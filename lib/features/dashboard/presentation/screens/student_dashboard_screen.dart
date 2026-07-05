@@ -10,6 +10,8 @@ import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../chat/providers.dart';
+import '../../../notifications/providers.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../widgets/classmates_strip.dart';
 import '../widgets/grades_block.dart';
@@ -39,8 +41,11 @@ class StudentDashboardScreen extends ConsumerWidget {
         children: [
           DashboardTopBar(
             onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () {},
-            notificationsBadge: 2,
+            onNotificationsTap: () => context.push(Routes.alerts),
+            onChatTap: () => context.push(Routes.chat),
+            notificationsBadge:
+                ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
+            chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
           // Saludo
@@ -142,10 +147,13 @@ class StudentDashboardScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Mis Notas (bloque oscuro)
-          GradesBlock(
-            grades: StudentMockData.grades,
-            average: StudentMockData.averageScore,
-            onDownload: () {},
+          GestureDetector(
+            onTap: () => context.push(Routes.grades),
+            child: GradesBlock(
+              grades: StudentMockData.grades,
+              average: StudentMockData.averageScore,
+              onDownload: () => context.push(Routes.reports),
+            ),
           ),
         ],
       ),
@@ -157,10 +165,9 @@ class StudentDashboardScreen extends ConsumerWidget {
       case EducaNavItem.home:
         break;
       case EducaNavItem.schedule:
-        // TODO: navigate to /schedule
         break;
       case EducaNavItem.alerts:
-        // TODO: navigate to /alerts
+        context.push(Routes.alerts);
         break;
       case EducaNavItem.profile:
         context.go(Routes.profile);

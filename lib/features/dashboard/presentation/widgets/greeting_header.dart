@@ -9,12 +9,16 @@ class DashboardTopBar extends StatelessWidget {
     super.key,
     this.onSettingsTap,
     this.onNotificationsTap,
+    this.onChatTap,
     this.notificationsBadge = 0,
+    this.chatBadge = 0,
   });
 
   final VoidCallback? onSettingsTap;
   final VoidCallback? onNotificationsTap;
+  final VoidCallback? onChatTap;
   final int notificationsBadge;
+  final int chatBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +44,14 @@ class DashboardTopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
+          if (onChatTap != null) ...[
+            _TopIcon(
+              icon: Icons.chat_bubble_outline,
+              onTap: onChatTap!,
+              badge: chatBadge,
+            ),
+            const SizedBox(width: 8),
+          ],
           if (onNotificationsTap != null)
             _TopIcon(
               icon: Icons.notifications_outlined,

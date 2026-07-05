@@ -10,6 +10,19 @@ import '../../features/assignments/presentation/screens/teacher_assignments_scre
 import '../../features/attendance/presentation/screens/attendance_classes_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_history_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_take_screen.dart';
+import '../../features/chat/presentation/screens/chat_screen.dart';
+import '../../features/chat/presentation/screens/conversations_screen.dart';
+import '../../features/chat/presentation/screens/new_conversation_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
+import '../../features/payments/presentation/screens/admin_dunning_screen.dart';
+import '../../features/payments/presentation/screens/charge_detail_screen.dart';
+import '../../features/payments/presentation/screens/checkout_screen.dart';
+import '../../features/payments/presentation/screens/parent_charges_screen.dart';
+import '../../features/payments/presentation/screens/payment_history_screen.dart';
+import '../../features/grades/presentation/screens/student_grades_screen.dart';
+import '../../features/grades/presentation/screens/subject_grades_screen.dart';
+import '../../features/grades/presentation/screens/teacher_gradebook_screen.dart';
+import '../../features/reports/presentation/report_card_screen.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/screens/institution_code_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -164,6 +177,120 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
+      // ----- Notas / Boletines -----
+      GoRoute(
+        path: Routes.grades,
+        builder: (context, state) {
+          final raw = state.uri.queryParameters['studentId'];
+          final studentId = int.tryParse(raw ?? '') ?? 1001;
+          return const _GradesRoleSplit();
+        },
+        routes: [
+          GoRoute(
+            path: 'gradebook',
+            builder: (context, state) => const RoleGuard(
+              allowed: {
+                AppRole.teacher,
+                AppRole.admin,
+                AppRole.coordinator,
+                AppRole.director,
+              },
+              child: TeacherGradebookScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'subject/:classId',
+            builder: (context, state) {
+              final classId =
+                  int.tryParse(state.pathParameters['classId'] ?? '') ?? 0;
+              final studentId = int.tryParse(
+                      state.uri.queryParameters['studentId'] ?? '') ??
+                  1001;
+              return SubjectGradesScreen(
+                studentId: studentId,
+                classId: classId,
+              );
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.reports,
+        builder: (context, state) {
+          final raw = state.uri.queryParameters['studentId'];
+          final studentId = int.tryParse(raw ?? '') ?? 1001;
+          return ReportCardScreen(studentId: studentId);
+        },
+      ),
+
+      // ----- Notificaciones -----
+      GoRoute(
+        path: Routes.alerts,
+        builder: (_, __) => const NotificationsScreen(),
+      ),
+
+      // ----- Pagos -----
+      GoRoute(
+        path: Routes.payments,
+        builder: (context, state) {
+          final raw = state.uri.queryParameters['studentId'];
+          final studentId = int.tryParse(raw ?? '') ?? 1001;
+          return _PaymentsRoleSplit(studentId: studentId);
+        },
+        routes: [
+          GoRoute(
+            path: 'history',
+            builder: (context, state) {
+              final raw = state.uri.queryParameters['studentId'];
+              final studentId = int.tryParse(raw ?? '') ?? 1001;
+              return PaymentHistoryScreen(studentId: studentId);
+            },
+          ),
+          GoRoute(
+            path: 'dunning',
+            builder: (_, __) => const RoleGuard(
+              allowed: {
+                AppRole.admin,
+                AppRole.coordinator,
+                AppRole.director,
+              },
+              child: AdminDunningScreen(),
+            ),
+          ),
+          GoRoute(
+            path: ':chargeId',
+            builder: (context, state) =>
+                ChargeDetailScreen(chargeId: state.pathParameters['chargeId']!),
+            routes: [
+              GoRoute(
+                path: 'checkout',
+                builder: (context, state) => CheckoutScreen(
+                  chargeId: state.pathParameters['chargeId']!,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // ----- Chat -----
+      GoRoute(
+        path: Routes.chat,
+        builder: (_, __) => const ConversationsScreen(),
+        routes: [
+          GoRoute(
+            path: 'new',
+            builder: (_, __) => const NewConversationScreen(),
+          ),
+          GoRoute(
+            path: ':conversationId',
+            builder: (context, state) => ChatScreen(
+              conversationId: state.pathParameters['conversationId']!,
+            ),
+          ),
+        ],
+      ),
+
       GoRoute(
         path: Routes.profile,
         builder: (_, __) => const ProfileScreen(),
@@ -192,6 +319,51 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 class _AuthRefresh extends ChangeNotifier {
   _AuthRefresh(Ref ref) {
     ref.listen(authControllerProvider, (_, __) => notifyListeners());
+  }
+}
+
+/// Dispatcher de `/payments`: padre ve su estado de cuenta; admin ve panel
+/// de morosidad; estudiante también ve estado (read-only).
+class _PaymentsRoleSplit extends ConsumerWidget {
+  const _PaymentsRoleSplit({required this.studentId});
+  final int studentId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authControllerProvider).user;
+    final role = user?.activeRole ?? AppRole.parent;
+    switch (role) {
+      case AppRole.admin:
+      case AppRole.coordinator:
+      case AppRole.director:
+        return const AdminDunningScreen();
+      case AppRole.parent:
+      case AppRole.student:
+      case AppRole.teacher:
+        return ParentChargesScreen(studentId: studentId);
+    }
+  }
+}
+
+/// Dispatcher de `/grades`: docente ve el gradebook por clase; estudiante y
+/// padre ven las notas del estudiante.
+class _GradesRoleSplit extends ConsumerWidget {
+  const _GradesRoleSplit();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authControllerProvider).user;
+    final role = user?.activeRole ?? AppRole.student;
+    switch (role) {
+      case AppRole.teacher:
+      case AppRole.admin:
+      case AppRole.coordinator:
+      case AppRole.director:
+        return const TeacherGradebookScreen();
+      case AppRole.student:
+      case AppRole.parent:
+        return const StudentGradesScreen(studentId: 1001);
+    }
   }
 }
 

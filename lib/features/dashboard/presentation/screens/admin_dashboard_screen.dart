@@ -11,6 +11,8 @@ import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/quick_action_button.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../chat/providers.dart';
+import '../../../notifications/providers.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../widgets/greeting_header.dart';
 
@@ -26,6 +28,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         current: EducaNavItem.home,
         onTap: (i) {
           if (i == EducaNavItem.profile) context.go(Routes.profile);
+          if (i == EducaNavItem.alerts) context.push(Routes.alerts);
         },
       ),
       fab: EducaFab(onPressed: () {}),
@@ -34,8 +37,12 @@ class AdminDashboardScreen extends ConsumerWidget {
         children: [
           DashboardTopBar(
             onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () {},
-            notificationsBadge: AdminMockData.systemAlerts,
+            onNotificationsTap: () => context.push(Routes.alerts),
+            onChatTap: () => context.push(Routes.chat),
+            notificationsBadge:
+                ref.watch(notificationsUnreadProvider).asData?.value ??
+                    AdminMockData.systemAlerts,
+            chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
           // Resumen institucional verde
@@ -100,6 +107,20 @@ class AdminDashboardScreen extends ConsumerWidget {
             label: 'Modificar Horarios',
             variant: QuickActionVariant.surface,
             onTap: () {},
+          ),
+          const SizedBox(height: 10),
+          QuickActionButton(
+            icon: Icons.grid_view_rounded,
+            label: 'Libro de notas',
+            variant: QuickActionVariant.surface,
+            onTap: () => context.push(Routes.gradebook),
+          ),
+          const SizedBox(height: 10),
+          QuickActionButton(
+            icon: Icons.payments_outlined,
+            label: 'Recaudación',
+            variant: QuickActionVariant.surface,
+            onTap: () => context.push(Routes.paymentsDunning),
           ),
           const SizedBox(height: 24),
 

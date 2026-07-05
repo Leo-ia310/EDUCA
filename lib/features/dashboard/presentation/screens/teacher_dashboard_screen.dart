@@ -12,6 +12,8 @@ import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../attendance/presentation/widgets/sync_status_badge.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../chat/providers.dart';
+import '../../../notifications/providers.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../widgets/greeting_header.dart';
 
@@ -46,8 +48,11 @@ class _TeacherDashboardScreenState
         children: [
           DashboardTopBar(
             onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () {},
-            notificationsBadge: 1,
+            onNotificationsTap: () => context.push(Routes.alerts),
+            onChatTap: () => context.push(Routes.chat),
+            notificationsBadge:
+                ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
+            chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
           GreetingBanner(
@@ -247,9 +252,10 @@ class _TeacherDashboardScreenState
                     ),
                 ],
                 const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Reporte Completo'),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(Routes.gradebook),
+                  icon: const Icon(Icons.grid_view_rounded),
+                  label: const Text('Libro de notas'),
                 ),
               ],
             ),
@@ -260,7 +266,17 @@ class _TeacherDashboardScreenState
   }
 
   void _handleNav(BuildContext context, EducaNavItem item) {
-    if (item == EducaNavItem.profile) context.go(Routes.profile);
+    switch (item) {
+      case EducaNavItem.profile:
+        context.go(Routes.profile);
+        break;
+      case EducaNavItem.alerts:
+        context.push(Routes.alerts);
+        break;
+      case EducaNavItem.home:
+      case EducaNavItem.schedule:
+        break;
+    }
   }
 }
 

@@ -11,6 +11,8 @@ import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../chat/providers.dart';
+import '../../../notifications/providers.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../widgets/greeting_header.dart';
 
@@ -38,6 +40,7 @@ class _ParentDashboardScreenState
         current: EducaNavItem.home,
         onTap: (i) {
           if (i == EducaNavItem.profile) context.go(Routes.profile);
+          if (i == EducaNavItem.alerts) context.push(Routes.alerts);
         },
       ),
       fab: EducaFab(onPressed: () {}),
@@ -46,8 +49,12 @@ class _ParentDashboardScreenState
         children: [
           DashboardTopBar(
             onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () {},
-            notificationsBadge: ParentMockData.newNotices,
+            onNotificationsTap: () => context.push(Routes.alerts),
+            onChatTap: () => context.push(Routes.chat),
+            notificationsBadge:
+                ref.watch(notificationsUnreadProvider).asData?.value ??
+                    ParentMockData.newNotices,
+            chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
           // Mis Hijos
@@ -239,8 +246,31 @@ class _ParentDashboardScreenState
             ),
           const SizedBox(height: 12),
 
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push(
+                    '${Routes.reports}?studentId=1001',
+                  ),
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('Boletín'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      context.push('${Routes.payments}?studentId=1001'),
+                  icon: const Icon(Icons.credit_card_rounded),
+                  label: const Text('Pagos'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () => context.push(Routes.chat),
             icon: const Icon(Icons.chat_bubble_outline),
             label: const Text('Contactar con Coordinación'),
           ),

@@ -45,8 +45,14 @@ dependencies:
   fl_chart: ^0.68.0
 
   # Notificaciones push
-  firebase_core: ^3.1.0
-  firebase_messaging: ^15.0.1
+  # NOTA: firebase_core/firebase_messaging están COMENTADOS para que la app
+  # arranque en modo demo sin configurar Firebase. Para activar FCM real:
+  # 1) Descomentar las 2 líneas de abajo
+  # 2) `flutterfire configure` (genera firebase_options.dart)
+  # 3) Copiar google-services.json a android/app/
+  # 4) En lib/features/notifications/providers.dart cambiar _forceDemoPush=false
+  # firebase_core: ^3.1.0
+  # firebase_messaging: ^15.0.1
   flutter_local_notifications: ^17.1.2
 
   # Archivos / PDF
