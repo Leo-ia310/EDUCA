@@ -6,7 +6,7 @@ import '../../domain/entities.dart';
 
 /// Modelo Hive para persistir el feed offline. TypeId 4 (los 1/2/3 son de
 /// asistencia — ver `hive_init.dart`).
-class LocalNotification {
+class LocalNotification extends HiveObject {
   LocalNotification({
     required this.id,
     required this.channelCode,

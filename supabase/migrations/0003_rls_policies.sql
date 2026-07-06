@@ -9,7 +9,9 @@
 -- =============================================================================
 
 -- Helper: lee el institution_id del JWT.
-create or replace function auth.current_institution_id() returns bigint
+-- NOTA: se crean en el schema `public` (no en `auth`) porque el rol de conexión
+-- no tiene permiso CREATE sobre el schema `auth` en Supabase.
+create or replace function public.current_institution_id() returns bigint
 language sql stable as $$
   select coalesce(
     nullif(current_setting('request.jwt.claims', true)::jsonb ->> 'institution_id', '')::bigint,
@@ -18,7 +20,7 @@ language sql stable as $$
 $$;
 
 -- Helper: roles del usuario.
-create or replace function auth.current_roles() returns text[]
+create or replace function public.current_roles() returns text[]
 language sql stable as $$
   select coalesce(
     array(select jsonb_array_elements_text(
@@ -28,9 +30,9 @@ language sql stable as $$
   );
 $$;
 
-create or replace function auth.has_role(role_code text) returns boolean
+create or replace function public.has_role(role_code text) returns boolean
 language sql stable as $$
-  select role_code = any(auth.current_roles());
+  select role_code = any(public.current_roles());
 $$;
 
 -- -----------------------------------------------------------------------------
@@ -40,8 +42,8 @@ do $$
 declare
   tbl text;
   tenant_tables text[] := array[
-    'institutions','roles','users','user_roles','sessions','devices','login_attempts','audit_log',
-    'persons','students','teachers','parents','parent_students','staff',
+    'institutions','roles','users','user_roles','audit_log',
+    'persons','students','teachers','parents','staff',
     'academic_years','academic_periods','grade_levels','sections','classrooms','subjects','groups',
     'classes','schedules','enrollments',
     'holidays','calendar_events',
@@ -50,7 +52,7 @@ declare
     'assignments','assignment_files','submissions','submission_files',
     'grading_scales','grading_scale_ranges','evaluations','grades','period_grades',
     'report_cards','report_card_lines',
-    'email_templates','notifications','notification_deliveries',
+    'email_templates','notifications',
     'announcements','announcement_reads',
     'conversations','conversation_participants','messages','message_reads',
     'payment_concepts','charges','payments',
@@ -64,8 +66,8 @@ begin
     if tbl = 'institutions' then
       execute format($f$
         create policy tenant_isolation on %I
-          using (id = auth.current_institution_id())
-          with check (id = auth.current_institution_id())
+          using (id = public.current_institution_id())
+          with check (id = public.current_institution_id())
       $f$, tbl);
     elsif tbl in ('grading_scale_ranges','assignment_files','submission_files','report_card_lines',
                    'conversation_participants','messages','message_reads','announcement_reads') then
@@ -76,12 +78,18 @@ begin
     else
       execute format($f$
         create policy tenant_isolation on %I
-          using (institution_id = auth.current_institution_id())
-          with check (institution_id = auth.current_institution_id())
+          using (institution_id = public.current_institution_id())
+          with check (institution_id = public.current_institution_id())
       $f$, tbl);
     end if;
   end loop;
 end$$;
+
+-- Roles y permisos globales del sistema (institution_id null): lectura para
+-- cualquier usuario autenticado, además del aislamiento por institución de arriba.
+-- Sin esto, los roles base sembrados (super_admin, teacher, ...) serían invisibles.
+drop policy if exists roles_global_read on roles;
+create policy roles_global_read on roles for select using (institution_id is null);
 
 -- -----------------------------------------------------------------------------
 -- Catálogos globales: lectura libre, sin escritura.
@@ -103,6 +111,39 @@ begin
     execute format('create policy public_read on %I for select using (true)', tbl);
   end loop;
 end$$;
+
+-- -----------------------------------------------------------------------------
+-- Tablas sin institution_id directo: se aíslan por join a la tabla padre que sí
+-- lo lleva (users / students / notifications), respetando el mismo tenant.
+-- -----------------------------------------------------------------------------
+-- sessions, devices, login_attempts -> users.institution_id
+do $$
+declare tbl text;
+begin
+  foreach tbl in array array['sessions','devices','login_attempts'] loop
+    execute format('alter table %I enable row level security', tbl);
+    execute format('drop policy if exists tenant_isolation on %I', tbl);
+    execute format($f$
+      create policy tenant_isolation on %I
+        using (user_id in (select id from users where institution_id = public.current_institution_id()))
+        with check (user_id in (select id from users where institution_id = public.current_institution_id()))
+    $f$, tbl);
+  end loop;
+end$$;
+
+-- parent_students -> students.institution_id
+alter table parent_students enable row level security;
+drop policy if exists tenant_isolation on parent_students;
+create policy tenant_isolation on parent_students
+  using (student_id in (select id from students where institution_id = public.current_institution_id()))
+  with check (student_id in (select id from students where institution_id = public.current_institution_id()));
+
+-- notification_deliveries -> notifications.institution_id
+alter table notification_deliveries enable row level security;
+drop policy if exists tenant_isolation on notification_deliveries;
+create policy tenant_isolation on notification_deliveries
+  using (notification_id in (select id from notifications where institution_id = public.current_institution_id()))
+  with check (notification_id in (select id from notifications where institution_id = public.current_institution_id()));
 
 -- -----------------------------------------------------------------------------
 -- Política específica para mensajería: el usuario solo ve mensajes de

@@ -37,13 +37,17 @@ import '../widgets/empty_state.dart';
 import 'route_paths.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final auth = ref.watch(authControllerProvider);
-
+  // IMPORTANTE: NO usar ref.watch aquí. Vigilar el estado de auth recrearía el
+  // GoRouter completo en cada cambio de sesión, reseteando la navegación a
+  // `initialLocation` (splash) y provocando un bucle al ingresar el código /
+  // iniciar sesión. El router se crea UNA vez; `refreshListenable` re-evalúa el
+  // `redirect`, que lee el estado fresco con ref.read en cada evaluación.
   return GoRouter(
     initialLocation: Routes.splash,
     debugLogDiagnostics: false,
     refreshListenable: _AuthRefresh(ref),
     redirect: (context, state) {
+      final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
       final loggedIn = auth.isAuthenticated;
       final goingToAuth = loc == Routes.splash ||

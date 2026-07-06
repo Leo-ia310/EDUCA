@@ -110,7 +110,8 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
 
     // TODO: persistir attachments en `assignment_files` y subir vía
     //       SupabaseFileUploadService (`folder: assignments/{id}`).
-    return assignmentById(row['id'].toString()) ??
+    final created = await assignmentById(row['id'].toString());
+    return created ??
         (throw StateError('No se pudo recuperar la tarea creada'));
   }
 

@@ -47,6 +47,9 @@ class FirebasePushService implements PushService {
   @override
   Future<void> unsubscribeFromTopic(String topic) async {}
 
+  @override
+  Future<void> simulate(AppNotification n) async {}
+
   void dispose() {
     _incomingCtrl.close();
     _tapCtrl.close();

@@ -4,8 +4,8 @@ publish_to: 'none'
 version: 0.1.0+1
 
 environment:
-  sdk: ">=3.4.0 <4.0.0"
-  flutter: ">=3.22.0"
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.24.0"
 
 dependencies:
   flutter:
@@ -64,7 +64,7 @@ dependencies:
   path: ^1.9.0
 
   # Internacionalización y fechas
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # Utilidades
   collection: ^1.18.0

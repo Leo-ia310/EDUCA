@@ -11,7 +11,7 @@ declare
   inst_id bigint;
   auth_uid uuid;
   public_uid bigint;
-  role_id int;
+  v_role_id int;
   demo_users text[][] := array[
     array['student@educa360.com', 'Julián Vargas', 'student'],
     array['teacher@educa360.com', 'Elena Ramírez', 'teacher'],
@@ -27,32 +27,58 @@ begin
   end if;
 
   foreach u slice 1 in array demo_users loop
-    -- 1) Auth user (idempotente vía on conflict).
-    insert into auth.users (
-      instance_id, id, aud, role, email, encrypted_password,
-      raw_app_meta_data, raw_user_meta_data,
-      email_confirmed_at, created_at, updated_at
+    -- 1) Auth user. Idempotente vía chequeo de existencia (el índice de email
+    --    en auth.users es parcial y no sirve para ON CONFLICT).
+    select id into auth_uid from auth.users where email = u[1];
+    if auth_uid is null then
+      auth_uid := gen_random_uuid();
+      insert into auth.users (
+        instance_id, id, aud, role, email, encrypted_password,
+        raw_app_meta_data, raw_user_meta_data,
+        email_confirmed_at, created_at, updated_at,
+        -- GoTrue escanea estas columnas como string no-nulo: deben ser '' (no NULL).
+        confirmation_token, recovery_token, email_change_token_new, email_change
+      )
+      values (
+        '00000000-0000-0000-0000-000000000000',
+        auth_uid,
+        'authenticated',
+        'authenticated',
+        u[1],
+        crypt('demo1234', gen_salt('bf')),
+        jsonb_build_object(
+          'institution_id', inst_id,
+          'roles', jsonb_build_array(u[3]),
+          'provider', 'email',
+          'providers', jsonb_build_array('email')
+        ),
+        '{}'::jsonb,
+        now(), now(), now(),
+        '', '', '', ''
+      );
+    else
+      update auth.users set
+        encrypted_password = crypt('demo1234', gen_salt('bf')),
+        raw_app_meta_data = jsonb_build_object(
+          'institution_id', inst_id,
+          'roles', jsonb_build_array(u[3]),
+          'provider', 'email',
+          'providers', jsonb_build_array('email')
+        )
+      where id = auth_uid;
+    end if;
+
+    -- 1b) Identity de email (requerida por GoTrue v2 para login por password).
+    insert into auth.identities (
+      provider_id, user_id, identity_data, provider,
+      last_sign_in_at, created_at, updated_at
     )
     values (
-      '00000000-0000-0000-0000-000000000000',
-      gen_random_uuid(),
-      'authenticated',
-      'authenticated',
-      u[1],
-      crypt('demo1234', gen_salt('bf')),
-      jsonb_build_object(
-        'institution_id', inst_id,
-        'roles', jsonb_build_array(u[3]),
-        'provider', 'email',
-        'providers', jsonb_build_array('email')
-      ),
-      '{}'::jsonb,
-      now(), now(), now()
+      u[1], auth_uid,
+      jsonb_build_object('sub', auth_uid::text, 'email', u[1], 'email_verified', true),
+      'email', now(), now(), now()
     )
-    on conflict (email) do update set
-      encrypted_password = excluded.encrypted_password,
-      raw_app_meta_data = excluded.raw_app_meta_data
-    returning id into auth_uid;
+    on conflict (provider, provider_id) do nothing;
 
     -- 2) public.users
     insert into public.users (
@@ -65,10 +91,10 @@ begin
     returning id into public_uid;
 
     -- 3) rol
-    select id into role_id from roles where code = u[3] and is_system = true;
-    if role_id is not null then
+    select id into v_role_id from roles where code = u[3] and is_system = true;
+    if v_role_id is not null then
       insert into user_roles (user_id, role_id, institution_id)
-      values (public_uid, role_id, inst_id)
+      values (public_uid, v_role_id, inst_id)
       on conflict (user_id, role_id, institution_id) do nothing;
     end if;
 

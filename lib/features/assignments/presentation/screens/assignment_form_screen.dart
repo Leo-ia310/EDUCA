@@ -12,6 +12,7 @@ import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../attendance/data/mock_attendance_data.dart';
 import '../../domain/entities.dart';
+import '../../providers.dart';
 import '../controllers/assignment_detail_controller.dart';
 import '../controllers/assignment_form_controller.dart';
 import '../controllers/assignments_list_controller.dart';
