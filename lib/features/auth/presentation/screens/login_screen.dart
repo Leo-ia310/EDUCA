@@ -109,7 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => context.push(Routes.forgotPassword),
                     child: const Text(AppStrings.forgotPasswordCta),
                   ),
                 ),

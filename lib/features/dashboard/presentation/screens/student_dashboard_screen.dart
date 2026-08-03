@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
+import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../chat/providers.dart';
@@ -35,7 +36,34 @@ class StudentDashboardScreen extends ConsumerWidget {
         current: EducaNavItem.home,
         onTap: (item) => _handleNav(context, item),
       ),
-      fab: EducaFab(onPressed: () {}),
+      fab: EducaFab(
+        onPressed: () => showQuickActionsSheet(
+          context,
+          title: 'Accesos rápidos',
+          actions: const [
+            QuickActionEntry(
+              icon: Icons.calendar_today_rounded,
+              label: 'Ver horario',
+              route: Routes.schedule,
+            ),
+            QuickActionEntry(
+              icon: Icons.assignment_outlined,
+              label: 'Mis tareas',
+              route: Routes.assignments,
+            ),
+            QuickActionEntry(
+              icon: Icons.grade_outlined,
+              label: 'Mis notas',
+              route: Routes.grades,
+            ),
+            QuickActionEntry(
+              icon: Icons.chat_bubble_outline,
+              label: 'Nuevo mensaje',
+              route: Routes.chatNew,
+            ),
+          ],
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -165,6 +193,7 @@ class StudentDashboardScreen extends ConsumerWidget {
       case EducaNavItem.home:
         break;
       case EducaNavItem.schedule:
+        context.push(Routes.schedule);
         break;
       case EducaNavItem.alerts:
         context.push(Routes.alerts);

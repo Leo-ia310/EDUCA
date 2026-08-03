@@ -14,6 +14,12 @@ class Routes {
   static const schedule = '/schedule';
   static const alerts = '/alerts';
   static const profile = '/profile';
+  static const changePassword = '/change-password';
+  static const notificationSettings = '/settings/notifications';
+  static const help = '/help';
+  static const announcements = '/announcements';
+  static const eventNew = '/events/new';
+  static const manageTeachers = '/admin/teachers';
 
   static const assignments = '/assignments';
   static const assignmentNew = '/assignments/new';

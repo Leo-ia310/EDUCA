@@ -62,7 +62,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            onPressed: () {},
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              showDragHandle: true,
+              builder: (ctx) => SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.notifications_off_outlined),
+                      title: const Text('Silenciar conversación'),
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Conversación silenciada.')),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.search),
+                      title: const Text('Buscar en la conversación'),
+                      onTap: () => Navigator.of(ctx).pop(),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.report_gmailerrorred_outlined),
+                      title: const Text('Reportar'),
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Reporte enviado a coordinación.')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

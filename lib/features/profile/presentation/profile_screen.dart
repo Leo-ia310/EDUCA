@@ -124,7 +124,7 @@ class ProfileScreen extends ConsumerWidget {
                 _ProfileAction(
                   icon: Icons.lock_outline,
                   label: 'Cambiar contraseña',
-                  onTap: () {},
+                  onTap: () => context.push(Routes.changePassword),
                 ),
                 Divider(
                   height: 1,
@@ -133,7 +133,7 @@ class ProfileScreen extends ConsumerWidget {
                 _ProfileAction(
                   icon: Icons.notifications_none,
                   label: 'Notificaciones',
-                  onTap: () {},
+                  onTap: () => context.push(Routes.notificationSettings),
                 ),
                 Divider(
                   height: 1,
@@ -142,7 +142,7 @@ class ProfileScreen extends ConsumerWidget {
                 _ProfileAction(
                   icon: Icons.help_outline,
                   label: 'Ayuda y soporte',
-                  onTap: () {},
+                  onTap: () => context.push(Routes.help),
                 ),
               ],
             ),

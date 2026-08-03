@@ -1,14 +1,16 @@
-import 'dart:math';
-
 import '../domain/entities.dart';
 import '../domain/payment_gateway.dart';
 
-/// Pasarela de demo. Simula un procesamiento exitoso el 92% de las veces
-/// para dar sensación real; el 8% falla para que la UI muestre estados de
-/// error. Devuelve un `reference` con formato `DEMO-<timestamp>`.
+/// Pasarela de demo. Procesa el pago **siempre con éxito** para que la demo
+/// en vivo sea 100% confiable (sin fallos aleatorios en escenario). Devuelve
+/// un `reference` con formato `DEMO-<timestamp>`.
+///
+/// Nota: antes simulaba un 8% de fallos para probar estados de error; se
+/// desactivó por seguridad de presentación. Para volver a probar el estado de
+/// rechazo, poner [failAlways] en true.
 class DemoPaymentGateway implements PaymentGateway {
-  DemoPaymentGateway({int seed = 42}) : _rand = Random(seed);
-  final Random _rand;
+  DemoPaymentGateway({this.failAlways = false});
+  final bool failAlways;
 
   @override
   String get providerName => 'Educa360 Demo Gateway';
@@ -24,8 +26,7 @@ class DemoPaymentGateway implements PaymentGateway {
   }) async {
     // Simular 3D-Secure / redirección.
     await Future<void>.delayed(const Duration(milliseconds: 1400));
-    final ok = _rand.nextDouble() < 0.92;
-    if (!ok) {
+    if (failAlways) {
       return const GatewayResult(
         success: false,
         reference: '',

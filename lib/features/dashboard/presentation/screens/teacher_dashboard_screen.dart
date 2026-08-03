@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
+import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../attendance/presentation/widgets/sync_status_badge.dart';
@@ -42,7 +43,34 @@ class _TeacherDashboardScreenState
         current: EducaNavItem.home,
         onTap: (item) => _handleNav(context, item),
       ),
-      fab: EducaFab(onPressed: () {}),
+      fab: EducaFab(
+        onPressed: () => showQuickActionsSheet(
+          context,
+          title: 'Accesos rápidos',
+          actions: const [
+            QuickActionEntry(
+              icon: Icons.add_task_rounded,
+              label: 'Asignar nueva tarea',
+              route: '${Routes.assignmentNew}?classId=101',
+            ),
+            QuickActionEntry(
+              icon: Icons.how_to_reg_outlined,
+              label: 'Tomar asistencia',
+              route: Routes.attendance,
+            ),
+            QuickActionEntry(
+              icon: Icons.grid_view_rounded,
+              label: 'Libro de notas',
+              route: Routes.gradebook,
+            ),
+            QuickActionEntry(
+              icon: Icons.calendar_today_rounded,
+              label: 'Ver horario',
+              route: Routes.schedule,
+            ),
+          ],
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -125,7 +153,7 @@ class _TeacherDashboardScreenState
             children: [
               const Expanded(child: SectionHeader(title: 'Mis Clases')),
               GestureDetector(
-                onTap: () {},
+                onTap: () => context.push(Routes.schedule),
                 child: Text(
                   'Ver Horario',
                   style: context.textTheme.labelMedium?.copyWith(
@@ -273,8 +301,10 @@ class _TeacherDashboardScreenState
       case EducaNavItem.alerts:
         context.push(Routes.alerts);
         break;
-      case EducaNavItem.home:
       case EducaNavItem.schedule:
+        context.push(Routes.schedule);
+        break;
+      case EducaNavItem.home:
         break;
     }
   }

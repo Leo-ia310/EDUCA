@@ -55,7 +55,7 @@ class HiveNotificationsRepository implements NotificationsRepository {
     final entry = _box.get(id);
     if (entry == null || entry.read) return;
     entry.read = true;
-    await entry.save();
+    await _box.put(entry.id, entry);
     _emitAll();
     _emitUnread();
   }
@@ -65,7 +65,7 @@ class HiveNotificationsRepository implements NotificationsRepository {
     for (final entry in _box.values) {
       if (!entry.read) {
         entry.read = true;
-        await entry.save();
+        await _box.put(entry.id, entry);
       }
     }
     _emitAll();

@@ -9,6 +9,7 @@ import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/quick_action_button.dart';
+import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../chat/providers.dart';
@@ -29,9 +30,37 @@ class AdminDashboardScreen extends ConsumerWidget {
         onTap: (i) {
           if (i == EducaNavItem.profile) context.go(Routes.profile);
           if (i == EducaNavItem.alerts) context.push(Routes.alerts);
+          if (i == EducaNavItem.schedule) context.push(Routes.schedule);
         },
       ),
-      fab: EducaFab(onPressed: () {}),
+      fab: EducaFab(
+        onPressed: () => showQuickActionsSheet(
+          context,
+          title: 'Acciones rápidas',
+          actions: const [
+            QuickActionEntry(
+              icon: Icons.event_outlined,
+              label: 'Crear evento',
+              route: Routes.eventNew,
+            ),
+            QuickActionEntry(
+              icon: Icons.school_outlined,
+              label: 'Asignar maestros',
+              route: Routes.manageTeachers,
+            ),
+            QuickActionEntry(
+              icon: Icons.schedule_outlined,
+              label: 'Modificar horarios',
+              route: Routes.schedule,
+            ),
+            QuickActionEntry(
+              icon: Icons.payments_outlined,
+              label: 'Recaudación',
+              route: Routes.paymentsDunning,
+            ),
+          ],
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -92,21 +121,21 @@ class AdminDashboardScreen extends ConsumerWidget {
           QuickActionButton(
             icon: Icons.school_outlined,
             label: 'Asignar Maestros',
-            onTap: () {},
+            onTap: () => context.push(Routes.manageTeachers),
           ),
           const SizedBox(height: 10),
           QuickActionButton(
             icon: Icons.event_outlined,
             label: 'Crear Evento',
             variant: QuickActionVariant.surface,
-            onTap: () {},
+            onTap: () => context.push(Routes.eventNew),
           ),
           const SizedBox(height: 10),
           QuickActionButton(
             icon: Icons.schedule_outlined,
             label: 'Modificar Horarios',
             variant: QuickActionVariant.surface,
-            onTap: () {},
+            onTap: () => context.push(Routes.schedule),
           ),
           const SizedBox(height: 10),
           QuickActionButton(
@@ -129,7 +158,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             children: [
               const Expanded(child: SectionHeader(title: 'Anuncios Recientes')),
               GestureDetector(
-                onTap: () {},
+                onTap: () => context.push(Routes.announcements),
                 child: Text(
                   'Ver todos',
                   style: context.textTheme.labelMedium?.copyWith(
@@ -153,7 +182,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             children: [
               const Expanded(child: SectionHeader(title: 'Maestros Activos')),
               GestureDetector(
-                onTap: () {},
+                onTap: () => context.push(Routes.manageTeachers),
                 child: Text(
                   'Gestionar',
                   style: context.textTheme.labelMedium?.copyWith(

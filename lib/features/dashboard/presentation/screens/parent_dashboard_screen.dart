@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
+import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -41,9 +42,37 @@ class _ParentDashboardScreenState
         onTap: (i) {
           if (i == EducaNavItem.profile) context.go(Routes.profile);
           if (i == EducaNavItem.alerts) context.push(Routes.alerts);
+          if (i == EducaNavItem.schedule) context.push(Routes.schedule);
         },
       ),
-      fab: EducaFab(onPressed: () {}),
+      fab: EducaFab(
+        onPressed: () => showQuickActionsSheet(
+          context,
+          title: 'Accesos rápidos',
+          actions: const [
+            QuickActionEntry(
+              icon: Icons.calendar_today_rounded,
+              label: 'Ver horario',
+              route: Routes.schedule,
+            ),
+            QuickActionEntry(
+              icon: Icons.credit_card_rounded,
+              label: 'Pagos',
+              route: '${Routes.payments}?studentId=1001',
+            ),
+            QuickActionEntry(
+              icon: Icons.picture_as_pdf_outlined,
+              label: 'Boletín',
+              route: '${Routes.reports}?studentId=1001',
+            ),
+            QuickActionEntry(
+              icon: Icons.chat_bubble_outline,
+              label: 'Nuevo mensaje',
+              route: Routes.chatNew,
+            ),
+          ],
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -201,7 +230,7 @@ class _ParentDashboardScreenState
             children: [
               const Expanded(child: SectionHeader(title: 'Materias y Profesores')),
               GestureDetector(
-                onTap: () {},
+                onTap: () => context.push(Routes.schedule),
                 child: Text(
                   'Ver Todo',
                   style: context.textTheme.labelMedium?.copyWith(
@@ -370,7 +399,7 @@ class _SubjectTeacherRow extends StatelessWidget {
             ),
           ),
           IconButton.filledTonal(
-            onPressed: () {},
+            onPressed: () => context.push(Routes.chat),
             icon: const Icon(Icons.chat_bubble_outline, size: 18),
             style: IconButton.styleFrom(
               backgroundColor: palette.cardContrast,
