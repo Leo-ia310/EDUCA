@@ -141,6 +141,13 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
                     ),
                     FilledButton.tonal(
                       onPressed: () => _assign(t),
+                      // El tema fuerza minimumSize con ancho infinito (botones
+                      // full-width); aquí es un botón compacto dentro de un Row,
+                      // así que lo acotamos a su contenido.
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
                       child: const Text('Asignar'),
                     ),
                   ],

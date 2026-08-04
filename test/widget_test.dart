@@ -1,30 +1,30 @@
-// This is a basic Flutter widget test.
+// Smoke test de Educa360.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Arrancar toda la app (`Educa360App`) en un test requiere inicializar Hive,
+// Supabase y providers, lo que la haría frágil. En su lugar verificamos un
+// widget base real de la app (`EduCard`) montado sobre el tema real, lo que
+// confirma que la suite de tests compila y que los tokens del tema
+// (`context.palette`) se resuelven correctamente.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:educa360/main.dart';
+import 'package:educa360/core/theme/app_theme.dart';
+import 'package:educa360/core/widgets/edu_card.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('EduCard renderiza su contenido sobre el tema de la app',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const Scaffold(
+          body: EduCard(child: Text('Educa360')),
+        ),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Educa360'), findsOneWidget);
+    expect(find.byType(EduCard), findsOneWidget);
   });
 }
