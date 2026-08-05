@@ -37,6 +37,8 @@ class _ParentDashboardScreenState
 
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+      onRefresh: () async =>
+          Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.home,
         onTap: (i) {
@@ -86,11 +88,18 @@ class _ParentDashboardScreenState
             chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
+          GreetingBanner(
+            title: '¡Hola, ${user.displayFirstName}!',
+            subtitle:
+                'Tienes ${ParentMockData.newNotices} avisos nuevos y ${ParentMockData.monthEvents} eventos este mes.',
+          ),
+          const SizedBox(height: 24),
+
           // Mis Hijos
           const SectionHeader(title: 'Mis Hijos'),
           const SizedBox(height: 12),
           SizedBox(
-            height: 86,
+            height: 96,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
@@ -134,6 +143,8 @@ class _ParentDashboardScreenState
                       const SizedBox(height: 6),
                       Text(
                         c.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: context.textTheme.labelMedium?.copyWith(
                           fontWeight:
                               selected ? FontWeight.w800 : FontWeight.w500,

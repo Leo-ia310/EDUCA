@@ -39,6 +39,8 @@ class _TeacherDashboardScreenState
 
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+      onRefresh: () async =>
+          Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.home,
         onTap: (item) => _handleNav(context, item),

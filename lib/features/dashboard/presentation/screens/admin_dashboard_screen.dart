@@ -12,6 +12,7 @@ import '../../../../core/widgets/quick_action_button.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
 import '../../data/mock_dashboard_data.dart';
@@ -23,8 +24,11 @@ class AdminDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
+    final user = ref.watch(authControllerProvider).user!;
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+      onRefresh: () async =>
+          Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.home,
         onTap: (i) {
@@ -36,7 +40,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       fab: EducaFab(
         onPressed: () => showQuickActionsSheet(
           context,
-          title: 'Acciones rápidas',
+          title: 'Accesos rápidos',
           actions: const [
             QuickActionEntry(
               icon: Icons.event_outlined,
@@ -86,13 +90,21 @@ class AdminDashboardScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Resumen Institucional',
-                  style: context.textTheme.titleMedium?.copyWith(
+                  '¡Hola, ${user.displayFirstName}!',
+                  style: context.textTheme.headlineSmall?.copyWith(
                     color: const Color(0xFF1E2218),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 2),
+                Text(
+                  'Resumen Institucional',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF34401C),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 14),
                 Row(
                   children: [
                     Expanded(
