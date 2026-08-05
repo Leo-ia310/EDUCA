@@ -1,0 +1,22 @@
+# CODEOWNERS — Educa360
+# GitHub pedirá automáticamente review del dueño cuando un PR toque estos paths.
+# Reemplaza @frontend-owner y @backend-owner por los usuarios reales de GitHub.
+# (El dueño del repo es @Leo-ia310.)
+
+# --- Frontend (UI) ---
+/lib/features/*/presentation/   @frontend-owner
+/lib/core/theme/                @frontend-owner
+/lib/core/widgets/              @frontend-owner
+/lib/core/routing/              @frontend-owner
+/web/                           @frontend-owner
+/android/                       @frontend-owner
+/assets/                        @frontend-owner
+
+# --- Backend (datos / Supabase) ---
+/lib/features/*/data/           @backend-owner
+/lib/core/network/              @backend-owner
+/supabase/                      @backend-owner
+
+# --- Contrato compartido: requiere review de AMBOS ---
+/lib/features/*/domain/         @frontend-owner @backend-owner
+/lib/features/*/providers.dart  @frontend-owner @backend-owner
