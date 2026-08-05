@@ -212,6 +212,8 @@ class _TeacherDashboardScreenState
                       const Spacer(),
                       Text(
                         c.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: context.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -220,6 +222,8 @@ class _TeacherDashboardScreenState
                       const SizedBox(height: 4),
                       Text(
                         c.room,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: context.textTheme.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.7),
                         ),
