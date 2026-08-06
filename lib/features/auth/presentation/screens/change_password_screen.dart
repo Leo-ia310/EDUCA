@@ -68,6 +68,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   TextFormField(
                     controller: _currentCtrl,
                     obscureText: _obscureCurrent,
+                    autofillHints: const [AutofillHints.password],
                     validator: Validators.password,
                     decoration: InputDecoration(
                       labelText: 'Contraseña actual',
@@ -85,6 +86,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   TextFormField(
                     controller: _newCtrl,
                     obscureText: _obscureNew,
+                    autofillHints: const [AutofillHints.newPassword],
                     validator: Validators.password,
                     decoration: InputDecoration(
                       labelText: 'Nueva contraseña',
@@ -102,6 +104,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   TextFormField(
                     controller: _confirmCtrl,
                     obscureText: _obscureNew,
+                    autofillHints: const [AutofillHints.newPassword],
                     validator: (v) {
                       if (v == null || v.isEmpty) {
                         return 'Confirma la nueva contraseña';
@@ -111,9 +114,16 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       }
                       return null;
                     },
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Confirmar nueva contraseña',
-                      prefixIcon: Icon(Icons.lock_reset_outlined),
+                      prefixIcon: const Icon(Icons.lock_reset_outlined),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscureNew
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined),
+                        onPressed: () =>
+                            setState(() => _obscureNew = !_obscureNew),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),

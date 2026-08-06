@@ -72,37 +72,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 28),
                 Form(
                   key: _formKey,
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: Validators.email,
-                        decoration: const InputDecoration(
-                          labelText: AppStrings.emailHint,
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: _passwordCtrl,
-                        obscureText: _obscure,
-                        validator: Validators.password,
-                        textInputAction: TextInputAction.go,
-                        onFieldSubmitted: (_) => _submit(),
-                        decoration: InputDecoration(
-                          labelText: AppStrings.passwordHint,
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscure
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined),
-                            onPressed: () =>
-                                setState(() => _obscure = !_obscure),
+                  child: AutofillGroup(
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [
+                            AutofillHints.username,
+                            AutofillHints.email,
+                          ],
+                          validator: Validators.email,
+                          decoration: const InputDecoration(
+                            labelText: AppStrings.emailHint,
+                            prefixIcon: Icon(Icons.person_outline),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _passwordCtrl,
+                          obscureText: _obscure,
+                          autofillHints: const [AutofillHints.password],
+                          validator: Validators.password,
+                          textInputAction: TextInputAction.go,
+                          onFieldSubmitted: (_) => _submit(),
+                          decoration: InputDecoration(
+                            labelText: AppStrings.passwordHint,
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscure
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined),
+                              onPressed: () =>
+                                  setState(() => _obscure = !_obscure),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
