@@ -8,7 +8,6 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
-import '../../domain/entities.dart';
 import '../controllers/assignments_list_controller.dart';
 import '../widgets/assignment_card.dart';
 

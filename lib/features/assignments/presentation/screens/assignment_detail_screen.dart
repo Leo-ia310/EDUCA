@@ -37,7 +37,6 @@ class AssignmentDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final assignmentAsync = ref.watch(assignmentByIdProvider(assignmentId));
-    final palette = context.palette;
     final user = ref.watch(authControllerProvider).user;
     final role = user?.activeRole ?? AppRole.student;
 
@@ -238,6 +237,10 @@ class _TeacherActions extends StatelessWidget {
                     onPressed: () => context.push(
                       '${Routes.assignments}/${assignment.id}/grade',
                     ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 44),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
                     icon: const Icon(Icons.fact_check_outlined),
                     label: const Text('Calificar'),
                   ),
@@ -395,6 +398,9 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                     children: [
                       OutlinedButton.icon(
                         onPressed: state.uploading ? null : _pickFiles,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 44),
+                        ),
                         icon: state.uploading
                             ? const SizedBox(
                                 width: 14,
@@ -407,6 +413,9 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                       ),
                       const Spacer(),
                       FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 44),
+                        ),
                         onPressed: state.saving
                             ? null
                             : () async {

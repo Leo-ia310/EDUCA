@@ -13,7 +13,6 @@ import '../../../../core/widgets/section_header.dart';
 import '../../../attendance/data/mock_attendance_data.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
-import '../controllers/assignment_detail_controller.dart';
 import '../controllers/assignment_form_controller.dart';
 import '../controllers/assignments_list_controller.dart';
 import '../widgets/attachment_pill.dart';
@@ -267,6 +266,9 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   children: [
                     OutlinedButton.icon(
                       onPressed: state.uploading ? null : _pickFiles,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                      ),
                       icon: state.uploading
                           ? const SizedBox(
                               width: 16,
