@@ -20,7 +20,6 @@ class CheckoutScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chargeAsync = ref.watch(chargeByIdProvider(chargeId));
-    final palette = context.palette;
 
     return AppScaffold(
       appBar: AppBar(

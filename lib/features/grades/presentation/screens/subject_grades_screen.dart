@@ -26,7 +26,6 @@ class SubjectGradesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final palette = context.palette;
     final periods = ref.watch(periodsProvider);
     final scaleAsync = ref.watch(defaultScaleProvider);
     final evalsAsync = ref.watch(studentEvaluationsProvider(

@@ -31,7 +31,6 @@ class _TeacherGradebookScreenState
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     final args = GradebookArgs(classId: _classId, periodId: _periodId);
     final data = ref.watch(gradebookProvider(args));
     final scaleAsync = ref.watch(defaultScaleProvider);
@@ -177,7 +176,6 @@ class _Matrix extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final palette = context.palette;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
       child: Column(

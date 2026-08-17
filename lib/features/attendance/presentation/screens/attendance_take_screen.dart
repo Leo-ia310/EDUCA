@@ -40,7 +40,6 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(attendanceTakeControllerProvider);
     final controller = ref.read(attendanceTakeControllerProvider.notifier);
-    final palette = context.palette;
     final brief = state.classBrief;
 
     if (state.loading && brief == null) {

@@ -205,8 +205,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.grades,
         builder: (context, state) {
-          final raw = state.uri.queryParameters['studentId'];
-          final studentId = int.tryParse(raw ?? '') ?? 1001;
           return const _GradesRoleSplit();
         },
         routes: [

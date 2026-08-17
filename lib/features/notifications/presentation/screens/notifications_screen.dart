@@ -7,7 +7,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
-import '../../../../core/widgets/section_header.dart';
 import '../../domain/entities.dart';
 import '../../domain/notifications_bootstrap.dart';
 import '../../providers.dart';

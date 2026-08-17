@@ -8,7 +8,6 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
-import '../../../../core/widgets/section_header.dart';
 import '../../domain/entities.dart';
 import '../controllers/attendance_take_controller.dart' show todaysClassesProvider;
 import '../widgets/sync_status_badge.dart';
