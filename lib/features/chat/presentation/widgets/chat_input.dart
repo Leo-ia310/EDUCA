@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities.dart';
@@ -33,11 +32,27 @@ class _ChatInputState extends State<ChatInput> {
   @override
   void initState() {
     super.initState();
+    // En web/escritorio, Enter envía y Shift+Enter inserta un salto de línea.
+    // En móvil (teclado por software) este handler no se dispara con Enter, así
+    // que allí se conserva el comportamiento de salto de línea.
+    _focus.onKeyEvent = _handleKeyEvent;
     _controller.addListener(() {
       final v = _controller.text.trim().isNotEmpty ||
           widget.pendingAttachment != null;
       if (v != _canSend) setState(() => _canSend = v);
     });
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    final isEnter = event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter;
+    if (event is KeyDownEvent &&
+        isEnter &&
+        !HardwareKeyboard.instance.isShiftPressed) {
+      if (!widget.sending) _send();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   @override
