@@ -129,7 +129,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
-                    value: _audience,
+                    initialValue: _audience,
                     decoration: const InputDecoration(
                       labelText: 'Dirigido a',
                       prefixIcon: Icon(Icons.groups_2_outlined),

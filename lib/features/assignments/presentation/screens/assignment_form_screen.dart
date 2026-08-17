@@ -218,7 +218,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Permitir entrega tardía'),
                   value: state.allowLate,
-                  activeColor: palette.limeDeep,
+                  activeThumbColor: palette.limeDeep,
                   onChanged: controller.setAllowLate,
                 ),
                 SwitchListTile.adaptive(
@@ -227,7 +227,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   subtitle:
                       const Text('Si lo apagas, queda como borrador.'),
                   value: state.published,
-                  activeColor: palette.limeDeep,
+                  activeThumbColor: palette.limeDeep,
                   onChanged: controller.setPublished,
                 ),
               ],

@@ -62,7 +62,7 @@ class _NotificationSettingsScreenState
                 SwitchListTile.adaptive(
                   value: _pushEnabled,
                   onChanged: (v) => setState(() => _pushEnabled = v),
-                  activeColor: palette.limeDeep,
+                  activeThumbColor: palette.limeDeep,
                   secondary: const Icon(Icons.notifications_active_outlined),
                   title: const Text('Notificaciones push'),
                   subtitle: const Text('Avisos en este dispositivo'),
@@ -70,7 +70,7 @@ class _NotificationSettingsScreenState
                 SwitchListTile.adaptive(
                   value: _emailEnabled,
                   onChanged: (v) => setState(() => _emailEnabled = v),
-                  activeColor: palette.limeDeep,
+                  activeThumbColor: palette.limeDeep,
                   secondary: const Icon(Icons.mail_outline),
                   title: const Text('Correo electrónico'),
                   subtitle: const Text('Resumen por email'),
@@ -91,7 +91,7 @@ class _NotificationSettingsScreenState
                     onChanged: _pushEnabled
                         ? (v) => setState(() => _channels[entry.key] = v)
                         : null,
-                    activeColor: palette.limeDeep,
+                    activeThumbColor: palette.limeDeep,
                     secondary: Icon(_icons[entry.key]),
                     title: Text(entry.key),
                   ),

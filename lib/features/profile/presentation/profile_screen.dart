@@ -84,33 +84,32 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           EduCard(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Column(
-              children: [
-                RadioListTile<ThemeMode>(
-                  value: ThemeMode.system,
-                  groupValue: themeMode,
-                  onChanged: (v) =>
-                      ref.read(themeControllerProvider.notifier).set(v!),
-                  title: const Text('Seguir sistema'),
-                  activeColor: palette.limeDeep,
-                ),
-                RadioListTile<ThemeMode>(
-                  value: ThemeMode.light,
-                  groupValue: themeMode,
-                  onChanged: (v) =>
-                      ref.read(themeControllerProvider.notifier).set(v!),
-                  title: const Text('Tema claro'),
-                  activeColor: palette.limeDeep,
-                ),
-                RadioListTile<ThemeMode>(
-                  value: ThemeMode.dark,
-                  groupValue: themeMode,
-                  onChanged: (v) =>
-                      ref.read(themeControllerProvider.notifier).set(v!),
-                  title: const Text('Tema oscuro'),
-                  activeColor: palette.limeDeep,
-                ),
-              ],
+            child: RadioGroup<ThemeMode>(
+              groupValue: themeMode,
+              onChanged: (v) {
+                if (v != null) {
+                  ref.read(themeControllerProvider.notifier).set(v);
+                }
+              },
+              child: Column(
+                children: [
+                  RadioListTile<ThemeMode>(
+                    value: ThemeMode.system,
+                    title: const Text('Seguir sistema'),
+                    activeColor: palette.limeDeep,
+                  ),
+                  RadioListTile<ThemeMode>(
+                    value: ThemeMode.light,
+                    title: const Text('Tema claro'),
+                    activeColor: palette.limeDeep,
+                  ),
+                  RadioListTile<ThemeMode>(
+                    value: ThemeMode.dark,
+                    title: const Text('Tema oscuro'),
+                    activeColor: palette.limeDeep,
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
