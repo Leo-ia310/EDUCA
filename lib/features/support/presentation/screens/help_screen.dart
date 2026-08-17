@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -140,6 +141,7 @@ class HelpScreen extends StatelessWidget {
   }
 
   void _copied(BuildContext context, String value) {
+    Clipboard.setData(ClipboardData(text: value));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Copiado: $value')),
     );
