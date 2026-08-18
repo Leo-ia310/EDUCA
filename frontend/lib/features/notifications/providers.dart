@@ -1,26 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/env.dart';
+import '../../core/network/supabase_client.dart';
 import '../../core/services/hive_init.dart';
+import '../auth/presentation/auth_controller.dart';
 import 'data/demo_push_service.dart';
-import 'data/firebase_push_service.dart';
 import 'data/hive_notifications_repository.dart';
+import 'data/web_push_service.dart';
 import 'domain/entities.dart';
 import 'domain/notifications_repository.dart';
 import 'domain/push_service.dart';
 
-/// Bandera compartida por el bootstrap para elegir Demo o Firebase.
-/// Si el binario no tiene `firebase_options.dart` configurado, dejar `true`
-/// para no romper la app en modo mock.
-const _forceDemoPush = true;
-
-/// Servicio de push. En modo demo emite el flujo simulado; en producción
-/// (cuando Firebase esté inicializado) usa FCM.
+/// Servicio de push. En modo demo (o sin cliente/sesión aún) emite el flujo
+/// simulado; conectado usa Web Push estándar (VAPID) — Educa360 no usa
+/// Firebase. Ver `data/web_push_service.dart` para el alcance (solo Flutter
+/// Web; Android/iOS nativo queda en demo hasta que se sume un proveedor
+/// compatible).
 final pushServiceProvider = Provider<PushService>((ref) {
-  if (_forceDemoPush || Env.isDemoMode) {
+  final auth = ref.watch(authControllerProvider);
+  final client = ref.watch(supabaseClientProvider);
+  if (Env.isDemoMode || client == null || auth.user == null) {
     return DemoPushService();
   }
-  return FirebasePushService();
+  return WebPushService(client: client, userId: auth.user!.id);
 });
 
 final notificationsRepositoryProvider =

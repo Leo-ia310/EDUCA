@@ -28,6 +28,7 @@ Get-Content ".env" | ForEach-Object {
 
 $url = $env_vars["SUPABASE_URL"]
 $key = $env_vars["SUPABASE_ANON_KEY"]
+$vapidKey = $env_vars["VAPID_PUBLIC_KEY"]
 
 if (-not $url -or -not $key) {
     Write-Error "SUPABASE_URL o SUPABASE_ANON_KEY vacíos en .env"
@@ -39,6 +40,10 @@ $flutterArgs = @(
     "--dart-define=SUPABASE_URL=$url",
     "--dart-define=SUPABASE_ANON_KEY=$key"
 )
+
+if ($vapidKey) {
+    $flutterArgs += "--dart-define=VAPID_PUBLIC_KEY=$vapidKey"
+}
 
 if ($Device) {
     $flutterArgs += "-d"
