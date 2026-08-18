@@ -95,7 +95,40 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> signOut() => _client.auth.signOut();
 
   @override
-  Future<AppUser?> currentUser() async => null; // implementar al rehidratar
+  Future<AppUser?> currentUser() async {
+    final authUser = _client.auth.currentSession?.user;
+    if (authUser == null) return null;
+
+    final me = await _client
+        .from('users')
+        .select(
+          'id, full_name, email, avatar_url, institution_id, '
+          'user_roles(roles(code))',
+        )
+        .eq('auth_user_id', authUser.id)
+        .maybeSingle();
+    if (me == null) return null;
+
+    final roleCodes = (me['user_roles'] as List? ?? const [])
+        .map((e) => (e['roles']?['code']) as String?)
+        .whereType<String>()
+        .toList();
+    final roles =
+        roleCodes.map(AppRole.fromCode).whereType<AppRole>().toList();
+    if (roles.isEmpty) return null;
+
+    final fullName = me['full_name'] as String? ?? 'Usuario';
+    return AppUser(
+      id: me['id'].toString(),
+      institutionId: (me['institution_id'] as num).toInt(),
+      email: me['email'] as String? ?? authUser.email ?? '',
+      fullName: fullName,
+      firstName: fullName.split(' ').first,
+      avatarUrl: me['avatar_url'] as String?,
+      roles: roles,
+      activeRole: roles.first,
+    );
+  }
 
   @override
   Future<void> sendPasswordReset(String email) async {

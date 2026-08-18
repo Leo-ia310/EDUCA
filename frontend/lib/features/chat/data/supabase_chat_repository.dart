@@ -10,7 +10,7 @@ const _uuid = Uuid();
 
 /// Implementación real contra Supabase.
 ///
-/// Tablas usadas (ver `supabase/migrations/0002_init_academic_extras.sql`):
+/// Tablas usadas (ver `backend/migrations/0002_init_academic_extras.sql`):
 /// - `conversations`
 /// - `conversation_participants`
 /// - `messages`
@@ -19,10 +19,6 @@ const _uuid = Uuid();
 /// La suscripción realtime se hace vía `client.channel(...)` filtrando por
 /// `conversation_id`. Los deltas se aplican al StreamController local para
 /// que el widget no tenga que recargar todo.
-///
-/// Esta implementación cubre el flujo mínimo funcional; los TODOs marcan
-/// campos avanzados (reply_to, editado, adjuntos vía `files`) que se
-/// completan cuando el resto del backend esté cableado.
 class SupabaseChatRepository implements ChatRepository {
   SupabaseChatRepository({
     required SupabaseClient client,
@@ -36,6 +32,10 @@ class SupabaseChatRepository implements ChatRepository {
   final String myName;
   final int institutionId;
 
+  static const _messageSelect =
+      'id, uuid, conversation_id, sender_id, content, created_at, '
+      'files(id, original_name, url, size_bytes, mime_type)';
+
   final _conversationsCtrl =
       StreamController<List<Conversation>>.broadcast();
   final _messagesCtrls = <String, StreamController<List<Message>>>{};
@@ -43,13 +43,7 @@ class SupabaseChatRepository implements ChatRepository {
 
   final _channels = <String, RealtimeChannel>{};
 
-  @override
-  Stream<List<Conversation>> watchConversations() async* {
-    yield await _fetchConversations();
-    yield* _conversationsCtrl.stream;
-
-    // Un solo canal para nuestras conversaciones — al recibir inserts en
-    // `messages` de una conversación donde participo, recargo.
+  void _ensureConversationsChannel() {
     _channels.putIfAbsent('conversations', () {
       final ch = _client.channel('my-conversations');
       ch.onPostgresChanges(
@@ -57,12 +51,31 @@ class SupabaseChatRepository implements ChatRepository {
         schema: 'public',
         table: 'messages',
         callback: (_) async {
-          _conversationsCtrl.add(await _fetchConversations());
+          final convos = await _fetchConversations();
+          _conversationsCtrl.add(convos);
+          _unreadCtrl.add(convos.fold<int>(0, (s, c) => s + c.unreadCount));
         },
       );
       ch.subscribe();
       return ch;
     });
+  }
+
+  @override
+  Stream<List<Conversation>> watchConversations() async* {
+    final convos = await _fetchConversations();
+    yield convos;
+    _unreadCtrl.add(convos.fold<int>(0, (s, c) => s + c.unreadCount));
+    _ensureConversationsChannel();
+    yield* _conversationsCtrl.stream;
+  }
+
+  @override
+  Stream<int> watchTotalUnread() async* {
+    final convos = await _fetchConversations();
+    yield convos.fold<int>(0, (s, c) => s + c.unreadCount);
+    _ensureConversationsChannel();
+    yield* _unreadCtrl.stream;
   }
 
   Future<List<Conversation>> _fetchConversations() async {
@@ -73,25 +86,91 @@ class SupabaseChatRepository implements ChatRepository {
         )
         .eq('user_id', meUserId);
 
-    // TODO: enriquecer con lastMessage + unreadCount vía RPC/joins.
-    final result = <Conversation>[];
-    for (final r in rows) {
+    final baseById = <String, Map<String, dynamic>>{};
+    for (final r in (rows as List)) {
       final conv = r['conversations'] as Map<String, dynamic>?;
       if (conv == null) continue;
-      result.add(Conversation(
-        id: conv['id'].toString(),
-        kind: (conv['kind'] as String?) == 'group'
-            ? ConversationKind.group
-            : ConversationKind.individual,
-        title: conv['title'] as String? ?? '',
-        participants: const [],
-        updatedAt:
-            DateTime.tryParse(conv['created_at'] as String? ?? '') ??
-                DateTime.now(),
-      ));
+      baseById[conv['id'].toString()] = conv;
     }
+    if (baseById.isEmpty) return const [];
+
+    final result = await Future.wait(
+      baseById.entries.map((e) => _hydrateConversation(e.key, e.value)),
+    );
     result.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return result;
+  }
+
+  Future<Conversation> _hydrateConversation(
+    String id,
+    Map<String, dynamic> conv,
+  ) async {
+    final participants = await _participantsFor(id);
+
+    final lastRow = await _client
+        .from('messages')
+        .select(_messageSelect)
+        .eq('conversation_id', id)
+        .order('created_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    final lastMessage =
+        lastRow == null ? null : _msgFromRow(lastRow, participants: participants);
+
+    final unread = await _unreadCountFor(id);
+    final title = (conv['title'] as String?)?.isNotEmpty == true
+        ? conv['title'] as String
+        : participants.where((p) => !p.isMe).map((p) => p.name).join(', ');
+
+    return Conversation(
+      id: id,
+      kind: (conv['kind'] as String?) == 'group'
+          ? ConversationKind.group
+          : ConversationKind.individual,
+      title: title,
+      participants: participants,
+      lastMessage: lastMessage,
+      unreadCount: unread,
+      updatedAt: lastMessage?.sentAt ??
+          DateTime.tryParse(conv['created_at'] as String? ?? '') ??
+          DateTime.now(),
+    );
+  }
+
+  Future<List<ChatParticipant>> _participantsFor(String conversationId) async {
+    final rows = await _client
+        .from('conversation_participants')
+        .select('user_id, role, users(id, full_name, avatar_url)')
+        .eq('conversation_id', conversationId);
+    return (rows as List).map((p) {
+      final u = p['users'] as Map<String, dynamic>?;
+      final userId = p['user_id'].toString();
+      return ChatParticipant(
+        userId: userId,
+        name: u?['full_name'] as String? ?? '—',
+        role: p['role'] as String? ?? '',
+        avatarUrl: u?['avatar_url'] as String?,
+        isMe: userId == meUserId,
+      );
+    }).toList();
+  }
+
+  Future<int> _unreadCountFor(String conversationId) async {
+    final messages = await _client
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', meUserId);
+    final ids = (messages as List).map((m) => m['id']).toList();
+    if (ids.isEmpty) return 0;
+    final reads = await _client
+        .from('message_reads')
+        .select('message_id')
+        .eq('user_id', meUserId)
+        .inFilter('message_id', ids);
+    final readIds =
+        (reads as List).map((r) => r['message_id'].toString()).toSet();
+    return ids.where((id) => !readIds.contains(id.toString())).length;
   }
 
   @override
@@ -102,16 +181,7 @@ class SupabaseChatRepository implements ChatRepository {
         .eq('id', id)
         .maybeSingle();
     if (row == null) return null;
-    return Conversation(
-      id: row['id'].toString(),
-      kind: (row['kind'] as String?) == 'group'
-          ? ConversationKind.group
-          : ConversationKind.individual,
-      title: row['title'] as String? ?? '',
-      participants: const [],
-      updatedAt: DateTime.tryParse(row['created_at'] as String? ?? '') ??
-          DateTime.now(),
-    );
+    return _hydrateConversation(id, row);
   }
 
   @override
@@ -120,8 +190,8 @@ class SupabaseChatRepository implements ChatRepository {
       conversationId,
       () => StreamController<List<Message>>.broadcast(),
     );
+    final participants = await _participantsFor(conversationId);
 
-    // Suscripción al canal específico.
     _channels.putIfAbsent(conversationId, () {
       final ch = _client.channel('messages:$conversationId');
       ch.onPostgresChanges(
@@ -134,36 +204,59 @@ class SupabaseChatRepository implements ChatRepository {
           value: conversationId,
         ),
         callback: (payload) {
-          ctrl.add([_msgFromRow(payload.newRecord)]);
+          ctrl.add([_msgFromRow(payload.newRecord, participants: participants)]);
         },
       );
       ch.subscribe();
       return ch;
     });
 
-    yield await _fetchMessages(conversationId);
+    yield await _fetchMessages(conversationId, participants);
     yield* ctrl.stream;
   }
 
-  Future<List<Message>> _fetchMessages(String conversationId) async {
+  Future<List<Message>> _fetchMessages(
+    String conversationId,
+    List<ChatParticipant> participants,
+  ) async {
     final rows = await _client
         .from('messages')
-        .select('id, uuid, conversation_id, sender_id, content, created_at')
+        .select(_messageSelect)
         .eq('conversation_id', conversationId)
         .order('created_at');
-    return rows.map<Message>((r) => _msgFromRow(r)).toList();
+    return (rows as List)
+        .cast<Map<String, dynamic>>()
+        .map<Message>((r) => _msgFromRow(r, participants: participants))
+        .toList();
   }
 
-  Message _msgFromRow(Map<String, dynamic> r) {
+  Message _msgFromRow(
+    Map<String, dynamic> r, {
+    List<ChatParticipant>? participants,
+  }) {
+    final senderId = r['sender_id'].toString();
+    final sender =
+        participants?.where((p) => p.userId == senderId).firstOrNull;
+    final file = r['files'] as Map<String, dynamic>?;
     return Message(
       id: r['id'].toString(),
       uuid: r['uuid'].toString(),
       conversationId: r['conversation_id'].toString(),
-      senderId: r['sender_id'].toString(),
-      senderName: r['sender_id'].toString() == meUserId ? myName : 'Usuario',
-      sentAt:
-          DateTime.tryParse(r['created_at'] as String? ?? '') ?? DateTime.now(),
+      senderId: senderId,
+      senderName: senderId == meUserId ? myName : (sender?.name ?? 'Usuario'),
+      senderAvatarUrl: sender?.avatarUrl,
+      sentAt: DateTime.tryParse(r['created_at'] as String? ?? '') ??
+          DateTime.now(),
       content: r['content'] as String?,
+      attachment: file == null
+          ? null
+          : MessageAttachment(
+              id: file['id'].toString(),
+              name: file['original_name'] as String? ?? 'archivo',
+              url: file['url'] as String? ?? '',
+              sizeBytes: (file['size_bytes'] as num?)?.toInt(),
+              mimeType: file['mime_type'] as String?,
+            ),
       status: MessageDeliveryStatus.delivered,
     );
   }
@@ -176,6 +269,7 @@ class SupabaseChatRepository implements ChatRepository {
     Message? replyTo,
   }) async {
     final uuid = _uuid.v4();
+    final fileId = attachment == null ? null : int.tryParse(attachment.id);
     final row = await _client
         .from('messages')
         .insert({
@@ -183,16 +277,30 @@ class SupabaseChatRepository implements ChatRepository {
           'conversation_id': conversationId,
           'sender_id': meUserId,
           'content': content,
-          // TODO: mapear attachment → file_id (subir con SupabaseFileUploadService).
+          if (fileId != null) 'file_id': fileId,
         })
-        .select('id, uuid, conversation_id, sender_id, content, created_at')
+        .select(_messageSelect)
         .single();
-    return _msgFromRow(row);
+    final participants = await _participantsFor(conversationId);
+    return _msgFromRow(row, participants: participants);
   }
 
   @override
   Future<void> markAsRead(String conversationId) async {
-    // TODO: insertar en `message_reads` para cada mensaje sin leer.
+    final rows = await _client
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', meUserId);
+    final ids = (rows as List).map((m) => m['id']).toList();
+    if (ids.isEmpty) return;
+    await _client.from('message_reads').upsert(
+          ids
+              .map((id) => {'message_id': id, 'user_id': meUserId})
+              .toList(),
+          onConflict: 'message_id,user_id',
+          ignoreDuplicates: true,
+        );
   }
 
   @override
@@ -202,13 +310,67 @@ class SupabaseChatRepository implements ChatRepository {
     required String otherRole,
     String? otherAvatarUrl,
   }) async {
-    // TODO: buscar conversación existente por participantes o crear una nueva
-    // via RPC atómica para evitar race conditions.
-    throw UnimplementedError('ensureIndividual: TODO en Supabase');
-  }
+    final myParticipations = await _client
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', meUserId);
+    final myConvIds =
+        (myParticipations as List).map((r) => r['conversation_id']).toList();
 
-  @override
-  Stream<int> watchTotalUnread() => _unreadCtrl.stream;
+    if (myConvIds.isNotEmpty) {
+      final theirShared = await _client
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', otherUserId)
+          .inFilter('conversation_id', myConvIds);
+      final sharedIds =
+          (theirShared as List).map((r) => r['conversation_id']).toList();
+
+      if (sharedIds.isNotEmpty) {
+        final individualMatch = await _client
+            .from('conversations')
+            .select('id')
+            .inFilter('id', sharedIds)
+            .eq('kind', 'individual')
+            .limit(1)
+            .maybeSingle();
+        if (individualMatch != null) {
+          final existing =
+              await conversationById(individualMatch['id'].toString());
+          if (existing != null) return existing;
+        }
+      }
+    }
+
+    final created = await _client
+        .from('conversations')
+        .insert({
+          'institution_id': institutionId,
+          'kind': 'individual',
+          'created_by': meUserId,
+        })
+        .select('id')
+        .single();
+    final conversationId = created['id'].toString();
+
+    // Dos inserts secuenciales (no un batch): la policy `participants_insert`
+    // de 0005 exige que el conversation_id ya esté en `my_conversation_ids()`
+    // para insertar la fila de un tercero — eso solo es cierto una vez que mi
+    // propia fila ya está confirmada.
+    await _client.from('conversation_participants').insert({
+      'conversation_id': conversationId,
+      'user_id': meUserId,
+      'role': 'member',
+    });
+    await _client.from('conversation_participants').insert({
+      'conversation_id': conversationId,
+      'user_id': otherUserId,
+      'role': 'member',
+    });
+
+    final conv = await conversationById(conversationId);
+    return conv ?? (throw StateError('No se pudo crear la conversación'));
+  }
 
   @override
   Future<List<ChatParticipant>> discoverableContacts({String? query}) async {
@@ -231,10 +393,12 @@ class SupabaseChatRepository implements ChatRepository {
 
   @override
   Future<void> setTyping(String conversationId, {required bool typing}) async {
-    // Broadcast por presencia realtime.
     final ch = _channels[conversationId];
     if (ch == null) return;
-    // TODO: usar channel.presence para publicar 'typing'.
+    await ch.sendBroadcastMessage(
+      event: 'typing',
+      payload: {'userId': meUserId, 'typing': typing},
+    );
   }
 
   void dispose() {
