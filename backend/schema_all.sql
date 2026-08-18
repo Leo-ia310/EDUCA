@@ -1,4 +1,11 @@
 -- =============================================================================
+-- Educa360 — schema_all.sql (generado por concatenación de migrations/0001..0007)
+-- NO editar directo: editar el archivo de migración correspondiente y regenerar.
+-- =============================================================================
+
+
+-- ============================== migrations/0001_init_core.sql ==============================
+-- =============================================================================
 -- Educa360 — 0001 INIT CORE
 -- Núcleo SaaS multi-tenant + RBAC + personas + estructura académica.
 -- Convenciones: snake_case, soft delete, timestamps con timezone.
@@ -549,6 +556,8 @@ create table files (
   created_at      timestamptz default now(),
   deleted_at      timestamptz
 );
+
+-- ============================== migrations/0002_init_academic_extras.sql ==============================
 -- =============================================================================
 -- Educa360 — 0002 ACADÉMICO EXTRAS
 -- Tareas, evaluaciones, calificaciones, boletines, comunicación, chat, pagos.
@@ -908,6 +917,8 @@ create table institution_settings (
   updated_at      timestamptz,
   unique (institution_id, key)
 );
+
+-- ============================== migrations/0003_rls_policies.sql ==============================
 -- =============================================================================
 -- Educa360 — 0003 ROW LEVEL SECURITY (multi-tenant)
 -- Política base: cada tabla operativa solo es visible/escribible si
@@ -919,6 +930,8 @@ create table institution_settings (
 -- =============================================================================
 
 -- Helper: lee el institution_id del JWT.
+-- NOTA: se crean en el schema `public` (no en `auth`) porque el rol de conexión
+-- no tiene permiso CREATE sobre el schema `auth` en Supabase.
 create or replace function public.current_institution_id() returns bigint
 language sql stable as $$
   select coalesce(
@@ -1087,8 +1100,10 @@ create policy own_participation on conversation_participants
 --   create policy "files_tenant_isolation"
 --     on storage.objects for select using (
 --       bucket_id = 'files'
---       and (storage.foldername(name))[1] = public.current_institution_id()::text
+--       and (storage.foldername(name))[1] = auth.current_institution_id()::text
 --     );
+
+-- ============================== migrations/0004_seed_catalogs.sql ==============================
 -- =============================================================================
 -- Educa360 — 0004 SEED CATÁLOGOS + INSTITUCIÓN DEMO
 -- =============================================================================
@@ -1210,3 +1225,297 @@ on conflict do nothing;
 insert into institutions (code, name, primary_color, secondary_color, timezone, active)
 values ('EDU360', 'Colegio Demo Educa360', '#9BE000', '#1E2218', 'America/Managua', true)
 on conflict (code) do nothing;
+
+-- ============================== migrations/0005_fix_chat_rls.sql ==============================
+-- =============================================================================
+-- Educa360 — 0005 FIX: recursión infinita en RLS de mensajería (error 42P17)
+--
+-- Problema: en 0003 la política `own_participation` de `conversation_participants`
+-- se auto-referenciaba (subconsulta a la propia tabla dentro de su USING), lo que
+-- provoca "infinite recursion detected in policy for relation
+-- conversation_participants". `messages` heredaba el fallo por su join.
+--
+-- Solución estándar Supabase: mover la comprobación de pertenencia a una función
+-- SECURITY DEFINER (se ejecuta como el dueño de la función → NO aplica RLS dentro,
+-- por lo que no hay recursión). Las políticas la invocan sin volver a evaluar RLS.
+--
+-- Aplicar en el SQL Editor de Supabase (o vía CLI) DESPUÉS de 0003.
+-- Es idempotente: se puede correr varias veces sin error.
+-- =============================================================================
+
+-- Helper: ids de conversaciones donde participa el usuario autenticado.
+-- SECURITY DEFINER evita la recursión de RLS al leer conversation_participants.
+create or replace function public.my_conversation_ids()
+returns setof bigint
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select cp.conversation_id
+  from conversation_participants cp
+  join users u on u.id = cp.user_id
+  where u.auth_user_id = auth.uid();
+$$;
+
+revoke all on function public.my_conversation_ids() from public;
+grant execute on function public.my_conversation_ids() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- conversation_participants: ver mis filas y las de mis conversaciones,
+-- sin auto-referencia recursiva.
+-- ---------------------------------------------------------------------------
+alter table conversation_participants enable row level security;
+drop policy if exists tenant_isolation on conversation_participants;
+drop policy if exists own_participation on conversation_participants;
+drop policy if exists participants_visible on conversation_participants;
+drop policy if exists participants_insert on conversation_participants;
+
+create policy participants_visible on conversation_participants
+  for select
+  using (
+    user_id in (select id from users where auth_user_id = auth.uid())
+    or conversation_id in (select public.my_conversation_ids())
+  );
+
+create policy participants_insert on conversation_participants
+  for insert
+  with check (
+    user_id in (select id from users where auth_user_id = auth.uid())
+    or conversation_id in (select public.my_conversation_ids())
+  );
+
+-- ---------------------------------------------------------------------------
+-- messages: solo mensajes de conversaciones donde participo.
+-- ---------------------------------------------------------------------------
+alter table messages enable row level security;
+drop policy if exists tenant_isolation on messages;
+drop policy if exists participants_only on messages;
+drop policy if exists messages_select on messages;
+drop policy if exists messages_insert on messages;
+
+create policy messages_select on messages
+  for select
+  using (conversation_id in (select public.my_conversation_ids()));
+
+create policy messages_insert on messages
+  for insert
+  with check (conversation_id in (select public.my_conversation_ids()));
+
+-- ---------------------------------------------------------------------------
+-- message_reads: acuses de lectura de mis conversaciones.
+-- (0003 la dejaba en USING true; la afinamos a la pertenencia real.)
+-- ---------------------------------------------------------------------------
+alter table message_reads enable row level security;
+drop policy if exists tenant_isolation on message_reads;
+drop policy if exists message_reads_rw on message_reads;
+
+create policy message_reads_rw on message_reads
+  using (
+    message_id in (
+      select m.id from messages m
+      where m.conversation_id in (select public.my_conversation_ids())
+    )
+  )
+  with check (
+    message_id in (
+      select m.id from messages m
+      where m.conversation_id in (select public.my_conversation_ids())
+    )
+  );
+
+-- ============================== migrations/0006_hardening.sql ==============================
+-- =============================================================================
+-- Educa360 — 0006 HARDENING
+-- Cierra los gaps detectados en la auditoría de 0001–0005:
+--   1) RLS real (hoy `using(true)`) en 5 tablas sin institution_id directo.
+--   2) Bucket de Storage `files` + políticas por institución (hoy solo
+--      documentado en comentario, nunca ejecutado).
+--   3) Triggers `updated_at` (las columnas existen pero nada las actualiza).
+--   4) Índices en institution_id/FKs consultados sin índice.
+--   5) Fix puntual: `sessions.device_id` sin FK declarada.
+--
+-- Idempotente: se puede correr varias veces sin error (igual que 0005).
+-- Aplicar en el SQL Editor de Supabase (o vía CLI) DESPUÉS de 0001–0005.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1) RLS real para tablas sin institution_id directo que quedaron en 0003
+--    con `using (true)` ("se afinará en 0004", nunca se hizo). Se aíslan vía
+--    join a la tabla padre, que sí lleva institution_id y ya tiene su propia
+--    política tenant_isolation (no hay recursión: es un join en un solo
+--    sentido, no una auto-referencia como el caso de chat en 0005).
+-- -----------------------------------------------------------------------------
+alter table grading_scale_ranges enable row level security;
+drop policy if exists tenant_isolation on grading_scale_ranges;
+create policy tenant_isolation on grading_scale_ranges
+  using (scale_id in (select id from grading_scales where institution_id = public.current_institution_id()))
+  with check (scale_id in (select id from grading_scales where institution_id = public.current_institution_id()));
+
+alter table assignment_files enable row level security;
+drop policy if exists tenant_isolation on assignment_files;
+create policy tenant_isolation on assignment_files
+  using (assignment_id in (select id from assignments where institution_id = public.current_institution_id()))
+  with check (assignment_id in (select id from assignments where institution_id = public.current_institution_id()));
+
+alter table submission_files enable row level security;
+drop policy if exists tenant_isolation on submission_files;
+create policy tenant_isolation on submission_files
+  using (submission_id in (select id from submissions where institution_id = public.current_institution_id()))
+  with check (submission_id in (select id from submissions where institution_id = public.current_institution_id()));
+
+alter table report_card_lines enable row level security;
+drop policy if exists tenant_isolation on report_card_lines;
+create policy tenant_isolation on report_card_lines
+  using (report_card_id in (select id from report_cards where institution_id = public.current_institution_id()))
+  with check (report_card_id in (select id from report_cards where institution_id = public.current_institution_id()));
+
+alter table announcement_reads enable row level security;
+drop policy if exists tenant_isolation on announcement_reads;
+create policy tenant_isolation on announcement_reads
+  using (announcement_id in (select id from announcements where institution_id = public.current_institution_id()))
+  with check (announcement_id in (select id from announcements where institution_id = public.current_institution_id()));
+
+-- -----------------------------------------------------------------------------
+-- 2) Storage: bucket `files` (privado) + políticas reales.
+--    Convención de path: {institution_id}/{folder}/{uuid}_{filename}
+--    (ya usada por SupabaseFileUploadService). El comentario de 0003
+--    apuntaba a `auth.current_institution_id()`, que no existe — la función
+--    real vive en `public`.
+-- -----------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('files', 'files', false)
+on conflict (id) do nothing;
+
+drop policy if exists "files_tenant_isolation_select" on storage.objects;
+create policy "files_tenant_isolation_select" on storage.objects
+  for select using (
+    bucket_id = 'files'
+    and (storage.foldername(name))[1] = public.current_institution_id()::text
+  );
+
+drop policy if exists "files_tenant_isolation_insert" on storage.objects;
+create policy "files_tenant_isolation_insert" on storage.objects
+  for insert with check (
+    bucket_id = 'files'
+    and (storage.foldername(name))[1] = public.current_institution_id()::text
+  );
+
+drop policy if exists "files_tenant_isolation_update" on storage.objects;
+create policy "files_tenant_isolation_update" on storage.objects
+  for update using (
+    bucket_id = 'files'
+    and (storage.foldername(name))[1] = public.current_institution_id()::text
+  );
+
+drop policy if exists "files_tenant_isolation_delete" on storage.objects;
+create policy "files_tenant_isolation_delete" on storage.objects
+  for delete using (
+    bucket_id = 'files'
+    and (storage.foldername(name))[1] = public.current_institution_id()::text
+  );
+
+-- -----------------------------------------------------------------------------
+-- 3) Triggers `updated_at` — las columnas existen desde 0001/0002 pero nada
+--    las mantenía; quedaban NULL para siempre salvo que la app las setee a mano.
+-- -----------------------------------------------------------------------------
+create or replace function public.set_updated_at() returns trigger
+language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+do $$
+declare
+  tbl text;
+  updated_at_tables text[] := array[
+    'institutions', 'persons', 'users', 'enrollments', 'attendances',
+    'assignments', 'submissions', 'grades', 'institution_settings'
+  ];
+begin
+  foreach tbl in array updated_at_tables loop
+    execute format('drop trigger if exists trg_set_updated_at on %I', tbl);
+    execute format(
+      'create trigger trg_set_updated_at before update on %I for each row execute function public.set_updated_at()',
+      tbl
+    );
+  end loop;
+end$$;
+
+-- -----------------------------------------------------------------------------
+-- 4) Índices en institution_id/FKs consultados sin índice (RLS filtra casi
+--    toda query por institution_id; estas son las tablas de mayor volumen
+--    operativo que no tenían ningún índice más allá de la PK).
+-- -----------------------------------------------------------------------------
+create index if not exists idx_groups_institution on groups(institution_id);
+create index if not exists idx_classes_institution on classes(institution_id);
+create index if not exists idx_classes_group on classes(group_id);
+create index if not exists idx_enrollments_group on enrollments(group_id);
+create index if not exists idx_enrollments_student on enrollments(student_id);
+create index if not exists idx_grades_institution on grades(institution_id);
+create index if not exists idx_grades_student on grades(student_id);
+create index if not exists idx_evaluations_class on evaluations(class_id);
+create index if not exists idx_evaluations_period on evaluations(academic_period_id);
+create index if not exists idx_evaluations_assignment on evaluations(assignment_id);
+create index if not exists idx_messages_conversation on messages(conversation_id);
+create index if not exists idx_messages_sender on messages(sender_id);
+create index if not exists idx_conversation_participants_user on conversation_participants(user_id);
+create index if not exists idx_payments_student on payments(student_id);
+create index if not exists idx_payments_charge on payments(charge_id);
+create index if not exists idx_charges_student on charges(student_id);
+create index if not exists idx_charges_institution on charges(institution_id);
+create index if not exists idx_assignments_class on assignments(class_id);
+create index if not exists idx_submissions_student on submissions(student_id);
+
+-- -----------------------------------------------------------------------------
+-- 5) Fix puntual: `sessions.device_id` era `bigint` suelto, sin FK, a
+--    diferencia de toda otra relación del esquema.
+-- -----------------------------------------------------------------------------
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.table_constraints
+    where constraint_name = 'sessions_device_id_fkey' and table_name = 'sessions'
+  ) then
+    alter table sessions
+      add constraint sessions_device_id_fkey
+      foreign key (device_id) references devices(id) on delete set null;
+  end if;
+end$$;
+
+-- ============================== migrations/0007_assignments_published.sql ==============================
+-- =============================================================================
+-- Educa360 — 0007 ASSIGNMENTS.PUBLISHED
+-- El dominio Flutter (`Assignment.published`, default true) esperaba un
+-- estado publicado/borrador propio. `assignments.task_status_id` no sirve
+-- para esto: su catálogo (`catalog_task_statuses` = PEND/ENTR/CALI/VENC/REV)
+-- describe el ciclo de vida de una ENTREGA, no de la tarea en sí. Se agrega
+-- una columna dedicada en vez de forzar un catálogo que no encaja.
+-- Idempotente.
+-- =============================================================================
+
+alter table assignments
+  add column if not exists published boolean not null default true;
+
+-- Constraints únicas para poder hacer upsert idempotente de adjuntos desde
+-- el repo Flutter (`assignment_files`/`submission_files` no las tenían).
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.table_constraints
+    where constraint_name = 'assignment_files_assignment_file_key'
+  ) then
+    alter table assignment_files
+      add constraint assignment_files_assignment_file_key unique (assignment_id, file_id);
+  end if;
+
+  if not exists (
+    select 1 from information_schema.table_constraints
+    where constraint_name = 'submission_files_submission_file_key'
+  ) then
+    alter table submission_files
+      add constraint submission_files_submission_file_key unique (submission_id, file_id);
+  end if;
+end$$;
