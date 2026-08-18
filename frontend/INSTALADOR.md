@@ -67,10 +67,13 @@ Abre PowerShell en la carpeta donde quieras guardar el proyecto y ejecuta:
 
 ```powershell
 git clone <URL_DEL_REPOSITORIO>
-cd EDUCA
+cd EDUCA\frontend
 ```
 
 > 💡 Pídele la URL del repositorio al dueño del proyecto si no la tienes.
+> ⚠️ La app Flutter vive en la carpeta `frontend/` del repo (el backend de
+> Supabase está en `backend/`, aparte). Todos los comandos de esta guía se
+> ejecutan **dentro de `frontend/`**.
 
 ---
 
@@ -176,18 +179,19 @@ Y abre manualmente `http://localhost:8080` en Chrome.
 
 ```
 EDUCA/
-├── lib/
-│   ├── core/          # Tema, rutas, constantes globales
-│   ├── features/      # Módulos: auth, dashboard, asistencia, etc.
-│   └── shared/        # Modelos y widgets reutilizables
-├── assets/            # Imágenes e iconos
-├── web/               # Configuración web (index.html, manifest)
-├── supabase/
-│   └── migrations/    # Scripts SQL de la base de datos
-├── .env               # ⚠️ Credenciales (NO subir a Git)
-├── .env.example       # Plantilla del .env
-├── run_dev.ps1        # Script para arrancar fácilmente
-└── pubspec.yaml       # Dependencias del proyecto
+├── frontend/            # App Flutter (esta carpeta)
+│   ├── lib/
+│   │   ├── core/          # Tema, rutas, constantes globales
+│   │   ├── features/      # Módulos: auth, dashboard, asistencia, etc.
+│   │   └── shared/        # Modelos y widgets reutilizables
+│   ├── assets/            # Imágenes e iconos
+│   ├── web/               # Configuración web (index.html, manifest)
+│   ├── .env               # ⚠️ Credenciales (NO subir a Git)
+│   ├── .env.example       # Plantilla del .env
+│   ├── run_dev.ps1        # Script para arrancar fácilmente
+│   └── pubspec.yaml       # Dependencias del proyecto
+└── backend/
+    └── migrations/         # Scripts SQL de la base de datos
 ```
 
 ---
@@ -197,8 +201,8 @@ EDUCA/
 Una vez configurado todo, para correr el proyecto solo necesitas:
 
 ```powershell
-# 1. Ir a la carpeta del proyecto
-cd "C:\ruta\al\proyecto\EDUCA"
+# 1. Ir a la carpeta de la app
+cd "C:\ruta\al\proyecto\EDUCA\frontend"
 
 # 2. Arrancar
 .\run_dev.ps1 -Device chrome

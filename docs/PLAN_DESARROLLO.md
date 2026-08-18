@@ -10,12 +10,16 @@ completar todo en modo demo primero**, y conectar el backend real después.
 ### Contexto del proyecto
 - **Plataformas objetivo:** Android, iOS y Web (las tres).
   - ⚠️ **iOS requiere una Mac** (Xcode) para compilar/firmar/publicar.
-- **Firebase:** ya existe un proyecto con su BD → el push (FCM) es *cablear lo
-  existente*, no crear de cero. Requiere los archivos de config por plataforma
-  (`google-services.json` en Android, `GoogleService-Info.plist` en iOS,
-  config web). Los provee quien administra Firebase; **no se commitean** si
-  contienen claves sensibles (evaluar `.gitignore`).
+- **Push sin Firebase:** decisión 2026-08 — **no se usa Firebase/FCM**. El
+  push real se implementa con **Web Push estándar (VAPID)** vía una Supabase
+  Edge Function (`backend/functions/send-push/`). Cubre Flutter Web de forma
+  nativa; **no cubre push nativo en Android/iOS** (requeriría FCM/APNs u otro
+  proveedor tipo OneSignal) — limitación conocida, no deuda oculta.
 - Perfil del equipo: backend experto → guías de backend a alto nivel.
+- **Estructura física:** desde la rama `Backend-MK` el repo separa
+  `frontend/` (app Flutter completa) y `backend/` (SQL, RLS, seeds, Edge
+  Functions) como carpetas de primer nivel. Ver detalle de rutas en
+  [`OWNERSHIP.md`](OWNERSHIP.md).
 
 ---
 
@@ -34,7 +38,7 @@ Somos 2 personas sobre `main`. Para no romper el trabajo del otro:
 
 ## 2. La regla del contrato (`domain/`)
 
-`lib/features/<x>/domain/` (entidades + interfaces) es la frontera entre ambos.
+`frontend/lib/features/<x>/domain/` (entidades + interfaces) es la frontera entre ambos.
 **Cambios ahí se acuerdan en pareja.** Flujo cuando el frontend necesita un dato
 nuevo:
 
@@ -66,13 +70,14 @@ la UI (misma interfaz `domain/`).
 - [ ] Aplicar `0005_fix_chat_rls.sql` (arregla recursión RLS del chat, error 42P17).
 - [ ] Provisionar usuarios de **Auth** con `raw_app_meta_data`
       `{ "institution_id": 1, "roles": [...] }` + fila en `public.users` +
-      `user_roles` (ver `supabase/README.md` y `test_users.sql`).
+      `user_roles` (ver `backend/README.md` y `test_users.sql`).
 - [ ] Sembrar datos operativos (estudiantes, clases, matrículas, tareas, notas).
 - [ ] Crear bucket `files` (privado) + policy de Storage por institución.
 - [ ] Completar repos Supabase (ver §4, columna Backend).
-- [ ] Push real (FCM): **cablear el proyecto Firebase existente** en
-      `firebase_push_service` + añadir configs por plataforma
-      (`google-services.json` / `GoogleService-Info.plist` / config web).
+- [ ] Push real (Web Push/VAPID, sin Firebase): `web_push_service.dart` +
+      Edge Function `backend/functions/send-push/` (ver detalle abajo).
+      Cubre Flutter Web; Android/iOS nativo queda pendiente de un proveedor
+      compatible (fuera de alcance por ahora).
 
 ### Fase 3 — Endurecimiento y release
 - [ ] Tests: ampliar más allá del smoke test (widget + unit de controllers/repos).
@@ -83,7 +88,8 @@ la UI (misma interfaz `domain/`).
   - Web → `flutter build web` + hosting.
   - Android → `flutter build appbundle` + firma + Play Console.
   - iOS → `flutter build ipa` **en una Mac** + firma + App Store Connect.
-- [ ] Push por plataforma probado (Android/iOS vía FCM; web push).
+- [ ] Push por plataforma probado (web push funcional; Android/iOS nativo
+      pendiente de proveedor — ver nota en Fase 2).
 - [ ] Íconos/splash y permisos revisados en las 3 plataformas.
 
 ---
@@ -103,7 +109,7 @@ Leyenda: 🟦 Frontend (demo)  ·  🟥 Backend (Fase 2)
 | **payments** | Cobros, checkout, historial (demo gateway) | Repo Supabase + gateway de pago real |
 | **events** | Anuncios + crear evento | Persistencia (hoy in-memory) |
 | **schedule** | Horario semanal | Repo Supabase |
-| **notifications** | Feed + ajustes | FCM real (Firebase) |
+| **notifications** | Feed + ajustes | Web Push (VAPID) real; nativo Android/iOS pendiente |
 | **profile / support / admin** | Pulir UI | Datos reales donde aplique |
 
 ## 5. Definición de "hecho" (DoD) por feature

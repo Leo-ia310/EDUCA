@@ -1,10 +1,13 @@
 # Mapa de propiedad — Frontend / Backend (equipo de 2)
 
-> En una app **Flutter + Supabase**, "frontend" y "backend" no son dos carpetas
-> separables: son **capas** dentro de un mismo código, más la carpeta `supabase/`
-> (SQL). Este documento define quién es responsable de cada capa/carpeta. La
-> estructura de código **no se mueve** — la Clean Architecture ya codifica la
-> frontera vía `domain/`.
+> En una app **Flutter + Supabase**, "frontend" y "backend" son ante todo
+> **capas** dentro del mismo código Flutter, más el SQL de Supabase. Desde
+> `Backend-MK` (2026-08) el repo además separa esas capas **físicamente** en
+> dos carpetas de primer nivel — `frontend/` (toda la app Flutter) y
+> `backend/` (SQL, RLS, seeds, Edge Functions) — para que cada quien tenga su
+> propio árbol de trabajo. La frontera **lógica** sigue siendo la misma:
+> `frontend/lib/features/<x>/domain/` (Clean Architecture), que ahora vive
+> dentro de `frontend/` pero no cambió de rol.
 
 ## Roles
 
@@ -15,8 +18,8 @@
 
 ## Frontera del contrato: `domain/`
 
-La carpeta `lib/features/<x>/domain/` (entidades + **interfaces** de repositorio)
-es el **contrato compartido**. Regla de oro:
+La carpeta `frontend/lib/features/<x>/domain/` (entidades + **interfaces** de
+repositorio) es el **contrato compartido**. Regla de oro:
 
 > **Ningún cambio en `domain/` se hace en solitario.** Modificar una interfaz o
 > entidad rompe a ambos lados. Se acuerda en pareja (issue/PR con ambos como
@@ -26,18 +29,18 @@ es el **contrato compartido**. Regla de oro:
 
 | Capa / Carpeta | Dueño | Notas |
 |----------------|-------|-------|
-| `lib/features/*/presentation/**` | 🟦 Frontend | Screens, widgets, controllers |
-| `lib/core/theme/**`, `lib/core/widgets/**` | 🟦 Frontend | Design system |
-| `lib/core/routing/**` | 🟦 Frontend | go_router, rutas |
-| `lib/features/*/data/mock_*` | 🟦 Frontend | Fixtures de UI: viven con el demo |
-| `web/`, `android/`, `assets/` | 🟦 Frontend | Shells de plataforma |
-| `lib/features/*/domain/**` | 🟨 **Compartido** | Contrato — cambios en pareja |
-| `lib/features/*/providers.dart` | 🟨 **Compartido** | El "switch" mock↔supabase |
-| `lib/features/*/data/supabase_*` | 🟥 Backend | Implementaciones reales |
-| `lib/features/*/data/datasources/**`, `models/**` | 🟥 Backend | Acceso a datos |
-| `lib/core/network/**` | 🟥 Backend | Cliente Supabase, conectividad |
-| `lib/features/notifications/data/firebase_*` | 🟥 Backend | Push real (FCM) |
-| `supabase/**` (SQL, RLS, seed) | 🟥 Backend | El backend real |
+| `frontend/lib/features/*/presentation/**` | 🟦 Frontend | Screens, widgets, controllers |
+| `frontend/lib/core/theme/**`, `frontend/lib/core/widgets/**` | 🟦 Frontend | Design system |
+| `frontend/lib/core/routing/**` | 🟦 Frontend | go_router, rutas |
+| `frontend/lib/features/*/data/mock_*` | 🟦 Frontend | Fixtures de UI: viven con el demo |
+| `frontend/web/`, `frontend/android/`, `frontend/assets/` | 🟦 Frontend | Shells de plataforma |
+| `frontend/lib/features/*/domain/**` | 🟨 **Compartido** | Contrato — cambios en pareja |
+| `frontend/lib/features/*/providers.dart` | 🟨 **Compartido** | El "switch" mock↔supabase |
+| `frontend/lib/features/*/data/supabase_*` | 🟥 Backend | Implementaciones reales |
+| `frontend/lib/features/*/data/datasources/**`, `models/**` | 🟥 Backend | Acceso a datos |
+| `frontend/lib/core/network/**` | 🟥 Backend | Cliente Supabase, conectividad |
+| `frontend/lib/features/notifications/data/web_push_service.dart` | 🟥 Backend | Push real (Web Push/VAPID) |
+| `backend/**` (SQL, RLS, seed, Edge Functions) | 🟥 Backend | El backend real |
 
 ## Cómo colaboran sin pisarse
 
