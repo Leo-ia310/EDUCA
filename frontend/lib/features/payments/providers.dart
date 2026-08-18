@@ -1,15 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/network/supabase_client.dart';
+import '../auth/presentation/auth_controller.dart';
 import 'data/demo_payment_gateway.dart';
 import 'data/mock_payments_repository.dart';
+import 'data/supabase_payments_repository.dart';
 import 'domain/entities.dart';
 import 'domain/payment_gateway.dart';
 import 'domain/payments_repository.dart';
 
-/// Singleton en memoria para que los pagos hechos durante la sesión demo
-/// persistan entre navegaciones.
+/// En demo, singleton en memoria para que los pagos hechos durante la sesión
+/// persistan entre navegaciones (no hay backend detrás).
 final paymentsRepositoryProvider = Provider<PaymentsRepository>((ref) {
-  return MockPaymentsRepository();
+  final auth = ref.watch(authControllerProvider);
+  final client = ref.watch(supabaseClientProvider);
+  if (client == null || auth.institution == null) {
+    return MockPaymentsRepository();
+  }
+  return SupabasePaymentsRepository(
+    client: client,
+    institutionId: auth.institution!.id,
+  );
 });
 
 /// Pasarela de pago. En producción esto sería `StripePaymentGateway(...)` o

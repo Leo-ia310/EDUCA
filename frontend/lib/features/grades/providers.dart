@@ -1,14 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/network/supabase_client.dart';
+import '../auth/presentation/auth_controller.dart';
 import 'data/mock_grades_repository.dart';
+import 'data/supabase_grades_repository.dart';
 import 'domain/entities.dart';
 import 'domain/grades_calculator.dart';
 import 'domain/grades_repository.dart';
 
-/// Singleton para que las escalas y notas registradas desde admin/docente
-/// persistan durante toda la sesión demo.
+/// En demo, singleton para que las escalas y notas registradas desde
+/// admin/docente persistan durante toda la sesión (no hay backend detrás).
 final gradesRepositoryProvider = Provider<GradesRepository>((ref) {
-  return MockGradesRepository();
+  final auth = ref.watch(authControllerProvider);
+  final client = ref.watch(supabaseClientProvider);
+  if (client == null || auth.institution == null) {
+    return MockGradesRepository();
+  }
+  return SupabaseGradesRepository(
+    client: client,
+    institutionId: auth.institution!.id,
+  );
 });
 
 final gradesCalculatorProvider =
