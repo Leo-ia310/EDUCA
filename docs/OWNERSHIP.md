@@ -1,11 +1,9 @@
 # Mapa de propiedad — Frontend / Backend (equipo de 2)
 
-> En una app **Flutter + Supabase**, "frontend" y "backend" son ante todo
-> **capas** dentro del mismo código Flutter, más el SQL de Supabase. Desde
-> `Backend-MK` (2026-08) el repo además separa esas capas **físicamente** en
-> dos carpetas de primer nivel — `frontend/` (toda la app Flutter) y
-> `backend/` (SQL, RLS, seeds, Edge Functions) — para que cada quien tenga su
-> propio árbol de trabajo. La frontera **lógica** sigue siendo la misma:
+> En Educa360, "frontend", "backend" y "Supabase" son carpetas separadas:
+> `frontend/` contiene la app Flutter, `backend/` contiene la API Node.js +
+> TypeScript y `supabase/` contiene la infraestructura (SQL, RLS, seeds y Edge
+> Functions especiales). La frontera **lógica** compartida sigue siendo:
 > `frontend/lib/features/<x>/domain/` (Clean Architecture), que ahora vive
 > dentro de `frontend/` pero no cambió de rol.
 
@@ -14,7 +12,7 @@
 | Persona | Rol | Responsable de |
 |---------|-----|----------------|
 | **Finn** | **Frontend** | Toda la UI, navegación, tema, estado de presentación |
-| *(compañero/a)* | **Backend** | Base de datos Supabase, repos de datos reales, Auth, Storage, push |
+| *(compañero/a)* | **Backend** | API Node, base de datos Supabase, repos de datos reales, Auth, Storage, push |
 
 ## Frontera del contrato: `domain/`
 
@@ -40,7 +38,8 @@ repositorio) es el **contrato compartido**. Regla de oro:
 | `frontend/lib/features/*/data/datasources/**`, `models/**` | 🟥 Backend | Acceso a datos |
 | `frontend/lib/core/network/**` | 🟥 Backend | Cliente Supabase, conectividad |
 | `frontend/lib/features/notifications/data/web_push_service.dart` | 🟥 Backend | Push real (Web Push/VAPID) |
-| `backend/**` (SQL, RLS, seed, Edge Functions) | 🟥 Backend | El backend real |
+| `backend/**` (API Node, scripts, env server-side) | 🟥 Backend | El backend principal |
+| `supabase/**` (SQL, RLS, seed, Edge Functions) | 🟥 Backend | Infraestructura Supabase |
 
 ## Cómo colaboran sin pisarse
 

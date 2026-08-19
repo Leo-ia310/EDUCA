@@ -4,10 +4,10 @@ import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web;
 
 import '../../../core/constants/env.dart';
+import '../../../core/network/backend_api_client.dart';
 import '../domain/entities.dart';
 import '../domain/push_service.dart';
 import 'demo_push_service.dart';
@@ -27,13 +27,13 @@ import 'demo_push_service.dart';
 /// Requiere:
 /// - `web/push-sw.js` (ya incluido).
 /// - `--dart-define=VAPID_PUBLIC_KEY=...` (pública; la privada solo la usa
-///   `backend/functions/send-push/`, nunca el cliente).
+///   `supabase/functions/send-push/`, nunca el cliente).
 /// - Un usuario Supabase autenticado, para guardar la suscripción en
 ///   `devices.push_token`.
 class WebPushService implements PushService {
-  WebPushService({required this.client, required this.userId});
+  WebPushService({required this.api, required this.userId});
 
-  final SupabaseClient client;
+  final BackendApiClient api;
   final String? userId;
 
   final _fallback = DemoPushService();
@@ -45,13 +45,16 @@ class WebPushService implements PushService {
     if (Env.vapidPublicKey.isEmpty || userId == null) return;
 
     try {
-      final registration =
-          await web.window.navigator.serviceWorker.register('/push-sw.js'.toJS).toDart;
+      final registration = await web.window.navigator.serviceWorker
+          .register('/push-sw.js'.toJS)
+          .toDart;
 
-      final permission = (await web.Notification.requestPermission().toDart).toDart;
+      final permission =
+          (await web.Notification.requestPermission().toDart).toDart;
       if (permission != 'granted') return;
 
-      var subscription = await registration.pushManager.getSubscription().toDart;
+      var subscription =
+          await registration.pushManager.getSubscription().toDart;
       subscription ??= await registration.pushManager
           .subscribe(
             web.PushSubscriptionOptionsInit(
@@ -87,38 +90,27 @@ class WebPushService implements PushService {
     final payload = jsonEncode({
       'endpoint': subscription.endpoint,
       'keys': {
-        'p256dh': p256dhBuffer == null ? null : base64UrlEncode(p256dhBuffer.toDart.asUint8List()),
-        'auth': authBuffer == null ? null : base64UrlEncode(authBuffer.toDart.asUint8List()),
+        'p256dh': p256dhBuffer == null
+            ? null
+            : base64UrlEncode(p256dhBuffer.toDart.asUint8List()),
+        'auth': authBuffer == null
+            ? null
+            : base64UrlEncode(authBuffer.toDart.asUint8List()),
       },
     });
 
-    final existing = await client
-        .from('devices')
-        .select('id')
-        .eq('user_id', userId!)
-        .eq('device_uuid', subscription.endpoint)
-        .maybeSingle();
-    if (existing == null) {
-      await client.from('devices').insert({
-        'user_id': int.parse(userId!),
-        'device_uuid': subscription.endpoint,
-        'platform': 'web',
-        'push_token': payload,
-        'active': true,
-      });
-    } else {
-      await client
-          .from('devices')
-          .update({'push_token': payload, 'active': true})
-          .eq('id', existing['id'] as Object);
-    }
+    await api.call('notifications.saveWebPushDevice', {
+      'endpoint': subscription.endpoint,
+      'pushToken': payload,
+    });
   }
 
   String base64UrlEncode(Uint8List bytes) =>
       base64Url.encode(bytes).replaceAll('=', '');
 
   @override
-  Future<String?> deviceToken() async => kIsWeb ? _endpoint : _fallback.deviceToken();
+  Future<String?> deviceToken() async =>
+      kIsWeb ? _endpoint : _fallback.deviceToken();
 
   @override
   Stream<AppNotification> get incoming => _fallback.incoming;

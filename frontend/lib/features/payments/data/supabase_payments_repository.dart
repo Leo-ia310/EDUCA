@@ -1,14 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
+import '../../../core/network/backend_api_client.dart';
 import '../domain/entities.dart';
 import '../domain/payments_repository.dart';
 
-const _uuid = Uuid();
-
 /// Implementación real contra Supabase.
 ///
-/// Tablas usadas (ver `backend/migrations/0002_init_academic_extras.sql`):
+/// Tablas usadas (ver `supabase/migrations/0002_init_academic_extras.sql`):
 /// `payment_concepts`, `charges`, `payments`. La pasarela de pago real
 /// (procesador externo tipo Stripe) queda fuera de alcance — este repo solo
 /// persiste el resultado de un cobro ya procesado por [PaymentGateway]
@@ -20,10 +18,13 @@ const _uuid = Uuid();
 class SupabasePaymentsRepository implements PaymentsRepository {
   SupabasePaymentsRepository({
     required SupabaseClient client,
+    required BackendApiClient api,
     required this.institutionId,
-  }) : _c = client;
+  })  : _c = client,
+        _api = api;
 
   final SupabaseClient _c;
+  final BackendApiClient _api;
   final int institutionId;
 
   static const _chargeSelect =
@@ -50,9 +51,11 @@ class SupabasePaymentsRepository implements PaymentsRepository {
     final upcoming = active.where((c) => !c.isOverdue).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
-    final studentName =
-        charges.isNotEmpty ? charges.first.studentName : await _studentName(studentId);
-    final currencyCode = charges.isNotEmpty ? charges.first.currencyCode : 'USD';
+    final studentName = charges.isNotEmpty
+        ? charges.first.studentName
+        : await _studentName(studentId);
+    final currencyCode =
+        charges.isNotEmpty ? charges.first.currencyCode : 'USD';
 
     return StudentBalance(
       studentId: studentId,
@@ -106,7 +109,8 @@ class SupabasePaymentsRepository implements PaymentsRepository {
     return _chargeFromRow(row, paid[row['id'].toString()] ?? 0);
   }
 
-  Future<Map<String, double>> _paidAmountsByCharge(List<dynamic> chargeIds) async {
+  Future<Map<String, double>> _paidAmountsByCharge(
+      List<dynamic> chargeIds) async {
     if (chargeIds.isEmpty) return {};
     final rows = await _c
         .from('payments')
@@ -125,7 +129,8 @@ class SupabasePaymentsRepository implements PaymentsRepository {
   Charge _chargeFromRow(Map<String, dynamic> row, double paidAmount) {
     final concept = row['payment_concepts'] as Map<String, dynamic>?;
     final currencyCode =
-        (concept?['catalog_currencies'] as Map?)?['iso_code'] as String? ?? 'USD';
+        (concept?['catalog_currencies'] as Map?)?['iso_code'] as String? ??
+            'USD';
     final person = (row['students'] as Map?)?['persons'] as Map?;
     final studentName =
         '${person?['first_name'] ?? ''} ${person?['last_name'] ?? ''}'.trim();
@@ -142,7 +147,8 @@ class SupabasePaymentsRepository implements PaymentsRepository {
       discount: (row['discount'] as num?)?.toDouble() ?? 0,
       lateFee: (row['late_fee'] as num?)?.toDouble() ?? 0,
       paidAmount: paidAmount,
-      dueDate: DateTime.tryParse(row['due_at'] as String? ?? '') ?? DateTime.now(),
+      dueDate:
+          DateTime.tryParse(row['due_at'] as String? ?? '') ?? DateTime.now(),
       currencyCode: currencyCode,
       status: _chargeStatusFromDb(row['status'] as String?),
       academicYear: (row['academic_years'] as Map?)?['name'] as String? ?? '',
@@ -164,7 +170,10 @@ class SupabasePaymentsRepository implements PaymentsRepository {
         .eq('student_id', studentId)
         .eq('institution_id', institutionId)
         .order('paid_at', ascending: false);
-    return (rows as List).cast<Map<String, dynamic>>().map(_paymentFromRow).toList();
+    return (rows as List)
+        .cast<Map<String, dynamic>>()
+        .map(_paymentFromRow)
+        .toList();
   }
 
   Payment _paymentFromRow(Map<String, dynamic> row) {
@@ -172,7 +181,8 @@ class SupabasePaymentsRepository implements PaymentsRepository {
     final studentName =
         '${person?['first_name'] ?? ''} ${person?['last_name'] ?? ''}'.trim();
     final charge = row['charges'] as Map<String, dynamic>?;
-    final conceptName = (charge?['payment_concepts'] as Map?)?['name'] as String?;
+    final conceptName =
+        (charge?['payment_concepts'] as Map?)?['name'] as String?;
     return Payment(
       id: row['id'].toString(),
       uuid: row['uuid'].toString(),
@@ -182,9 +192,11 @@ class SupabasePaymentsRepository implements PaymentsRepository {
       studentName: studentName.isEmpty ? 'Estudiante' : studentName,
       method: _methodFromDb(row['payment_method'] as String?),
       amount: (row['amount'] as num?)?.toDouble() ?? 0,
-      currencyCode: (row['catalog_currencies'] as Map?)?['iso_code'] as String? ?? 'USD',
+      currencyCode:
+          (row['catalog_currencies'] as Map?)?['iso_code'] as String? ?? 'USD',
       status: _paymentStatusFromDb(row['status'] as String?),
-      paidAt: DateTime.tryParse(row['paid_at'] as String? ?? '') ?? DateTime.now(),
+      paidAt:
+          DateTime.tryParse(row['paid_at'] as String? ?? '') ?? DateTime.now(),
       receiptNumber: row['receipt_number'] as String? ?? '',
       reference: row['reference'] as String?,
     );
@@ -214,66 +226,24 @@ class SupabasePaymentsRepository implements PaymentsRepository {
     String? reference,
     String? gatewayName,
   }) async {
-    final chargeRow = await _c
-        .from('charges')
-        .select('id, student_id, amount, discount, late_fee, payment_concepts(currency_id)')
-        .eq('id', chargeId)
-        .single();
-    final studentId = (chargeRow['student_id'] as num).toInt();
-    final currencyId = (chargeRow['payment_concepts'] as Map?)?['currency_id'];
-    final totalAmount = ((chargeRow['amount'] as num?)?.toDouble() ?? 0) -
-        ((chargeRow['discount'] as num?)?.toDouble() ?? 0) +
-        ((chargeRow['late_fee'] as num?)?.toDouble() ?? 0);
-
-    final inserted = await _c
-        .from('payments')
-        .insert({
-          'uuid': _uuid.v4(),
-          'institution_id': institutionId,
-          'charge_id': chargeId,
-          'student_id': studentId,
-          'payment_method': method.code,
-          'amount': amount,
-          if (currencyId != null) 'currency_id': currencyId,
-          'reference': reference,
-          'receipt_number': 'RC-${DateTime.now().millisecondsSinceEpoch}',
-          'status': PaymentStatus.paid.name,
-          'paid_at': DateTime.now().toIso8601String(),
-        })
-        .select(_paymentSelect)
-        .single();
-
-    final paidSoFar = await _paidAmountsByCharge([chargeId]);
-    final newStatus = (paidSoFar[chargeId] ?? 0) >= totalAmount
-        ? ChargeStatus.paid
-        : ChargeStatus.partial;
-    await _c.from('charges').update({'status': newStatus.name}).eq('id', chargeId);
-
-    final base = _paymentFromRow(inserted);
-    return Payment(
-      id: base.id,
-      uuid: base.uuid,
-      chargeId: base.chargeId,
-      chargeConcept: base.chargeConcept,
-      studentName: base.studentName,
-      method: base.method,
-      amount: base.amount,
-      currencyCode: base.currencyCode,
-      status: base.status,
-      paidAt: base.paidAt,
-      receiptNumber: base.receiptNumber,
-      reference: base.reference,
-      gatewayName: gatewayName,
-      payerName: payerName,
+    final response = await _api.call(
+      'payments.register',
+      {
+        'chargeId': chargeId,
+        'amount': amount,
+        'method': method.code,
+        'payerName': payerName,
+        'reference': reference,
+        'gatewayName': gatewayName,
+      },
     );
+    final data = Map<String, dynamic>.from(response as Map);
+    return _paymentFromApi(Map<String, dynamic>.from(data['payment'] as Map));
   }
 
   @override
   Future<void> cancelCharge(String chargeId) async {
-    await _c
-        .from('charges')
-        .update({'status': ChargeStatus.cancelled.name})
-        .eq('id', chargeId);
+    await _api.call('payments.cancelCharge', {'chargeId': chargeId});
   }
 
   // ---------- Admin ----------
@@ -306,18 +276,21 @@ class SupabasePaymentsRepository implements PaymentsRepository {
     var expectedThisMonth = 0.0;
     var currencyCode = 'USD';
     for (final c in (chargesRows as List).cast<Map<String, dynamic>>()) {
-      final code = ((c['payment_concepts'] as Map?)?['catalog_currencies'] as Map?)?['iso_code']
-          as String?;
+      final code = ((c['payment_concepts'] as Map?)?['catalog_currencies']
+          as Map?)?['iso_code'] as String?;
       if (code != null) currencyCode = code;
       final status = c['status'] as String?;
       final dueAt = DateTime.tryParse(c['due_at'] as String? ?? '');
       final total = (c['total_amount'] as num?)?.toDouble() ?? 0;
-      final isClosed = status == ChargeStatus.paid.name || status == ChargeStatus.cancelled.name;
+      final isClosed = status == ChargeStatus.paid.name ||
+          status == ChargeStatus.cancelled.name;
       if (!isClosed && dueAt != null && dueAt.isBefore(now)) {
         totalOverdueAmount += total;
         overdueCount++;
       }
-      if (dueAt != null && !dueAt.isBefore(monthStart) && dueAt.isBefore(nextMonthStart)) {
+      if (dueAt != null &&
+          !dueAt.isBefore(monthStart) &&
+          dueAt.isBefore(nextMonthStart)) {
         expectedThisMonth += total;
       }
     }
@@ -330,7 +303,8 @@ class SupabasePaymentsRepository implements PaymentsRepository {
         .gte('paid_at', monthStart.toIso8601String());
     final collectedThisMonth = (paymentsRows as List)
         .cast<Map<String, dynamic>>()
-        .fold<double>(0, (a, p) => a + ((p['amount'] as num?)?.toDouble() ?? 0));
+        .fold<double>(
+            0, (a, p) => a + ((p['amount'] as num?)?.toDouble() ?? 0));
 
     return DunningMetrics(
       totalOverdueAmount: totalOverdueAmount,
@@ -338,6 +312,26 @@ class SupabasePaymentsRepository implements PaymentsRepository {
       collectedThisMonth: collectedThisMonth,
       expectedThisMonth: expectedThisMonth,
       currencyCode: currencyCode,
+    );
+  }
+
+  Payment _paymentFromApi(Map<String, dynamic> row) {
+    return Payment(
+      id: row['id'].toString(),
+      uuid: row['uuid'].toString(),
+      chargeId: row['chargeId']?.toString() ?? '',
+      chargeConcept: row['chargeConcept'] as String? ?? 'Pago',
+      studentName: row['studentName'] as String? ?? 'Estudiante',
+      method: _methodFromDb(row['method'] as String?),
+      amount: (row['amount'] as num?)?.toDouble() ?? 0,
+      currencyCode: row['currencyCode'] as String? ?? 'USD',
+      status: _paymentStatusFromDb(row['status'] as String?),
+      paidAt:
+          DateTime.tryParse(row['paidAt'] as String? ?? '') ?? DateTime.now(),
+      receiptNumber: row['receiptNumber'] as String? ?? '',
+      reference: row['reference'] as String?,
+      gatewayName: row['gatewayName'] as String?,
+      payerName: row['payerName'] as String?,
     );
   }
 }

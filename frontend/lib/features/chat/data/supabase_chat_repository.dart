@@ -1,16 +1,14 @@
 import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
+import '../../../core/network/backend_api_client.dart';
 import '../domain/chat_repository.dart';
 import '../domain/entities.dart';
 
-const _uuid = Uuid();
-
 /// Implementación real contra Supabase.
 ///
-/// Tablas usadas (ver `backend/migrations/0002_init_academic_extras.sql`):
+/// Tablas usadas (ver `supabase/migrations/0002_init_academic_extras.sql`):
 /// - `conversations`
 /// - `conversation_participants`
 /// - `messages`
@@ -22,12 +20,15 @@ const _uuid = Uuid();
 class SupabaseChatRepository implements ChatRepository {
   SupabaseChatRepository({
     required SupabaseClient client,
+    required BackendApiClient api,
     required this.meUserId,
     required this.myName,
     required this.institutionId,
-  }) : _client = client;
+  })  : _client = client,
+        _api = api;
 
   final SupabaseClient _client;
+  final BackendApiClient _api;
   final String meUserId;
   final String myName;
   final int institutionId;
@@ -36,8 +37,7 @@ class SupabaseChatRepository implements ChatRepository {
       'id, uuid, conversation_id, sender_id, content, created_at, '
       'files(id, original_name, url, size_bytes, mime_type)';
 
-  final _conversationsCtrl =
-      StreamController<List<Conversation>>.broadcast();
+  final _conversationsCtrl = StreamController<List<Conversation>>.broadcast();
   final _messagesCtrls = <String, StreamController<List<Message>>>{};
   final _unreadCtrl = StreamController<int>.broadcast();
 
@@ -114,8 +114,9 @@ class SupabaseChatRepository implements ChatRepository {
         .order('created_at', ascending: false)
         .limit(1)
         .maybeSingle();
-    final lastMessage =
-        lastRow == null ? null : _msgFromRow(lastRow, participants: participants);
+    final lastMessage = lastRow == null
+        ? null
+        : _msgFromRow(lastRow, participants: participants);
 
     final unread = await _unreadCountFor(id);
     final title = (conv['title'] as String?)?.isNotEmpty == true
@@ -204,7 +205,8 @@ class SupabaseChatRepository implements ChatRepository {
           value: conversationId,
         ),
         callback: (payload) {
-          ctrl.add([_msgFromRow(payload.newRecord, participants: participants)]);
+          ctrl.add(
+              [_msgFromRow(payload.newRecord, participants: participants)]);
         },
       );
       ch.subscribe();
@@ -235,8 +237,7 @@ class SupabaseChatRepository implements ChatRepository {
     List<ChatParticipant>? participants,
   }) {
     final senderId = r['sender_id'].toString();
-    final sender =
-        participants?.where((p) => p.userId == senderId).firstOrNull;
+    final sender = participants?.where((p) => p.userId == senderId).firstOrNull;
     final file = r['files'] as Map<String, dynamic>?;
     return Message(
       id: r['id'].toString(),
@@ -245,8 +246,8 @@ class SupabaseChatRepository implements ChatRepository {
       senderId: senderId,
       senderName: senderId == meUserId ? myName : (sender?.name ?? 'Usuario'),
       senderAvatarUrl: sender?.avatarUrl,
-      sentAt: DateTime.tryParse(r['created_at'] as String? ?? '') ??
-          DateTime.now(),
+      sentAt:
+          DateTime.tryParse(r['created_at'] as String? ?? '') ?? DateTime.now(),
       content: r['content'] as String?,
       attachment: file == null
           ? null
@@ -268,39 +269,26 @@ class SupabaseChatRepository implements ChatRepository {
     MessageAttachment? attachment,
     Message? replyTo,
   }) async {
-    final uuid = _uuid.v4();
-    final fileId = attachment == null ? null : int.tryParse(attachment.id);
-    final row = await _client
-        .from('messages')
-        .insert({
-          'uuid': uuid,
-          'conversation_id': conversationId,
-          'sender_id': meUserId,
-          'content': content,
-          if (fileId != null) 'file_id': fileId,
-        })
-        .select(_messageSelect)
-        .single();
-    final participants = await _participantsFor(conversationId);
-    return _msgFromRow(row, participants: participants);
+    final response = await _api.call('chat.sendMessage', {
+      'conversationId': conversationId,
+      'content': content,
+      'attachment': attachment == null
+          ? null
+          : {
+              'id': attachment.id,
+              'name': attachment.name,
+              'url': attachment.url,
+              'sizeBytes': attachment.sizeBytes,
+              'mimeType': attachment.mimeType,
+            },
+    });
+    final data = Map<String, dynamic>.from(response as Map);
+    return _msgFromApi(Map<String, dynamic>.from(data['message'] as Map));
   }
 
   @override
   Future<void> markAsRead(String conversationId) async {
-    final rows = await _client
-        .from('messages')
-        .select('id')
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', meUserId);
-    final ids = (rows as List).map((m) => m['id']).toList();
-    if (ids.isEmpty) return;
-    await _client.from('message_reads').upsert(
-          ids
-              .map((id) => {'message_id': id, 'user_id': meUserId})
-              .toList(),
-          onConflict: 'message_id,user_id',
-          ignoreDuplicates: true,
-        );
+    await _api.call('chat.markAsRead', {'conversationId': conversationId});
   }
 
   @override
@@ -310,64 +298,11 @@ class SupabaseChatRepository implements ChatRepository {
     required String otherRole,
     String? otherAvatarUrl,
   }) async {
-    final myParticipations = await _client
-        .from('conversation_participants')
-        .select('conversation_id')
-        .eq('user_id', meUserId);
-    final myConvIds =
-        (myParticipations as List).map((r) => r['conversation_id']).toList();
-
-    if (myConvIds.isNotEmpty) {
-      final theirShared = await _client
-          .from('conversation_participants')
-          .select('conversation_id')
-          .eq('user_id', otherUserId)
-          .inFilter('conversation_id', myConvIds);
-      final sharedIds =
-          (theirShared as List).map((r) => r['conversation_id']).toList();
-
-      if (sharedIds.isNotEmpty) {
-        final individualMatch = await _client
-            .from('conversations')
-            .select('id')
-            .inFilter('id', sharedIds)
-            .eq('kind', 'individual')
-            .limit(1)
-            .maybeSingle();
-        if (individualMatch != null) {
-          final existing =
-              await conversationById(individualMatch['id'].toString());
-          if (existing != null) return existing;
-        }
-      }
-    }
-
-    final created = await _client
-        .from('conversations')
-        .insert({
-          'institution_id': institutionId,
-          'kind': 'individual',
-          'created_by': meUserId,
-        })
-        .select('id')
-        .single();
-    final conversationId = created['id'].toString();
-
-    // Dos inserts secuenciales (no un batch): la policy `participants_insert`
-    // de 0005 exige que el conversation_id ya esté en `my_conversation_ids()`
-    // para insertar la fila de un tercero — eso solo es cierto una vez que mi
-    // propia fila ya está confirmada.
-    await _client.from('conversation_participants').insert({
-      'conversation_id': conversationId,
-      'user_id': meUserId,
-      'role': 'member',
+    final response = await _api.call('chat.ensureIndividual', {
+      'otherUserId': otherUserId,
     });
-    await _client.from('conversation_participants').insert({
-      'conversation_id': conversationId,
-      'user_id': otherUserId,
-      'role': 'member',
-    });
-
+    final data = Map<String, dynamic>.from(response as Map);
+    final conversationId = data['conversationId'].toString();
     final conv = await conversationById(conversationId);
     return conv ?? (throw StateError('No se pudo crear la conversación'));
   }
@@ -410,5 +345,30 @@ class SupabaseChatRepository implements ChatRepository {
     for (final c in _messagesCtrls.values) {
       c.close();
     }
+  }
+
+  Message _msgFromApi(Map<String, dynamic> r) {
+    final attachment = r['attachment'] == null
+        ? null
+        : Map<String, dynamic>.from(r['attachment'] as Map);
+    return Message(
+      id: r['id'].toString(),
+      uuid: r['uuid'].toString(),
+      conversationId: r['conversationId'].toString(),
+      senderId: r['senderId'].toString(),
+      senderName: r['senderName'] as String? ?? myName,
+      sentAt: DateTime.tryParse(r['sentAt'] as String? ?? '') ?? DateTime.now(),
+      content: r['content'] as String?,
+      attachment: attachment == null
+          ? null
+          : MessageAttachment(
+              id: attachment['id'].toString(),
+              name: attachment['name'] as String? ?? 'archivo',
+              url: attachment['url'] as String? ?? '',
+              sizeBytes: (attachment['sizeBytes'] as num?)?.toInt(),
+              mimeType: attachment['mimeType'] as String?,
+            ),
+      status: MessageDeliveryStatus.delivered,
+    );
   }
 }

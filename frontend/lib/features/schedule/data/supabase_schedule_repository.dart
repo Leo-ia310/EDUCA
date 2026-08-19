@@ -4,7 +4,7 @@ import '../domain/entities.dart';
 import '../domain/schedule_repository.dart';
 
 /// Implementación real contra Supabase. Tablas usadas (ver
-/// `backend/migrations/0001_init_core.sql`): `schedules`, `classes`,
+/// `supabase/migrations/0001_init_core.sql`): `schedules`, `classes`,
 /// `catalog_weekdays`, `classrooms`.
 class SupabaseScheduleRepository implements ScheduleRepository {
   SupabaseScheduleRepository({

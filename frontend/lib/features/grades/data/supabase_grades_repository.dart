@@ -1,13 +1,14 @@
 import 'package:flutter/painting.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/network/backend_api_client.dart';
 import '../domain/entities.dart';
 import '../domain/grades_calculator.dart';
 import '../domain/grades_repository.dart';
 
 /// Implementación real contra Supabase.
 ///
-/// Tablas usadas (ver `backend/migrations/0001_init_core.sql` y
+/// Tablas usadas (ver `supabase/migrations/0001_init_core.sql` y
 /// `0002_init_academic_extras.sql`): `grading_scales`, `grading_scale_ranges`,
 /// `academic_years`, `academic_periods`, `evaluations`, `grades`,
 /// `institution_settings` (para la escala por defecto — la tabla no tiene su
@@ -18,10 +19,13 @@ import '../domain/grades_repository.dart';
 class SupabaseGradesRepository implements GradesRepository {
   SupabaseGradesRepository({
     required SupabaseClient client,
+    required BackendApiClient api,
     required this.institutionId,
-  }) : _c = client;
+  })  : _c = client,
+        _api = api;
 
   final SupabaseClient _c;
+  final BackendApiClient _api;
   final int institutionId;
   final _calc = const GradesCalculator();
 
@@ -38,7 +42,10 @@ class SupabaseGradesRepository implements GradesRepository {
         .select(_scaleSelect)
         .eq('institution_id', institutionId)
         .eq('active', true);
-    return (rows as List).cast<Map<String, dynamic>>().map(_scaleFromRow).toList();
+    return (rows as List)
+        .cast<Map<String, dynamic>>()
+        .map(_scaleFromRow)
+        .toList();
   }
 
   @override
@@ -59,60 +66,34 @@ class SupabaseGradesRepository implements GradesRepository {
 
   @override
   Future<GradingScale> upsertScale(GradingScale scale) async {
-    final existingId = int.tryParse(scale.id);
-    final payload = {
-      if (existingId != null) 'id': existingId,
-      'institution_id': institutionId,
+    final response = await _api.call('grades.upsertScale', {
+      'id': int.tryParse(scale.id),
       'name': scale.name,
-      'scale_type': scale.type.name,
-      'min_value': scale.minValue,
-      'max_value': scale.maxValue,
-      'pass_value': scale.passValue,
+      'type': scale.type.name,
+      'minValue': scale.minValue,
+      'maxValue': scale.maxValue,
+      'passValue': scale.passValue,
       'decimals': scale.decimals,
-      'active': true,
-    };
-    final row =
-        await _c.from('grading_scales').upsert(payload).select('id').single();
-    final scaleId = (row['id'] as num).toInt();
-
-    // Reemplaza los rangos: borrar + reinsertar es más simple y seguro que
-    // diffear rango por rango, y esta tabla no tiene volumen para que
-    // importe el costo.
-    await _c.from('grading_scale_ranges').delete().eq('scale_id', scaleId);
-    if (scale.ranges.isNotEmpty) {
-      await _c.from('grading_scale_ranges').insert(
-            scale.ranges
-                .map(
-                  (r) => {
-                    'scale_id': scaleId,
-                    'label': r.label,
-                    'range_min': r.rangeMin,
-                    'range_max': r.rangeMax,
-                    'description': r.description,
-                    'passed': r.passed,
-                    'color': r.color == null ? null : _colorToHex(r.color!),
-                  },
-                )
-                .toList(),
-          );
-    }
-
-    final updated = await _c
-        .from('grading_scales')
-        .select(_scaleSelect)
-        .eq('id', scaleId)
-        .single();
-    return _scaleFromRow(updated);
+      'ranges': scale.ranges
+          .map(
+            (r) => {
+              'label': r.label,
+              'rangeMin': r.rangeMin,
+              'rangeMax': r.rangeMax,
+              'description': r.description,
+              'passed': r.passed,
+              'color': r.color == null ? null : _colorToHex(r.color!),
+            },
+          )
+          .toList(),
+    });
+    final data = Map<String, dynamic>.from(response as Map);
+    return _scaleFromRow(Map<String, dynamic>.from(data['scale'] as Map));
   }
 
   @override
   Future<void> setDefaultScale(String id) async {
-    await _c.from('institution_settings').upsert({
-      'institution_id': institutionId,
-      'key': _defaultScaleKey,
-      'value': id,
-      'data_type': 'string',
-    }, onConflict: 'institution_id,key');
+    await _api.call('grades.setDefaultScale', {'id': id});
   }
 
   GradingScale _scaleFromRow(Map<String, dynamic> row) {
@@ -226,7 +207,8 @@ class SupabaseGradesRepository implements GradesRepository {
     String? periodId,
     int? classId,
   }) async {
-    final classIds = classId != null ? [classId] : await _classIdsForStudent(studentId);
+    final classIds =
+        classId != null ? [classId] : await _classIdsForStudent(studentId);
     if (classIds.isEmpty) return const [];
     var query = _c
         .from('evaluations')
@@ -239,7 +221,10 @@ class SupabaseGradesRepository implements GradesRepository {
         .eq('published', true);
     if (periodId != null) query = query.eq('academic_period_id', periodId);
     final rows = await query.order('date');
-    return (rows as List).cast<Map<String, dynamic>>().map(_evalFromRow).toList();
+    return (rows as List)
+        .cast<Map<String, dynamic>>()
+        .map(_evalFromRow)
+        .toList();
   }
 
   Evaluation _evalFromRow(Map<String, dynamic> row) {
@@ -266,7 +251,8 @@ class SupabaseGradesRepository implements GradesRepository {
   }) async {
     final rows = await _c
         .from('grades')
-        .select('evaluation_id, student_id, score, notes, evaluations!inner(academic_period_id)')
+        .select(
+            'evaluation_id, student_id, score, notes, evaluations!inner(academic_period_id)')
         .eq('student_id', studentId)
         .eq('institution_id', institutionId);
     return (rows as List)
@@ -297,7 +283,8 @@ class SupabaseGradesRepository implements GradesRepository {
         .select('id, subjects(name), teachers(persons(first_name, last_name))')
         .inFilter('id', classIds);
     return (rows as List).cast<Map<String, dynamic>>().map((r) {
-      final subjectName = (r['subjects'] as Map?)?['name'] as String? ?? 'Materia';
+      final subjectName =
+          (r['subjects'] as Map?)?['name'] as String? ?? 'Materia';
       final person = (r['teachers'] as Map?)?['persons'] as Map?;
       final teacherName =
           '${person?['first_name'] ?? ''} ${person?['last_name'] ?? ''}'.trim();
@@ -363,8 +350,9 @@ class SupabaseGradesRepository implements GradesRepository {
   }) async {
     final s = scale ?? await defaultScale();
     final periodsList = await periods();
-    final targetPeriod =
-        periodId == null ? null : periodsList.firstWhere((p) => p.id == periodId);
+    final targetPeriod = periodId == null
+        ? null
+        : periodsList.firstWhere((p) => p.id == periodId);
     final performances =
         await performanceForStudent(studentId: studentId, scale: s);
 
@@ -397,7 +385,8 @@ class SupabaseGradesRepository implements GradesRepository {
       institutionName: info.institutionName,
       gradeLevel: info.gradeLevel,
       periodName: targetPeriod?.name ?? 'Anual',
-      periodStart: targetPeriod?.startDate ?? DateTime(DateTime.now().year, 1, 1),
+      periodStart:
+          targetPeriod?.startDate ?? DateTime(DateTime.now().year, 1, 1),
       periodEnd: targetPeriod?.endDate ?? DateTime(DateTime.now().year, 12, 31),
       lines: lines,
       overallAverage: overall,
@@ -430,12 +419,14 @@ class SupabaseGradesRepository implements GradesRepository {
         (row['institutions'] as Map?)?['name'] as String? ?? 'Colegio';
     final enrollments =
         (row['enrollments'] as List? ?? const []).cast<Map<String, dynamic>>();
-    final group =
-        enrollments.isEmpty ? null : enrollments.first['groups'] as Map<String, dynamic>?;
+    final group = enrollments.isEmpty
+        ? null
+        : enrollments.first['groups'] as Map<String, dynamic>?;
     final gradeLevel = group == null
         ? '—'
         : '${(group['grade_levels'] as Map?)?['name'] ?? ''} '
-            '${(group['sections'] as Map?)?['name'] ?? ''}'.trim();
+                '${(group['sections'] as Map?)?['name'] ?? ''}'
+            .trim();
     return (
       name: name.isEmpty ? 'Estudiante' : name,
       institutionName: institutionName,
@@ -500,8 +491,10 @@ class SupabaseGradesRepository implements GradesRepository {
         .eq('academic_period_id', periodId)
         .eq('institution_id', institutionId)
         .order('date');
-    final evaluations =
-        (evalRows as List).cast<Map<String, dynamic>>().map(_evalFromRow).toList();
+    final evaluations = (evalRows as List)
+        .cast<Map<String, dynamic>>()
+        .map(_evalFromRow)
+        .toList();
 
     final classRow =
         await _c.from('classes').select('group_id').eq('id', classId).single();
@@ -512,7 +505,8 @@ class SupabaseGradesRepository implements GradesRepository {
         .select('student_id, students(id, persons(first_name, last_name))')
         .eq('group_id', groupId as Object)
         .eq('institution_id', institutionId);
-    final students = (enrollments as List).cast<Map<String, dynamic>>().map((e) {
+    final students =
+        (enrollments as List).cast<Map<String, dynamic>>().map((e) {
       final person = (e['students'] as Map?)?['persons'] as Map?;
       final name =
           '${person?['first_name'] ?? ''} ${person?['last_name'] ?? ''}'.trim();
@@ -542,7 +536,8 @@ class SupabaseGradesRepository implements GradesRepository {
       grades[sid]?[eid] = (g['score'] as num?)?.toDouble();
     }
 
-    return GradebookMatrix(evaluations: evaluations, students: students, grades: grades);
+    return GradebookMatrix(
+        evaluations: evaluations, students: students, grades: grades);
   }
 
   @override
@@ -552,12 +547,11 @@ class SupabaseGradesRepository implements GradesRepository {
     required double rawScore,
     String? notes,
   }) async {
-    await _c.from('grades').upsert({
-      'institution_id': institutionId,
-      'evaluation_id': evaluationId,
-      'student_id': studentId,
-      'score': rawScore,
+    await _api.call('grades.setGrade', {
+      'evaluationId': evaluationId,
+      'studentId': studentId,
+      'rawScore': rawScore,
       'notes': notes,
-    }, onConflict: 'evaluation_id,student_id');
+    });
   }
 }

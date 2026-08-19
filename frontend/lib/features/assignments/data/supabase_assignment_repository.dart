@@ -1,18 +1,22 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/network/backend_api_client.dart';
 import '../domain/assignment_repository.dart';
 import '../domain/entities.dart';
 
 /// Implementación Supabase del repositorio. Lee/escribe contra las tablas
 /// `assignments`, `assignment_files`, `submissions`, `submission_files`,
-/// `evaluations` y `grades` definidas en `backend/migrations/`.
+/// `evaluations` y `grades` definidas en `supabase/migrations/`.
 class SupabaseAssignmentRepository implements AssignmentRepository {
   SupabaseAssignmentRepository({
     required SupabaseClient client,
+    required BackendApiClient api,
     required this.institutionId,
-  }) : _c = client;
+  })  : _c = client,
+        _api = api;
 
   final SupabaseClient _c;
+  final BackendApiClient _api;
   final int institutionId;
 
   static const _assignmentSelect =
@@ -140,75 +144,36 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
   // ---------- Escritura docente ----------
   @override
   Future<Assignment> upsertAssignment(AssignmentDraft draft) async {
-    final payload = {
-      if (draft.assignmentId != null) 'id': draft.assignmentId,
-      'institution_id': institutionId,
-      'class_id': draft.classId,
+    final response = await _api.call('assignments.upsert', {
+      'assignmentId': draft.assignmentId,
+      'classId': draft.classId,
       'title': draft.title,
       'description': draft.description,
       'instructions': draft.instructions,
-      'due_at': draft.dueAt.toIso8601String(),
-      'max_score': draft.maxScore,
-      'allow_late': draft.allowLate,
+      'kind': draft.kind.name,
+      'dueAt': draft.dueAt.toIso8601String(),
+      'maxScore': draft.maxScore,
+      'allowLate': draft.allowLate,
       'published': draft.published,
-    };
-    final row =
-        await _c.from('assignments').upsert(payload).select('id').single();
-    final assignmentId = row['id'].toString();
-
-    if (draft.attachments.isNotEmpty) {
-      await _linkAttachments(
-        attachments: draft.attachments,
-        assignmentId: assignmentId,
-      );
-    }
-
-    final created = await assignmentById(assignmentId);
-    return created ??
-        (throw StateError('No se pudo recuperar la tarea creada'));
-  }
-
-  /// Enlaza adjuntos ya subidos (vía `SupabaseFileUploadService`, que sube a
-  /// Storage y devuelve el id de la fila `files` como `AssignmentAttachment.id`)
-  /// a la tarea o entrega correspondiente.
-  Future<void> _linkAttachments({
-    required List<AssignmentAttachment> attachments,
-    String? assignmentId,
-    String? submissionId,
-  }) async {
-    for (final a in attachments) {
-      final fileId = int.tryParse(a.id);
-      if (fileId == null) continue; // adjunto demo, sin fila real en `files`.
-      if (assignmentId != null) {
-        await _c.from('assignment_files').upsert(
-          {'assignment_id': assignmentId, 'file_id': fileId},
-          onConflict: 'assignment_id,file_id',
-          ignoreDuplicates: true,
-        );
-      } else if (submissionId != null) {
-        await _c.from('submission_files').upsert(
-          {'submission_id': submissionId, 'file_id': fileId},
-          onConflict: 'submission_id,file_id',
-          ignoreDuplicates: true,
-        );
-      }
-    }
+      'attachments': draft.attachments.map(_attachmentToApi).toList(),
+    });
+    final data = Map<String, dynamic>.from(response as Map);
+    return _assignmentFromApi(
+      Map<String, dynamic>.from(data['assignment'] as Map),
+    );
   }
 
   @override
   Future<void> deleteAssignment(String id) async {
-    await _c
-        .from('assignments')
-        .update({'deleted_at': DateTime.now().toIso8601String()})
-        .eq('id', id);
+    await _api.call('assignments.delete', {'id': id});
   }
 
   @override
   Future<void> publishAssignment(String id, {required bool published}) async {
-    await _c
-        .from('assignments')
-        .update({'published': published})
-        .eq('id', id);
+    await _api.call('assignments.publish', {
+      'id': id,
+      'published': published,
+    });
   }
 
   @override
@@ -217,79 +182,18 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
     required double score,
     String? feedback,
   }) async {
-    final submissionRow = await _c
-        .from('submissions')
-        .select('id, assignment_id, student_id')
-        .eq('id', submissionId)
-        .single();
-    final assignmentId = submissionRow['assignment_id'].toString();
-    final studentId = (submissionRow['student_id'] as num).toInt();
-
-    final assignmentRow = await _c
-        .from('assignments')
-        .select('class_id, academic_period_id, max_score, title')
-        .eq('id', assignmentId)
-        .single();
-
-    final evaluationId = await _findOrCreateEvaluation(
-      assignmentId: assignmentId,
-      classId: (assignmentRow['class_id'] as num).toInt(),
-      academicPeriodId: (assignmentRow['academic_period_id'] as num?)?.toInt(),
-      maxScore: (assignmentRow['max_score'] as num?)?.toDouble(),
-      title: assignmentRow['title'] as String?,
+    final response = await _api.call(
+      'assignments.gradeSubmission',
+      {
+        'submissionId': submissionId,
+        'score': score,
+        'feedback': feedback,
+      },
     );
-
-    await _c.from('grades').upsert({
-      'institution_id': institutionId,
-      'evaluation_id': evaluationId,
-      'student_id': studentId,
-      'score': score,
-      'notes': feedback,
-    }, onConflict: 'evaluation_id,student_id');
-
-    final statuses = await _taskStatusIds();
-    final gradedStatusId = statuses['CALI'];
-    await _c
-        .from('submissions')
-        .update({if (gradedStatusId != null) 'task_status_id': gradedStatusId})
-        .eq('id', submissionId);
-
-    final updated = await submissionForStudent(
-      assignmentId: assignmentId,
-      studentId: studentId,
+    final data = Map<String, dynamic>.from(response as Map);
+    return _submissionFromApi(
+      Map<String, dynamic>.from(data['submission'] as Map),
     );
-    return updated ??
-        (throw StateError('Entrega no encontrada tras calificar'));
-  }
-
-  Future<String> _findOrCreateEvaluation({
-    required String assignmentId,
-    required int classId,
-    int? academicPeriodId,
-    double? maxScore,
-    String? title,
-  }) async {
-    final existing = await _c
-        .from('evaluations')
-        .select('id')
-        .eq('assignment_id', assignmentId)
-        .maybeSingle();
-    if (existing != null) return existing['id'].toString();
-
-    final created = await _c
-        .from('evaluations')
-        .insert({
-          'institution_id': institutionId,
-          'class_id': classId,
-          'academic_period_id': academicPeriodId,
-          'assignment_id': assignmentId,
-          'title': title,
-          'max_score': maxScore,
-          'published': true,
-        })
-        .select('id')
-        .single();
-    return created['id'].toString();
   }
 
   // ---------- Escritura estudiante ----------
@@ -300,52 +204,24 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
     required List<AssignmentAttachment> attachments,
     String? notes,
   }) async {
-    final statuses = await _taskStatusIds();
-    final now = DateTime.now();
-
-    final assignmentRow = await _c
-        .from('assignments')
-        .select('due_at')
-        .eq('id', assignmentId)
-        .single();
-    final dueAt = DateTime.tryParse(assignmentRow['due_at'] as String? ?? '');
-    final isLate = dueAt != null && now.isAfter(dueAt);
-
-    final payload = {
-      'institution_id': institutionId,
-      'assignment_id': assignmentId,
-      'student_id': studentId,
-      'submitted_at': now.toIso8601String(),
-      'student_notes': notes,
-      'is_late': isLate,
-      'task_status_id': statuses['ENTR'],
-    };
-
-    final row = await _c
-        .from('submissions')
-        .upsert(payload, onConflict: 'assignment_id,student_id')
-        .select('id')
-        .single();
-    final submissionId = row['id'].toString();
-
-    if (attachments.isNotEmpty) {
-      await _linkAttachments(
-        attachments: attachments,
-        submissionId: submissionId,
-      );
-    }
-
-    final created = await submissionForStudent(
-      assignmentId: assignmentId,
-      studentId: studentId,
+    final response = await _api.call(
+      'assignments.submit',
+      {
+        'assignmentId': assignmentId,
+        'studentId': studentId,
+        'attachments': attachments.map(_attachmentToApi).toList(),
+        'notes': notes,
+      },
     );
-    return created ?? (throw StateError('No se pudo recuperar la entrega'));
+    final data = Map<String, dynamic>.from(response as Map);
+    return _submissionFromApi(
+      Map<String, dynamic>.from(data['submission'] as Map),
+    );
   }
 
   // ---------- Counters ----------
   @override
-  Future<({int pending, int submitted, int toGrade})>
-      teacherCounters() async {
+  Future<({int pending, int submitted, int toGrade})> teacherCounters() async {
     final assigns = await assignmentsForTeacher();
     var pending = 0;
     var submitted = 0;
@@ -383,9 +259,8 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
         .eq('student_id', studentId);
     final statuses = await _taskStatusIds();
     final gradedId = statuses['CALI'];
-    final submittedAssignmentIds = (submissions as List)
-        .map((s) => s['assignment_id'].toString())
-        .toSet();
+    final submittedAssignmentIds =
+        (submissions as List).map((s) => s['assignment_id'].toString()).toSet();
     final graded =
         submissions.where((s) => s['task_status_id'] == gradedId).length;
     final submitted = submittedAssignmentIds.length;
@@ -522,6 +397,83 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
             url: f['url'] as String? ?? '',
             sizeBytes: (f['size_bytes'] as num?)?.toInt(),
             mimeType: f['mime_type'] as String?,
+          ),
+        )
+        .toList();
+  }
+
+  Map<String, dynamic> _attachmentToApi(AssignmentAttachment a) => {
+        'id': a.id,
+        'name': a.name,
+        'url': a.url,
+        'sizeBytes': a.sizeBytes,
+        'mimeType': a.mimeType,
+      };
+
+  Assignment _assignmentFromApi(Map<String, dynamic> row) {
+    return Assignment(
+      id: row['id'].toString(),
+      classId: (row['classId'] as num).toInt(),
+      subjectName: row['subjectName'] as String? ?? 'Materia',
+      groupName: row['groupName'] as String? ?? 'Grupo',
+      title: row['title'] as String? ?? '',
+      description: row['description'] as String?,
+      instructions: row['instructions'] as String?,
+      assignedAt: DateTime.tryParse(row['assignedAt'] as String? ?? '') ??
+          DateTime.now(),
+      dueAt: DateTime.tryParse(row['dueAt'] as String? ?? '') ?? DateTime.now(),
+      kind: _kindFromApi(row['kind'] as String?),
+      maxScore: (row['maxScore'] as num?)?.toDouble() ?? 100,
+      allowLate: row['allowLate'] as bool? ?? false,
+      published: row['published'] as bool? ?? true,
+      attachments: _attachmentsFromApi(row['attachments']),
+      totalStudents: (row['totalStudents'] as num?)?.toInt() ?? 0,
+      submittedCount: (row['submittedCount'] as num?)?.toInt() ?? 0,
+      gradedCount: (row['gradedCount'] as num?)?.toInt() ?? 0,
+      teacherName: row['teacherName'] as String?,
+    );
+  }
+
+  AssignmentKind _kindFromApi(String? value) {
+    for (final kind in AssignmentKind.values) {
+      if (kind.name == value) return kind;
+    }
+    return AssignmentKind.homework;
+  }
+
+  Submission _submissionFromApi(Map<String, dynamic> row) {
+    return Submission(
+      id: row['id'].toString(),
+      assignmentId: row['assignmentId'].toString(),
+      studentId: (row['studentId'] as num).toInt(),
+      studentName: row['studentName'] as String? ?? 'Estudiante',
+      status: _submissionStatusFromApi(row['status'] as String?),
+      submittedAt: DateTime.tryParse(row['submittedAt'] as String? ?? ''),
+      studentNotes: row['studentNotes'] as String?,
+      attachments: _attachmentsFromApi(row['attachments']),
+      score: (row['score'] as num?)?.toDouble(),
+      feedback: row['feedback'] as String?,
+    );
+  }
+
+  SubmissionStatus _submissionStatusFromApi(String? value) {
+    for (final status in SubmissionStatus.values) {
+      if (status.name == value) return status;
+    }
+    return SubmissionStatus.submitted;
+  }
+
+  List<AssignmentAttachment> _attachmentsFromApi(dynamic value) {
+    final rows = value is List ? value : const [];
+    return rows
+        .map((r) => Map<String, dynamic>.from(r as Map))
+        .map(
+          (r) => AssignmentAttachment(
+            id: r['id'].toString(),
+            name: r['name'] as String? ?? 'archivo',
+            url: r['url'] as String? ?? '',
+            sizeBytes: (r['sizeBytes'] as num?)?.toInt(),
+            mimeType: r['mimeType'] as String?,
           ),
         )
         .toList();

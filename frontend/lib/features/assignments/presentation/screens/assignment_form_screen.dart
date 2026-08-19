@@ -10,7 +10,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/section_header.dart';
-import '../../../attendance/data/mock_attendance_data.dart';
+import '../../../attendance/domain/entities.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/assignment_form_controller.dart';
@@ -157,7 +157,10 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                         decoration:
                             const InputDecoration(labelText: 'Clase'),
                         items: [
-                          for (final c in AttendanceMock.todaysClasses)
+                          for (final c in ref
+                                  .watch(teacherClassesProvider)
+                                  .valueOrNull ??
+                              const <ClassSessionBrief>[])
                             DropdownMenuItem(
                               value: c.classId,
                               child: Text('${c.subjectName} · ${c.groupName}',

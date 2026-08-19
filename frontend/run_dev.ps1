@@ -6,21 +6,29 @@
 #   .\run_dev.ps1 -Device windows
 #   .\run_dev.ps1 -Device chrome
 #
-# Este script lee `.env` y arma los `--dart-define` que la app espera.
+# Lee las credenciales centralizadas en `backend/.env` (copia de backend/.env.example)
+# y arma los `--dart-define` que la app espera. Las claves viven en el backend;
+# el frontend solo las recibe en tiempo de build.
 # -----------------------------------------------------------------------------
 
 param(
     [string]$Device = ""
 )
 
-if (-not (Test-Path ".env")) {
-    Write-Error "Falta .env en la raíz. Copia .env.example y complétalo."
-    exit 1
+# Credenciales centralizadas en el backend. Fallback a un .env local del frontend.
+$envPath = "../backend/.env"
+if (-not (Test-Path $envPath)) {
+    if (Test-Path ".env") {
+        $envPath = ".env"
+    } else {
+        Write-Error "Falta backend/.env. Copia backend/.env.example a backend/.env y complétalo."
+        exit 1
+    }
 }
 
 # Cargar .env como variables locales.
 $env_vars = @{}
-Get-Content ".env" | ForEach-Object {
+Get-Content $envPath | ForEach-Object {
     if ($_ -match "^\s*([^#=]+?)\s*=\s*(.+?)\s*$") {
         $env_vars[$matches[1]] = $matches[2]
     }
@@ -29,6 +37,10 @@ Get-Content ".env" | ForEach-Object {
 $url = $env_vars["SUPABASE_URL"]
 $key = $env_vars["SUPABASE_ANON_KEY"]
 $vapidKey = $env_vars["VAPID_PUBLIC_KEY"]
+$backendApiBaseUrl = $env_vars["BACKEND_API_BASE_URL"]
+if (-not $backendApiBaseUrl) {
+    $backendApiBaseUrl = "http://localhost:3000/api"
+}
 
 if (-not $url -or -not $key) {
     Write-Error "SUPABASE_URL o SUPABASE_ANON_KEY vacíos en .env"
@@ -38,7 +50,8 @@ if (-not $url -or -not $key) {
 $flutterArgs = @(
     "run",
     "--dart-define=SUPABASE_URL=$url",
-    "--dart-define=SUPABASE_ANON_KEY=$key"
+    "--dart-define=SUPABASE_ANON_KEY=$key",
+    "--dart-define=BACKEND_API_BASE_URL=$backendApiBaseUrl"
 )
 
 if ($vapidKey) {
@@ -50,5 +63,5 @@ if ($Device) {
     $flutterArgs += $Device
 }
 
-Write-Host "Arrancando Educa360 conectado a $url" -ForegroundColor Green
+Write-Host "Arrancando Educa360 conectado a $url y backend $backendApiBaseUrl" -ForegroundColor Green
 & flutter @flutterArgs

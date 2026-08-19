@@ -15,7 +15,9 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
+import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
+import '../../providers.dart';
 import '../widgets/greeting_header.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
@@ -25,6 +27,9 @@ class AdminDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     final user = ref.watch(authControllerProvider).user!;
+    // Datos reales del backend (fallback a demo mientras carga o sin backend).
+    final data = ref.watch(adminDashboardProvider).valueOrNull ??
+        AdminDashboardData.mock();
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       onRefresh: () async =>
@@ -74,7 +79,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             onChatTap: () => context.push(Routes.chat),
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ??
-                    AdminMockData.systemAlerts,
+                    data.systemAlerts,
             chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
@@ -110,7 +115,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                     Expanded(
                       child: _OverviewMini(
                         value:
-                            '${AdminMockData.attendancePct.toStringAsFixed(1)}%',
+                            '${data.attendancePct.toStringAsFixed(1)}%',
                         label: 'Asistencia hoy',
                       ),
                     ),
@@ -118,7 +123,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                     Expanded(
                       child: _OverviewMini(
                         value:
-                            AdminMockData.institutionalAvg.toStringAsFixed(1),
+                            data.institutionalAvg.toStringAsFixed(1),
                         label: 'Promedio institucional',
                       ),
                     ),
@@ -182,7 +187,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
-          for (final a in AdminMockData.announcements)
+          for (final a in data.announcements)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: _AnnouncementRow(item: a),
@@ -209,9 +214,9 @@ class AdminDashboardScreen extends ConsumerWidget {
           EduCard(
             child: Column(
               children: [
-                for (final t in AdminMockData.teachers) ...[
+                for (final t in data.teachers) ...[
                   _TeacherRow(item: t),
-                  if (t != AdminMockData.teachers.last)
+                  if (t != data.teachers.last)
                     Divider(
                       color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
                       height: 14,
@@ -227,7 +232,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _AdminStatCard(
-                  value: '${AdminMockData.totalStudents}',
+                  value: '${data.totalStudents}',
                   label: 'Total estudiantes',
                   icon: Icons.people_outline,
                   color: palette.info,
@@ -236,7 +241,7 @@ class AdminDashboardScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _AdminStatCard(
-                  value: '${AdminMockData.activeTeachers}',
+                  value: '${data.activeTeachers}',
                   label: 'Docentes activos',
                   icon: Icons.badge_outlined,
                   color: palette.success,
@@ -249,7 +254,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _AdminStatCard(
-                  value: '${AdminMockData.upcomingEvents}',
+                  value: '${data.upcomingEvents}',
                   label: 'Eventos próximos',
                   icon: Icons.event_available_outlined,
                   color: palette.warning,
@@ -258,7 +263,7 @@ class AdminDashboardScreen extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _AdminStatCard(
-                  value: '${AdminMockData.systemAlerts}',
+                  value: '${data.systemAlerts}',
                   label: 'Alertas sistema',
                   icon: Icons.warning_amber_outlined,
                   color: palette.danger,

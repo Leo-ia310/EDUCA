@@ -1,35 +1,27 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
+import '../../../../core/network/backend_api_client.dart';
 import '../models/local_attendance.dart';
 import '../models/local_class_session.dart';
 
 /// Acceso a las tablas `class_sessions` y `attendances` de Supabase. Diseñado
 /// para idempotencia: si el `uuid` ya existe en el server, hace UPDATE.
 class AttendanceRemoteDataSource {
-  AttendanceRemoteDataSource(this._client);
-  final SupabaseClient _client;
+  AttendanceRemoteDataSource(this._api);
+  final BackendApiClient _api;
 
   /// Sube (insert/update) una sesión. Devuelve el id del server.
   Future<int> upsertClassSession({
     required LocalClassSession session,
     required int institutionId,
   }) async {
-    final payload = {
-      'institution_id': institutionId,
-      'class_id': session.classId,
-      'group_id': null, // se completaría si el cliente conoce el group_id
-      'date': DateTime.fromMillisecondsSinceEpoch(session.dateMs)
-          .toIso8601String()
-          .substring(0, 10),
-      'recorded_by': session.teacherId,
-      'synced': true,
-    };
-    final row = await _client
-        .from('class_sessions')
-        .upsert(payload)
-        .select('id')
-        .single();
-    return row['id'] as int;
+    final response = await _api.call('attendance.upsertClassSession', {
+      'uuid': session.uuid,
+      'classId': session.classId,
+      'dateMs': session.dateMs,
+      'teacherId': session.teacherId,
+      'createdAtMs': session.createdAtMs,
+    });
+    final data = Map<String, dynamic>.from(response as Map);
+    return (data['id'] as num).toInt();
   }
 
   /// Sube (insert/update) un registro de asistencia identificado por uuid.
@@ -38,23 +30,16 @@ class AttendanceRemoteDataSource {
     required int institutionId,
     int? classSessionServerId,
   }) async {
-    final payload = {
+    final response = await _api.call('attendance.upsertAttendance', {
       'uuid': record.uuid,
-      'institution_id': institutionId,
-      'class_session_id': classSessionServerId ?? record.classSessionId,
-      'student_id': record.studentId,
-      'attendance_status_id': record.statusId,
-      'recorded_at':
-          DateTime.fromMillisecondsSinceEpoch(record.recordedAtMs)
-              .toIso8601String(),
+      'classId': record.classId,
+      'classSessionId': classSessionServerId ?? record.classSessionId,
+      'studentId': record.studentId,
+      'statusId': record.statusId,
+      'recordedAtMs': record.recordedAtMs,
       'notes': record.notes,
-      'source': 'app',
-    };
-    final row = await _client
-        .from('attendances')
-        .upsert(payload, onConflict: 'uuid')
-        .select('id')
-        .single();
-    return row['id'] as int;
+    });
+    final data = Map<String, dynamic>.from(response as Map);
+    return (data['id'] as num).toInt();
   }
 }

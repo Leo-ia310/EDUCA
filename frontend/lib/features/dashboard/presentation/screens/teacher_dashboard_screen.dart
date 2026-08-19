@@ -15,7 +15,9 @@ import '../../../attendance/presentation/widgets/sync_status_badge.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
+import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
+import '../../providers.dart';
 import '../widgets/greeting_header.dart';
 
 class TeacherDashboardScreen extends ConsumerStatefulWidget {
@@ -28,14 +30,18 @@ class TeacherDashboardScreen extends ConsumerStatefulWidget {
 
 class _TeacherDashboardScreenState
     extends ConsumerState<TeacherDashboardScreen> {
-  late Map<String, bool> _attendance = {
-    for (final s in TeacherMockData.quickAttendance) s.name: s.present,
-  };
+  final Map<String, bool> _attendance = {};
 
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user!;
     final palette = context.palette;
+    // Datos reales del backend (fallback a demo mientras carga o sin backend).
+    final data = ref.watch(teacherDashboardProvider).valueOrNull ??
+        TeacherDashboardData.mock();
+    for (final s in data.quickAttendance) {
+      _attendance.putIfAbsent(s.name, () => s.present);
+    }
 
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -53,7 +59,7 @@ class _TeacherDashboardScreenState
             QuickActionEntry(
               icon: Icons.add_task_rounded,
               label: 'Asignar nueva tarea',
-              route: '${Routes.assignmentNew}?classId=101',
+              route: Routes.assignmentNew,
             ),
             QuickActionEntry(
               icon: Icons.how_to_reg_outlined,
@@ -88,7 +94,7 @@ class _TeacherDashboardScreenState
           GreetingBanner(
             title: '¡Buen día, ${user.displayFirstName}!',
             subtitle:
-                'Tienes ${TeacherMockData.pendingClasses} clases hoy y ${TeacherMockData.pendingGrading} tareas por calificar.',
+                'Tienes ${data.pendingClasses} clases hoy y ${data.pendingGrading} tareas por calificar.',
           ),
           const SizedBox(height: 24),
 
@@ -109,14 +115,14 @@ class _TeacherDashboardScreenState
           EduCard(
             child: Column(
               children: [
-                for (final line in TeacherMockData.quickAttendance) ...[
+                for (final line in data.quickAttendance) ...[
                   _AttendanceTile(
                     name: line.name,
                     present: _attendance[line.name] ?? line.present,
                     onChanged: (v) =>
                         setState(() => _attendance[line.name] = v),
                   ),
-                  if (line != TeacherMockData.quickAttendance.last)
+                  if (line != data.quickAttendance.last)
                     Divider(
                       color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
                       height: 12,
@@ -172,10 +178,10 @@ class _TeacherDashboardScreenState
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
-              itemCount: TeacherMockData.myClasses.length + 1,
+              itemCount: data.myClasses.length + 1,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (context, i) {
-                if (i >= TeacherMockData.myClasses.length) {
+                if (i >= data.myClasses.length) {
                   return Container(
                     width: 160,
                     padding: const EdgeInsets.all(16),
@@ -197,7 +203,7 @@ class _TeacherDashboardScreenState
                     ),
                   );
                 }
-                final c = TeacherMockData.myClasses[i];
+                final c = data.myClasses[i];
                 return Container(
                   width: 220,
                   padding: const EdgeInsets.all(18),
@@ -247,7 +253,7 @@ class _TeacherDashboardScreenState
               ),
               FilledButton.tonalIcon(
                 onPressed: () =>
-                    context.push('${Routes.assignmentNew}?classId=101'),
+                    context.push(Routes.assignmentNew),
                 icon: const Icon(Icons.add),
                 label: const Text('Asignar Nuevo'),
                 style: FilledButton.styleFrom(
@@ -261,7 +267,7 @@ class _TeacherDashboardScreenState
             ],
           ),
           const SizedBox(height: 8),
-          for (final t in TeacherMockData.upcomingAssignments)
+          for (final t in data.upcomingAssignments)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: GestureDetector(
@@ -277,9 +283,9 @@ class _TeacherDashboardScreenState
           EduCard(
             child: Column(
               children: [
-                for (final g in TeacherMockData.recentGrades) ...[
+                for (final g in data.recentGrades) ...[
                   _RecentGradeRow(item: g),
-                  if (g != TeacherMockData.recentGrades.last)
+                  if (g != data.recentGrades.last)
                     Divider(
                       color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
                       height: 18,

@@ -24,6 +24,7 @@ import '../../features/grades/presentation/screens/subject_grades_screen.dart';
 import '../../features/grades/presentation/screens/teacher_gradebook_screen.dart';
 import '../../features/reports/presentation/report_card_screen.dart';
 import '../../features/auth/presentation/auth_controller.dart';
+import '../../features/auth/presentation/identity_providers.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/institution_code_screen.dart';
@@ -441,14 +442,37 @@ class _AssignmentsRoleSplit extends ConsumerWidget {
       case AppRole.teacher:
         return const TeacherAssignmentsScreen();
       case AppRole.student:
-        return const StudentAssignmentsScreen(studentId: 1001);
+        return _StudentAssignmentsResolved(
+          idProvider: currentStudentIdProvider,
+        );
       case AppRole.parent:
-        return const StudentAssignmentsScreen(studentId: 1001);
+        return _StudentAssignmentsResolved(
+          idProvider: parentChildStudentIdProvider,
+        );
       case AppRole.admin:
       case AppRole.coordinator:
       case AppRole.director:
         return const TeacherAssignmentsScreen();
     }
+  }
+}
+
+/// Resuelve el `studentId` real (vía RPC del backend) antes de mostrar el feed
+/// de tareas del estudiante/padre. Evita el `studentId: 1001` hardcodeado.
+class _StudentAssignmentsResolved extends ConsumerWidget {
+  const _StudentAssignmentsResolved({required this.idProvider});
+
+  final FutureProvider<int> idProvider;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref.watch(idProvider).when(
+          data: (id) => StudentAssignmentsScreen(studentId: id),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (e, _) =>
+              Scaffold(body: Center(child: Text('Error: $e'))),
+        );
   }
 }
 

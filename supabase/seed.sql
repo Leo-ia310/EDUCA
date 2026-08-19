@@ -5,7 +5,7 @@
 -- esquema, es data de ejemplo para poder probar el modo CONECTADO end-to-end
 -- (asignaciones, notas, pagos, horario) contra la institución demo EDU360.
 --
--- Requiere haber corrido antes: todas las migraciones + `test_users.sql`
+-- Requiere haber corrido antes: todas las migraciones + `seed_auth_users.sql`
 -- (los 4 usuarios demo student@/teacher@/parent@/admin@educa360.com).
 --
 -- Idempotente: usa check-then-insert (o ON CONFLICT donde la tabla ya tiene
@@ -84,7 +84,7 @@ begin
   select id into v_teacher_user_id from users where institution_id = v_inst_id and email = 'teacher@educa360.com';
   select id into v_parent_user_id from users where institution_id = v_inst_id and email = 'parent@educa360.com';
   if v_student_user_id is null or v_teacher_user_id is null or v_parent_user_id is null then
-    raise exception 'Faltan usuarios demo. Ejecuta backend/test_users.sql primero.';
+    raise exception 'Faltan usuarios demo. Ejecuta supabase/seed_auth_users.sql primero.';
   end if;
 
   select id into v_doc_type_id from catalog_document_types where code = 'CED';

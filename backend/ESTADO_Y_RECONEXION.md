@@ -23,7 +23,7 @@ Ahora **está en línea otra vez** y se verificó lo siguiente:
 1. **Aplicar `0005_fix_chat_rls.sql`** (arregla el chat). Ver abajo.
 2. **Crear usuarios de Auth** con su `raw_app_meta_data`:
    `{ "institution_id": 1, "roles": ["teacher"] }` y su fila en `public.users`
-   (ver `README.md` de esta carpeta y `test_users.sql`).
+   (ver `backend/README.md` y `supabase/seed_auth_users.sql`).
 3. **Sembrar datos operativos** (estudiantes, clases, matrículas, tareas…).
 4. **Terminar los repos de Supabase** que aún tienen `UnimplementedError`
    (`supabase_assignment_repository.dart`, `supabase_chat_repository.dart`).

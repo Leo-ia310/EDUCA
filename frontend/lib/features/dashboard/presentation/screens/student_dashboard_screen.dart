@@ -13,7 +13,8 @@ import '../../../../core/widgets/section_header.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
-import '../../data/mock_dashboard_data.dart';
+import '../../data/dashboard_data.dart';
+import '../../providers.dart';
 import '../widgets/classmates_strip.dart';
 import '../widgets/grades_block.dart';
 import '../widgets/greeting_header.dart';
@@ -28,6 +29,10 @@ class StudentDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user!;
     final palette = context.palette;
+    // Datos reales del backend (fallback a demo mientras carga o sin backend).
+    final data =
+        ref.watch(studentDashboardProvider).valueOrNull ??
+            StudentDashboardData.mock();
 
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -80,7 +85,7 @@ class StudentDashboardScreen extends ConsumerWidget {
           GreetingBanner(
             title: '¡Hola, ${user.displayFirstName}!',
             subtitle:
-                'Tienes ${StudentMockData.pendingTasks} tareas pendientes para hoy.',
+                'Tienes ${data.pendingTasks} tareas pendientes para hoy.',
           ),
           const SizedBox(height: 24),
 
@@ -110,13 +115,13 @@ class StudentDashboardScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Column(
               children: [
-                for (var i = 0; i < StudentMockData.todaySchedule.length; i++) ...[
+                for (var i = 0; i < data.todaySchedule.length; i++) ...[
                   if (i > 0)
                     Divider(
                       color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
                       height: 1,
                     ),
-                  ScheduleItemRow(slot: StudentMockData.todaySchedule[i]),
+                  ScheduleItemRow(slot: data.todaySchedule[i]),
                 ],
               ],
             ),
@@ -127,8 +132,8 @@ class StudentDashboardScreen extends ConsumerWidget {
           const SectionHeader(title: 'Compañeros'),
           const SizedBox(height: 12),
           ClassmatesStrip(
-            names: StudentMockData.classmates,
-            extraCount: StudentMockData.classmatesExtra,
+            names: data.classmates,
+            extraCount: data.classmatesExtra,
           ),
           const SizedBox(height: 24),
 
@@ -137,11 +142,11 @@ class StudentDashboardScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              for (var i = 0; i < StudentMockData.subjects.length; i++) ...[
+              for (var i = 0; i < data.subjects.length; i++) ...[
                 if (i > 0) const SizedBox(width: 12),
                 Expanded(
                     child:
-                        SubjectProgressCard(subject: StudentMockData.subjects[i])),
+                        SubjectProgressCard(subject: data.subjects[i])),
               ],
             ],
           ),
@@ -164,7 +169,7 @@ class StudentDashboardScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
-          for (final task in StudentMockData.tasks)
+          for (final task in data.tasks)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: GestureDetector(
@@ -178,8 +183,8 @@ class StudentDashboardScreen extends ConsumerWidget {
           GestureDetector(
             onTap: () => context.push(Routes.grades),
             child: GradesBlock(
-              grades: StudentMockData.grades,
-              average: StudentMockData.averageScore,
+              grades: data.grades,
+              average: data.averageScore,
               onDownload: () => context.push(Routes.reports),
             ),
           ),

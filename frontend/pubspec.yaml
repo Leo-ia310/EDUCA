@@ -47,7 +47,7 @@ dependencies:
   # Notificaciones push
   # Educa360 NO usa Firebase. El push real es Web Push estándar (VAPID) vía
   # `WebPushService` (solo Flutter Web) + la Edge Function
-  # `backend/functions/send-push/`. Ver `notifications/data/web_push_service.dart`.
+  # `supabase/functions/send-push/`. Ver `notifications/data/web_push_service.dart`.
   web: ^1.1.0
   flutter_local_notifications: ^17.1.2
 

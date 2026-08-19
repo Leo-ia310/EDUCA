@@ -48,6 +48,16 @@ pubspec.lock
 .env
 .env.local
 
+# Herramientas locales (browser-act CLI / skills)
+.agents/
+.claude/skills/
+skills-lock.json
+
+# Dependencias de scripts de backend
+backend/node_modules/
+backend/dist/
+backend/scripts/node_modules/
+
 # OS
 .DS_Store
 Thumbs.db

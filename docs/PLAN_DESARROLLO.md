@@ -4,21 +4,22 @@ Objetivo: dejar la app **completa y sólida**. Estrategia acordada: **pulir y
 completar todo en modo demo primero**, y conectar el backend real después.
 
 - **Frontend — Finn:** UI, navegación, tema, estado de presentación, mocks.
-- **Backend — compañero/a (perfil experto):** Supabase (BD, RLS, seed, Auth,
-  Storage), repos reales, push. Ver división en [`OWNERSHIP.md`](OWNERSHIP.md).
+- **Backend — compañero/a (perfil experto):** API Node TypeScript, Supabase
+  (BD, RLS, seed, Auth, Storage), repos reales, push. Ver división en
+  [`OWNERSHIP.md`](OWNERSHIP.md).
 
 ### Contexto del proyecto
 - **Plataformas objetivo:** Android, iOS y Web (las tres).
   - ⚠️ **iOS requiere una Mac** (Xcode) para compilar/firmar/publicar.
 - **Push sin Firebase:** decisión 2026-08 — **no se usa Firebase/FCM**. El
   push real se implementa con **Web Push estándar (VAPID)** vía una Supabase
-  Edge Function (`backend/functions/send-push/`). Cubre Flutter Web de forma
+  Edge Function (`supabase/functions/send-push/`). Cubre Flutter Web de forma
   nativa; **no cubre push nativo en Android/iOS** (requeriría FCM/APNs u otro
   proveedor tipo OneSignal) — limitación conocida, no deuda oculta.
 - Perfil del equipo: backend experto → guías de backend a alto nivel.
-- **Estructura física:** desde la rama `Backend-MK` el repo separa
-  `frontend/` (app Flutter completa) y `backend/` (SQL, RLS, seeds, Edge
-  Functions) como carpetas de primer nivel. Ver detalle de rutas en
+- **Estructura física:** el repo separa `frontend/` (app Flutter completa),
+  `backend/` (API Node TypeScript + scripts) y `supabase/` (SQL, RLS, seeds,
+  Edge Functions) como carpetas de primer nivel. Ver detalle de rutas en
   [`OWNERSHIP.md`](OWNERSHIP.md).
 
 ---
@@ -70,12 +71,12 @@ la UI (misma interfaz `domain/`).
 - [ ] Aplicar `0005_fix_chat_rls.sql` (arregla recursión RLS del chat, error 42P17).
 - [ ] Provisionar usuarios de **Auth** con `raw_app_meta_data`
       `{ "institution_id": 1, "roles": [...] }` + fila en `public.users` +
-      `user_roles` (ver `backend/README.md` y `test_users.sql`).
+      `user_roles` (ver `backend/README.md` y `supabase/seed_auth_users.sql`).
 - [ ] Sembrar datos operativos (estudiantes, clases, matrículas, tareas, notas).
 - [ ] Crear bucket `files` (privado) + policy de Storage por institución.
 - [ ] Completar repos Supabase (ver §4, columna Backend).
 - [ ] Push real (Web Push/VAPID, sin Firebase): `web_push_service.dart` +
-      Edge Function `backend/functions/send-push/` (ver detalle abajo).
+      Edge Function `supabase/functions/send-push/` (ver detalle abajo).
       Cubre Flutter Web; Android/iOS nativo queda pendiente de un proveedor
       compatible (fuera de alcance por ahora).
 

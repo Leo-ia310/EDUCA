@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
 import '../auth/presentation/auth_controller.dart';
 import 'data/mock_grades_repository.dart';
@@ -13,11 +14,13 @@ import 'domain/grades_repository.dart';
 final gradesRepositoryProvider = Provider<GradesRepository>((ref) {
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
-  if (client == null || auth.institution == null) {
+  final api = ref.watch(backendApiClientProvider);
+  if (client == null || api == null || auth.institution == null) {
     return MockGradesRepository();
   }
   return SupabaseGradesRepository(
     client: client,
+    api: api,
     institutionId: auth.institution!.id,
   );
 });
@@ -26,9 +29,8 @@ final gradesCalculatorProvider =
     Provider<GradesCalculator>((ref) => const GradesCalculator());
 
 /// Escalas configuradas por el colegio.
-final scalesProvider =
-    FutureProvider<List<GradingScale>>((ref) async =>
-        ref.watch(gradesRepositoryProvider).scales());
+final scalesProvider = FutureProvider<List<GradingScale>>(
+    (ref) async => ref.watch(gradesRepositoryProvider).scales());
 
 final defaultScaleProvider = FutureProvider<GradingScale>(
   (ref) async => ref.watch(gradesRepositoryProvider).defaultScale(),

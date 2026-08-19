@@ -1,17 +1,21 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/network/backend_api_client.dart';
 import '../domain/entities.dart';
 import '../domain/events_repository.dart';
 
 /// Implementación real contra Supabase. Tabla usada (ver
-/// `backend/migrations/0001_init_core.sql`): `calendar_events`.
+/// `supabase/migrations/0001_init_core.sql`): `calendar_events`.
 class SupabaseEventsRepository implements EventsRepository {
   SupabaseEventsRepository({
     required SupabaseClient client,
+    required BackendApiClient api,
     required this.institutionId,
-  }) : _c = client;
+  })  : _c = client,
+        _api = api;
 
   final SupabaseClient _c;
+  final BackendApiClient _api;
   final int institutionId;
 
   static const _select = 'id, title, description, start_at, audience';
@@ -33,26 +37,30 @@ class SupabaseEventsRepository implements EventsRepository {
     required DateTime date,
     required String audience,
   }) async {
-    final row = await _c
-        .from('calendar_events')
-        .insert({
-          'institution_id': institutionId,
-          'title': title,
-          'description': description,
-          'start_at': date.toIso8601String(),
-          'audience': audience,
-          'type': 'event',
-        })
-        .select(_select)
-        .single();
-    return _fromRow(row);
+    final response = await _api.call('events.create', {
+      'title': title,
+      'description': description,
+      'date': date.toIso8601String(),
+      'audience': audience,
+    });
+    final data = Map<String, dynamic>.from(response as Map);
+    return _fromApi(Map<String, dynamic>.from(data['event'] as Map));
   }
 
   SchoolEvent _fromRow(Map<String, dynamic> row) => SchoolEvent(
         id: row['id'].toString(),
         title: row['title'] as String? ?? '',
         description: row['description'] as String? ?? '',
-        date: DateTime.tryParse(row['start_at'] as String? ?? '') ?? DateTime.now(),
+        date: DateTime.tryParse(row['start_at'] as String? ?? '') ??
+            DateTime.now(),
+        audience: row['audience'] as String? ?? 'Toda la institución',
+      );
+
+  SchoolEvent _fromApi(Map<String, dynamic> row) => SchoolEvent(
+        id: row['id'].toString(),
+        title: row['title'] as String? ?? '',
+        description: row['description'] as String? ?? '',
+        date: DateTime.tryParse(row['date'] as String? ?? '') ?? DateTime.now(),
         audience: row['audience'] as String? ?? 'Toda la institución',
       );
 }

@@ -32,7 +32,7 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
       ),
       fab: EducaFab(
         onPressed: () =>
-            context.push('${Routes.assignments}/new?classId=101'),
+            context.push('${Routes.assignments}/new'),
       ),
       child: SafeArea(
         bottom: false,
@@ -53,7 +53,7 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
                           'Crea tu primera tarea o examen con el botón flotante.',
                       actionLabel: 'Crear tarea',
                       onAction: () => context.push(
-                        '${Routes.assignments}/new?classId=101',
+                        '${Routes.assignments}/new',
                       ),
                     );
                   }

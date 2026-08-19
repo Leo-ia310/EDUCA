@@ -11,6 +11,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../data/events_store.dart';
+import '../../providers.dart';
 
 /// Lista de anuncios/eventos. El admin puede crear nuevos con el FAB.
 class AnnouncementsScreen extends ConsumerWidget {
@@ -18,7 +19,13 @@ class AnnouncementsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final events = ref.watch(eventsStoreProvider);
+    // En modo conectado muestra los eventos reales (`calendar_events`); en
+    // demo o mientras carga, cae al store en memoria.
+    final List<SchoolEvent> events =
+        ref.watch(upcomingEventsViewProvider).maybeWhen(
+      data: (list) => list,
+      orElse: () => ref.watch(eventsStoreProvider),
+    );
     final role = ref.watch(authControllerProvider).user?.activeRole;
     final isAdmin = role == AppRole.admin ||
         role == AppRole.coordinator ||

@@ -5,19 +5,25 @@ por `WebPushService` (cliente Flutter Web). Educa360 no usa Firebase/FCM.
 
 ## Estado
 
-**Código listo, sin desplegar.** Desplegar requiere la CLI de Supabase
-autenticada (`supabase login`), que no está disponible en esta sesión —
-credenciales de acceso a la API de administración de Supabase, distintas de
-la contraseña de la base de datos.
+**Desplegada** (2026-08-18) en el proyecto `qwfkmijewogksfizdski`, con los
+secrets `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` configurados
+(par VAPID regenerado en esa fecha; `frontend/.env` actualizado con la nueva
+`VAPID_PUBLIC_KEY` para que coincida).
 
-## Para desplegar (pendiente)
+## Para redesplegar tras cambios de código
+
+El código fuente ya vive en la ruta estándar `supabase/functions/send-push`.
+Para redesplegar:
 
 ```bash
-supabase functions deploy send-push
+supabase link --project-ref qwfkmijewogksfizdski   # si no está linkeado
+supabase functions deploy send-push --use-api       # --use-api evita requerir Docker
+```
 
-# Secrets — VAPID_PUBLIC_KEY debe coincidir con el que usa el cliente
-# Flutter (--dart-define=VAPID_PUBLIC_KEY=..., ver frontend/.env.example).
-# Regenerar el par con: npx web-push generate-vapid-keys
+Si cambian las claves VAPID (regenerar con `npx web-push generate-vapid-keys`),
+actualiza también `VAPID_PUBLIC_KEY` en `frontend/.env`:
+
+```bash
 supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:tu-correo@dominio.com
 ```
 

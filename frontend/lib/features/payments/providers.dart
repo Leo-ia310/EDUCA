@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
 import '../auth/presentation/auth_controller.dart';
 import 'data/demo_payment_gateway.dart';
@@ -14,11 +15,13 @@ import 'domain/payments_repository.dart';
 final paymentsRepositoryProvider = Provider<PaymentsRepository>((ref) {
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
-  if (client == null || auth.institution == null) {
+  final api = ref.watch(backendApiClientProvider);
+  if (client == null || api == null || auth.institution == null) {
     return MockPaymentsRepository();
   }
   return SupabasePaymentsRepository(
     client: client,
+    api: api,
     institutionId: auth.institution!.id,
   );
 });
@@ -55,6 +58,7 @@ final allBalancesProvider =
   return ref.watch(paymentsRepositoryProvider).allBalances();
 });
 
-final dunningMetricsProvider = FutureProvider.autoDispose<DunningMetrics>((ref) {
+final dunningMetricsProvider =
+    FutureProvider.autoDispose<DunningMetrics>((ref) {
   return ref.watch(paymentsRepositoryProvider).dunningMetrics();
 });

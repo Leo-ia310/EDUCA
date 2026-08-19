@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
 import '../auth/presentation/auth_controller.dart';
 import 'data/mock_chat_repository.dart';
@@ -13,6 +14,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   final auth = ref.watch(authControllerProvider);
   final user = auth.user;
   final client = ref.watch(supabaseClientProvider);
+  final api = ref.watch(backendApiClientProvider);
   if (user == null) {
     return MockChatRepository(
       meId: 'demo',
@@ -20,7 +22,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
       myRoleCode: 'student',
     );
   }
-  if (client == null || auth.institution == null) {
+  if (client == null || api == null || auth.institution == null) {
     return MockChatRepository(
       meId: user.id,
       myName: user.fullName,
@@ -29,6 +31,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   }
   return SupabaseChatRepository(
     client: client,
+    api: api,
     meUserId: user.id,
     myName: user.fullName,
     institutionId: auth.institution!.id,
@@ -36,8 +39,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 });
 
 /// Lista viva de conversaciones del usuario actual.
-final conversationsStreamProvider =
-    StreamProvider<List<Conversation>>((ref) {
+final conversationsStreamProvider = StreamProvider<List<Conversation>>((ref) {
   return ref.watch(chatRepositoryProvider).watchConversations();
 });
 

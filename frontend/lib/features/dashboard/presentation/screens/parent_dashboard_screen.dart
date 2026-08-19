@@ -14,7 +14,9 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
+import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
+import '../../providers.dart';
 import '../widgets/greeting_header.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
@@ -33,7 +35,14 @@ class _ParentDashboardScreenState
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user!;
     final palette = context.palette;
-    final child = ParentMockData.children[_selectedChild];
+    // Datos reales del backend (fallback a demo mientras carga o sin backend).
+    final data = ref.watch(parentDashboardProvider).valueOrNull ??
+        ParentDashboardData.mock();
+    final childIndex =
+        _selectedChild < data.children.length ? _selectedChild : 0;
+    final child = data.children.isEmpty
+        ? const ChildBrief('—')
+        : data.children[childIndex];
 
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -60,12 +69,12 @@ class _ParentDashboardScreenState
             QuickActionEntry(
               icon: Icons.credit_card_rounded,
               label: 'Pagos',
-              route: '${Routes.payments}?studentId=1001',
+              route: '${Routes.payments}',
             ),
             QuickActionEntry(
               icon: Icons.picture_as_pdf_outlined,
               label: 'Boletín',
-              route: '${Routes.reports}?studentId=1001',
+              route: '${Routes.reports}',
             ),
             QuickActionEntry(
               icon: Icons.chat_bubble_outline,
@@ -84,14 +93,14 @@ class _ParentDashboardScreenState
             onChatTap: () => context.push(Routes.chat),
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ??
-                    ParentMockData.newNotices,
+                    data.newNotices,
             chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
           GreetingBanner(
             title: '¡Hola, ${user.displayFirstName}!',
             subtitle:
-                'Tienes ${ParentMockData.newNotices} avisos nuevos y ${ParentMockData.monthEvents} eventos este mes.',
+                'Tienes ${data.newNotices} avisos nuevos y ${data.monthEvents} eventos este mes.',
           ),
           const SizedBox(height: 24),
 
@@ -103,10 +112,10 @@ class _ParentDashboardScreenState
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
-              itemCount: ParentMockData.children.length + 1,
+              itemCount: data.children.length + 1,
               separatorBuilder: (_, __) => const SizedBox(width: 16),
               itemBuilder: (context, i) {
-                if (i >= ParentMockData.children.length) {
+                if (i >= data.children.length) {
                   return Column(
                     children: [
                       Container(
@@ -129,7 +138,7 @@ class _ParentDashboardScreenState
                     ],
                   );
                 }
-                final c = ParentMockData.children[i];
+                final c = data.children[i];
                 final selected = i == _selectedChild;
                 return GestureDetector(
                   onTap: () => setState(() => _selectedChild = i),
@@ -181,7 +190,7 @@ class _ParentDashboardScreenState
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '${ParentMockData.attendancePercent.toStringAsFixed(0)}%',
+                        '${data.attendancePercent.toStringAsFixed(0)}%',
                         style: context.textTheme.displaySmall?.copyWith(
                           color: const Color(0xFF1E2218),
                           fontWeight: FontWeight.w800,
@@ -219,7 +228,7 @@ class _ParentDashboardScreenState
                   icon: Icons.calendar_month_rounded,
                   iconBg: palette.info.withValues(alpha: 0.15),
                   iconColor: palette.info,
-                  value: '${ParentMockData.monthEvents}',
+                  value: '${data.monthEvents}',
                   label: 'Eventos este mes',
                 ),
               ),
@@ -229,7 +238,7 @@ class _ParentDashboardScreenState
                   icon: Icons.mark_email_unread_rounded,
                   iconBg: palette.warning.withValues(alpha: 0.15),
                   iconColor: palette.warning,
-                  value: '${ParentMockData.newNotices}',
+                  value: '${data.newNotices}',
                   label: 'Avisos nuevos',
                 ),
               ),
@@ -253,7 +262,7 @@ class _ParentDashboardScreenState
             ],
           ),
           const SizedBox(height: 8),
-          for (final s in ParentMockData.subjects)
+          for (final s in data.subjects)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: _SubjectTeacherRow(item: s),
@@ -276,7 +285,7 @@ class _ParentDashboardScreenState
             ],
           ),
           const SizedBox(height: 8),
-          for (final a in ParentMockData.recentActivity)
+          for (final a in data.recentActivity)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: GestureDetector(
@@ -291,7 +300,7 @@ class _ParentDashboardScreenState
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => context.push(
-                    '${Routes.reports}?studentId=1001',
+                    '${Routes.reports}',
                   ),
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: const Text('Boletín'),
@@ -301,7 +310,7 @@ class _ParentDashboardScreenState
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () =>
-                      context.push('${Routes.payments}?studentId=1001'),
+                      context.push('${Routes.payments}'),
                   icon: const Icon(Icons.credit_card_rounded),
                   label: const Text('Pagos'),
                 ),

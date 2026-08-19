@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/network/supabase_client.dart';
+import '../../core/network/backend_api_client.dart';
 import '../../core/services/hive_init.dart';
 import '../auth/presentation/auth_controller.dart';
 import 'data/datasources/attendance_local_datasource.dart';
@@ -19,9 +19,9 @@ final attendanceLocalDataSourceProvider =
 
 final attendanceRemoteDataSourceProvider =
     Provider<AttendanceRemoteDataSource?>((ref) {
-  final client = ref.watch(supabaseClientProvider);
-  if (client == null) return null;
-  return AttendanceRemoteDataSource(client);
+  final api = ref.watch(backendApiClientProvider);
+  if (api == null) return null;
+  return AttendanceRemoteDataSource(api);
 });
 
 final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
