@@ -57,4 +57,13 @@ abstract class DeveloperRepository {
 
   /// `DELETE /api/developer/modules/:id` — archiva (soft-delete).
   Future<void> archiveModule(int id);
+
+  /// `GET /api/developer/institutions` — instituciones (solo lectura).
+  Future<List<DevInstitution>> institutions();
+
+  /// `GET /api/developer/users` — usuarios con sus roles (solo lectura).
+  Future<List<DevUser>> users();
+
+  /// `GET /api/developer/audit-events` — actividad técnica (solo lectura).
+  Future<List<DevAuditEvent>> auditEvents();
 }

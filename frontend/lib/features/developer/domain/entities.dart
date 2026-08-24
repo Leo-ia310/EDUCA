@@ -327,6 +327,87 @@ class DevModule {
       );
 }
 
+/// Institución (`GET /api/developer/institutions`, solo lectura).
+class DevInstitution {
+  const DevInstitution({
+    required this.id,
+    required this.code,
+    required this.name,
+    this.commercialName,
+    this.subdomain,
+    this.email,
+    this.active = true,
+    this.timezone,
+    this.createdAt,
+  });
+
+  final int id;
+  final String code;
+  final String name;
+  final String? commercialName;
+  final String? subdomain;
+  final String? email;
+  final bool active;
+  final String? timezone;
+  final DateTime? createdAt;
+
+  factory DevInstitution.fromMap(Map<String, dynamic> m) => DevInstitution(
+        id: devInt(m['id']),
+        code: devStr(m['code']),
+        name: devStr(m['name'], 'Institución'),
+        commercialName: m['commercial_name'] as String?,
+        subdomain: m['subdomain'] as String?,
+        email: m['email'] as String?,
+        active: devBool(m['active'], true),
+        timezone: m['timezone'] as String?,
+        createdAt: devDate(m['created_at']),
+      );
+}
+
+/// Usuario (`GET /api/developer/users`, solo lectura).
+class DevUser {
+  const DevUser({
+    required this.id,
+    this.email,
+    this.fullName,
+    this.active = true,
+    this.roles = const [],
+    this.lastSignIn,
+    this.createdAt,
+  });
+
+  final String id;
+  final String? email;
+  final String? fullName;
+  final bool active;
+
+  /// Nombres de los roles (de `user_roles(roles(code,name))`).
+  final List<String> roles;
+  final DateTime? lastSignIn;
+  final DateTime? createdAt;
+
+  factory DevUser.fromMap(Map<String, dynamic> m) {
+    final userRoles = (m['user_roles'] as List?) ?? const [];
+    final roles = <String>[];
+    for (final ur in userRoles) {
+      final role = (ur as Map?)?['roles'];
+      if (role is Map) {
+        final label = role['name'] ?? role['code'];
+        if (label != null) roles.add(label.toString());
+      }
+    }
+    return DevUser(
+      id: devStr(m['id']),
+      email: m['email'] as String?,
+      fullName: m['full_name'] as String?,
+      active: devBool(m['active'], true),
+      roles: roles,
+      lastSignIn: devDate(m['last_sign_in']),
+      createdAt: devDate(m['created_at']),
+    );
+  }
+}
+
 /// Resumen operativo (`GET /api/developer/summary`).
 class DevSummary {
   const DevSummary({

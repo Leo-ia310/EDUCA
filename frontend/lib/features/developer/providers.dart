@@ -51,3 +51,20 @@ final developerSystemChecksProvider =
 final developerModulesProvider = FutureProvider<List<DevModule>>((ref) {
   return ref.watch(developerRepositoryProvider).modules();
 });
+
+/// `GET /api/developer/institutions` — instituciones (solo lectura).
+final developerInstitutionsProvider =
+    FutureProvider<List<DevInstitution>>((ref) {
+  return ref.watch(developerRepositoryProvider).institutions();
+});
+
+/// `GET /api/developer/users` — usuarios con roles (solo lectura).
+final developerUsersProvider = FutureProvider<List<DevUser>>((ref) {
+  return ref.watch(developerRepositoryProvider).users();
+});
+
+/// `GET /api/developer/audit-events` — actividad técnica (solo lectura).
+final developerAuditEventsProvider =
+    FutureProvider<List<DevAuditEvent>>((ref) {
+  return ref.watch(developerRepositoryProvider).auditEvents();
+});

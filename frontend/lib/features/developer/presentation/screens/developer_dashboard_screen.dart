@@ -315,9 +315,12 @@ class _AreasGrid extends StatelessWidget {
           route: Routes.developerSystemChecks,),
       _Area('modules', 'Módulos', Icons.widgets_outlined,
           route: Routes.developerModules,),
-      _Area('institutions', 'Instituciones', Icons.apartment_rounded),
-      _Area('users', 'Usuarios', Icons.people_alt_outlined),
-      _Area('audit', 'Auditoría', Icons.receipt_long_outlined),
+      _Area('institutions', 'Instituciones', Icons.apartment_rounded,
+          route: Routes.developerInstitutions,),
+      _Area('users', 'Usuarios', Icons.people_alt_outlined,
+          route: Routes.developerUsers,),
+      _Area('audit', 'Auditoría', Icons.receipt_long_outlined,
+          route: Routes.developerAudit,),
     ];
     return Column(
       children: [

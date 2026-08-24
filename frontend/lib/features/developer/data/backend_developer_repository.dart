@@ -232,4 +232,34 @@ class BackendDeveloperRepository implements DeveloperRepository {
       _dio.delete('$_base/developer/modules/$id', options: _authOptions),
     );
   }
+
+  @override
+  Future<List<DevInstitution>> institutions() async {
+    final data = await _unwrap(
+      _dio.get('$_base/developer/institutions', options: _authOptions),
+    );
+    return ((data as List?) ?? const [])
+        .map((e) => DevInstitution.fromMap(devMap(e)))
+        .toList();
+  }
+
+  @override
+  Future<List<DevUser>> users() async {
+    final data = await _unwrap(
+      _dio.get('$_base/developer/users', options: _authOptions),
+    );
+    return ((data as List?) ?? const [])
+        .map((e) => DevUser.fromMap(devMap(e)))
+        .toList();
+  }
+
+  @override
+  Future<List<DevAuditEvent>> auditEvents() async {
+    final data = await _unwrap(
+      _dio.get('$_base/developer/audit-events', options: _authOptions),
+    );
+    return ((data as List?) ?? const [])
+        .map((e) => DevAuditEvent.fromMap(devMap(e)))
+        .toList();
+  }
 }

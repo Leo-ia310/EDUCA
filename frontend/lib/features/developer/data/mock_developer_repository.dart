@@ -674,4 +674,118 @@ class MockDeveloperRepository implements DeveloperRepository {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     _modules.removeWhere((m) => m.id == id);
   }
+
+  @override
+  Future<List<DevInstitution>> institutions() async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return [
+      DevInstitution(
+        id: 1,
+        code: 'EDU360',
+        name: 'Colegio Demo Educa360',
+        commercialName: 'Educa360',
+        subdomain: 'edu360',
+        email: 'contacto@edu360.demo',
+        timezone: 'America/Mexico_City',
+        createdAt: DateTime.now().subtract(const Duration(days: 120)),
+      ),
+      DevInstitution(
+        id: 2,
+        code: 'NORTE',
+        name: 'Instituto del Norte',
+        commercialName: 'INorte',
+        subdomain: 'inorte',
+        email: 'hola@inorte.demo',
+        active: false,
+        timezone: 'America/Monterrey',
+        createdAt: DateTime.now().subtract(const Duration(days: 45)),
+      ),
+    ];
+  }
+
+  @override
+  Future<List<DevUser>> users() async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return [
+      DevUser(
+        id: 'u-admin',
+        email: 'admin@demo.com',
+        fullName: 'Ana Administradora',
+        roles: const ['Administrador'],
+        lastSignIn: DateTime.now().subtract(const Duration(hours: 2)),
+        createdAt: DateTime.now().subtract(const Duration(days: 120)),
+      ),
+      DevUser(
+        id: 'u-teacher',
+        email: 'teacher@demo.com',
+        fullName: 'Tomás Docente',
+        roles: const ['Docente'],
+        lastSignIn: DateTime.now().subtract(const Duration(days: 1)),
+        createdAt: DateTime.now().subtract(const Duration(days: 90)),
+      ),
+      DevUser(
+        id: 'u-parent',
+        email: 'parent@demo.com',
+        fullName: 'Paula Tutora',
+        roles: const ['Tutor'],
+        lastSignIn: DateTime.now().subtract(const Duration(days: 5)),
+        createdAt: DateTime.now().subtract(const Duration(days: 80)),
+      ),
+      const DevUser(
+        id: 'u-student',
+        email: 'student@demo.com',
+        fullName: 'Samuel Estudiante',
+        roles: ['Estudiante'],
+        active: false,
+      ),
+    ];
+  }
+
+  @override
+  Future<List<DevAuditEvent>> auditEvents() async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final now = DateTime.now();
+    return [
+      DevAuditEvent(
+        id: 30,
+        actorUserId: 1,
+        entityTable: 'developer_dashboard_modules',
+        entityId: '4',
+        action: 'update',
+        createdAt: now.subtract(const Duration(minutes: 8)),
+      ),
+      DevAuditEvent(
+        id: 29,
+        actorUserId: 1,
+        entityTable: 'developer_feature_flags',
+        entityId: '3',
+        action: 'update',
+        createdAt: now.subtract(const Duration(minutes: 40)),
+      ),
+      DevAuditEvent(
+        id: 28,
+        actorUserId: 1,
+        entityTable: 'developer_system_checks',
+        entityId: '3',
+        action: 'create',
+        createdAt: now.subtract(const Duration(hours: 3)),
+      ),
+      DevAuditEvent(
+        id: 27,
+        actorUserId: 1,
+        entityTable: 'developer_tasks',
+        entityId: '2',
+        action: 'update',
+        createdAt: now.subtract(const Duration(hours: 6)),
+      ),
+      DevAuditEvent(
+        id: 26,
+        actorUserId: 1,
+        entityTable: 'developer_api_registry',
+        entityId: '3',
+        action: 'archive',
+        createdAt: now.subtract(const Duration(days: 1)),
+      ),
+    ];
+  }
 }

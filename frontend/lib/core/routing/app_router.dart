@@ -37,6 +37,9 @@ import '../../features/developer/presentation/screens/developer_tasks_screen.dar
 import '../../features/developer/presentation/screens/developer_feature_flags_screen.dart';
 import '../../features/developer/presentation/screens/developer_system_checks_screen.dart';
 import '../../features/developer/presentation/screens/developer_modules_screen.dart';
+import '../../features/developer/presentation/screens/developer_institutions_screen.dart';
+import '../../features/developer/presentation/screens/developer_users_screen.dart';
+import '../../features/developer/presentation/screens/developer_audit_screen.dart';
 import '../../features/events/presentation/screens/announcements_screen.dart';
 import '../../features/events/presentation/screens/create_event_screen.dart';
 import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
@@ -402,6 +405,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RoleGuard(
           allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
           child: DeveloperModulesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.developerInstitutions,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: DeveloperInstitutionsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.developerUsers,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: DeveloperUsersScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.developerAudit,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: DeveloperAuditScreen(),
         ),
       ),
       GoRoute(
