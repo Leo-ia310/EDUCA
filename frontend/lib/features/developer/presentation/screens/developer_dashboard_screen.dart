@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
@@ -56,12 +57,12 @@ class DeveloperDashboardScreen extends ConsumerWidget {
                 Row(
                   children: [
                     const Expanded(
-                        child: SectionHeader(title: 'Tareas pendientes')),
+                        child: SectionHeader(title: 'Tareas pendientes'),),
                     Text('${data.pendingTasks.length}',
                         style: context.textTheme.labelLarge?.copyWith(
                           color: palette.textMuted,
                           fontWeight: FontWeight.w800,
-                        )),
+                        ),),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -96,7 +97,7 @@ class DeveloperDashboardScreen extends ConsumerWidget {
                                 height: 16,
                                 color: Theme.of(context)
                                     .dividerColor
-                                    .withValues(alpha: 0.5)),
+                                    .withValues(alpha: 0.5),),
                           _AuditTile(event: data.recentAuditEvents[i]),
                         ],
                       ],
@@ -181,7 +182,7 @@ class _Hero extends StatelessWidget {
 
 class _HeroStat extends StatelessWidget {
   const _HeroStat(
-      {required this.value, required this.label, required this.color});
+      {required this.value, required this.label, required this.color,});
   final String value;
   final String label;
   final Color color;
@@ -221,13 +222,13 @@ class _StatsGrid extends StatelessWidget {
     final palette = context.palette;
     final stats = <_Stat>[
       _Stat('Instituciones', '${counts.institutions}', Icons.apartment_rounded,
-          palette.info),
+          palette.info,),
       _Stat('Usuarios', '${counts.users}', Icons.people_alt_outlined,
-          palette.limeDeep),
+          palette.limeDeep,),
       _Stat(
-          'Módulos', '${counts.modules}', Icons.widgets_outlined, palette.info),
+          'Módulos', '${counts.modules}', Icons.widgets_outlined, palette.info,),
       _Stat('Feature flags', '${counts.featureFlags}', Icons.flag_outlined,
-          palette.warning),
+          palette.warning,),
     ];
     return Column(
       children: [
@@ -289,7 +290,7 @@ class _StatCard extends StatelessWidget {
           Text(stat.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: context.textTheme.bodySmall),
+              style: context.textTheme.bodySmall,),
         ],
       ),
     );
@@ -304,7 +305,8 @@ class _AreasGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const areas = <_Area>[
-      _Area('apis', 'APIs por conectar', Icons.api_rounded),
+      _Area('apis', 'APIs por conectar', Icons.api_rounded,
+          route: Routes.developerApis,),
       _Area('tasks', 'Tareas técnicas', Icons.checklist_rounded),
       _Area('featureFlags', 'Feature flags', Icons.flag_outlined),
       _Area('systemChecks', 'System checks', Icons.health_and_safety_outlined),
@@ -336,10 +338,13 @@ class _AreasGrid extends StatelessWidget {
 }
 
 class _Area {
-  const _Area(this.key, this.label, this.icon);
+  const _Area(this.key, this.label, this.icon, {this.route});
   final String key;
   final String label;
   final IconData icon;
+
+  /// Ruta de la pantalla del área; si es `null` aún no está construida.
+  final String? route;
 }
 
 class _AreaCard extends StatelessWidget {
@@ -349,14 +354,18 @@ class _AreaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final built = area.route != null;
     return EduCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('“${area.label}” — próximamente')),
-      ),
+      onTap: () => built
+          ? context.push(area.route!)
+          : ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('“${area.label}” — próximamente')),
+            ),
       child: Row(
         children: [
-          Icon(area.icon, color: palette.limeDeep, size: 22),
+          Icon(area.icon,
+              color: built ? palette.limeDeep : palette.textMuted, size: 22,),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -417,7 +426,7 @@ class _TaskTile extends StatelessWidget {
               if (task.moduleKey != null)
                 _MetaText(icon: Icons.widgets_outlined, text: task.moduleKey!),
               if (task.frontendRequired)
-                _MetaText(icon: Icons.phone_iphone_rounded, text: 'Frontend'),
+                const _MetaText(icon: Icons.phone_iphone_rounded, text: 'Frontend'),
               _MetaText(
                 icon: task.backendReady
                     ? Icons.cloud_done_outlined
@@ -515,7 +524,7 @@ class _MetaText extends StatelessWidget {
         const SizedBox(width: 3),
         Text(text,
             style: context.textTheme.labelSmall
-                ?.copyWith(color: c, fontWeight: FontWeight.w600)),
+                ?.copyWith(color: c, fontWeight: FontWeight.w600),),
       ],
     );
   }

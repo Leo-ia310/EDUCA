@@ -127,6 +127,77 @@ class DevAuditEvent {
       );
 }
 
+/// Entrada del inventario de APIs (`developer_api_registry`).
+///
+/// Modela cada endpoint que el backend expone y su estado de conexión con el
+/// frontend, para el área "APIs por conectar" del panel.
+class DevApi {
+  const DevApi({
+    required this.id,
+    this.moduleKey,
+    required this.method,
+    required this.path,
+    this.action,
+    this.summary,
+    this.description,
+    this.authRequired = true,
+    this.requiredRoles = const [],
+    required this.backendStatus,
+    required this.frontendStatus,
+    this.sourceFile,
+    this.owner,
+    this.priority,
+    this.notes,
+    this.active = true,
+  });
+
+  final int id;
+  final String? moduleKey;
+
+  /// GET | POST | PATCH | DELETE | ...
+  final String method;
+  final String path;
+  final String? action;
+  final String? summary;
+  final String? description;
+  final bool authRequired;
+  final List<String> requiredRoles;
+
+  /// planned | implemented | blocked | deprecated
+  final String backendStatus;
+
+  /// pending | connected | blocked | not_needed
+  final String frontendStatus;
+  final String? sourceFile;
+  final String? owner;
+
+  /// low | medium | high | critical
+  final String? priority;
+  final String? notes;
+  final bool active;
+
+  factory DevApi.fromMap(Map<String, dynamic> m) => DevApi(
+        id: devInt(m['id']),
+        moduleKey: m['module_key'] as String?,
+        method: devStr(m['method'], 'GET').toUpperCase(),
+        path: devStr(m['path']),
+        action: m['action'] as String?,
+        summary: m['summary'] as String?,
+        description: m['description'] as String?,
+        authRequired: devBool(m['auth_required'], true),
+        requiredRoles: ((m['required_roles'] as List?) ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        backendStatus: devStr(m['backend_status'], 'planned'),
+        frontendStatus: devStr(m['frontend_status'], 'pending'),
+        sourceFile: m['source_file'] as String?,
+        owner: m['owner'] as String?,
+        priority: m['priority'] as String?,
+        notes: m['notes'] as String?,
+        active: devBool(m['active'], true),
+      );
+}
+
 /// Resumen operativo (`GET /api/developer/summary`).
 class DevSummary {
   const DevSummary({

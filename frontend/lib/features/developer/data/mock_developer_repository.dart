@@ -19,7 +19,7 @@ class MockDeveloperRepository implements DeveloperRepository {
         failingChecks: 1,
       ),
       pendingTasks: [
-        DevTask(
+        const DevTask(
           id: 1,
           title: 'Conectar dashboard "Resumen" del desarrollador',
           moduleKey: 'developer',
@@ -29,7 +29,7 @@ class MockDeveloperRepository implements DeveloperRepository {
           frontendRequired: true,
           backendReady: true,
         ),
-        DevTask(
+        const DevTask(
           id: 2,
           title: 'Pantalla de feature flags',
           moduleKey: 'developer',
@@ -38,7 +38,7 @@ class MockDeveloperRepository implements DeveloperRepository {
           frontendRequired: true,
           backendReady: true,
         ),
-        DevTask(
+        const DevTask(
           id: 3,
           title: 'Inventario de APIs por conectar',
           moduleKey: 'developer',
@@ -47,7 +47,7 @@ class MockDeveloperRepository implements DeveloperRepository {
           frontendRequired: true,
           backendReady: true,
         ),
-        DevTask(
+        const DevTask(
           id: 4,
           title: 'Revisar índice fallando en system-checks',
           moduleKey: 'infra',
@@ -79,5 +79,147 @@ class MockDeveloperRepository implements DeveloperRepository {
         ),
       ],
     );
+  }
+
+  @override
+  Future<List<DevApi>> apis() async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    return const [
+      DevApi(
+        id: 1,
+        moduleKey: 'assignments',
+        method: 'POST',
+        path: '/api/business-api',
+        action: 'assignments.upsert',
+        summary: 'Crear/editar tarea',
+        backendStatus: 'implemented',
+        frontendStatus: 'connected',
+        owner: 'Frontend',
+        priority: 'high',
+      ),
+      DevApi(
+        id: 2,
+        moduleKey: 'attendance',
+        method: 'POST',
+        path: '/api/business-api',
+        action: 'attendance.upsert',
+        summary: 'Registrar asistencia',
+        backendStatus: 'implemented',
+        frontendStatus: 'connected',
+        owner: 'Frontend',
+        priority: 'high',
+      ),
+      DevApi(
+        id: 3,
+        moduleKey: 'grades',
+        method: 'POST',
+        path: '/api/business-api',
+        action: 'grades.setGrade',
+        summary: 'Asignar calificación',
+        backendStatus: 'implemented',
+        frontendStatus: 'pending',
+        owner: 'Frontend',
+        priority: 'high',
+      ),
+      DevApi(
+        id: 4,
+        moduleKey: 'payments',
+        method: 'POST',
+        path: '/api/business-api',
+        action: 'payments.register',
+        summary: 'Registrar pago',
+        backendStatus: 'implemented',
+        frontendStatus: 'pending',
+        owner: 'Frontend',
+        priority: 'medium',
+      ),
+      DevApi(
+        id: 5,
+        moduleKey: 'chat',
+        method: 'POST',
+        path: '/api/business-api',
+        action: 'chat.sendMessage',
+        summary: 'Enviar mensaje de chat',
+        backendStatus: 'implemented',
+        frontendStatus: 'connected',
+        priority: 'medium',
+      ),
+      DevApi(
+        id: 6,
+        moduleKey: 'events',
+        method: 'POST',
+        path: '/api/business-api',
+        action: 'events.upsert',
+        summary: 'Crear/editar evento',
+        backendStatus: 'implemented',
+        frontendStatus: 'pending',
+        priority: 'medium',
+      ),
+      DevApi(
+        id: 7,
+        moduleKey: 'notifications',
+        method: 'POST',
+        path: '/api/business-api',
+        action: 'notifications.markRead',
+        summary: 'Marcar notificación leída',
+        backendStatus: 'implemented',
+        frontendStatus: 'connected',
+        priority: 'low',
+      ),
+      DevApi(
+        id: 8,
+        moduleKey: 'schedule',
+        method: 'GET',
+        path: '/api/business-api',
+        action: 'schedule.list',
+        summary: 'Listar horario',
+        backendStatus: 'implemented',
+        frontendStatus: 'pending',
+        priority: 'medium',
+      ),
+      DevApi(
+        id: 9,
+        moduleKey: 'reports',
+        method: 'GET',
+        path: '/api/reports/overview',
+        summary: 'Reporte general',
+        backendStatus: 'planned',
+        frontendStatus: 'pending',
+        priority: 'low',
+      ),
+      DevApi(
+        id: 10,
+        moduleKey: 'payments',
+        method: 'GET',
+        path: '/api/payments/export',
+        summary: 'Exportar pagos (CSV)',
+        backendStatus: 'blocked',
+        frontendStatus: 'blocked',
+        priority: 'low',
+        notes: 'Depende del proveedor de facturación.',
+      ),
+      DevApi(
+        id: 11,
+        moduleKey: 'auth',
+        method: 'POST',
+        path: '/api/auth/reset-password',
+        summary: 'Restablecer contraseña',
+        backendStatus: 'implemented',
+        frontendStatus: 'not_needed',
+        priority: 'low',
+        notes: 'Se maneja vía Supabase Auth directo.',
+      ),
+      DevApi(
+        id: 12,
+        moduleKey: 'developer',
+        method: 'GET',
+        path: '/api/developer/summary',
+        summary: 'Resumen técnico',
+        backendStatus: 'implemented',
+        frontendStatus: 'connected',
+        owner: 'Frontend',
+        priority: 'high',
+      ),
+    ];
   }
 }

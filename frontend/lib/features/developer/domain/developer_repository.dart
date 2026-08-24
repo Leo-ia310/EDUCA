@@ -6,4 +6,7 @@ import 'entities.dart';
 abstract class DeveloperRepository {
   /// `GET /api/developer/summary`
   Future<DevSummary> summary();
+
+  /// `GET /api/developer/apis` — inventario de endpoints y su estado.
+  Future<List<DevApi>> apis();
 }

@@ -30,7 +30,7 @@ class BackendDeveloperRepository implements DeveloperRepository {
       'Authorization': 'Bearer $token',
       'apikey': Env.supabaseAnonKey,
       'Content-Type': 'application/json',
-    });
+    },);
   }
 
   /// Ejecuta la petición y desenvuelve `{ ok, data }`.
@@ -42,7 +42,7 @@ class BackendDeveloperRepository implements DeveloperRepository {
       throw StateError(_messageFrom(data) ?? 'Respuesta inválida del backend.');
     } on DioException catch (e) {
       throw StateError(
-          _messageFrom(e.response?.data) ?? e.message ?? 'Error de red.');
+          _messageFrom(e.response?.data) ?? e.message ?? 'Error de red.',);
     }
   }
 
@@ -63,5 +63,15 @@ class BackendDeveloperRepository implements DeveloperRepository {
       _dio.get('$_base/developer/summary', options: _authOptions),
     );
     return DevSummary.fromMap(devMap(data));
+  }
+
+  @override
+  Future<List<DevApi>> apis() async {
+    final data = await _unwrap(
+      _dio.get('$_base/developer/apis', options: _authOptions),
+    );
+    return ((data as List?) ?? const [])
+        .map((e) => DevApi.fromMap(devMap(e)))
+        .toList();
   }
 }

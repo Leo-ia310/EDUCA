@@ -23,3 +23,8 @@ final developerRepositoryProvider = Provider<DeveloperRepository>((ref) {
 final developerSummaryProvider = FutureProvider<DevSummary>((ref) {
   return ref.watch(developerRepositoryProvider).summary();
 });
+
+/// `GET /api/developer/apis` — inventario de endpoints y su estado.
+final developerApisProvider = FutureProvider<List<DevApi>>((ref) {
+  return ref.watch(developerRepositoryProvider).apis();
+});
