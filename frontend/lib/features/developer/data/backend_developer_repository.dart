@@ -153,4 +153,48 @@ class BackendDeveloperRepository implements DeveloperRepository {
       _dio.delete('$_base/developer/feature-flags/$id', options: _authOptions),
     );
   }
+
+  @override
+  Future<List<DevSystemCheck>> systemChecks(
+      {String? status, String? severity,}) async {
+    final data = await _unwrap(
+      _dio.get(
+        '$_base/developer/system-checks',
+        queryParameters: {
+          if (status != null) 'status': status,
+          if (severity != null) 'severity': severity,
+        },
+        options: _authOptions,
+      ),
+    );
+    return ((data as List?) ?? const [])
+        .map((e) => DevSystemCheck.fromMap(devMap(e)))
+        .toList();
+  }
+
+  @override
+  Future<DevSystemCheck> createSystemCheck(Map<String, dynamic> payload) async {
+    final data = await _unwrap(
+      _dio.post('$_base/developer/system-checks',
+          data: payload, options: _authOptions,),
+    );
+    return DevSystemCheck.fromMap(devMap(devMap(data)['systemCheck']));
+  }
+
+  @override
+  Future<DevSystemCheck> updateSystemCheck(
+      int id, Map<String, dynamic> payload,) async {
+    final data = await _unwrap(
+      _dio.patch('$_base/developer/system-checks/$id',
+          data: payload, options: _authOptions,),
+    );
+    return DevSystemCheck.fromMap(devMap(devMap(data)['systemCheck']));
+  }
+
+  @override
+  Future<void> archiveSystemCheck(int id) async {
+    await _unwrap(
+      _dio.delete('$_base/developer/system-checks/$id', options: _authOptions),
+    );
+  }
 }

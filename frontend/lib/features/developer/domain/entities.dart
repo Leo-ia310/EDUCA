@@ -238,6 +238,52 @@ class DevFeatureFlag {
       );
 }
 
+/// Chequeo de salud del sistema (`developer_system_checks`).
+class DevSystemCheck {
+  const DevSystemCheck({
+    required this.id,
+    required this.checkKey,
+    required this.title,
+    this.description,
+    this.checkType,
+    this.target,
+    this.severity,
+    required this.status,
+    this.enabled = true,
+    this.lastCheckedAt,
+  });
+
+  final int id;
+  final String checkKey;
+  final String title;
+  final String? description;
+
+  /// manual | sql | http | script
+  final String? checkType;
+  final String? target;
+
+  /// low | medium | high | critical
+  final String? severity;
+
+  /// unknown | passing | warning | failing | disabled
+  final String status;
+  final bool enabled;
+  final DateTime? lastCheckedAt;
+
+  factory DevSystemCheck.fromMap(Map<String, dynamic> m) => DevSystemCheck(
+        id: devInt(m['id']),
+        checkKey: devStr(m['check_key']),
+        title: devStr(m['title'], 'Check'),
+        description: m['description'] as String?,
+        checkType: m['check_type'] as String?,
+        target: m['target'] as String?,
+        severity: m['severity'] as String?,
+        status: devStr(m['status'], 'unknown'),
+        enabled: devBool(m['enabled'], true),
+        lastCheckedAt: devDate(m['last_checked_at']),
+      );
+}
+
 /// Resumen operativo (`GET /api/developer/summary`).
 class DevSummary {
   const DevSummary({

@@ -35,6 +35,7 @@ import '../../features/developer/presentation/screens/developer_dashboard_screen
 import '../../features/developer/presentation/screens/developer_apis_screen.dart';
 import '../../features/developer/presentation/screens/developer_tasks_screen.dart';
 import '../../features/developer/presentation/screens/developer_feature_flags_screen.dart';
+import '../../features/developer/presentation/screens/developer_system_checks_screen.dart';
 import '../../features/events/presentation/screens/announcements_screen.dart';
 import '../../features/events/presentation/screens/create_event_screen.dart';
 import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
@@ -386,6 +387,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RoleGuard(
           allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
           child: DeveloperFeatureFlagsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.developerSystemChecks,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: DeveloperSystemChecksScreen(),
         ),
       ),
       GoRoute(

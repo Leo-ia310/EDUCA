@@ -33,4 +33,16 @@ abstract class DeveloperRepository {
 
   /// `DELETE /api/developer/feature-flags/:id` — archiva (soft-delete).
   Future<void> archiveFeatureFlag(int id);
+
+  /// `GET /api/developer/system-checks` — chequeos (filtros status/severity).
+  Future<List<DevSystemCheck>> systemChecks({String? status, String? severity});
+
+  /// `POST /api/developer/system-checks` — crea un check (payload snake_case).
+  Future<DevSystemCheck> createSystemCheck(Map<String, dynamic> payload);
+
+  /// `PATCH /api/developer/system-checks/:id` — actualización parcial.
+  Future<DevSystemCheck> updateSystemCheck(int id, Map<String, dynamic> payload);
+
+  /// `DELETE /api/developer/system-checks/:id` — archiva (soft-delete).
+  Future<void> archiveSystemCheck(int id);
 }

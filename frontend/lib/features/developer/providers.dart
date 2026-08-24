@@ -40,3 +40,9 @@ final developerFeatureFlagsProvider =
     FutureProvider<List<DevFeatureFlag>>((ref) {
   return ref.watch(developerRepositoryProvider).featureFlags();
 });
+
+/// `GET /api/developer/system-checks` — todos los chequeos (filtrado en cliente).
+final developerSystemChecksProvider =
+    FutureProvider<List<DevSystemCheck>>((ref) {
+  return ref.watch(developerRepositoryProvider).systemChecks();
+});

@@ -441,4 +441,119 @@ class MockDeveloperRepository implements DeveloperRepository {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     _flags.removeWhere((f) => f.id == id);
   }
+
+  /// Estado en memoria de los chequeos de sistema (persiste en la sesión demo).
+  final List<DevSystemCheck> _checks = [
+    DevSystemCheck(
+      id: 1,
+      checkKey: 'db_connection',
+      title: 'Conexión a Postgres',
+      description: 'Verifica conectividad con Supabase.',
+      checkType: 'sql',
+      target: 'SELECT 1',
+      severity: 'critical',
+      status: 'passing',
+      lastCheckedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+    ),
+    DevSystemCheck(
+      id: 2,
+      checkKey: 'push_endpoint',
+      title: 'Edge Function send-push',
+      description: 'Comprueba que el envío de Web Push responde.',
+      checkType: 'http',
+      target: '/functions/v1/send-push',
+      severity: 'high',
+      status: 'warning',
+      lastCheckedAt: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+    DevSystemCheck(
+      id: 3,
+      checkKey: 'grades_index',
+      title: 'Índice en developer_tasks',
+      description: 'Índice degradado; requiere migración 0015.',
+      checkType: 'sql',
+      target: 'idx_tasks_status',
+      severity: 'high',
+      status: 'failing',
+      lastCheckedAt: DateTime.now().subtract(const Duration(hours: 3)),
+    ),
+    const DevSystemCheck(
+      id: 4,
+      checkKey: 'backup_nightly',
+      title: 'Respaldo nocturno',
+      description: 'Chequeo manual del respaldo.',
+      checkType: 'manual',
+      severity: 'medium',
+      status: 'unknown',
+    ),
+  ];
+
+  int _nextCheckId = 5;
+
+  @override
+  Future<List<DevSystemCheck>> systemChecks(
+      {String? status, String? severity,}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final list = _checks.where((c) {
+      if (status != null && c.status != status) return false;
+      if (severity != null && c.severity != severity) return false;
+      return true;
+    }).toList();
+    return List<DevSystemCheck>.unmodifiable(list);
+  }
+
+  @override
+  Future<DevSystemCheck> createSystemCheck(Map<String, dynamic> payload) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final check = DevSystemCheck.fromMap({...payload, 'id': _nextCheckId++});
+    _checks.insert(0, check);
+    return check;
+  }
+
+  @override
+  Future<DevSystemCheck> updateSystemCheck(
+      int id, Map<String, dynamic> payload,) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final index = _checks.indexWhere((c) => c.id == id);
+    if (index < 0) throw StateError('Check no encontrado.');
+    final current = _checks[index];
+    final updated = DevSystemCheck(
+      id: id,
+      checkKey: payload.containsKey('check_key')
+          ? devStr(payload['check_key'], current.checkKey)
+          : current.checkKey,
+      title: payload.containsKey('title')
+          ? devStr(payload['title'], current.title)
+          : current.title,
+      description: payload.containsKey('description')
+          ? payload['description'] as String?
+          : current.description,
+      checkType: payload.containsKey('check_type')
+          ? payload['check_type'] as String?
+          : current.checkType,
+      target: payload.containsKey('target')
+          ? payload['target'] as String?
+          : current.target,
+      severity: payload.containsKey('severity')
+          ? payload['severity'] as String?
+          : current.severity,
+      status: payload.containsKey('status')
+          ? devStr(payload['status'], current.status)
+          : current.status,
+      enabled: payload.containsKey('enabled')
+          ? devBool(payload['enabled'], true)
+          : current.enabled,
+      lastCheckedAt: payload.containsKey('last_checked_at')
+          ? devDate(payload['last_checked_at'])
+          : current.lastCheckedAt,
+    );
+    _checks[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> archiveSystemCheck(int id) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    _checks.removeWhere((c) => c.id == id);
+  }
 }
