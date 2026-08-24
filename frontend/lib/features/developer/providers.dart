@@ -46,3 +46,8 @@ final developerSystemChecksProvider =
     FutureProvider<List<DevSystemCheck>>((ref) {
   return ref.watch(developerRepositoryProvider).systemChecks();
 });
+
+/// `GET /api/developer/modules` — módulos del dashboard.
+final developerModulesProvider = FutureProvider<List<DevModule>>((ref) {
+  return ref.watch(developerRepositoryProvider).modules();
+});

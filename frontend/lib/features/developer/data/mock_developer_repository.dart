@@ -556,4 +556,122 @@ class MockDeveloperRepository implements DeveloperRepository {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     _checks.removeWhere((c) => c.id == id);
   }
+
+  /// Estado en memoria de los módulos del dashboard (persiste en la sesión demo).
+  final List<DevModule> _modules = [
+    const DevModule(
+      id: 1,
+      moduleKey: 'assignments',
+      title: 'Tareas y evaluaciones',
+      description: 'Gestión de tareas, entregas y calificación.',
+      category: 'Académico',
+      icon: 'assignment',
+      frontendRoute: '/assignments',
+      requiredRoles: ['teacher', 'admin'],
+      enabled: true,
+      displayOrder: 1,
+    ),
+    const DevModule(
+      id: 2,
+      moduleKey: 'attendance',
+      title: 'Asistencia',
+      description: 'Registro diario de asistencia.',
+      category: 'Académico',
+      icon: 'fact_check',
+      frontendRoute: '/attendance',
+      requiredRoles: ['teacher', 'admin'],
+      enabled: true,
+      displayOrder: 2,
+    ),
+    const DevModule(
+      id: 3,
+      moduleKey: 'payments',
+      title: 'Pagos',
+      description: 'Cobros y estado de cuenta.',
+      category: 'Administración',
+      icon: 'payments',
+      frontendRoute: '/payments',
+      requiredRoles: ['admin', 'parent'],
+      enabled: true,
+      displayOrder: 3,
+    ),
+    const DevModule(
+      id: 4,
+      moduleKey: 'developer',
+      title: 'Panel de desarrollador',
+      description: 'Herramientas técnicas para administración.',
+      category: 'Sistema',
+      icon: 'terminal',
+      frontendRoute: '/developer',
+      requiredRoles: ['admin'],
+      enabled: true,
+      displayOrder: 99,
+    ),
+  ];
+
+  int _nextModuleId = 5;
+
+  @override
+  Future<List<DevModule>> modules() async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return List<DevModule>.unmodifiable(_modules);
+  }
+
+  @override
+  Future<DevModule> createModule(Map<String, dynamic> payload) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final module = DevModule.fromMap({...payload, 'id': _nextModuleId++});
+    _modules.insert(0, module);
+    return module;
+  }
+
+  @override
+  Future<DevModule> updateModule(int id, Map<String, dynamic> payload) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final index = _modules.indexWhere((m) => m.id == id);
+    if (index < 0) throw StateError('Módulo no encontrado.');
+    final current = _modules[index];
+    final updated = DevModule(
+      id: id,
+      moduleKey: payload.containsKey('module_key')
+          ? devStr(payload['module_key'], current.moduleKey)
+          : current.moduleKey,
+      title: payload.containsKey('title')
+          ? devStr(payload['title'], current.title)
+          : current.title,
+      description: payload.containsKey('description')
+          ? payload['description'] as String?
+          : current.description,
+      category: payload.containsKey('category')
+          ? payload['category'] as String?
+          : current.category,
+      icon: payload.containsKey('icon')
+          ? payload['icon'] as String?
+          : current.icon,
+      frontendRoute: payload.containsKey('frontend_route')
+          ? payload['frontend_route'] as String?
+          : current.frontendRoute,
+      requiredRoles: payload.containsKey('required_roles')
+          ? ((payload['required_roles'] as List?) ?? const [])
+              .map((e) => e.toString())
+              .toList()
+          : current.requiredRoles,
+      enabled: payload.containsKey('enabled')
+          ? devBool(payload['enabled'], true)
+          : current.enabled,
+      displayOrder: payload.containsKey('display_order')
+          ? (payload['display_order'] == null
+              ? null
+              : devInt(payload['display_order']))
+          : current.displayOrder,
+    );
+    _modules[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> archiveModule(int id) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    _modules.removeWhere((m) => m.id == id);
+  }
 }

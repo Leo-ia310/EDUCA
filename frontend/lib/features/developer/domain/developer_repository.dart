@@ -45,4 +45,16 @@ abstract class DeveloperRepository {
 
   /// `DELETE /api/developer/system-checks/:id` — archiva (soft-delete).
   Future<void> archiveSystemCheck(int id);
+
+  /// `GET /api/developer/modules` — módulos del dashboard.
+  Future<List<DevModule>> modules();
+
+  /// `POST /api/developer/modules` — crea un módulo (payload snake_case).
+  Future<DevModule> createModule(Map<String, dynamic> payload);
+
+  /// `PATCH /api/developer/modules/:id` — actualización parcial.
+  Future<DevModule> updateModule(int id, Map<String, dynamic> payload);
+
+  /// `DELETE /api/developer/modules/:id` — archiva (soft-delete).
+  Future<void> archiveModule(int id);
 }

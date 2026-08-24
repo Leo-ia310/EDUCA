@@ -284,6 +284,49 @@ class DevSystemCheck {
       );
 }
 
+/// Módulo del dashboard (`developer_dashboard_modules`).
+class DevModule {
+  const DevModule({
+    required this.id,
+    required this.moduleKey,
+    required this.title,
+    this.description,
+    this.category,
+    this.icon,
+    this.frontendRoute,
+    this.requiredRoles = const [],
+    this.enabled = true,
+    this.displayOrder,
+  });
+
+  final int id;
+  final String moduleKey;
+  final String title;
+  final String? description;
+  final String? category;
+  final String? icon;
+  final String? frontendRoute;
+  final List<String> requiredRoles;
+  final bool enabled;
+  final int? displayOrder;
+
+  factory DevModule.fromMap(Map<String, dynamic> m) => DevModule(
+        id: devInt(m['id']),
+        moduleKey: devStr(m['module_key']),
+        title: devStr(m['title'], 'Módulo'),
+        description: m['description'] as String?,
+        category: m['category'] as String?,
+        icon: m['icon'] as String?,
+        frontendRoute: m['frontend_route'] as String?,
+        requiredRoles: ((m['required_roles'] as List?) ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        enabled: devBool(m['enabled'], true),
+        displayOrder:
+            m['display_order'] == null ? null : devInt(m['display_order']),
+      );
+}
+
 /// Resumen operativo (`GET /api/developer/summary`).
 class DevSummary {
   const DevSummary({

@@ -25,6 +25,7 @@ class Routes {
   static const developerTasks = '/developer/tasks';
   static const developerFeatureFlags = '/developer/feature-flags';
   static const developerSystemChecks = '/developer/system-checks';
+  static const developerModules = '/developer/modules';
 
   static const assignments = '/assignments';
   static const assignmentNew = '/assignments/new';

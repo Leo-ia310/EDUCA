@@ -197,4 +197,39 @@ class BackendDeveloperRepository implements DeveloperRepository {
       _dio.delete('$_base/developer/system-checks/$id', options: _authOptions),
     );
   }
+
+  @override
+  Future<List<DevModule>> modules() async {
+    final data = await _unwrap(
+      _dio.get('$_base/developer/modules', options: _authOptions),
+    );
+    return ((data as List?) ?? const [])
+        .map((e) => DevModule.fromMap(devMap(e)))
+        .toList();
+  }
+
+  @override
+  Future<DevModule> createModule(Map<String, dynamic> payload) async {
+    final data = await _unwrap(
+      _dio.post('$_base/developer/modules',
+          data: payload, options: _authOptions,),
+    );
+    return DevModule.fromMap(devMap(devMap(data)['module']));
+  }
+
+  @override
+  Future<DevModule> updateModule(int id, Map<String, dynamic> payload) async {
+    final data = await _unwrap(
+      _dio.patch('$_base/developer/modules/$id',
+          data: payload, options: _authOptions,),
+    );
+    return DevModule.fromMap(devMap(devMap(data)['module']));
+  }
+
+  @override
+  Future<void> archiveModule(int id) async {
+    await _unwrap(
+      _dio.delete('$_base/developer/modules/$id', options: _authOptions),
+    );
+  }
 }
