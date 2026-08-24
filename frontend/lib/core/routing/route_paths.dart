@@ -22,6 +22,7 @@ class Routes {
   static const manageTeachers = '/admin/teachers';
   static const developer = '/developer';
   static const developerApis = '/developer/apis';
+  static const developerTasks = '/developer/tasks';
 
   static const assignments = '/assignments';
   static const assignmentNew = '/assignments/new';

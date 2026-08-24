@@ -65,6 +65,8 @@ class DevTask {
     this.frontendRequired = false,
     this.backendReady = false,
     this.dueAt,
+    this.completedAt,
+    this.notes,
   });
 
   final int id;
@@ -81,6 +83,8 @@ class DevTask {
   final bool frontendRequired;
   final bool backendReady;
   final DateTime? dueAt;
+  final DateTime? completedAt;
+  final String? notes;
 
   factory DevTask.fromMap(Map<String, dynamic> m) => DevTask(
         id: devInt(m['id']),
@@ -93,6 +97,8 @@ class DevTask {
         frontendRequired: devBool(m['frontend_required']),
         backendReady: devBool(m['backend_ready']),
         dueAt: devDate(m['due_at']),
+        completedAt: devDate(m['completed_at']),
+        notes: m['notes'] as String?,
       );
 }
 

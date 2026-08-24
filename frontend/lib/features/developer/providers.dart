@@ -28,3 +28,9 @@ final developerSummaryProvider = FutureProvider<DevSummary>((ref) {
 final developerApisProvider = FutureProvider<List<DevApi>>((ref) {
   return ref.watch(developerRepositoryProvider).apis();
 });
+
+/// `GET /api/developer/tasks` — todas las tareas (el filtrado por estado se
+/// hace en el cliente).
+final developerTasksProvider = FutureProvider<List<DevTask>>((ref) {
+  return ref.watch(developerRepositoryProvider).tasks();
+});

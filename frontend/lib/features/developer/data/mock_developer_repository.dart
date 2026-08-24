@@ -222,4 +222,136 @@ class MockDeveloperRepository implements DeveloperRepository {
       ),
     ];
   }
+
+  /// Estado en memoria de las tareas técnicas (persiste durante la sesión demo,
+  /// para que el CRUD sea navegable sin backend).
+  final List<DevTask> _tasks = [
+    DevTask(
+      id: 1,
+      title: 'Conectar área "APIs por conectar"',
+      moduleKey: 'developer',
+      status: 'done',
+      priority: 'high',
+      owner: 'Frontend',
+      frontendRequired: true,
+      backendReady: true,
+      completedAt: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+    const DevTask(
+      id: 2,
+      title: 'Construir área "Tareas técnicas" (CRUD)',
+      moduleKey: 'developer',
+      status: 'in_progress',
+      priority: 'high',
+      owner: 'Frontend',
+      frontendRequired: true,
+      backendReady: true,
+    ),
+    const DevTask(
+      id: 3,
+      title: 'Pantalla de feature flags',
+      moduleKey: 'developer',
+      status: 'ready',
+      priority: 'medium',
+      frontendRequired: true,
+      backendReady: true,
+    ),
+    const DevTask(
+      id: 4,
+      title: 'Conectar grades.setGrade en el gradebook',
+      moduleKey: 'grades',
+      description: 'Reemplazar el mock por la llamada real al backend.',
+      status: 'pending',
+      priority: 'high',
+      frontendRequired: true,
+      backendReady: true,
+    ),
+    const DevTask(
+      id: 5,
+      title: 'Revisar índice fallando en system-checks',
+      moduleKey: 'infra',
+      status: 'blocked',
+      priority: 'critical',
+      notes: 'Bloqueado hasta migración 0015.',
+    ),
+    const DevTask(
+      id: 6,
+      title: 'Exportación de pagos a CSV',
+      moduleKey: 'payments',
+      status: 'cancelled',
+      priority: 'low',
+    ),
+  ];
+
+  int _nextTaskId = 7;
+
+  @override
+  Future<List<DevTask>> tasks({String? status}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final list = status == null
+        ? _tasks
+        : _tasks.where((t) => t.status == status).toList();
+    return List<DevTask>.unmodifiable(list);
+  }
+
+  @override
+  Future<DevTask> createTask(Map<String, dynamic> payload) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final task = DevTask.fromMap({...payload, 'id': _nextTaskId++});
+    _tasks.insert(0, task);
+    return task;
+  }
+
+  @override
+  Future<DevTask> updateTask(int id, Map<String, dynamic> payload) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final index = _tasks.indexWhere((t) => t.id == id);
+    if (index < 0) throw StateError('Tarea no encontrada.');
+    final current = _tasks[index];
+    // Fusiona: los campos ausentes en el payload conservan su valor actual.
+    final updated = DevTask(
+      id: id,
+      title: payload.containsKey('title')
+          ? devStr(payload['title'], current.title)
+          : current.title,
+      moduleKey: payload.containsKey('module_key')
+          ? payload['module_key'] as String?
+          : current.moduleKey,
+      description: payload.containsKey('description')
+          ? payload['description'] as String?
+          : current.description,
+      status: payload.containsKey('status')
+          ? devStr(payload['status'], current.status)
+          : current.status,
+      priority: payload.containsKey('priority')
+          ? payload['priority'] as String?
+          : current.priority,
+      owner: payload.containsKey('owner')
+          ? payload['owner'] as String?
+          : current.owner,
+      frontendRequired: payload.containsKey('frontend_required')
+          ? devBool(payload['frontend_required'])
+          : current.frontendRequired,
+      backendReady: payload.containsKey('backend_ready')
+          ? devBool(payload['backend_ready'])
+          : current.backendReady,
+      dueAt: payload.containsKey('due_at')
+          ? devDate(payload['due_at'])
+          : current.dueAt,
+      completedAt: payload.containsKey('completed_at')
+          ? devDate(payload['completed_at'])
+          : current.completedAt,
+      notes: payload.containsKey('notes')
+          ? payload['notes'] as String?
+          : current.notes,
+    );
+    _tasks[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> archiveTask(int id) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    _tasks.removeWhere((t) => t.id == id);
+  }
 }

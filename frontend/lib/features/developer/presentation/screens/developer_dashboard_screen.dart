@@ -307,7 +307,8 @@ class _AreasGrid extends StatelessWidget {
     const areas = <_Area>[
       _Area('apis', 'APIs por conectar', Icons.api_rounded,
           route: Routes.developerApis,),
-      _Area('tasks', 'Tareas técnicas', Icons.checklist_rounded),
+      _Area('tasks', 'Tareas técnicas', Icons.checklist_rounded,
+          route: Routes.developerTasks,),
       _Area('featureFlags', 'Feature flags', Icons.flag_outlined),
       _Area('systemChecks', 'System checks', Icons.health_and_safety_outlined),
       _Area('modules', 'Módulos', Icons.widgets_outlined),

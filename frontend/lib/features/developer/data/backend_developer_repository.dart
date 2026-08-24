@@ -74,4 +74,43 @@ class BackendDeveloperRepository implements DeveloperRepository {
         .map((e) => DevApi.fromMap(devMap(e)))
         .toList();
   }
+
+  @override
+  Future<List<DevTask>> tasks({String? status}) async {
+    final data = await _unwrap(
+      _dio.get(
+        '$_base/developer/tasks',
+        queryParameters: {if (status != null) 'status': status},
+        options: _authOptions,
+      ),
+    );
+    return ((data as List?) ?? const [])
+        .map((e) => DevTask.fromMap(devMap(e)))
+        .toList();
+  }
+
+  @override
+  Future<DevTask> createTask(Map<String, dynamic> payload) async {
+    final data = await _unwrap(
+      _dio.post('$_base/developer/tasks',
+          data: payload, options: _authOptions,),
+    );
+    return DevTask.fromMap(devMap(devMap(data)['task']));
+  }
+
+  @override
+  Future<DevTask> updateTask(int id, Map<String, dynamic> payload) async {
+    final data = await _unwrap(
+      _dio.patch('$_base/developer/tasks/$id',
+          data: payload, options: _authOptions,),
+    );
+    return DevTask.fromMap(devMap(devMap(data)['task']));
+  }
+
+  @override
+  Future<void> archiveTask(int id) async {
+    await _unwrap(
+      _dio.delete('$_base/developer/tasks/$id', options: _authOptions),
+    );
+  }
 }
