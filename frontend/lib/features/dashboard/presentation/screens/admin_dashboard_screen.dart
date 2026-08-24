@@ -168,6 +168,13 @@ class AdminDashboardScreen extends ConsumerWidget {
             variant: QuickActionVariant.surface,
             onTap: () => context.push(Routes.paymentsDunning),
           ),
+          const SizedBox(height: 10),
+          QuickActionButton(
+            icon: Icons.terminal_rounded,
+            label: 'Panel de desarrollador',
+            variant: QuickActionVariant.surface,
+            onTap: () => context.push(Routes.developer),
+          ),
           const SizedBox(height: 24),
 
           // Anuncios recientes

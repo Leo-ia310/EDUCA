@@ -31,6 +31,7 @@ import '../../features/auth/presentation/screens/institution_code_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/admin/presentation/screens/manage_teachers_screen.dart';
+import '../../features/developer/presentation/screens/developer_dashboard_screen.dart';
 import '../../features/events/presentation/screens/announcements_screen.dart';
 import '../../features/events/presentation/screens/create_event_screen.dart';
 import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
@@ -354,6 +355,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RoleGuard(
           allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
           child: ManageTeachersScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.developer,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: DeveloperDashboardScreen(),
         ),
       ),
       GoRoute(
