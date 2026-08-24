@@ -204,6 +204,40 @@ class DevApi {
       );
 }
 
+/// Feature flag del panel (`developer_feature_flags`).
+class DevFeatureFlag {
+  const DevFeatureFlag({
+    required this.id,
+    required this.flagKey,
+    required this.title,
+    this.description,
+    this.enabled = false,
+    this.rolloutPercent,
+    this.config = const {},
+  });
+
+  final int id;
+  final String flagKey;
+  final String title;
+  final String? description;
+  final bool enabled;
+
+  /// 0..100 (porcentaje de despliegue gradual).
+  final int? rolloutPercent;
+  final Map<String, dynamic> config;
+
+  factory DevFeatureFlag.fromMap(Map<String, dynamic> m) => DevFeatureFlag(
+        id: devInt(m['id']),
+        flagKey: devStr(m['flag_key']),
+        title: devStr(m['title'], 'Flag'),
+        description: m['description'] as String?,
+        enabled: devBool(m['enabled']),
+        rolloutPercent:
+            m['rollout_percent'] == null ? null : devInt(m['rollout_percent']),
+        config: devMap(m['config']),
+      );
+}
+
 /// Resumen operativo (`GET /api/developer/summary`).
 class DevSummary {
   const DevSummary({

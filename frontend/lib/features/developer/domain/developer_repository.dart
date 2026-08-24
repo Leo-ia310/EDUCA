@@ -21,4 +21,16 @@ abstract class DeveloperRepository {
 
   /// `DELETE /api/developer/tasks/:id` — archiva (soft-delete).
   Future<void> archiveTask(int id);
+
+  /// `GET /api/developer/feature-flags` — flags (opcionalmente por `enabled`).
+  Future<List<DevFeatureFlag>> featureFlags({bool? enabled});
+
+  /// `POST /api/developer/feature-flags` — crea un flag (payload snake_case).
+  Future<DevFeatureFlag> createFeatureFlag(Map<String, dynamic> payload);
+
+  /// `PATCH /api/developer/feature-flags/:id` — actualización parcial.
+  Future<DevFeatureFlag> updateFeatureFlag(int id, Map<String, dynamic> payload);
+
+  /// `DELETE /api/developer/feature-flags/:id` — archiva (soft-delete).
+  Future<void> archiveFeatureFlag(int id);
 }

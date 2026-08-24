@@ -354,4 +354,91 @@ class MockDeveloperRepository implements DeveloperRepository {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     _tasks.removeWhere((t) => t.id == id);
   }
+
+  /// Estado en memoria de los feature flags (persiste durante la sesión demo).
+  final List<DevFeatureFlag> _flags = [
+    const DevFeatureFlag(
+      id: 1,
+      flagKey: 'developer_dashboard',
+      title: 'Panel de desarrollador',
+      description: 'Habilita el panel técnico para administración.',
+      enabled: true,
+      rolloutPercent: 100,
+    ),
+    const DevFeatureFlag(
+      id: 2,
+      flagKey: 'web_push',
+      title: 'Notificaciones push web',
+      description: 'Envío de push vía VAPID (sin Firebase).',
+      enabled: true,
+      rolloutPercent: 100,
+    ),
+    const DevFeatureFlag(
+      id: 3,
+      flagKey: 'new_gradebook',
+      title: 'Nuevo libro de calificaciones',
+      description: 'Rediseño del gradebook, en despliegue gradual.',
+      enabled: false,
+      rolloutPercent: 25,
+    ),
+  ];
+
+  int _nextFlagId = 4;
+
+  @override
+  Future<List<DevFeatureFlag>> featureFlags({bool? enabled}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final list = enabled == null
+        ? _flags
+        : _flags.where((f) => f.enabled == enabled).toList();
+    return List<DevFeatureFlag>.unmodifiable(list);
+  }
+
+  @override
+  Future<DevFeatureFlag> createFeatureFlag(Map<String, dynamic> payload) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final flag = DevFeatureFlag.fromMap({...payload, 'id': _nextFlagId++});
+    _flags.insert(0, flag);
+    return flag;
+  }
+
+  @override
+  Future<DevFeatureFlag> updateFeatureFlag(
+      int id, Map<String, dynamic> payload,) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final index = _flags.indexWhere((f) => f.id == id);
+    if (index < 0) throw StateError('Flag no encontrado.');
+    final current = _flags[index];
+    final updated = DevFeatureFlag(
+      id: id,
+      flagKey: payload.containsKey('flag_key')
+          ? devStr(payload['flag_key'], current.flagKey)
+          : current.flagKey,
+      title: payload.containsKey('title')
+          ? devStr(payload['title'], current.title)
+          : current.title,
+      description: payload.containsKey('description')
+          ? payload['description'] as String?
+          : current.description,
+      enabled: payload.containsKey('enabled')
+          ? devBool(payload['enabled'])
+          : current.enabled,
+      rolloutPercent: payload.containsKey('rollout_percent')
+          ? (payload['rollout_percent'] == null
+              ? null
+              : devInt(payload['rollout_percent']))
+          : current.rolloutPercent,
+      config: payload.containsKey('config')
+          ? devMap(payload['config'])
+          : current.config,
+    );
+    _flags[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> archiveFeatureFlag(int id) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    _flags.removeWhere((f) => f.id == id);
+  }
 }

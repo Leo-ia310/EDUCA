@@ -34,3 +34,9 @@ final developerApisProvider = FutureProvider<List<DevApi>>((ref) {
 final developerTasksProvider = FutureProvider<List<DevTask>>((ref) {
   return ref.watch(developerRepositoryProvider).tasks();
 });
+
+/// `GET /api/developer/feature-flags` — todos los flags (filtrado en cliente).
+final developerFeatureFlagsProvider =
+    FutureProvider<List<DevFeatureFlag>>((ref) {
+  return ref.watch(developerRepositoryProvider).featureFlags();
+});

@@ -113,4 +113,44 @@ class BackendDeveloperRepository implements DeveloperRepository {
       _dio.delete('$_base/developer/tasks/$id', options: _authOptions),
     );
   }
+
+  @override
+  Future<List<DevFeatureFlag>> featureFlags({bool? enabled}) async {
+    final data = await _unwrap(
+      _dio.get(
+        '$_base/developer/feature-flags',
+        queryParameters: {if (enabled != null) 'enabled': enabled},
+        options: _authOptions,
+      ),
+    );
+    return ((data as List?) ?? const [])
+        .map((e) => DevFeatureFlag.fromMap(devMap(e)))
+        .toList();
+  }
+
+  @override
+  Future<DevFeatureFlag> createFeatureFlag(Map<String, dynamic> payload) async {
+    final data = await _unwrap(
+      _dio.post('$_base/developer/feature-flags',
+          data: payload, options: _authOptions,),
+    );
+    return DevFeatureFlag.fromMap(devMap(devMap(data)['featureFlag']));
+  }
+
+  @override
+  Future<DevFeatureFlag> updateFeatureFlag(
+      int id, Map<String, dynamic> payload,) async {
+    final data = await _unwrap(
+      _dio.patch('$_base/developer/feature-flags/$id',
+          data: payload, options: _authOptions,),
+    );
+    return DevFeatureFlag.fromMap(devMap(devMap(data)['featureFlag']));
+  }
+
+  @override
+  Future<void> archiveFeatureFlag(int id) async {
+    await _unwrap(
+      _dio.delete('$_base/developer/feature-flags/$id', options: _authOptions),
+    );
+  }
 }
