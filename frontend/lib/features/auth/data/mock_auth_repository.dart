@@ -53,6 +53,11 @@ class MockAuthRepository implements AuthRepository {
   }
 
   AppRole? _roleFromEmail(String email) {
+    // "developer" es un alias de acceso al panel técnico (superadmin). Usa rol
+    // admin para pasar el RoleGuard del panel de desarrollador.
+    if (email.endsWith('@developer.educa') || email.startsWith('developer')) {
+      return AppRole.admin;
+    }
     if (email.endsWith('@teacher.educa') || email.startsWith('teacher')) {
       return AppRole.teacher;
     }

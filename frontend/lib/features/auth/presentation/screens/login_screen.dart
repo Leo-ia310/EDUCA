@@ -31,12 +31,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
+    final email = _emailCtrl.text.trim();
     final role = await ref.read(authControllerProvider.notifier).signIn(
-          _emailCtrl.text.trim(),
+          email,
           _passwordCtrl.text,
         );
     if (role == null || !mounted) return;
+    // Acceso al panel técnico (superadmin): el alias "developer" entra directo
+    // al panel de desarrollador en lugar del dashboard de admin.
+    if (email.toLowerCase().startsWith('developer')) {
+      context.go(Routes.developer);
+      return;
+    }
     context.go(role.dashboardRoute);
+  }
+
+  /// Acceso discreto al panel de desarrollador: mantener presionado el título
+  /// rellena las credenciales demo del superadmin e inicia sesión.
+  void _devShortcut() {
+    _emailCtrl.text = 'developer@demo.com';
+    _passwordCtrl.text = 'demo1234';
+    _submit();
   }
 
   @override
@@ -57,10 +72,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Hola de nuevo',
-                  style: context.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                GestureDetector(
+                  onLongPress: _devShortcut,
+                  behavior: HitTestBehavior.opaque,
+                  child: Text(
+                    'Hola de nuevo',
+                    style: context.textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -103,7 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             suffixIcon: IconButton(
                               icon: Icon(_obscure
                                   ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined),
+                                  : Icons.visibility_outlined,),
                               onPressed: () =>
                                   setState(() => _obscure = !_obscure),
                             ),
