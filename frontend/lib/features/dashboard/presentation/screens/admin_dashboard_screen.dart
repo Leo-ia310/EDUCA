@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
-import '../../../../core/widgets/quick_action_button.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/stat_card.dart';
@@ -84,12 +84,19 @@ class AdminDashboardScreen extends ConsumerWidget {
             chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
-          // Resumen institucional verde
+          // Resumen institucional (salvia suave)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: palette.lime,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  palette.lime,
+                  Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
+                ],
+              ),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Column(
@@ -135,46 +142,23 @@ class AdminDashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Acciones rápidas
-          QuickActionButton(
-            icon: Icons.school_outlined,
-            label: 'Asignar Maestros',
-            onTap: () => context.push(Routes.manageTeachers),
-          ),
-          const SizedBox(height: 10),
-          QuickActionButton(
-            icon: Icons.event_outlined,
-            label: 'Crear Evento',
-            variant: QuickActionVariant.surface,
-            onTap: () => context.push(Routes.eventNew),
-          ),
-          const SizedBox(height: 10),
-          QuickActionButton(
-            icon: Icons.schedule_outlined,
-            label: 'Modificar Horarios',
-            variant: QuickActionVariant.surface,
-            onTap: () => context.push(Routes.schedule),
-          ),
-          const SizedBox(height: 10),
-          QuickActionButton(
-            icon: Icons.grid_view_rounded,
-            label: 'Libro de notas',
-            variant: QuickActionVariant.surface,
-            onTap: () => context.push(Routes.gradebook),
-          ),
-          const SizedBox(height: 10),
-          QuickActionButton(
-            icon: Icons.payments_outlined,
-            label: 'Recaudación',
-            variant: QuickActionVariant.surface,
-            onTap: () => context.push(Routes.paymentsDunning),
-          ),
-          const SizedBox(height: 10),
-          QuickActionButton(
-            icon: Icons.terminal_rounded,
-            label: 'Panel de desarrollador',
-            variant: QuickActionVariant.surface,
-            onTap: () => context.push(Routes.developer),
+          // Acciones rápidas (grid de 2 columnas)
+          _QuickActionsGrid(
+            actions: [
+              _AdminAction(Icons.school_outlined, 'Asignar Maestros',
+                  palette.info, () => context.push(Routes.manageTeachers),),
+              _AdminAction(Icons.event_outlined, 'Crear Evento',
+                  AppColors.pastelMint, () => context.push(Routes.eventNew),),
+              _AdminAction(Icons.schedule_outlined, 'Modificar Horarios',
+                  AppColors.pastelLavender, () => context.push(Routes.schedule),),
+              _AdminAction(Icons.grid_view_rounded, 'Libro de notas',
+                  AppColors.pastelPeach, () => context.push(Routes.gradebook),),
+              _AdminAction(Icons.payments_outlined, 'Recaudación',
+                  AppColors.pastelRose,
+                  () => context.push(Routes.paymentsDunning),),
+              _AdminAction(Icons.terminal_rounded, 'Panel de desarrollador',
+                  palette.limeDeep, () => context.push(Routes.developer),),
+            ],
           ),
           const SizedBox(height: 24),
 
@@ -278,6 +262,82 @@ class AdminDashboardScreen extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminAction {
+  const _AdminAction(this.icon, this.label, this.accent, this.onTap);
+  final IconData icon;
+  final String label;
+  final Color accent;
+  final VoidCallback onTap;
+}
+
+/// Grid de accesos rápidos en 2 columnas con altura pareja por fila.
+class _QuickActionsGrid extends StatelessWidget {
+  const _QuickActionsGrid({required this.actions});
+  final List<_AdminAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < actions.length; i += 2)
+          Padding(
+            padding: EdgeInsets.only(bottom: i + 2 < actions.length ? 10 : 0),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _ActionTile(action: actions[i])),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: i + 1 < actions.length
+                        ? _ActionTile(action: actions[i + 1])
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({required this.action});
+  final _AdminAction action;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = Color.lerp(action.accent, const Color(0xFF23281E), 0.30)!;
+    return EduCard(
+      padding: const EdgeInsets.all(14),
+      onTap: action.onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: action.accent.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(action.icon, color: ink, size: 20),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            action.label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
