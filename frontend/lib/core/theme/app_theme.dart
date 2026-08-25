@@ -91,6 +91,18 @@ extension AppThemeX on BuildContext {
 class AppTheme {
   AppTheme._();
 
+  /// Transiciones de página suaves (fade + leve deslizamiento) en todas las
+  /// plataformas, para una navegación calmada. Parte del pulido "Sereno".
+  static const PageTransitionsTheme _transitions = PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+      TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+      TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+      TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+      TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+    },
+  );
+
   static ThemeData get lightTheme {
     const scheme = ColorScheme.light(
       primary: AppColors.limeDeep,
@@ -112,6 +124,10 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.lightBg,
       canvasColor: AppColors.lightBg,
+      pageTransitionsTheme: _transitions,
+      splashColor: AppColors.limePrimary.withValues(alpha: 0.12),
+      highlightColor: Colors.transparent,
+      hoverColor: AppColors.limeSoft.withValues(alpha: 0.5),
       textTheme:
           AppTypography.textTheme(AppColors.textLight, AppColors.textLightMuted),
       extensions: const [
@@ -257,6 +273,10 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.darkBg,
       canvasColor: AppColors.darkBg,
+      pageTransitionsTheme: _transitions,
+      splashColor: AppColors.limePrimaryDark.withValues(alpha: 0.12),
+      highlightColor: Colors.transparent,
+      hoverColor: AppColors.limeSoftDark.withValues(alpha: 0.6),
       textTheme:
           AppTypography.textTheme(AppColors.textDark, AppColors.textDarkMuted),
       extensions: const [

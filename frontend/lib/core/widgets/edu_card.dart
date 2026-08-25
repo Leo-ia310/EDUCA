@@ -4,7 +4,10 @@ import '../theme/app_theme.dart';
 
 /// Tarjeta blanca (o de superficie) con bordes suaves, sombra sutil y padding
 /// estándar. Es la primitiva visual de prácticamente todas las pantallas.
-class EduCard extends StatelessWidget {
+///
+/// Si es interactiva (`onTap != null`) responde con un feedback táctil sutil
+/// —una leve escala al presionar— parte del pulido "Sereno".
+class EduCard extends StatefulWidget {
   const EduCard({
     super.key,
     required this.child,
@@ -25,22 +28,29 @@ class EduCard extends StatelessWidget {
   final bool elevated;
 
   @override
+  State<EduCard> createState() => _EduCardState();
+}
+
+class _EduCardState extends State<EduCard> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final bg = color ?? palette.cardElevated;
-    final radius = BorderRadius.circular(borderRadius);
+    final bg = widget.color ?? palette.cardElevated;
+    final radius = BorderRadius.circular(widget.borderRadius);
 
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      padding: padding,
+      padding: widget.padding,
       decoration: BoxDecoration(
         color: bg,
         borderRadius: radius,
-        border: border ??
+        border: widget.border ??
             Border.all(
               color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
             ),
-        boxShadow: elevated
+        boxShadow: widget.elevated
             ? [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.04),
@@ -50,16 +60,26 @@ class EduCard extends StatelessWidget {
               ]
             : null,
       ),
-      child: child,
+      child: widget.child,
     );
 
-    if (onTap == null) return card;
+    if (widget.onTap == null) return card;
+
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
+        onHighlightChanged: (v) {
+          if (v != _pressed) setState(() => _pressed = v);
+        },
         borderRadius: radius,
-        child: card,
+        child: AnimatedScale(
+          scale: _pressed && !reduceMotion ? 0.98 : 1,
+          duration: Duration(milliseconds: reduceMotion ? 0 : 120),
+          curve: Curves.easeOut,
+          child: card,
+        ),
       ),
     );
   }
