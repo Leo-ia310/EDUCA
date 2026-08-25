@@ -315,7 +315,7 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ink = Color.lerp(action.accent, const Color(0xFF23281E), 0.30)!;
+    final ink = Color.lerp(action.accent, const Color(0xFF23281E), 0.42)!;
     return EduCard(
       padding: const EdgeInsets.all(14),
       onTap: action.onTap,

@@ -28,7 +28,7 @@ Color subjectColor(String name) {
 
 /// Versión profunda del pastel, legible como ícono/texto sobre un tinte suave.
 Color subjectInk(String name) =>
-    Color.lerp(subjectColor(name), const Color(0xFF23281E), 0.34)!;
+    Color.lerp(subjectColor(name), const Color(0xFF23281E), 0.42)!;
 
 /// Fondo suave (tinte) del color de la materia, para pastillas de ícono.
 Color subjectSoft(String name) => subjectColor(name).withValues(alpha: 0.16);
