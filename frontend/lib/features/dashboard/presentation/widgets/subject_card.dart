@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../domain/dashboard_models.dart';
 
@@ -12,6 +13,9 @@ class SubjectProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final pct = (subject.progress * 100).toInt();
+    // Cada materia tiene su acento pastel propio (o el que traiga el dato).
+    final accent = subject.color ?? subjectColor(subject.name);
+    final ink = subject.color ?? subjectInk(subject.name);
     return EduCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -20,13 +24,13 @@ class SubjectProgressCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
+              color: accent.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               subject.icon ?? Icons.book_outlined,
               size: 20,
-              color: palette.limeDeep,
+              color: ink,
             ),
           ),
           const SizedBox(height: 10),
@@ -53,8 +57,7 @@ class SubjectProgressCard extends StatelessWidget {
                     value: subject.progress,
                     minHeight: 6,
                     backgroundColor: palette.surfaceAlt,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(palette.limeDeep),
+                    valueColor: AlwaysStoppedAnimation<Color>(ink),
                   ),
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../domain/dashboard_models.dart';
 
 class ScheduleItemRow extends StatelessWidget {
@@ -10,32 +11,41 @@ class ScheduleItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final accent = slot.accent ?? subjectColor(slot.subject);
+    final ink = slot.accent ?? subjectInk(slot.subject);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 48,
+            width: 46,
             child: Text(
               slot.startTime,
               style: context.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+                color: palette.textMuted,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: 4),
+          // Marcador tipo línea de tiempo, en el color de la materia.
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+          ),
           Container(
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
+              color: accent.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               slot.icon ?? Icons.menu_book_rounded,
               size: 18,
-              color: palette.limeDeep,
+              color: ink,
             ),
           ),
           const SizedBox(width: 12),
