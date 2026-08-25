@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
@@ -125,16 +126,12 @@ class _TeacherDashboardScreenState
                   if (line != data.quickAttendance.last)
                     Divider(
                       color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                      height: 12,
+                      height: 18,
                     ),
                 ],
                 const SizedBox(height: 12),
-                ElevatedButton.icon(
+                FilledButton.icon(
                   onPressed: () => context.push(Routes.attendance),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2B5A11),
-                    foregroundColor: Colors.white,
-                  ),
                   icon: const Icon(Icons.check_circle_outline),
                   label: const Text('Tomar / Finalizar Pase'),
                 ),
@@ -195,33 +192,42 @@ class _TeacherDashboardScreenState
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.add_circle_outline,
-                            color: palette.limeDeep, size: 28),
+                            color: palette.limeDeep, size: 28,),
                         const SizedBox(height: 6),
                         const Text('Agregar clase',
-                            textAlign: TextAlign.center),
+                            textAlign: TextAlign.center,),
                       ],
                     ),
                   );
                 }
                 final c = data.myClasses[i];
+                final accent = subjectColor(c.name);
+                final ink = subjectInk(c.name);
                 return Container(
-                  width: 220,
+                  width: 200,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: palette.cardContrast,
+                    color: accent.withValues(alpha: 0.16),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(c.icon, color: palette.lime, size: 28),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(c.icon, color: ink, size: 22),
+                      ),
                       const Spacer(),
                       Text(
                         c.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: context.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -230,9 +236,7 @@ class _TeacherDashboardScreenState
                         c.room,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
+                        style: context.textTheme.bodySmall,
                       ),
                     ],
                   ),
@@ -335,7 +339,9 @@ class _AttendanceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
       children: [
         UserAvatar(name: name, size: 36),
         const SizedBox(width: 12),
@@ -356,6 +362,7 @@ class _AttendanceTile extends StatelessWidget {
           checkColor: const Color(0xFF1E2218),
         ),
       ],
+      ),
     );
   }
 }
@@ -460,7 +467,7 @@ class _RecentGradeRow extends StatelessWidget {
                 ),
               ),
               Text(item.topic,
-                  style: context.textTheme.bodySmall, maxLines: 1),
+                  style: context.textTheme.bodySmall, maxLines: 1,),
             ],
           ),
         ),
