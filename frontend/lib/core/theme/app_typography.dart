@@ -9,19 +9,22 @@ class AppTypography {
 
   static TextTheme textTheme(Color base, Color muted) {
     final jakarta = GoogleFonts.plusJakartaSansTextTheme();
+    // Dirección "Sereno": disciplina de peso. El w800 se reserva para cifras y
+    // títulos grandes; los encabezados intermedios respiran en 600–700, con un
+    // leve tracking negativo para una lectura más elegante.
     return jakarta.copyWith(
-      displayLarge:
-          jakarta.displayLarge?.copyWith(color: base, fontWeight: FontWeight.w800),
-      displayMedium:
-          jakarta.displayMedium?.copyWith(color: base, fontWeight: FontWeight.w800),
-      displaySmall:
-          jakarta.displaySmall?.copyWith(color: base, fontWeight: FontWeight.w700),
-      headlineLarge:
-          jakarta.headlineLarge?.copyWith(color: base, fontWeight: FontWeight.w700),
+      displayLarge: jakarta.displayLarge
+          ?.copyWith(color: base, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+      displayMedium: jakarta.displayMedium
+          ?.copyWith(color: base, fontWeight: FontWeight.w800, letterSpacing: -0.4),
+      displaySmall: jakarta.displaySmall
+          ?.copyWith(color: base, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+      headlineLarge: jakarta.headlineLarge
+          ?.copyWith(color: base, fontWeight: FontWeight.w700, letterSpacing: -0.2),
       headlineMedium:
-          jakarta.headlineMedium?.copyWith(color: base, fontWeight: FontWeight.w700),
+          jakarta.headlineMedium?.copyWith(color: base, fontWeight: FontWeight.w600),
       headlineSmall:
-          jakarta.headlineSmall?.copyWith(color: base, fontWeight: FontWeight.w700),
+          jakarta.headlineSmall?.copyWith(color: base, fontWeight: FontWeight.w600),
       titleLarge:
           jakarta.titleLarge?.copyWith(color: base, fontWeight: FontWeight.w700),
       titleMedium:

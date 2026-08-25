@@ -92,7 +92,7 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme {
-    final scheme = const ColorScheme.light(
+    const scheme = ColorScheme.light(
       primary: AppColors.limeDeep,
       onPrimary: AppColors.textLight,
       primaryContainer: AppColors.limeSoft,
@@ -104,7 +104,7 @@ class AppTheme {
       surfaceContainerHighest: AppColors.lightSurfaceAlt,
       error: AppColors.danger,
       onError: Colors.white,
-      outline: Color(0xFFE3E7D2),
+      outline: AppColors.lineLight,
     );
 
     return ThemeData(
@@ -141,13 +141,13 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFFEAEFD8)),
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: AppColors.lineLightSoft),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.limeDeep,
+          backgroundColor: AppColors.limePrimary,
           foregroundColor: AppColors.textLight,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
@@ -177,7 +177,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textLight,
-          side: const BorderSide(color: Color(0xFFD8DEC2)),
+          side: const BorderSide(color: AppColors.lineLight),
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -192,11 +192,11 @@ class AppTheme {
         hintStyle: const TextStyle(color: AppColors.textLightMuted),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE3E7D2)),
+          borderSide: const BorderSide(color: AppColors.lineLight),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFE3E7D2)),
+          borderSide: const BorderSide(color: AppColors.lineLight),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -229,7 +229,7 @@ class AppTheme {
         shape: CircleBorder(),
       ),
       dividerTheme: const DividerThemeData(
-        color: Color(0xFFE3E7D2),
+        color: AppColors.lineLight,
         thickness: 1,
         space: 1,
       ),
@@ -237,19 +237,19 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
-    final scheme = const ColorScheme.dark(
-      primary: AppColors.limePrimary,
+    const scheme = ColorScheme.dark(
+      primary: AppColors.limePrimaryDark,
       onPrimary: AppColors.textLight,
-      primaryContainer: Color(0xFF2D3A12),
-      onPrimaryContainer: AppColors.limePrimary,
-      secondary: AppColors.limeDeep,
+      primaryContainer: AppColors.limeSoftDark,
+      onPrimaryContainer: AppColors.limePrimaryDark,
+      secondary: AppColors.limeDeepDark,
       onSecondary: AppColors.textLight,
       surface: AppColors.darkSurface,
       onSurface: AppColors.textDark,
       surfaceContainerHighest: AppColors.darkSurfaceAlt,
       error: AppColors.danger,
       onError: Colors.white,
-      outline: Color(0xFF2E3424),
+      outline: AppColors.lineDark,
     );
 
     return ThemeData(
@@ -269,9 +269,9 @@ class AppTheme {
           warning: AppColors.warning,
           danger: AppColors.danger,
           info: AppColors.info,
-          lime: AppColors.limePrimary,
-          limeDeep: AppColors.limeDeep,
-          limeSoft: Color(0xFF2D3A12),
+          lime: AppColors.limePrimaryDark,
+          limeDeep: AppColors.limeDeepDark,
+          limeSoft: AppColors.limeSoftDark,
         ),
       ],
       appBarTheme: const AppBarTheme(
@@ -286,13 +286,13 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF2E3424)),
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: AppColors.lineDark),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.limePrimary,
+          backgroundColor: AppColors.limePrimaryDark,
           foregroundColor: AppColors.textLight,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
@@ -318,7 +318,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textDark,
-          side: const BorderSide(color: Color(0xFF2E3424)),
+          side: const BorderSide(color: AppColors.lineDark),
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -333,15 +333,15 @@ class AppTheme {
         hintStyle: const TextStyle(color: AppColors.textDarkMuted),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF2E3424)),
+          borderSide: const BorderSide(color: AppColors.lineDark),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF2E3424)),
+          borderSide: const BorderSide(color: AppColors.lineDark),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.limePrimary, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.limePrimaryDark, width: 1.5),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -357,20 +357,20 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.darkSurface,
-        selectedItemColor: AppColors.limePrimary,
+        selectedItemColor: AppColors.limePrimaryDark,
         unselectedItemColor: AppColors.textDarkMuted,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.limePrimary,
+        backgroundColor: AppColors.limePrimaryDark,
         foregroundColor: AppColors.textLight,
         elevation: 4,
         shape: CircleBorder(),
       ),
       dividerTheme: const DividerThemeData(
-        color: Color(0xFF2E3424),
+        color: AppColors.lineDark,
         thickness: 1,
         space: 1,
       ),
