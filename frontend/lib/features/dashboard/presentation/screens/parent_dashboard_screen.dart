@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
@@ -69,12 +70,12 @@ class _ParentDashboardScreenState
             QuickActionEntry(
               icon: Icons.credit_card_rounded,
               label: 'Pagos',
-              route: '${Routes.payments}',
+              route: Routes.payments,
             ),
             QuickActionEntry(
               icon: Icons.picture_as_pdf_outlined,
               label: 'Boletín',
-              route: '${Routes.reports}',
+              route: Routes.reports,
             ),
             QuickActionEntry(
               icon: Icons.chat_bubble_outline,
@@ -129,12 +130,12 @@ class _ParentDashboardScreenState
                           ),
                         ),
                         child: Icon(Icons.add,
-                            color: palette.textMuted, size: 28),
+                            color: palette.textMuted, size: 28,),
                       ),
                       const SizedBox(height: 6),
                       Text('Añadir',
                           style: context.textTheme.labelSmall
-                              ?.copyWith(color: palette.textMuted)),
+                              ?.copyWith(color: palette.textMuted),),
                     ],
                   );
                 }
@@ -172,7 +173,14 @@ class _ParentDashboardScreenState
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
             decoration: BoxDecoration(
-              color: palette.lime,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  palette.lime,
+                  Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
+                ],
+              ),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Row(
@@ -300,7 +308,7 @@ class _ParentDashboardScreenState
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => context.push(
-                    '${Routes.reports}',
+                    Routes.reports,
                   ),
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: const Text('Boletín'),
@@ -310,7 +318,7 @@ class _ParentDashboardScreenState
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () =>
-                      context.push('${Routes.payments}'),
+                      context.push(Routes.payments),
                   icon: const Icon(Icons.credit_card_rounded),
                   label: const Text('Pagos'),
                 ),
@@ -389,6 +397,8 @@ class _SubjectTeacherRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final accent = subjectColor(item.name);
+    final ink = subjectInk(item.name);
     return EduCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Row(
@@ -397,11 +407,10 @@ class _SubjectTeacherRow extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
+              color: accent.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.menu_book_rounded,
-                color: palette.limeDeep, size: 20),
+            child: Icon(Icons.menu_book_rounded, color: ink, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
