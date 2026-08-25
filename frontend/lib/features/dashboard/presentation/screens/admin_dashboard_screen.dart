@@ -11,6 +11,7 @@ import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/quick_action_button.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/stat_card.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../chat/providers.dart';
@@ -238,20 +239,20 @@ class AdminDashboardScreen extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: _AdminStatCard(
+                child: StatCard(
                   value: '${data.totalStudents}',
                   label: 'Total estudiantes',
                   icon: Icons.people_outline,
-                  color: palette.info,
+                  accent: palette.info,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _AdminStatCard(
+                child: StatCard(
                   value: '${data.activeTeachers}',
                   label: 'Docentes activos',
                   icon: Icons.badge_outlined,
-                  color: palette.success,
+                  accent: palette.success,
                 ),
               ),
             ],
@@ -260,20 +261,20 @@ class AdminDashboardScreen extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: _AdminStatCard(
+                child: StatCard(
                   value: '${data.upcomingEvents}',
                   label: 'Eventos próximos',
                   icon: Icons.event_available_outlined,
-                  color: palette.warning,
+                  accent: palette.warning,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _AdminStatCard(
+                child: StatCard(
                   value: '${data.systemAlerts}',
                   label: 'Alertas sistema',
                   icon: Icons.warning_amber_outlined,
-                  color: palette.danger,
+                  accent: palette.danger,
                 ),
               ),
             ],
@@ -340,7 +341,7 @@ class _AnnouncementRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.campaign_outlined,
-                color: palette.limeDeep, size: 20),
+                color: palette.limeDeep, size: 20,),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -405,45 +406,3 @@ class _TeacherRow extends StatelessWidget {
   }
 }
 
-class _AdminStatCard extends StatelessWidget {
-  const _AdminStatCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-  final String value;
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return EduCard(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: context.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(label, style: context.textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-}

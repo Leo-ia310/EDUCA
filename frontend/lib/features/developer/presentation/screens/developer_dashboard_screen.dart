@@ -10,6 +10,7 @@ import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/stat_card.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 
@@ -237,11 +238,11 @@ class _StatsGrid extends StatelessWidget {
             padding: EdgeInsets.only(bottom: i + 2 < stats.length ? 10 : 0),
             child: Row(
               children: [
-                Expanded(child: _StatCard(stat: stats[i])),
+                Expanded(child: _statCard(stats[i])),
                 const SizedBox(width: 10),
                 Expanded(
                   child: i + 1 < stats.length
-                      ? _StatCard(stat: stats[i + 1])
+                      ? _statCard(stats[i + 1])
                       : const SizedBox.shrink(),
                 ),
               ],
@@ -260,42 +261,9 @@ class _Stat {
   final Color color;
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.stat});
-  final _Stat stat;
-
-  @override
-  Widget build(BuildContext context) {
-    return EduCard(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: stat.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(stat.icon, color: stat.color, size: 18),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            stat.value,
-            style: context.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 2),
-          Text(stat.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.textTheme.bodySmall,),
-        ],
-      ),
-    );
-  }
-}
+/// Adapta un [_Stat] al `StatCard` compartido.
+StatCard _statCard(_Stat s) =>
+    StatCard(value: s.value, label: s.label, icon: s.icon, accent: s.color);
 
 /// Las 9 áreas del panel. Cada una se conectará a su pantalla propia en los
 /// siguientes incrementos; por ahora las no construidas avisan "próximamente".

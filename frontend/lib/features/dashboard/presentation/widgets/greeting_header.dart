@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 
-/// Encabezado verde lima con "EduCore" + acciones. Aparece en los 4
-/// dashboards, igual a las referencias.
+/// Encabezado con la marca "Educa360" + acciones. Aparece en los 4
+/// dashboards.
 class DashboardTopBar extends StatelessWidget {
   const DashboardTopBar({
     super.key,
@@ -34,11 +34,11 @@ class DashboardTopBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.school_rounded,
-                color: Color(0xFF1E2218), size: 18),
+                color: Color(0xFF1E2218), size: 18,),
           ),
           const SizedBox(width: 8),
           Text(
-            'EduCore',
+            'Educa360',
             style: context.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
@@ -132,11 +132,19 @@ class GreetingBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
       decoration: BoxDecoration(
-        color: context.palette.lime,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            palette.lime,
+            Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
+          ],
+        ),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
