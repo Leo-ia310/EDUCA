@@ -1,0 +1,45 @@
+name: Initialize Shorebird
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  init-shorebird:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+        
+    - name: Setup Shorebird
+      uses: shorebirdtech/setup-shorebird@v1
+
+    - name: Init Shorebird
+      working-directory: ./frontend
+      run: shorebird init --force
+      env:
+        SHOREBIRD_TOKEN: sb_api_VwIDJ3crTDv8PjLYHGW7xK7idqXFfPslDjWsA1Gg7Ak
+
+    - name: Commit shorebird.yaml
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add frontend/shorebird.yaml
+        git commit -m "chore: initialize shorebird"
+        git push
