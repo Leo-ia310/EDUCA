@@ -36,7 +36,7 @@ class AssignmentsMockSeed {
               id: 'att-mat-001',
               name: 'Temario_Parcial_II.pdf',
               url: 'demo://files/Temario_Parcial_II.pdf',
-              sizeBytes: 248_000,
+              sizeBytes: 248000,
               mimeType: 'application/pdf',
             ),
           ],
@@ -202,7 +202,7 @@ class AssignmentsMockSeed {
                     .replaceAll(' ', '_')
                     .toLowerCase(),
                 url: 'demo://files/entrega_$studentId.pdf',
-                sizeBytes: 100_000 + index * 5000,
+                sizeBytes: 100000 + index * 5000,
                 mimeType: 'application/pdf',
               ),
             ]
