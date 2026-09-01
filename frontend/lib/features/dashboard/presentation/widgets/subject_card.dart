@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../domain/dashboard_models.dart';
@@ -53,11 +54,16 @@ class SubjectProgressCard extends StatelessWidget {
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: subject.progress,
-                    minHeight: 6,
-                    backgroundColor: palette.surfaceAlt,
-                    valueColor: AlwaysStoppedAnimation<Color>(ink),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: subject.progress),
+                    duration: context.motion(AppMotion.slow),
+                    curve: AppMotion.standard,
+                    builder: (context, value, _) => LinearProgressIndicator(
+                      value: value,
+                      minHeight: 6,
+                      backgroundColor: palette.surfaceAlt,
+                      valueColor: AlwaysStoppedAnimation<Color>(ink),
+                    ),
                   ),
                 ),
               ),

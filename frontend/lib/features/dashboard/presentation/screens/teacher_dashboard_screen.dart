@@ -11,6 +11,7 @@ import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../attendance/presentation/widgets/sync_status_badge.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -80,7 +81,7 @@ class _TeacherDashboardScreenState
           ],
         ),
       ),
-      child: Column(
+      child: StaggeredEntrance(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           DashboardTopBar(
