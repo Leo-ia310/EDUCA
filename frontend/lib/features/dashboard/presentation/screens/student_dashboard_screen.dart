@@ -32,6 +32,7 @@ class StudentDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user!;
+    final institution = ref.watch(authControllerProvider).institution;
     final palette = context.palette;
     // Datos reales del backend (fallback a demo mientras carga o sin backend).
     final data =
@@ -90,6 +91,10 @@ class StudentDashboardScreen extends ConsumerWidget {
             title: '¡Hola, ${user.displayFirstName}!',
             subtitle:
                 'Tienes ${data.pendingTasks} tareas pendientes para hoy.',
+            institutionName: institution?.name ?? 'Colegio Educa360',
+            // Eslogan de ejemplo (placeholder, aún no viene del backend).
+            slogan: 'Aprender hoy, liderar mañana.',
+            crest: const _SchoolCrest(),
           ),
           const SizedBox(height: 24),
 
@@ -222,5 +227,32 @@ class StudentDashboardScreen extends ConsumerWidget {
         context.go(Routes.profile);
         break;
     }
+  }
+}
+
+/// Escudo/emblema del colegio (placeholder inventado, para previsualizar).
+class _SchoolCrest extends StatelessWidget {
+  const _SchoolCrest();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 54,
+      height: 60,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Icon(Icons.shield_rounded, size: 60, color: Color(0xFF2B5A11)),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Icon(
+              Icons.auto_stories_rounded,
+              size: 22,
+              color: context.palette.lime,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

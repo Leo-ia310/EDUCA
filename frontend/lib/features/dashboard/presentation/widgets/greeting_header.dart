@@ -127,15 +127,103 @@ class GreetingBanner extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.trailing,
+    this.institutionName,
+    this.slogan,
+    this.crest,
   });
 
   final String title;
   final String subtitle;
   final Widget? trailing;
 
+  /// Nombre del colegio, mostrado como etiqueta sobre el saludo.
+  final String? institutionName;
+
+  /// Eslogan del colegio, mostrado como cita bajo el subtítulo.
+  final String? slogan;
+
+  /// Escudo/emblema del colegio, a la izquierda del saludo.
+  final Widget? crest;
+
+  // Tonos oscuros legibles sobre el fondo salvia.
+  static const Color _ink = Color(0xFF1E2218);
+  static const Color _inkSoft = Color(0xFF34401C);
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+
+    final info = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (institutionName != null) ...[
+          Text(
+            institutionName!.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.labelSmall?.copyWith(
+              color: _inkSoft,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
+        Text(
+          title,
+          style: context.textTheme.headlineSmall?.copyWith(
+            color: _ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          subtitle,
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: _inkSoft,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        if (slogan != null) ...[
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 3,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2B5A11),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  slogan!,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: _inkSoft,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+
+    final body = crest == null
+        ? info
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              crest!,
+              const SizedBox(width: 16),
+              Expanded(child: info),
+            ],
+          );
+
     return FloatingCard(
       child: Container(
         width: double.infinity,
@@ -154,21 +242,7 @@ class GreetingBanner extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: context.textTheme.headlineSmall?.copyWith(
-                color: const Color(0xFF1E2218),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF34401C),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            body,
             if (trailing != null) ...[
               const SizedBox(height: 12),
               trailing!,
