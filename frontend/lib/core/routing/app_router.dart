@@ -50,6 +50,7 @@ import '../../features/dashboard/presentation/screens/parent_dashboard_screen.da
 import '../../features/dashboard/presentation/screens/student_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/profile/presentation/student_profile_screen.dart';
 import '../../shared/models/app_role.dart';
 import '../widgets/empty_state.dart';
 import 'route_paths.dart';
@@ -325,7 +326,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       GoRoute(
         path: Routes.profile,
-        builder: (_, __) => const ProfileScreen(),
+        builder: (_, __) => const _ProfileRoleSplit(),
       ),
       GoRoute(
         path: Routes.changePassword,
@@ -479,6 +480,19 @@ class _PaymentsRoleSplit extends ConsumerWidget {
 }
 
 /// Dispatcher de `/grades`: docente ve el gradebook por clase; estudiante y
+/// Dispatcher de `/profile`: el alumno ve un perfil con sus tarjetas de
+/// notificaciones y notas (opciones en un menú); el resto ve el perfil estándar.
+class _ProfileRoleSplit extends ConsumerWidget {
+  const _ProfileRoleSplit();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(authControllerProvider).user?.activeRole;
+    if (role == AppRole.student) return const StudentProfileScreen();
+    return const ProfileScreen();
+  }
+}
+
 /// padre ven las notas del estudiante.
 class _GradesRoleSplit extends ConsumerWidget {
   const _GradesRoleSplit();
