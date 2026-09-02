@@ -76,33 +76,38 @@ class _NavButton extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              item.icon,
-              color: active ? activeColor : inactiveColor,
-              size: 24,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              item.label,
-              style: context.textTheme.labelSmall?.copyWith(
+        // FittedBox + mainAxisSize.min: el ítem se reduce si por un frame de
+        // transición recibe una altura diminuta, en vez de desbordar.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                item.icon,
                 color: active ? activeColor : inactiveColor,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                size: 24,
               ),
-            ),
-            const SizedBox(height: 4),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              height: 3,
-              width: active ? 20 : 0,
-              decoration: BoxDecoration(
-                color: activeColor,
-                borderRadius: BorderRadius.circular(2),
+              const SizedBox(height: 2),
+              Text(
+                item.label,
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: active ? activeColor : inactiveColor,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                height: 3,
+                width: active ? 20 : 0,
+                decoration: BoxDecoration(
+                  color: activeColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
