@@ -10,6 +10,7 @@ import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/floating_card.dart';
+import '../../../../core/widgets/open_card.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
@@ -21,6 +22,7 @@ import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/greeting_header.dart';
+import 'activity_detail_screen.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -266,7 +268,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           Row(
             children: [
               const Expanded(
-                  child: SectionHeader(title: 'Materias y Profesores')),
+                  child: SectionHeader(title: 'Materias y Profesores'),),
               GestureDetector(
                 onTap: () => context.push(Routes.schedule),
                 child: Text(
@@ -306,9 +308,13 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           for (final a in data.recentActivity)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: GestureDetector(
-                onTap: () => context.push(Routes.assignments),
-                child: _ActivityCard(item: a),
+              child: OpenCard(
+                closed: (context, open) => GestureDetector(
+                  onTap: open,
+                  behavior: HitTestBehavior.opaque,
+                  child: _ActivityCard(item: a),
+                ),
+                open: (context) => ActivityDetailScreen(activity: a),
               ),
             ),
           const SizedBox(height: 12),
