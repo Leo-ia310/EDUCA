@@ -186,28 +186,23 @@ class GreetingBanner extends StatelessWidget {
         ),
         if (slogan != null) ...[
           const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                width: 3,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2B5A11),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+          // Barra de acento como borde izquierdo: se ajusta a la altura del
+          // texto sin necesidad de `stretch` (que rompe dentro del Tilt).
+          Container(
+            padding: const EdgeInsets.only(left: 10),
+            decoration: const BoxDecoration(
+              border: Border(
+                left: BorderSide(color: Color(0xFF2B5A11), width: 3),
               ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  slogan!,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: _inkSoft,
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+            ),
+            child: Text(
+              slogan!,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: _inkSoft,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w600,
               ),
-            ],
+            ),
           ),
         ],
       ],
