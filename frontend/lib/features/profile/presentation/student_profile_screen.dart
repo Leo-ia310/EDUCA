@@ -231,7 +231,7 @@ class _SettingsMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded),
+      icon: const Icon(Icons.settings_outlined),
       tooltip: 'Opciones',
       onSelected: (v) async {
         switch (v) {
