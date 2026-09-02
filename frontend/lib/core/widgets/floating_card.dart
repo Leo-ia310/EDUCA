@@ -25,19 +25,22 @@ class FloatingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tilt.base(
-      disable: context.reduceMotion,
-      borderRadius: BorderRadius.circular(borderRadius),
-      tiltConfig: TiltConfig(
-        angle: angle,
-        enableGestureSensors: false,
-        enableReverse: false,
-        moveDuration: AppMotion.fast,
-        leaveDuration: AppMotion.slow,
+    // Aísla los repintados continuos del tilt del resto de la pantalla.
+    return RepaintBoundary(
+      child: Tilt.base(
+        disable: context.reduceMotion,
+        borderRadius: BorderRadius.circular(borderRadius),
+        tiltConfig: TiltConfig(
+          angle: angle,
+          enableGestureSensors: false,
+          enableReverse: false,
+          moveDuration: AppMotion.fast,
+          leaveDuration: AppMotion.slow,
+        ),
+        lightConfig: const LightConfig(disable: true),
+        shadowConfig: const ShadowBaseConfig(disable: true),
+        child: child,
       ),
-      lightConfig: const LightConfig(disable: true),
-      shadowConfig: const ShadowBaseConfig(disable: true),
-      child: child,
     );
   }
 }

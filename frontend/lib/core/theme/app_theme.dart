@@ -95,11 +95,14 @@ class AppTheme {
   /// Transiciones de página con eje compartido (shared-axis horizontal):
   /// deslizado direccional + fade que refuerza hacia dónde navega el usuario.
   /// `fillColor` es el fondo del tema para evitar destellos durante la
-  /// transición. Parte de la dirección "Sereno en movimiento".
+  /// transición. Si el usuario pidió reducir movimiento, degrada a un fade
+  /// simple. Parte de la dirección "Sereno en movimiento".
   static PageTransitionsTheme _transitionsFor(Color fillColor) {
-    final builder = SharedAxisPageTransitionsBuilder(
-      transitionType: SharedAxisTransitionType.horizontal,
-      fillColor: fillColor,
+    final builder = _MotionAware(
+      SharedAxisPageTransitionsBuilder(
+        transitionType: SharedAxisTransitionType.horizontal,
+        fillColor: fillColor,
+      ),
     );
     return PageTransitionsTheme(
       builders: {
@@ -133,8 +136,8 @@ class AppTheme {
       splashColor: AppColors.limePrimary.withValues(alpha: 0.12),
       highlightColor: Colors.transparent,
       hoverColor: AppColors.limeSoft.withValues(alpha: 0.5),
-      textTheme:
-          AppTypography.textTheme(AppColors.textLight, AppColors.textLightMuted),
+      textTheme: AppTypography.textTheme(
+          AppColors.textLight, AppColors.textLightMuted,),
       extensions: const [
         AppPalette(
           surfaceAlt: AppColors.lightSurfaceAlt,
@@ -366,7 +369,8 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.limePrimaryDark, width: 1.5),
+          borderSide:
+              const BorderSide(color: AppColors.limePrimaryDark, width: 1.5),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -399,6 +403,33 @@ class AppTheme {
         thickness: 1,
         space: 1,
       ),
+    );
+  }
+}
+
+/// Envuelve un [PageTransitionsBuilder] y lo degrada a un fade simple cuando el
+/// sistema pide reducir movimiento (accesibilidad).
+class _MotionAware extends PageTransitionsBuilder {
+  const _MotionAware(this.delegate);
+  final PageTransitionsBuilder delegate;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return FadeTransition(opacity: animation, child: child);
+    }
+    return delegate.buildTransitions(
+      route,
+      context,
+      animation,
+      secondaryAnimation,
+      child,
     );
   }
 }
