@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
+import '../../../../core/widgets/open_card.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
@@ -21,6 +22,7 @@ import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/greeting_header.dart';
+import 'class_detail_screen.dart';
 
 class TeacherDashboardScreen extends ConsumerStatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -126,7 +128,8 @@ class _TeacherDashboardScreenState
                   ),
                   if (line != data.quickAttendance.last)
                     Divider(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                      color:
+                          Theme.of(context).dividerColor.withValues(alpha: 0.5),
                       height: 18,
                     ),
                 ],
@@ -192,11 +195,16 @@ class _TeacherDashboardScreenState
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_circle_outline,
-                            color: palette.limeDeep, size: 28,),
+                        Icon(
+                          Icons.add_circle_outline,
+                          color: palette.limeDeep,
+                          size: 28,
+                        ),
                         const SizedBox(height: 6),
-                        const Text('Agregar clase',
-                            textAlign: TextAlign.center,),
+                        const Text(
+                          'Agregar clase',
+                          textAlign: TextAlign.center,
+                        ),
                       ],
                     ),
                   );
@@ -204,42 +212,50 @@ class _TeacherDashboardScreenState
                 final c = data.myClasses[i];
                 final accent = subjectColor(c.name);
                 final ink = subjectInk(c.name);
-                return Container(
-                  width: 200,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: accent.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(c.icon, color: ink, size: 22),
+                return OpenCard(
+                  borderRadius: 20,
+                  open: (context) => ClassDetailScreen(teacherClass: c),
+                  closed: (context, open) => GestureDetector(
+                    onTap: open,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      width: 200,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const Spacer(),
-                      Text(
-                        c.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(c.icon, color: ink, size: 22),
+                          ),
+                          const Spacer(),
+                          Text(
+                            c.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            c.room,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.bodySmall,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        c.room,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.bodySmall,
-                      ),
-                    ],
+                    ),
                   ),
                 );
               },
@@ -257,8 +273,7 @@ class _TeacherDashboardScreenState
                 ),
               ),
               FilledButton.tonalIcon(
-                onPressed: () =>
-                    context.push(Routes.assignmentNew),
+                onPressed: () => context.push(Routes.assignmentNew),
                 icon: const Icon(Icons.add),
                 label: const Text('Asignar Nuevo'),
                 style: FilledButton.styleFrom(
@@ -292,7 +307,8 @@ class _TeacherDashboardScreenState
                   _RecentGradeRow(item: g),
                   if (g != data.recentGrades.last)
                     Divider(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                      color:
+                          Theme.of(context).dividerColor.withValues(alpha: 0.5),
                       height: 18,
                     ),
                 ],
@@ -343,26 +359,26 @@ class _AttendanceTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-      children: [
-        UserAvatar(name: name, size: 36),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            name,
-            style: context.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+        children: [
+          UserAvatar(name: name, size: 36),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: context.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
-        ),
-        Checkbox.adaptive(
-          value: present,
-          onChanged: (v) => onChanged(v ?? false),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+          Checkbox.adaptive(
+            value: present,
+            onChanged: (v) => onChanged(v ?? false),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+            activeColor: context.palette.limeDeep,
+            checkColor: const Color(0xFF1E2218),
           ),
-          activeColor: context.palette.limeDeep,
-          checkColor: const Color(0xFF1E2218),
-        ),
-      ],
+        ],
       ),
     );
   }
@@ -424,8 +440,7 @@ class _AssignmentRow extends StatelessWidget {
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(999),
@@ -467,8 +482,11 @@ class _RecentGradeRow extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Text(item.topic,
-                  style: context.textTheme.bodySmall, maxLines: 1,),
+              Text(
+                item.topic,
+                style: context.textTheme.bodySmall,
+                maxLines: 1,
+              ),
             ],
           ),
         ),
