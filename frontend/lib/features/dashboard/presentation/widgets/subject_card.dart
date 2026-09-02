@@ -7,8 +7,9 @@ import '../../../../core/widgets/edu_card.dart';
 import '../../domain/dashboard_models.dart';
 
 class SubjectProgressCard extends StatelessWidget {
-  const SubjectProgressCard({super.key, required this.subject});
+  const SubjectProgressCard({super.key, required this.subject, this.onTap});
   final SubjectProgress subject;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +19,7 @@ class SubjectProgressCard extends StatelessWidget {
     final accent = subject.color ?? subjectColor(subject.name);
     final ink = subject.color ?? subjectInk(subject.name);
     return EduCard(
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
