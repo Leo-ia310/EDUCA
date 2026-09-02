@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
+import '../../../../core/widgets/floating_card.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
@@ -86,59 +87,59 @@ class AdminDashboardScreen extends ConsumerWidget {
           ),
 
           // Resumen institucional (salvia suave)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  palette.lime,
-                  Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '¡Hola, ${user.displayFirstName}!',
-                  style: context.textTheme.headlineSmall?.copyWith(
-                    color: const Color(0xFF1E2218),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Resumen Institucional',
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF34401C),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _OverviewMini(
-                        value:
-                            '${data.attendancePct.toStringAsFixed(1)}%',
-                        label: 'Asistencia hoy',
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _OverviewMini(
-                        value:
-                            data.institutionalAvg.toStringAsFixed(1),
-                        label: 'Promedio institucional',
-                      ),
-                    ),
+          FloatingCard(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    palette.lime,
+                    Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
                   ],
                 ),
-              ],
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '¡Hola, ${user.displayFirstName}!',
+                    style: context.textTheme.headlineSmall?.copyWith(
+                      color: const Color(0xFF1E2218),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Resumen Institucional',
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF34401C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _OverviewMini(
+                          value: '${data.attendancePct.toStringAsFixed(1)}%',
+                          label: 'Asistencia hoy',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _OverviewMini(
+                          value: data.institutionalAvg.toStringAsFixed(1),
+                          label: 'Promedio institucional',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -146,19 +147,42 @@ class AdminDashboardScreen extends ConsumerWidget {
           // Acciones rápidas (grid de 2 columnas)
           _QuickActionsGrid(
             actions: [
-              _AdminAction(Icons.school_outlined, 'Asignar Maestros',
-                  palette.info, () => context.push(Routes.manageTeachers),),
-              _AdminAction(Icons.event_outlined, 'Crear Evento',
-                  AppColors.pastelMint, () => context.push(Routes.eventNew),),
-              _AdminAction(Icons.schedule_outlined, 'Modificar Horarios',
-                  AppColors.pastelLavender, () => context.push(Routes.schedule),),
-              _AdminAction(Icons.grid_view_rounded, 'Libro de notas',
-                  AppColors.pastelPeach, () => context.push(Routes.gradebook),),
-              _AdminAction(Icons.payments_outlined, 'Recaudación',
-                  AppColors.pastelRose,
-                  () => context.push(Routes.paymentsDunning),),
-              _AdminAction(Icons.terminal_rounded, 'Panel de desarrollador',
-                  palette.limeDeep, () => context.push(Routes.developer),),
+              _AdminAction(
+                Icons.school_outlined,
+                'Asignar Maestros',
+                palette.info,
+                () => context.push(Routes.manageTeachers),
+              ),
+              _AdminAction(
+                Icons.event_outlined,
+                'Crear Evento',
+                AppColors.pastelMint,
+                () => context.push(Routes.eventNew),
+              ),
+              _AdminAction(
+                Icons.schedule_outlined,
+                'Modificar Horarios',
+                AppColors.pastelLavender,
+                () => context.push(Routes.schedule),
+              ),
+              _AdminAction(
+                Icons.grid_view_rounded,
+                'Libro de notas',
+                AppColors.pastelPeach,
+                () => context.push(Routes.gradebook),
+              ),
+              _AdminAction(
+                Icons.payments_outlined,
+                'Recaudación',
+                AppColors.pastelRose,
+                () => context.push(Routes.paymentsDunning),
+              ),
+              _AdminAction(
+                Icons.terminal_rounded,
+                'Panel de desarrollador',
+                palette.limeDeep,
+                () => context.push(Routes.developer),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -211,7 +235,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                   _TeacherRow(item: t),
                   if (t != data.teachers.last)
                     Divider(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                      color:
+                          Theme.of(context).dividerColor.withValues(alpha: 0.5),
                       height: 14,
                     ),
                 ],
@@ -401,8 +426,11 @@ class _AnnouncementRow extends StatelessWidget {
               color: palette.limeSoft,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.campaign_outlined,
-                color: palette.limeDeep, size: 20,),
+            child: Icon(
+              Icons.campaign_outlined,
+              color: palette.limeDeep,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -466,4 +494,3 @@ class _TeacherRow extends StatelessWidget {
     );
   }
 }
-

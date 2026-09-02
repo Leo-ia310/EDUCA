@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
+import '../../../../core/widgets/floating_card.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
@@ -29,8 +30,7 @@ class ParentDashboardScreen extends ConsumerStatefulWidget {
       _ParentDashboardScreenState();
 }
 
-class _ParentDashboardScreenState
-    extends ConsumerState<ParentDashboardScreen> {
+class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   int _selectedChild = 0;
 
   @override
@@ -130,13 +130,18 @@ class _ParentDashboardScreenState
                             color: Theme.of(context).dividerColor,
                           ),
                         ),
-                        child: Icon(Icons.add,
-                            color: palette.textMuted, size: 28,),
+                        child: Icon(
+                          Icons.add,
+                          color: palette.textMuted,
+                          size: 28,
+                        ),
                       ),
                       const SizedBox(height: 6),
-                      Text('Añadir',
-                          style: context.textTheme.labelSmall
-                              ?.copyWith(color: palette.textMuted),),
+                      Text(
+                        'Añadir',
+                        style: context.textTheme.labelSmall
+                            ?.copyWith(color: palette.textMuted),
+                      ),
                     ],
                   );
                 }
@@ -170,61 +175,64 @@ class _ParentDashboardScreenState
           const SizedBox(height: 20),
 
           // Estado de Asistencia
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  palette.lime,
-                  Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
+          FloatingCard(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    palette.lime,
+                    Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Estado de Asistencia',
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF34401C),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${data.attendancePercent.toStringAsFixed(0)}%',
+                          style: context.textTheme.displaySmall?.copyWith(
+                            color: const Color(0xFF1E2218),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${child.name} está al día',
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF34401C),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2B5A11),
+                      shape: BoxShape.circle,
+                    ),
+                    child:
+                        const Icon(Icons.check, color: Colors.white, size: 28),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Estado de Asistencia',
-                        style: context.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF34401C),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${data.attendancePercent.toStringAsFixed(0)}%',
-                        style: context.textTheme.displaySmall?.copyWith(
-                          color: const Color(0xFF1E2218),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${child.name} está al día',
-                        style: context.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF34401C),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2B5A11),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, color: Colors.white, size: 28),
-                ),
-              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -257,7 +265,8 @@ class _ParentDashboardScreenState
 
           Row(
             children: [
-              const Expanded(child: SectionHeader(title: 'Materias y Profesores')),
+              const Expanded(
+                  child: SectionHeader(title: 'Materias y Profesores')),
               GestureDetector(
                 onTap: () => context.push(Routes.schedule),
                 child: Text(
@@ -318,8 +327,7 @@ class _ParentDashboardScreenState
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () =>
-                      context.push(Routes.payments),
+                  onPressed: () => context.push(Routes.payments),
                   icon: const Icon(Icons.credit_card_rounded),
                   label: const Text('Pagos'),
                 ),

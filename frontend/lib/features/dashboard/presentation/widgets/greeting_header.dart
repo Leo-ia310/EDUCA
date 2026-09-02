@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/floating_card.dart';
 
 /// Encabezado con la marca "Educa360" + acciones. Aparece en los 4
 /// dashboards.
@@ -33,8 +34,11 @@ class DashboardTopBar extends StatelessWidget {
               color: context.palette.limeDeep,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.school_rounded,
-                color: Color(0xFF1E2218), size: 18,),
+            child: const Icon(
+              Icons.school_rounded,
+              color: Color(0xFF1E2218),
+              size: 18,
+            ),
           ),
           const SizedBox(width: 8),
           Text(
@@ -95,8 +99,7 @@ class _TopIcon extends StatelessWidget {
             right: 6,
             top: 6,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                 color: context.palette.danger,
                 borderRadius: BorderRadius.circular(10),
@@ -133,43 +136,45 @@ class GreetingBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            palette.lime,
-            Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
+    return FloatingCard(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              palette.lime,
+              Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: context.textTheme.headlineSmall?.copyWith(
+                color: const Color(0xFF1E2218),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF34401C),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(height: 12),
+              trailing!,
+            ],
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: context.textTheme.headlineSmall?.copyWith(
-              color: const Color(0xFF1E2218),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF34401C),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(height: 12),
-            trailing!,
-          ],
-        ],
       ),
     );
   }
