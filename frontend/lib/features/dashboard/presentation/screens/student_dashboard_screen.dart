@@ -1,16 +1,15 @@
-import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/motion.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
+import '../../../../core/widgets/open_card.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -25,6 +24,7 @@ import '../widgets/schedule_item.dart';
 import '../widgets/subject_card.dart';
 import '../widgets/task_card.dart';
 import 'subject_detail_screen.dart';
+import 'task_detail_screen.dart';
 
 class StudentDashboardScreen extends ConsumerWidget {
   const StudentDashboardScreen({super.key});
@@ -149,24 +149,12 @@ class StudentDashboardScreen extends ConsumerWidget {
               for (var i = 0; i < data.subjects.length; i++) ...[
                 if (i > 0) const SizedBox(width: 12),
                 Expanded(
-                  child: OpenContainer(
-                    tappable: false,
-                    closedElevation: 0,
-                    closedColor: Colors.transparent,
-                    openColor: Theme.of(context).scaffoldBackgroundColor,
-                    middleColor: Theme.of(context).scaffoldBackgroundColor,
-                    closedShape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    transitionType: ContainerTransitionType.fadeThrough,
-                    transitionDuration: context.reduceMotion
-                        ? AppMotion.fast
-                        : AppMotion.slow,
-                    closedBuilder: (context, open) => SubjectProgressCard(
+                  child: OpenCard(
+                    closed: (context, open) => SubjectProgressCard(
                       subject: data.subjects[i],
                       onTap: open,
                     ),
-                    openBuilder: (context, _) =>
+                    open: (context) =>
                         SubjectDetailScreen(subject: data.subjects[i]),
                   ),
                 ),
@@ -195,9 +183,13 @@ class StudentDashboardScreen extends ConsumerWidget {
           for (final task in data.tasks)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: GestureDetector(
-                onTap: () => context.push(Routes.assignments),
-                child: TaskRow(task: task),
+              child: OpenCard(
+                closed: (context, open) => GestureDetector(
+                  onTap: open,
+                  behavior: HitTestBehavior.opaque,
+                  child: TaskRow(task: task),
+                ),
+                open: (context) => TaskDetailScreen(task: task),
               ),
             ),
           const SizedBox(height: 16),
