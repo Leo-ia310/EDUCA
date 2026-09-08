@@ -27,7 +27,6 @@ import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/identity_providers.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
-import '../../features/auth/presentation/screens/institution_code_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/admin/presentation/screens/manage_teachers_screen.dart';
@@ -46,6 +45,7 @@ import '../../features/notifications/presentation/screens/notification_settings_
 import '../../features/schedule/presentation/screens/schedule_screen.dart';
 import '../../features/support/presentation/screens/help_screen.dart';
 import '../../features/dashboard/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/dashboard/presentation/screens/all_subjects_screen.dart';
 import '../../features/dashboard/presentation/screens/parent_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/student_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/teacher_dashboard_screen.dart';
@@ -70,28 +70,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
       final loggedIn = auth.isAuthenticated;
 
-      // El splash siempre reenvía: al dashboard si hay sesión, o al código de
-      // colegio si no. (La pantalla splash no navega por sí misma.)
+      // El splash siempre reenvía: al dashboard si hay sesión, o al login si no.
+      // (La pantalla splash no navega por sí misma.)
       if (loc == Routes.splash) {
         return loggedIn
             ? auth.user!.activeRole.dashboardRoute
-            : Routes.institutionCode;
+            : Routes.login;
       }
 
-      final goingToAuth = loc == Routes.institutionCode ||
-          loc == Routes.login ||
-          loc == Routes.forgotPassword;
+      final goingToAuth =
+          loc == Routes.login || loc == Routes.forgotPassword;
 
-      if (!loggedIn && !goingToAuth) return Routes.institutionCode;
+      if (!loggedIn && !goingToAuth) return Routes.login;
       if (loggedIn && goingToAuth) return auth.user!.activeRole.dashboardRoute;
       return null;
     },
     routes: [
       GoRoute(path: Routes.splash, builder: (_, __) => const SplashScreen()),
-      GoRoute(
-        path: Routes.institutionCode,
-        builder: (_, __) => const InstitutionCodeScreen(),
-      ),
       GoRoute(path: Routes.login, builder: (_, __) => const LoginScreen()),
       GoRoute(
         path: Routes.forgotPassword,
@@ -339,6 +334,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.help,
         builder: (_, __) => const HelpScreen(),
+      ),
+
+      // ----- Materias -----
+      GoRoute(
+        path: Routes.subjects,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.student, AppRole.parent},
+          child: AllSubjectsScreen(),
+        ),
       ),
 
       // ----- Horario -----

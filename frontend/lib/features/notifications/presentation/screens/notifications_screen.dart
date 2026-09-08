@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/entities.dart';
 import '../../domain/notifications_bootstrap.dart';
 import '../../providers.dart';
@@ -28,15 +31,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final palette = context.palette;
     final feed = ref.watch(notificationsFeedProvider);
     final unread = ref.watch(notificationsUnreadProvider).asData?.value ?? 0;
+    final user = ref.watch(authControllerProvider).user;
 
     return AppScaffold(
       scrollable: false,
       padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+      bottomNav: EducaBottomNav(
+        current: null,
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: null,
+          homeRoute:
+              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
         ),
+      ),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(unread > 0 ? 'Alertas ($unread)' : 'Alertas'),
         actions: [
           PopupMenuButton<String>(

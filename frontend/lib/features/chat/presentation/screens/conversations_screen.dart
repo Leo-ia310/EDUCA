@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../providers.dart';
 import '../widgets/conversation_tile.dart';
@@ -38,11 +40,17 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       scrollable: false,
       padding: EdgeInsets.zero,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
         title: const Text('Mensajes'),
+      ),
+      bottomNav: EducaBottomNav(
+        current: EducaNavItem.messages,
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: EducaNavItem.messages,
+          homeRoute: me?.activeRole.dashboardRoute ?? Routes.studentDashboard,
+        ),
       ),
       fab: EducaFab(
         icon: Icons.chat_bubble_outline,
@@ -71,8 +79,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
             ),
             Expanded(
               child: conversations.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (list) {
                   final filtered = _query.isEmpty

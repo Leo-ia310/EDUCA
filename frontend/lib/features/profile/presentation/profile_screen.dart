@@ -25,11 +25,13 @@ class ProfileScreen extends ConsumerWidget {
     return AppScaffold(
       bottomNav: EducaBottomNav(
         current: EducaNavItem.profile,
-        onTap: (i) {
-          if (i == EducaNavItem.home && user != null) {
-            context.go(user.activeRole.dashboardRoute);
-          }
-        },
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: EducaNavItem.profile,
+          homeRoute:
+              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +153,7 @@ class ProfileScreen extends ConsumerWidget {
           OutlinedButton.icon(
             onPressed: () async {
               await ref.read(authControllerProvider.notifier).signOut();
-              if (context.mounted) context.go(Routes.institutionCode);
+              if (context.mounted) context.go(Routes.login);
             },
             icon: Icon(Icons.logout, color: palette.danger),
             label: Text('Cerrar sesión',

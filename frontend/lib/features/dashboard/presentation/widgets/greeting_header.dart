@@ -9,17 +9,18 @@ class DashboardTopBar extends StatelessWidget {
   const DashboardTopBar({
     super.key,
     this.onSettingsTap,
+    this.settingsMenu,
     this.onNotificationsTap,
-    this.onChatTap,
     this.notificationsBadge = 0,
-    this.chatBadge = 0,
   });
 
   final VoidCallback? onSettingsTap;
+
+  /// Menú desplegable para el engranaje. Si se provee, reemplaza al botón que
+  /// dispara [onSettingsTap] (que solo navega). Tiene prioridad sobre él.
+  final Widget? settingsMenu;
   final VoidCallback? onNotificationsTap;
-  final VoidCallback? onChatTap;
   final int notificationsBadge;
-  final int chatBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -48,21 +49,16 @@ class DashboardTopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          if (onChatTap != null) ...[
-            _TopIcon(
-              icon: Icons.chat_bubble_outline,
-              onTap: onChatTap!,
-              badge: chatBadge,
-            ),
-            const SizedBox(width: 8),
-          ],
           if (onNotificationsTap != null)
             _TopIcon(
               icon: Icons.notifications_outlined,
               onTap: onNotificationsTap!,
               badge: notificationsBadge,
             ),
-          if (onSettingsTap != null) ...[
+          if (settingsMenu != null) ...[
+            const SizedBox(width: 8),
+            settingsMenu!,
+          ] else if (onSettingsTap != null) ...[
             const SizedBox(width: 8),
             _TopIcon(icon: Icons.settings_outlined, onTap: onSettingsTap!),
           ],

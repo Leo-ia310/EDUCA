@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -32,35 +31,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     return AppScaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Horario'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else if (user != null) {
-              context.go(user.activeRole.dashboardRoute);
-            }
-          },
-        ),
       ),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.schedule,
-        onTap: (item) {
-          switch (item) {
-            case EducaNavItem.home:
-              if (user != null) context.go(user.activeRole.dashboardRoute);
-              break;
-            case EducaNavItem.alerts:
-              context.push(Routes.alerts);
-              break;
-            case EducaNavItem.profile:
-              context.go(Routes.profile);
-              break;
-            case EducaNavItem.schedule:
-              break;
-          }
-        },
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: EducaNavItem.schedule,
+          homeRoute:
+              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

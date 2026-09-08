@@ -6,9 +6,12 @@ import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/grades_controller.dart';
@@ -25,10 +28,21 @@ class StudentGradesScreen extends ConsumerWidget {
     final periods = ref.watch(periodsProvider);
     final performance = ref.watch(studentPerformanceProvider(studentId));
     final scaleAsync = ref.watch(defaultScaleProvider);
+    final user = ref.watch(authControllerProvider).user;
 
     return AppScaffold(
       scrollable: false,
       padding: EdgeInsets.zero,
+      bottomNav: EducaBottomNav(
+        current: null,
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: null,
+          homeRoute:
+              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
+        ),
+      ),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -48,7 +62,7 @@ class StudentGradesScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: performance.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (perfs) {
             if (perfs.isEmpty) {

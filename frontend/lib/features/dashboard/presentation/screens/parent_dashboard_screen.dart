@@ -16,7 +16,6 @@ import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
-import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
 import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
@@ -54,11 +53,12 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
           Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.home,
-        onTap: (i) {
-          if (i == EducaNavItem.profile) context.go(Routes.profile);
-          if (i == EducaNavItem.alerts) context.push(Routes.alerts);
-          if (i == EducaNavItem.schedule) context.push(Routes.schedule);
-        },
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: EducaNavItem.home,
+          homeRoute: user.activeRole.dashboardRoute,
+        ),
       ),
       fab: EducaFab(
         onPressed: () => showQuickActionsSheet(
@@ -93,12 +93,10 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         children: [
           DashboardTopBar(
             onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () => context.push(Routes.alerts),
-            onChatTap: () => context.push(Routes.chat),
+            onNotificationsTap: () => context.go(Routes.alerts),
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ??
                     data.newNotices,
-            chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
           GreetingBanner(

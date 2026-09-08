@@ -16,7 +16,6 @@ import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../attendance/presentation/widgets/sync_status_badge.dart';
 import '../../../auth/presentation/auth_controller.dart';
-import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
 import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
@@ -53,7 +52,12 @@ class _TeacherDashboardScreenState
           Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.home,
-        onTap: (item) => _handleNav(context, item),
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: EducaNavItem.home,
+          homeRoute: user.activeRole.dashboardRoute,
+        ),
       ),
       fab: EducaFab(
         onPressed: () => showQuickActionsSheet(
@@ -88,11 +92,9 @@ class _TeacherDashboardScreenState
         children: [
           DashboardTopBar(
             onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () => context.push(Routes.alerts),
-            onChatTap: () => context.push(Routes.chat),
+            onNotificationsTap: () => context.go(Routes.alerts),
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
-            chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
           GreetingBanner(
@@ -326,21 +328,6 @@ class _TeacherDashboardScreenState
     );
   }
 
-  void _handleNav(BuildContext context, EducaNavItem item) {
-    switch (item) {
-      case EducaNavItem.profile:
-        context.go(Routes.profile);
-        break;
-      case EducaNavItem.alerts:
-        context.push(Routes.alerts);
-        break;
-      case EducaNavItem.schedule:
-        context.push(Routes.schedule);
-        break;
-      case EducaNavItem.home:
-        break;
-    }
-  }
 }
 
 class _AttendanceTile extends StatelessWidget {

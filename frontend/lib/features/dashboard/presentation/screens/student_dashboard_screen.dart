@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -9,22 +10,18 @@ import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
-import '../../../../core/widgets/open_card.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/section_nav_card.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../auth/presentation/auth_controller.dart';
-import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
+import '../../../profile/presentation/widgets/account_settings_menu.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/classmates_strip.dart';
-import '../widgets/grades_block.dart';
 import '../widgets/greeting_header.dart';
 import '../widgets/schedule_item.dart';
-import '../widgets/subject_card.dart';
-import '../widgets/task_card.dart';
-import 'subject_detail_screen.dart';
-import 'task_detail_screen.dart';
+import '../widgets/stat_strip.dart';
 
 class StudentDashboardScreen extends ConsumerWidget {
   const StudentDashboardScreen({super.key});
@@ -39,12 +36,36 @@ class StudentDashboardScreen extends ConsumerWidget {
         ref.watch(studentDashboardProvider).valueOrNull ??
             StudentDashboardData.mock();
 
+    // Estado del horario respecto a la hora actual: clase en curso y siguiente.
+    final now = DateTime.now();
+    final nowMin = now.hour * 60 + now.minute;
+    int? currentIdx;
+    int? nextIdx;
+    for (var i = 0; i < data.todaySchedule.length; i++) {
+      final start = _toMinutes(data.todaySchedule[i].startTime);
+      final end = _toMinutes(data.todaySchedule[i].endTime);
+      if (nowMin >= start && nowMin < end) {
+        currentIdx = i;
+      } else if (start > nowMin && nextIdx == null) {
+        nextIdx = i;
+      }
+    }
+    // Etiqueta de fecha real (día de la semana capitalizado).
+    final weekday = toBeginningOfSentenceCase(
+      DateFormat('EEEE', 'es').format(now),
+    );
+
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       onRefresh: () async => Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.home,
-        onTap: (item) => _handleNav(context, item),
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: EducaNavItem.home,
+          homeRoute: user.activeRole.dashboardRoute,
+        ),
       ),
       fab: EducaFab(
         onPressed: () => showQuickActionsSheet(
@@ -78,23 +99,29 @@ class StudentDashboardScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           DashboardTopBar(
-            onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () => context.push(Routes.alerts),
-            onChatTap: () => context.push(Routes.chat),
+            settingsMenu: const AccountSettingsMenu(boxed: true),
+            onNotificationsTap: () => context.go(Routes.alerts),
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
-            chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
           ),
 
-          // Saludo
+          // Saludo (consciente de la hora del día)
           GreetingBanner(
-            title: '¡Hola, ${user.displayFirstName}!',
+            title: '${_greeting(now)}, ${user.displayFirstName}',
             subtitle:
                 'Tienes ${data.pendingTasks} tareas pendientes para hoy.',
             institutionName: institution?.name ?? 'Colegio Educa360',
             // Eslogan de ejemplo (placeholder, aún no viene del backend).
             slogan: 'Aprender hoy, liderar mañana.',
             crest: const _SchoolCrest(),
+          ),
+          const SizedBox(height: 16),
+
+          // KPIs de un vistazo (promedio · asistencia · pendientes)
+          DashboardStatStrip(
+            average: data.averageScore,
+            attendanceRate: data.attendanceRate,
+            pendingTasks: data.pendingTasks,
           ),
           const SizedBox(height: 24),
 
@@ -110,7 +137,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  'Lunes',
+                  weekday,
                   style: context.textTheme.labelSmall?.copyWith(
                     color: palette.limeDeep,
                     fontWeight: FontWeight.w800,
@@ -125,12 +152,23 @@ class StudentDashboardScreen extends ConsumerWidget {
             child: Column(
               children: [
                 for (var i = 0; i < data.todaySchedule.length; i++) ...[
-                  if (i > 0)
+                  if (i > 0 && currentIdx != i && currentIdx != i - 1)
                     Divider(
                       color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
                       height: 1,
                     ),
-                  ScheduleItemRow(slot: data.todaySchedule[i]),
+                  ScheduleItemRow(
+                    slot: data.todaySchedule[i],
+                    highlighted: i == currentIdx,
+                    badge: i == currentIdx
+                        ? 'Ahora'
+                        : i == nextIdx
+                            ? _inLabel(
+                                _toMinutes(data.todaySchedule[i].startTime) -
+                                    nowMin,
+                              )
+                            : null,
+                  ),
                 ],
               ],
             ),
@@ -146,87 +184,40 @@ class StudentDashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // Materias inscritas
-          const SectionHeader(title: 'Materias Inscritas'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              for (var i = 0; i < data.subjects.length; i++) ...[
-                if (i > 0) const SizedBox(width: 12),
-                Expanded(
-                  child: OpenCard(
-                    closed: (context, open) => SubjectProgressCard(
-                      subject: data.subjects[i],
-                      onTap: open,
-                    ),
-                    open: (context) =>
-                        SubjectDetailScreen(subject: data.subjects[i]),
-                  ),
-                ),
-              ],
-            ],
+          // Materias — tarjeta de acceso a la lista completa.
+          SectionNavCard(
+            icon: Icons.menu_book_rounded,
+            title: 'Materias',
+            subtitle: 'Todas tus materias y su progreso',
+            trailing: _StatPill('${data.subjects.length} materias'),
+            onTap: () => context.push(Routes.subjects),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-          // Mis Tareas
-          Row(
-            children: [
-              const Expanded(child: SectionHeader(title: 'Mis Tareas')),
-              GestureDetector(
-                onTap: () => context.push(Routes.assignments),
-                child: Text(
-                  'Ver todas',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: palette.limeDeep,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
+          // Tareas — tarjeta de acceso al feed de tareas.
+          SectionNavCard(
+            icon: Icons.note_alt_rounded,
+            title: 'Tareas',
+            subtitle: 'Tus entregas y actividades',
+            trailing: data.pendingTasks > 0
+                ? _StatPill('${data.pendingTasks} pendientes',
+                    accent: palette.warning)
+                : _StatPill('Al día', accent: palette.success),
+            onTap: () => context.push(Routes.assignments),
           ),
-          const SizedBox(height: 8),
-          for (final task in data.tasks)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: OpenCard(
-                closed: (context, open) => GestureDetector(
-                  onTap: open,
-                  behavior: HitTestBehavior.opaque,
-                  child: TaskRow(task: task),
-                ),
-                open: (context) => TaskDetailScreen(task: task),
-              ),
-            ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Mis Notas (bloque oscuro)
-          GestureDetector(
+          // Notas — tarjeta de acceso al boletín/calificaciones.
+          SectionNavCard(
+            icon: Icons.edit_rounded,
+            title: 'Notas',
+            subtitle: 'Boletín y calificaciones',
+            trailing: _StatPill('Prom. ${data.averageScore.toStringAsFixed(1)}'),
             onTap: () => context.push(Routes.grades),
-            child: GradesBlock(
-              grades: data.grades,
-              average: data.averageScore,
-              onDownload: () => context.push(Routes.reports),
-            ),
           ),
         ],
       ),
     );
-  }
-
-  void _handleNav(BuildContext context, EducaNavItem item) {
-    switch (item) {
-      case EducaNavItem.home:
-        break;
-      case EducaNavItem.schedule:
-        context.push(Routes.schedule);
-        break;
-      case EducaNavItem.alerts:
-        context.push(Routes.alerts);
-        break;
-      case EducaNavItem.profile:
-        context.go(Routes.profile);
-        break;
-    }
   }
 }
 
@@ -252,6 +243,62 @@ class _SchoolCrest extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Saludo según la hora del día.
+String _greeting(DateTime now) {
+  final h = now.hour;
+  if (h < 12) return 'Buenos días';
+  if (h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+/// Convierte "HH:MM" en minutos desde medianoche.
+int _toMinutes(String hhmm) {
+  final parts = hhmm.split(':');
+  final h = int.tryParse(parts.first) ?? 0;
+  final m = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+  return h * 60 + m;
+}
+
+/// Etiqueta "En X min" / "En Yh Zm" para la próxima clase.
+String _inLabel(int minutes) {
+  if (minutes <= 0) return 'Ahora';
+  if (minutes < 60) return 'En $minutes min';
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  return m == 0 ? 'En $h h' : 'En ${h}h ${m}m';
+}
+
+/// Pastilla compacta para el dato "de un vistazo" de una tarjeta de sección.
+class _StatPill extends StatelessWidget {
+  const _StatPill(this.label, {this.accent});
+
+  final String label;
+  final Color? accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final bg = accent != null
+        ? accent!.withValues(alpha: 0.16)
+        : palette.surfaceAlt;
+    final fg = accent ?? palette.textMuted;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: context.textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

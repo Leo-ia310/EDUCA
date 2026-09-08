@@ -42,6 +42,42 @@ class StudentMockData {
       progress: 0.40,
       icon: Icons.public_rounded,
     ),
+    SubjectProgress(
+      name: 'Historia Universal',
+      teacher: 'Prof. Elena Sandoval',
+      progress: 0.62,
+      icon: Icons.account_balance_rounded,
+    ),
+    SubjectProgress(
+      name: 'Física',
+      teacher: 'Prof. Iván Quintero',
+      progress: 0.55,
+      icon: Icons.science_rounded,
+    ),
+    SubjectProgress(
+      name: 'Literatura',
+      teacher: 'Prof. Carmen Ruiz',
+      progress: 0.73,
+      icon: Icons.menu_book_rounded,
+    ),
+    SubjectProgress(
+      name: 'Química',
+      teacher: 'Prof. Diego Fuentes',
+      progress: 0.31,
+      icon: Icons.biotech_rounded,
+    ),
+    SubjectProgress(
+      name: 'Inglés',
+      teacher: 'Prof. Laura Méndez',
+      progress: 0.79,
+      icon: Icons.translate_rounded,
+    ),
+    SubjectProgress(
+      name: 'Educación Física',
+      teacher: 'Prof. Marco Aguilar',
+      progress: 0.90,
+      icon: Icons.sports_soccer_rounded,
+    ),
   ];
 
   static const tasks = <TaskBrief>[
@@ -80,6 +116,7 @@ class StudentMockData {
 
   static const averageScore = 8.5;
   static const pendingTasks = 3;
+  static const attendanceRate = 0.96;
   static const classmates = <String>[
     'Ana López',
     'Luis Pérez',

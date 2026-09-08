@@ -5,12 +5,10 @@ class AppStrings {
   static const appName = 'Educa360';
 
   // Login
-  static const institutionCodeHint = 'Código del colegio';
   static const emailHint = 'Correo o usuario';
   static const passwordHint = 'Contraseña';
   static const loginCta = 'Ingresar';
   static const forgotPasswordCta = '¿Olvidaste tu contraseña?';
-  static const continueWith = 'Continuar';
 
   // Errores
   static const errorGeneric = 'Ocurrió un error. Intenta de nuevo.';
@@ -26,6 +24,7 @@ class AppStrings {
   // Navegación
   static const navHome = 'Inicio';
   static const navSchedule = 'Horario';
+  static const navMessages = 'Mensajes';
   static const navAlerts = 'Alertas';
   static const navProfile = 'Perfil';
 }

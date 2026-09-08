@@ -71,19 +71,20 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<AppRole?> signIn(String emailOrUsername, String password) async {
-    final institution = state.institution;
-    if (institution == null) {
-      state = state.copyWith(error: 'Primero ingresa el código del colegio.');
-      return null;
-    }
     state = state.copyWith(loading: true, clearError: true);
     try {
+      // Ya no existe la pantalla de código de colegio: si aún no hay una
+      // institución resuelta, se toma la institución por defecto (configurable
+      // con `--dart-define=INSTITUTION_CODE`, `EDU360` en demo).
+      final institution = state.institution ??
+          await _repo.resolveInstitution(Env.defaultInstitutionCode);
       final user = await _repo.signIn(
         institution: institution,
         emailOrUsername: emailOrUsername,
         password: password,
       );
-      state = state.copyWith(user: user, loading: false);
+      state = state.copyWith(
+          user: user, institution: institution, loading: false);
       return user.activeRole;
     } on Failure catch (e) {
       state = state.copyWith(loading: false, error: e.message);

@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_paths.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../core/widgets/edu_card.dart';
 import '../../../core/widgets/educa_bottom_nav.dart';
@@ -18,6 +17,7 @@ import '../../dashboard/presentation/widgets/grades_block.dart';
 import '../../dashboard/providers.dart';
 import '../../notifications/domain/entities.dart';
 import '../../notifications/providers.dart';
+import 'widgets/account_settings_menu.dart';
 
 /// Perfil del alumno: identidad (avatar + nombre) + sus tarjetas de
 /// notificaciones y notas. Las opciones de configuración viven en un menú
@@ -40,19 +40,21 @@ class StudentProfileScreen extends ConsumerWidget {
     return AppScaffold(
       bottomNav: EducaBottomNav(
         current: EducaNavItem.profile,
-        onTap: (i) {
-          if (i == EducaNavItem.home && user != null) {
-            context.go(user.activeRole.dashboardRoute);
-          }
-        },
+        onTap: (item) => goToEducaTab(
+          context,
+          item: item,
+          current: EducaNavItem.profile,
+          homeRoute:
+              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Menú de opciones en la esquina.
-          Align(
+          const Align(
             alignment: Alignment.topRight,
-            child: _SettingsMenu(),
+            child: AccountSettingsMenu(),
           ),
 
           // Identidad
@@ -223,123 +225,6 @@ class _NotificationCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Menú desplegable con las opciones de configuración de la cuenta.
-class _SettingsMenu extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final palette = context.palette;
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.settings_outlined),
-      tooltip: 'Opciones',
-      onSelected: (v) async {
-        switch (v) {
-          case 'appearance':
-            _showAppearanceSheet(context, ref);
-          case 'password':
-            context.push(Routes.changePassword);
-          case 'notifications':
-            context.push(Routes.notificationSettings);
-          case 'help':
-            context.push(Routes.help);
-          case 'logout':
-            await ref.read(authControllerProvider.notifier).signOut();
-            if (context.mounted) context.go(Routes.institutionCode);
-        }
-      },
-      itemBuilder: (_) => [
-        _item('appearance', Icons.palette_outlined, 'Apariencia'),
-        _item('password', Icons.lock_outline, 'Cambiar contraseña'),
-        _item('notifications', Icons.notifications_none, 'Notificaciones'),
-        _item('help', Icons.help_outline, 'Ayuda y soporte'),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          value: 'logout',
-          child: ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.logout, color: palette.danger),
-            title: Text('Cerrar sesión',
-                style: TextStyle(color: palette.danger),),
-          ),
-        ),
-      ],
-    );
-  }
-
-  PopupMenuItem<String> _item(String value, IconData icon, String label) {
-    return PopupMenuItem(
-      value: value,
-      child: ListTile(
-        dense: true,
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon),
-        title: Text(label),
-      ),
-    );
-  }
-}
-
-void _showAppearanceSheet(BuildContext context, WidgetRef ref) {
-  showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    builder: (sheetContext) {
-      return SafeArea(
-        child: Consumer(
-          builder: (context, ref, _) {
-            final themeMode = ref.watch(themeControllerProvider);
-            final palette = context.palette;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                  child: Row(
-                    children: [
-                      Text('Apariencia',
-                          style: context.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w800),),
-                    ],
-                  ),
-                ),
-                RadioGroup<ThemeMode>(
-                  groupValue: themeMode,
-                  onChanged: (v) {
-                    if (v != null) {
-                      ref.read(themeControllerProvider.notifier).set(v);
-                      Navigator.pop(sheetContext);
-                    }
-                  },
-                  child: Column(
-                    children: [
-                      RadioListTile<ThemeMode>(
-                        value: ThemeMode.system,
-                        title: const Text('Seguir sistema'),
-                        activeColor: palette.limeDeep,
-                      ),
-                      RadioListTile<ThemeMode>(
-                        value: ThemeMode.light,
-                        title: const Text('Tema claro'),
-                        activeColor: palette.limeDeep,
-                      ),
-                      RadioListTile<ThemeMode>(
-                        value: ThemeMode.dark,
-                        title: const Text('Tema oscuro'),
-                        activeColor: palette.limeDeep,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            );
-          },
-        ),
-      );
-    },
-  );
 }
 
 Color _channelColor(NotificationChannel channel, AppPalette palette) {
