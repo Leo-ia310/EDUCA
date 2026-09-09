@@ -189,30 +189,32 @@ class StudentDashboardScreen extends ConsumerWidget {
             icon: Icons.menu_book_rounded,
             title: 'Materias',
             subtitle: 'Todas tus materias y su progreso',
-            trailing: _StatPill('${data.subjects.length} materias'),
+            color: const Color(0xFF4C8DF5),
+            badge: '${data.subjects.length} materias',
             onTap: () => context.push(Routes.subjects),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // Tareas — tarjeta de acceso al feed de tareas.
           SectionNavCard(
             icon: Icons.note_alt_rounded,
             title: 'Tareas',
             subtitle: 'Tus entregas y actividades',
-            trailing: data.pendingTasks > 0
-                ? _StatPill('${data.pendingTasks} pendientes',
-                    accent: palette.warning)
-                : _StatPill('Al día', accent: palette.success),
+            color: const Color(0xFFF3993E),
+            badge: data.pendingTasks > 0
+                ? '${data.pendingTasks} pendientes'
+                : 'Al día',
             onTap: () => context.push(Routes.assignments),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // Notas — tarjeta de acceso al boletín/calificaciones.
           SectionNavCard(
             icon: Icons.edit_rounded,
             title: 'Notas',
             subtitle: 'Boletín y calificaciones',
-            trailing: _StatPill('Prom. ${data.averageScore.toStringAsFixed(1)}'),
+            color: const Color(0xFF9A6BE0),
+            badge: 'Prom. ${data.averageScore.toStringAsFixed(1)}',
             onTap: () => context.push(Routes.grades),
           ),
         ],
@@ -271,35 +273,4 @@ String _inLabel(int minutes) {
   final h = minutes ~/ 60;
   final m = minutes % 60;
   return m == 0 ? 'En $h h' : 'En ${h}h ${m}m';
-}
-
-/// Pastilla compacta para el dato "de un vistazo" de una tarjeta de sección.
-class _StatPill extends StatelessWidget {
-  const _StatPill(this.label, {this.accent});
-
-  final String label;
-  final Color? accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    final bg = accent != null
-        ? accent!.withValues(alpha: 0.16)
-        : palette.surfaceAlt;
-    final fg = accent ?? palette.textMuted;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: context.textTheme.labelSmall?.copyWith(
-          color: fg,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
 }
