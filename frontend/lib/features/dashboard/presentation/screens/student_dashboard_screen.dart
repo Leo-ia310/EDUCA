@@ -29,7 +29,6 @@ class StudentDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user!;
-    final institution = ref.watch(authControllerProvider).institution;
     final palette = context.palette;
     // Datos reales del backend (fallback a demo mientras carga o sin backend).
     final data =
@@ -56,7 +55,7 @@ class StudentDashboardScreen extends ConsumerWidget {
     );
 
     return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+      padding: const EdgeInsets.only(bottom: 100),
       onRefresh: () async => Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.home,
@@ -95,30 +94,33 @@ class StudentDashboardScreen extends ConsumerWidget {
           ],
         ),
       ),
-      child: StaggeredEntrance(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DashboardTopBar(
-            settingsMenu: const AccountSettingsMenu(boxed: true),
-            onNotificationsTap: () => context.go(Routes.alerts),
+          // Hero de bienvenida (full-bleed, sin padding lateral).
+          StudentGreetingHeader(
+            greeting: _greeting(now),
+            name: user.displayFirstName,
+            initials: user.displayFirstName.isNotEmpty
+                ? user.displayFirstName.substring(0, 1).toUpperCase()
+                : '?',
+            dateLabel: toBeginningOfSentenceCase(
+              DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
+            ),
+            pendingTasks: data.pendingTasks,
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
+            onNotificationsTap: () => context.go(Routes.alerts),
+            settingsMenu: const AccountSettingsMenu(circular: true),
           ),
-
-          // Saludo (consciente de la hora del día)
-          GreetingBanner(
-            title: '${_greeting(now)}, ${user.displayFirstName}',
-            subtitle:
-                'Tienes ${data.pendingTasks} tareas pendientes para hoy.',
-            institutionName: institution?.name ?? 'Colegio Educa360',
-            // Eslogan de ejemplo (placeholder, aún no viene del backend).
-            slogan: 'Aprender hoy, liderar mañana.',
-            crest: const _SchoolCrest(),
-          ),
-          const SizedBox(height: 16),
-
-          // KPIs de un vistazo (promedio · asistencia · pendientes)
-          DashboardStatStrip(
+          // Resto del contenido, con padding lateral y entrada escalonada.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+            child: StaggeredEntrance(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // KPIs de un vistazo (promedio · asistencia · pendientes)
+                DashboardStatStrip(
             average: data.averageScore,
             attendanceRate: data.attendanceRate,
             pendingTasks: data.pendingTasks,
@@ -217,31 +219,7 @@ class StudentDashboardScreen extends ConsumerWidget {
             badge: 'Prom. ${data.averageScore.toStringAsFixed(1)}',
             onTap: () => context.push(Routes.grades),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Escudo/emblema del colegio (placeholder inventado, para previsualizar).
-class _SchoolCrest extends StatelessWidget {
-  const _SchoolCrest();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 54,
-      height: 60,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Icon(Icons.shield_rounded, size: 60, color: Color(0xFF2B5A11)),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Icon(
-              Icons.auto_stories_rounded,
-              size: 22,
-              color: context.palette.lime,
+              ],
             ),
           ),
         ],

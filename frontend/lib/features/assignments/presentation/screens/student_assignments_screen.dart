@@ -164,6 +164,7 @@ class _StudentTile extends ConsumerWidget {
             showProgress: false,
             studentStatus: status,
             studentScore: score,
+            pastel: true,
           ),
         ),
       ),

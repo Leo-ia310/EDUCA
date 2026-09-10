@@ -14,29 +14,46 @@ import '../../../auth/presentation/auth_controller.dart';
 /// [boxed] envuelve el ícono en la misma "caja" que los íconos de la barra
 /// superior del dashboard, para que combine con el resto de acciones.
 class AccountSettingsMenu extends ConsumerWidget {
-  const AccountSettingsMenu({super.key, this.boxed = false});
+  const AccountSettingsMenu({
+    super.key,
+    this.boxed = false,
+    this.circular = false,
+  });
 
   final bool boxed;
+
+  /// Botón circular (para el header de bienvenida estilo fondo).
+  final bool circular;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     return PopupMenuButton<String>(
       tooltip: 'Opciones',
-      padding: boxed ? EdgeInsets.zero : const EdgeInsets.all(8),
-      icon: boxed ? null : const Icon(Icons.settings_outlined),
-      child: boxed
+      padding: (boxed || circular) ? EdgeInsets.zero : const EdgeInsets.all(8),
+      icon: (boxed || circular) ? null : const Icon(Icons.settings_outlined),
+      child: circular
           ? Container(
-              width: 48,
-              height: 48,
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
-                color: palette.cardElevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).dividerColor),
+                color: Colors.white.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.settings_outlined),
+              child: const Icon(Icons.settings_outlined, color: Colors.white),
             )
-          : null,
+          : boxed
+              ? Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: palette.cardElevated,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: const Icon(Icons.settings_outlined),
+                )
+              : null,
       onSelected: (v) async {
         switch (v) {
           case 'appearance':
