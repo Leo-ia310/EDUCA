@@ -38,6 +38,7 @@ class StudentProfileScreen extends ConsumerWidget {
         StudentDashboardData.mock();
 
     return AppScaffold(
+      padding: const EdgeInsets.only(bottom: 24),
       bottomNav: EducaBottomNav(
         current: EducaNavItem.profile,
         onTap: (item) => goToEducaTab(
@@ -51,103 +52,159 @@ class StudentProfileScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Menú de opciones en la esquina.
-          const Align(
-            alignment: Alignment.topRight,
-            child: AccountSettingsMenu(),
+          // Hero de identidad (full-bleed).
+          _ProfileHero(
+            name: user?.fullName ?? 'Invitado',
+            role: user?.activeRole.label,
+            institutionName: institution?.name,
+            avatarUrl: user?.avatarUrl,
           ),
-
-          // Identidad
-          Center(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                UserAvatar(
-                  name: user?.fullName ?? 'Usuario',
-                  imageUrl: user?.avatarUrl,
-                  size: 96,
-                  ringColor: palette.limeDeep,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  user?.fullName ?? 'Invitado',
-                  style: context.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                if (user != null)
-                  Text(
-                    user.activeRole.label,
-                    style: context.textTheme.bodyMedium
-                        ?.copyWith(color: palette.textMuted),
-                  ),
-                if (institution != null) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4,),
-                    decoration: BoxDecoration(
-                      color: palette.limeSoft,
-                      borderRadius: BorderRadius.circular(999),
+                // Cuenta y ajustes
+                const SectionHeader(title: 'Cuenta'),
+                const SizedBox(height: 10),
+                const AccountSettingsList(),
+                const SizedBox(height: 24),
+
+                // Notificaciones
+                Row(
+                  children: [
+                    const Expanded(
+                      child: SectionHeader(title: 'Notificaciones'),
                     ),
-                    child: Text(
-                      institution.name,
-                      style: context.textTheme.labelMedium?.copyWith(
-                        color: palette.limeDeep,
-                        fontWeight: FontWeight.w800,
+                    if (notifications.isNotEmpty)
+                      GestureDetector(
+                        onTap: () => context.push(Routes.alerts),
+                        behavior: HitTestBehavior.opaque,
+                        child: Text(
+                          'Ver todas',
+                          style: context.textTheme.labelMedium?.copyWith(
+                            color: palette.limeDeep,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (topNotifications.isEmpty)
+                  const EmptyState(
+                    icon: Icons.notifications_none_rounded,
+                    title: 'Sin notificaciones',
+                    subtitle: 'Aquí verás tus avisos, tareas y notas.',
+                  )
+                else
+                  for (final n in topNotifications)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _NotificationCard(notification: n),
                     ),
+                const SizedBox(height: 24),
+
+                // Notas
+                const SectionHeader(title: 'Mis Notas'),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => context.push(Routes.grades),
+                  child: GradesBlock(
+                    grades: data.grades,
+                    average: data.averageScore,
                   ),
-                ],
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
-          const SizedBox(height: 28),
+        ],
+      ),
+    );
+  }
+}
 
-          // Notificaciones
-          Row(
-            children: [
-              const Expanded(child: SectionHeader(title: 'Notificaciones')),
-              if (notifications.isNotEmpty)
-                GestureDetector(
-                  onTap: () => context.push(Routes.alerts),
-                  behavior: HitTestBehavior.opaque,
-                  child: Text(
-                    'Ver todas',
-                    style: context.textTheme.labelMedium?.copyWith(
-                      color: palette.limeDeep,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+/// Hero de identidad del perfil: banda full-bleed con degradado multicolor,
+/// avatar grande centrado, nombre, rol y chip del colegio.
+class _ProfileHero extends StatelessWidget {
+  const _ProfileHero({
+    required this.name,
+    this.role,
+    this.institutionName,
+    this.avatarUrl,
+  });
+
+  final String name;
+  final String? role;
+  final String? institutionName;
+  final String? avatarUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF4C8DF5),
+              Color(0xFF8A5CF6),
+              Color(0xFF33B7A0),
             ],
           ),
-          const SizedBox(height: 8),
-          if (topNotifications.isEmpty)
-            const EmptyState(
-              icon: Icons.notifications_none_rounded,
-              title: 'Sin notificaciones',
-              subtitle: 'Aquí verás tus avisos, tareas y notas.',
-            )
-          else
-            for (final n in topNotifications)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _NotificationCard(notification: n),
-              ),
-          const SizedBox(height: 24),
-
-          // Notas
-          const SectionHeader(title: 'Mis Notas'),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () => context.push(Routes.grades),
-            child: GradesBlock(
-              grades: data.grades,
-              average: data.averageScore,
-              onDownload: () => context.push(Routes.reports),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            UserAvatar(
+              name: name,
+              imageUrl: avatarUrl,
+              size: 92,
+              ringColor: Colors.white,
             ),
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              name,
+              textAlign: TextAlign.center,
+              style: context.textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (role != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                role!,
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
+              ),
+            ],
+            if (institutionName != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.20),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  institutionName!,
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

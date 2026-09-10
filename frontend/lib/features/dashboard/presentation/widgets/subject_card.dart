@@ -17,17 +17,10 @@ class SubjectProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = subject.color ?? subjectColor(subject.name);
-    final hsl = HSLColor.fromColor(base);
-    final vivid = hsl
-        .withSaturation(hsl.saturation.clamp(0.5, 1.0))
-        .withLightness(0.56)
-        .toColor();
-    final cardBg = hsl
-        .withSaturation(hsl.saturation.clamp(0.35, 1.0))
-        .withLightness(0.94)
-        .toColor();
-    final inkMuted = _ink.withValues(alpha: 0.6);
+    final s = pastelSurface(subject.color ?? subjectColor(subject.name));
+    final vivid = s.vivid;
+    final cardBg = s.surface;
+    final inkMuted = s.inkMuted;
 
     return Material(
       color: Colors.transparent,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../auth/presentation/auth_controller.dart';
 
@@ -97,6 +98,114 @@ class AccountSettingsMenu extends ConsumerWidget {
         contentPadding: EdgeInsets.zero,
         leading: Icon(icon),
         title: Text(label),
+      ),
+    );
+  }
+}
+
+/// Lista de opciones de la cuenta como filas pastel con círculo de ícono
+/// (mismo lenguaje visual del panel). Comparte acciones con [AccountSettingsMenu].
+class AccountSettingsList extends ConsumerWidget {
+  const AccountSettingsList({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      children: [
+        _SettingsRow(
+          icon: Icons.palette_outlined,
+          label: 'Apariencia',
+          color: const Color(0xFF8A5CF6),
+          onTap: () => _showAppearanceSheet(context, ref),
+        ),
+        const SizedBox(height: 10),
+        _SettingsRow(
+          icon: Icons.lock_outline,
+          label: 'Cambiar contraseña',
+          color: const Color(0xFF4C8DF5),
+          onTap: () => context.push(Routes.changePassword),
+        ),
+        const SizedBox(height: 10),
+        _SettingsRow(
+          icon: Icons.notifications_none,
+          label: 'Notificaciones',
+          color: const Color(0xFFF3993E),
+          onTap: () => context.push(Routes.notificationSettings),
+        ),
+        const SizedBox(height: 10),
+        _SettingsRow(
+          icon: Icons.help_outline,
+          label: 'Ayuda y soporte',
+          color: const Color(0xFF33B7A0),
+          onTap: () => context.push(Routes.help),
+        ),
+        const SizedBox(height: 10),
+        _SettingsRow(
+          icon: Icons.logout,
+          label: 'Cerrar sesión',
+          color: const Color(0xFFE5484D),
+          onTap: () async {
+            await ref.read(authControllerProvider.notifier).signOut();
+            if (context.mounted) context.go(Routes.login);
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  const _SettingsRow({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = pastelSurface(color);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: s.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration:
+                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                  child: Icon(icon, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: context.textTheme.titleSmall?.copyWith(
+                      color: s.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: s.inkMuted, size: 22),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

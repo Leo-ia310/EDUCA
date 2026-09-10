@@ -102,14 +102,9 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                     );
                   }
                   return ListView.separated(
-                    padding: const EdgeInsets.only(bottom: 96),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      color: Theme.of(context)
-                          .dividerColor
-                          .withValues(alpha: 0.5),
-                    ),
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (_, i) => ConversationTile(
                       conversation: filtered[i],
                       currentUserId: me?.id ?? '',

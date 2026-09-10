@@ -6,10 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
-import '../../../../core/widgets/educa_fab.dart';
-import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/section_nav_card.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
@@ -66,34 +63,6 @@ class StudentDashboardScreen extends ConsumerWidget {
           homeRoute: user.activeRole.dashboardRoute,
         ),
       ),
-      fab: EducaFab(
-        onPressed: () => showQuickActionsSheet(
-          context,
-          title: 'Accesos rápidos',
-          actions: const [
-            QuickActionEntry(
-              icon: Icons.calendar_today_rounded,
-              label: 'Ver horario',
-              route: Routes.schedule,
-            ),
-            QuickActionEntry(
-              icon: Icons.assignment_outlined,
-              label: 'Mis tareas',
-              route: Routes.assignments,
-            ),
-            QuickActionEntry(
-              icon: Icons.grade_outlined,
-              label: 'Mis notas',
-              route: Routes.grades,
-            ),
-            QuickActionEntry(
-              icon: Icons.chat_bubble_outline,
-              label: 'Nuevo mensaje',
-              route: Routes.chatNew,
-            ),
-          ],
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -148,33 +117,21 @@ class StudentDashboardScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          EduCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Column(
-              children: [
-                for (var i = 0; i < data.todaySchedule.length; i++) ...[
-                  if (i > 0 && currentIdx != i && currentIdx != i - 1)
-                    Divider(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                      height: 1,
-                    ),
-                  ScheduleItemRow(
-                    slot: data.todaySchedule[i],
-                    highlighted: i == currentIdx,
-                    badge: i == currentIdx
-                        ? 'Ahora'
-                        : i == nextIdx
-                            ? _inLabel(
-                                _toMinutes(data.todaySchedule[i].startTime) -
-                                    nowMin,
-                              )
-                            : null,
-                  ),
-                ],
-              ],
+          const SizedBox(height: 10),
+          for (var i = 0; i < data.todaySchedule.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            ScheduleItemRow(
+              slot: data.todaySchedule[i],
+              highlighted: i == currentIdx,
+              badge: i == currentIdx
+                  ? 'Ahora'
+                  : i == nextIdx
+                      ? _inLabel(
+                          _toMinutes(data.todaySchedule[i].startTime) - nowMin,
+                        )
+                      : null,
             ),
-          ),
+          ],
           const SizedBox(height: 24),
 
           // Compañeros

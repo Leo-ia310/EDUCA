@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/subject_palette.dart';
 
 class UserAvatar extends StatelessWidget {
   const UserAvatar({
@@ -27,12 +28,12 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
+    final vivid = pastelSurface(subjectColor(name)).vivid;
     final core = Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: palette.limeSoft,
+        color: vivid,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
@@ -63,7 +64,7 @@ class UserAvatar extends StatelessWidget {
   Widget _initialsLabel(BuildContext context) => Text(
         _initials,
         style: context.textTheme.titleSmall?.copyWith(
-          color: context.palette.limeDeep,
+          color: Colors.white,
           fontWeight: FontWeight.w800,
         ),
       );

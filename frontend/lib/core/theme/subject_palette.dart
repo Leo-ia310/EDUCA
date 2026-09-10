@@ -32,3 +32,45 @@ Color subjectInk(String name) =>
 
 /// Fondo suave (tinte) del color de la materia, para pastillas de ícono.
 Color subjectSoft(String name) => subjectColor(name).withValues(alpha: 0.16);
+
+/// Superficies derivadas de un color base para el estilo "pastel + círculo
+/// vívido" del panel del alumno: [surface] es un fondo muy claro, [vivid] es
+/// una versión saturada para el círculo del ícono, e [ink]/[inkMuted] son
+/// tintas legibles sobre el pastel. Unifica el criterio en todo el panel.
+class PastelSurface {
+  const PastelSurface({
+    required this.vivid,
+    required this.surface,
+    required this.ink,
+    required this.inkMuted,
+  });
+
+  final Color vivid;
+  final Color surface;
+  final Color ink;
+  final Color inkMuted;
+}
+
+const Color _pastelInk = Color(0xFF232A33);
+
+/// Deriva las superficies pastel/vívidas a partir de un color base (HSL).
+PastelSurface pastelSurface(Color base) {
+  final hsl = HSLColor.fromColor(base);
+  final vivid = hsl
+      .withSaturation(hsl.saturation.clamp(0.5, 1.0))
+      .withLightness(0.56)
+      .toColor();
+  final surface = hsl
+      .withSaturation(hsl.saturation.clamp(0.35, 1.0))
+      .withLightness(0.94)
+      .toColor();
+  return PastelSurface(
+    vivid: vivid,
+    surface: surface,
+    ink: _pastelInk,
+    inkMuted: _pastelInk.withValues(alpha: 0.62),
+  );
+}
+
+/// Atajo: superficies pastel para una materia por su nombre.
+PastelSurface subjectSurface(String name) => pastelSurface(subjectColor(name));

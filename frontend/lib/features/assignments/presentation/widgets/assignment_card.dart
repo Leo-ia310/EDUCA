@@ -51,17 +51,10 @@ class AssignmentCard extends StatelessWidget {
   }
 
   Widget _buildPastel(BuildContext context) {
-    final base = subjectColor(assignment.subjectName);
-    final hsl = HSLColor.fromColor(base);
-    final vivid = hsl
-        .withSaturation(hsl.saturation.clamp(0.5, 1.0))
-        .withLightness(0.56)
-        .toColor();
-    final cardBg = hsl
-        .withSaturation(hsl.saturation.clamp(0.35, 1.0))
-        .withLightness(0.94)
-        .toColor();
-    final inkMuted = _ink.withValues(alpha: 0.62);
+    final s = pastelSurface(subjectColor(assignment.subjectName));
+    final vivid = s.vivid;
+    final cardBg = s.surface;
+    final inkMuted = s.inkMuted;
     final status = assignment.statusForNow(DateTime.now());
     final fmt = DateFormat("d MMM, HH:mm", 'es');
 

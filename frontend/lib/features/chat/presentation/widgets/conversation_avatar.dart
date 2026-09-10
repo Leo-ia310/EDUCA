@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../domain/entities.dart';
 
@@ -22,12 +23,12 @@ class ConversationAvatar extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: palette.limeSoft,
-          borderRadius: BorderRadius.circular(size / 3),
+          color: pastelSurface(subjectColor(conversation.title)).vivid,
+          shape: BoxShape.circle,
         ),
         alignment: Alignment.center,
         child: Icon(Icons.groups_rounded,
-            color: palette.limeDeep, size: size * 0.55),
+            color: Colors.white, size: size * 0.55),
       );
     }
     final other = conversation.counterpart;
