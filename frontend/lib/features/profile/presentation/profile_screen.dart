@@ -23,16 +23,7 @@ class ProfileScreen extends ConsumerWidget {
     final palette = context.palette;
 
     return AppScaffold(
-      bottomNav: EducaBottomNav(
-        current: EducaNavItem.profile,
-        onTap: (item) => goToEducaTab(
-          context,
-          item: item,
-          current: EducaNavItem.profile,
-          homeRoute:
-              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
-        ),
-      ),
+      bottomNav: const EducaBottomNav(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

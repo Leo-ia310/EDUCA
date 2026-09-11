@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/routing/route_paths.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/open_card.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
-import '../../../auth/presentation/auth_controller.dart';
 import '../../data/dashboard_data.dart';
 import '../../domain/dashboard_models.dart';
 import '../../providers.dart';
@@ -25,7 +23,6 @@ class AllSubjectsScreen extends ConsumerWidget {
     final data = ref.watch(studentDashboardProvider).valueOrNull ??
         StudentDashboardData.mock();
     final subjects = data.subjects;
-    final user = ref.watch(authControllerProvider).user;
 
     return AppScaffold(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -36,16 +33,7 @@ class AllSubjectsScreen extends ConsumerWidget {
         ),
         title: const Text('Todas las Materias'),
       ),
-      bottomNav: EducaBottomNav(
-        current: null,
-        onTap: (item) => goToEducaTab(
-          context,
-          item: item,
-          current: null,
-          homeRoute:
-              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
-        ),
-      ),
+      bottomNav: const EducaBottomNav(),
       child: StaggeredEntrance(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

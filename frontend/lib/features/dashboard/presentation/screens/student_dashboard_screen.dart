@@ -54,20 +54,12 @@ class StudentDashboardScreen extends ConsumerWidget {
     return AppScaffold(
       padding: const EdgeInsets.only(bottom: 100),
       onRefresh: () async => Future<void>.delayed(const Duration(milliseconds: 600)),
-      bottomNav: EducaBottomNav(
-        current: EducaNavItem.home,
-        onTap: (item) => goToEducaTab(
-          context,
-          item: item,
-          current: EducaNavItem.home,
-          homeRoute: user.activeRole.dashboardRoute,
-        ),
-      ),
+      bottomNav: const EducaBottomNav(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Hero de bienvenida (full-bleed, sin padding lateral).
-          StudentGreetingHeader(
+          AppGreetingHeader(
             greeting: _greeting(now),
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
@@ -76,7 +68,10 @@ class StudentDashboardScreen extends ConsumerWidget {
             dateLabel: toBeginningOfSentenceCase(
               DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
             ),
-            pendingTasks: data.pendingTasks,
+            chipIcon: Icons.assignment_turned_in_outlined,
+            chipLabel: data.pendingTasks > 0
+                ? 'Tienes ${data.pendingTasks} ${data.pendingTasks == 1 ? 'tarea' : 'tareas'} para hoy'
+                : 'No tienes tareas para hoy',
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
             onNotificationsTap: () => context.go(Routes.alerts),
@@ -90,10 +85,31 @@ class StudentDashboardScreen extends ConsumerWidget {
               children: [
                 // KPIs de un vistazo (promedio · asistencia · pendientes)
                 DashboardStatStrip(
-            average: data.averageScore,
-            attendanceRate: data.attendanceRate,
-            pendingTasks: data.pendingTasks,
-          ),
+                  tiles: [
+                    StatTile(
+                      icon: Icons.star_rounded,
+                      color: const Color(0xFF34C77A),
+                      value: data.averageScore,
+                      decimals: 1,
+                      label: 'Promedio',
+                    ),
+                    StatTile(
+                      icon: Icons.event_available_rounded,
+                      color: const Color(0xFF4C8DF5),
+                      value: data.attendanceRate * 100,
+                      suffix: '%',
+                      label: 'Asistencia',
+                    ),
+                    StatTile(
+                      icon: Icons.assignment_late_rounded,
+                      color: data.pendingTasks > 0
+                          ? const Color(0xFFF3993E)
+                          : const Color(0xFF34C77A),
+                      value: data.pendingTasks.toDouble(),
+                      label: 'Pendientes',
+                    ),
+                  ],
+                ),
           const SizedBox(height: 24),
 
           // Horario de hoy

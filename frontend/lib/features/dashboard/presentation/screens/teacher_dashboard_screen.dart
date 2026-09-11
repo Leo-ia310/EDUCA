@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/open_card.dart';
@@ -17,11 +17,17 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../attendance/presentation/widgets/sync_status_badge.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
+import '../../../profile/presentation/widgets/account_settings_menu.dart';
 import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/greeting_header.dart';
+import '../widgets/stat_strip.dart';
 import 'class_detail_screen.dart';
+
+// Tarjeta clara neutra para listas funcionales (asistencia, calificaciones).
+const Color _panelCard = Color(0xFFEFF1F6);
+const Color _panelInk = Color(0xFF232A33);
 
 class TeacherDashboardScreen extends ConsumerStatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -39,26 +45,18 @@ class _TeacherDashboardScreenState
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user!;
     final palette = context.palette;
-    // Datos reales del backend (fallback a demo mientras carga o sin backend).
     final data = ref.watch(teacherDashboardProvider).valueOrNull ??
         TeacherDashboardData.mock();
     for (final s in data.quickAttendance) {
       _attendance.putIfAbsent(s.name, () => s.present);
     }
+    final now = DateTime.now();
 
     return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+      padding: const EdgeInsets.only(bottom: 100),
       onRefresh: () async =>
           Future<void>.delayed(const Duration(milliseconds: 600)),
-      bottomNav: EducaBottomNav(
-        current: EducaNavItem.home,
-        onTap: (item) => goToEducaTab(
-          context,
-          item: item,
-          current: EducaNavItem.home,
-          homeRoute: user.activeRole.dashboardRoute,
-        ),
-      ),
+      bottomNav: const EducaBottomNav(),
       fab: EducaFab(
         onPressed: () => showQuickActionsSheet(
           context,
@@ -87,238 +85,245 @@ class _TeacherDashboardScreenState
           ],
         ),
       ),
-      child: StaggeredEntrance(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DashboardTopBar(
-            onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () => context.go(Routes.alerts),
+          // Hero de bienvenida (full-bleed).
+          AppGreetingHeader(
+            greeting: _greeting(now),
+            name: user.displayFirstName,
+            initials: user.displayFirstName.isNotEmpty
+                ? user.displayFirstName.substring(0, 1).toUpperCase()
+                : '?',
+            dateLabel: toBeginningOfSentenceCase(
+              DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
+            ),
+            chipIcon: Icons.event_note_rounded,
+            chipLabel:
+                '${data.pendingClasses} clases hoy · ${data.pendingGrading} por calificar',
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
+            onNotificationsTap: () => context.go(Routes.alerts),
+            settingsMenu: const AccountSettingsMenu(circular: true),
           ),
-
-          GreetingBanner(
-            title: '¡Buen día, ${user.displayFirstName}!',
-            subtitle:
-                'Tienes ${data.pendingClasses} clases hoy y ${data.pendingGrading} tareas por calificar.',
-          ),
-          const SizedBox(height: 24),
-
-          // Asistencia rápida
-          Row(
-            children: [
-              const Expanded(child: SectionHeader(title: 'Asistencia Rápida')),
-              Text(
-                '4° A · Mat',
-                style: context.textTheme.labelMedium?.copyWith(
-                  color: palette.textMuted,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          EduCard(
-            child: Column(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+            child: StaggeredEntrance(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final line in data.quickAttendance) ...[
-                  _AttendanceTile(
-                    name: line.name,
-                    present: _attendance[line.name] ?? line.present,
-                    onChanged: (v) =>
-                        setState(() => _attendance[line.name] = v),
-                  ),
-                  if (line != data.quickAttendance.last)
-                    Divider(
-                      color:
-                          Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                      height: 18,
+                // KPIs
+                DashboardStatStrip(
+                  tiles: [
+                    StatTile(
+                      icon: Icons.event_note_rounded,
+                      color: const Color(0xFF4C8DF5),
+                      value: data.pendingClasses.toDouble(),
+                      label: 'Clases hoy',
                     ),
-                ],
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: () => context.push(Routes.attendance),
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Tomar / Finalizar Pase'),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SyncStatusBadge(compact: true),
-                    const SizedBox(width: 8),
-                    TextButton.icon(
-                      onPressed: () => context.push(Routes.attendanceHistory),
-                      icon: const Icon(Icons.history_rounded, size: 16),
-                      label: const Text('Historial'),
+                    StatTile(
+                      icon: Icons.fact_check_rounded,
+                      color: const Color(0xFFF3993E),
+                      value: data.pendingGrading.toDouble(),
+                      label: 'Por calificar',
+                    ),
+                    StatTile(
+                      icon: Icons.groups_rounded,
+                      color: const Color(0xFF9A6BE0),
+                      value: data.myClasses.length.toDouble(),
+                      label: 'Grupos',
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-          // Mis clases
-          Row(
-            children: [
-              const Expanded(child: SectionHeader(title: 'Mis Clases')),
-              GestureDetector(
-                onTap: () => context.push(Routes.schedule),
-                child: Text(
-                  'Ver Horario',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: palette.limeDeep,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 130,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.zero,
-              itemCount: data.myClasses.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (context, i) {
-                if (i >= data.myClasses.length) {
-                  return Container(
-                    width: 160,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: palette.surfaceAlt,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Theme.of(context).dividerColor),
+                // Asistencia rápida
+                Row(
+                  children: [
+                    const Expanded(
+                      child: SectionHeader(title: 'Asistencia Rápida'),
                     ),
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_circle_outline,
-                          color: palette.limeDeep,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Agregar clase',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                final c = data.myClasses[i];
-                final accent = subjectColor(c.name);
-                final ink = subjectInk(c.name);
-                return OpenCard(
-                  borderRadius: 20,
-                  open: (context) => ClassDetailScreen(teacherClass: c),
-                  closed: (context, open) => GestureDetector(
-                    onTap: open,
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      width: 200,
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(20),
+                    Text(
+                      '4° A · Mat',
+                      style: context.textTheme.labelMedium?.copyWith(
+                        color: palette.textMuted,
+                        fontWeight: FontWeight.w700,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _panelCard,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    children: [
+                      for (final line in data.quickAttendance) ...[
+                        _AttendanceTile(
+                          name: line.name,
+                          present: _attendance[line.name] ?? line.present,
+                          onChanged: (v) =>
+                              setState(() => _attendance[line.name] = v),
+                        ),
+                        if (line != data.quickAttendance.last)
+                          Divider(
+                            color: _panelInk.withValues(alpha: 0.10),
+                            height: 18,
+                          ),
+                      ],
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: () => context.push(Routes.attendance),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF4C8DF5),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 44),
+                          ),
+                          icon: const Icon(Icons.check_circle_outline),
+                          label: const Text('Tomar / Finalizar Pase'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: accent.withValues(alpha: 0.22),
-                              borderRadius: BorderRadius.circular(12),
+                          const SyncStatusBadge(compact: true),
+                          const SizedBox(width: 8),
+                          TextButton.icon(
+                            onPressed: () =>
+                                context.push(Routes.attendanceHistory),
+                            style: TextButton.styleFrom(
+                              foregroundColor: _panelInk.withValues(alpha: 0.7),
                             ),
-                            child: Icon(c.icon, color: ink, size: 22),
-                          ),
-                          const Spacer(),
-                          Text(
-                            c.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            c.room,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.bodySmall,
+                            icon: const Icon(Icons.history_rounded, size: 16),
+                            label: const Text('Historial'),
                           ),
                         ],
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Mis clases
+                Row(
+                  children: [
+                    const Expanded(child: SectionHeader(title: 'Mis Clases')),
+                    GestureDetector(
+                      onTap: () => context.push(Routes.schedule),
+                      child: Text(
+                        'Ver Horario',
+                        style: context.textTheme.labelMedium?.copyWith(
+                          color: palette.limeDeep,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 132,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.zero,
+                    itemCount: data.myClasses.length + 1,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (context, i) {
+                      if (i >= data.myClasses.length) {
+                        return _AddClassCard(
+                          onTap: () => context.push(Routes.schedule),
+                        );
+                      }
+                      final c = data.myClasses[i];
+                      return OpenCard(
+                        borderRadius: 20,
+                        open: (context) => ClassDetailScreen(teacherClass: c),
+                        closed: (context, open) =>
+                            _ClassCard(teacherClass: c, onTap: open),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Tareas y exámenes
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => context.push(Routes.assignments),
+                        child: const SectionHeader(title: 'Tareas y Exámenes'),
+                      ),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: () => context.push(Routes.assignmentNew),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Asignar'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: palette.limeDeep,
+                        foregroundColor: const Color(0xFF1E2218),
+                        minimumSize: const Size(0, 40),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                for (final t in data.upcomingAssignments)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _AssignmentRow(
+                      item: t,
+                      onTap: () => context.push(Routes.assignments),
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-          // Tareas y exámenes
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => context.push(Routes.assignments),
-                  child: const SectionHeader(title: 'Tareas y\nExámenes'),
-                ),
-              ),
-              FilledButton.tonalIcon(
-                onPressed: () => context.push(Routes.assignmentNew),
-                icon: const Icon(Icons.add),
-                label: const Text('Asignar Nuevo'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: palette.limeDeep,
-                  foregroundColor: const Color(0xFF1E2218),
-                  minimumSize: const Size(0, 40),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          for (final t in data.upcomingAssignments)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: GestureDetector(
-                onTap: () => context.push(Routes.assignments),
-                child: _AssignmentRow(item: t),
-              ),
-            ),
-          const SizedBox(height: 16),
-
-          // Calificaciones recientes
-          const SectionHeader(title: 'Calificaciones Recientes'),
-          const SizedBox(height: 8),
-          EduCard(
-            child: Column(
-              children: [
-                for (final g in data.recentGrades) ...[
-                  _RecentGradeRow(item: g),
-                  if (g != data.recentGrades.last)
-                    Divider(
-                      color:
-                          Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                      height: 18,
-                    ),
-                ],
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () => context.push(Routes.gradebook),
-                  icon: const Icon(Icons.grid_view_rounded),
-                  label: const Text('Libro de notas'),
+                // Calificaciones recientes
+                const SectionHeader(title: 'Calificaciones Recientes'),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _panelCard,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    children: [
+                      for (final g in data.recentGrades) ...[
+                        _RecentGradeRow(item: g),
+                        if (g != data.recentGrades.last)
+                          Divider(
+                            color: _panelInk.withValues(alpha: 0.10),
+                            height: 18,
+                          ),
+                      ],
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(Routes.gradebook),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _panelInk,
+                            side: BorderSide(
+                              color: _panelInk.withValues(alpha: 0.25),
+                            ),
+                            minimumSize: const Size(0, 44),
+                          ),
+                          icon: const Icon(Icons.grid_view_rounded),
+                          label: const Text('Libro de notas'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -327,7 +332,99 @@ class _TeacherDashboardScreenState
       ),
     );
   }
+}
 
+/// Saludo según la hora del día.
+String _greeting(DateTime now) {
+  final h = now.hour;
+  if (h < 12) return 'Buenos días';
+  if (h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+/// Tarjeta de clase (Mis Clases) en estilo pastel del panel.
+class _ClassCard extends StatelessWidget {
+  const _ClassCard({required this.teacherClass, required this.onTap});
+  final TeacherClass teacherClass;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = pastelSurface(subjectColor(teacherClass.name));
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 200,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: s.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+              child: Icon(teacherClass.icon, color: Colors.white, size: 22),
+            ),
+            const Spacer(),
+            Text(
+              teacherClass.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.titleMedium?.copyWith(
+                color: s.ink,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              teacherClass.room,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tarjeta punteada "Agregar clase".
+class _AddClassCard extends StatelessWidget {
+  const _AddClassCard({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 160,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: palette.surfaceAlt,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Theme.of(context).dividerColor),
+        ),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_circle_outline, color: palette.limeDeep, size: 28),
+            const SizedBox(height: 6),
+            const Text('Agregar clase', textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _AttendanceTile extends StatelessWidget {
@@ -352,8 +449,10 @@ class _AttendanceTile extends StatelessWidget {
           Expanded(
             child: Text(
               name,
-              style: context.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: context.textTheme.titleSmall?.copyWith(
+                color: _panelInk,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           Checkbox.adaptive(
@@ -362,8 +461,9 @@ class _AttendanceTile extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
-            activeColor: context.palette.limeDeep,
-            checkColor: const Color(0xFF1E2218),
+            side: BorderSide(color: _panelInk.withValues(alpha: 0.4), width: 2),
+            activeColor: const Color(0xFF4C8DF5),
+            checkColor: Colors.white,
           ),
         ],
       ),
@@ -371,76 +471,98 @@ class _AttendanceTile extends StatelessWidget {
   }
 }
 
+/// Fila de tarea/examen del docente, estilo pastel (tintada por estado).
 class _AssignmentRow extends StatelessWidget {
-  const _AssignmentRow({required this.item});
+  const _AssignmentRow({required this.item, required this.onTap});
   final UpcomingAssignment item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-    final accent = item.urgent
-        ? palette.danger
+    final statusColor = item.urgent
+        ? const Color(0xFFE5484D)
         : item.completed
-            ? palette.success
-            : palette.warning;
+            ? const Color(0xFF2FA869)
+            : const Color(0xFFF3993E);
     final chipLabel = item.urgent
         ? 'Urgente'
         : item.completed
             ? 'Completado'
             : '${item.delivered}/${item.total}';
+    final s = pastelSurface(statusColor);
 
-    return EduCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              item.completed
-                  ? Icons.check_circle_outline
-                  : Icons.assignment_outlined,
-              color: accent,
-              size: 20,
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: s.surface,
+            borderRadius: BorderRadius.circular(16),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text(
-                  item.title,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration:
+                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                  child: Icon(
+                    item.completed
+                        ? Icons.check_circle_outline
+                        : Icons.assignment_outlined,
+                    color: Colors.white,
+                    size: 22,
                   ),
                 ),
-                Text(
-                  item.meta,
-                  style: context.textTheme.bodySmall,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.textTheme.titleSmall?.copyWith(
+                          color: s.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: s.vivid.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    chipLabel,
+                    style: context.textTheme.labelSmall?.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              chipLabel,
-              style: context.textTheme.labelSmall?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -452,9 +574,10 @@ class _RecentGradeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     final pass = item.score >= 6;
-    final color = pass ? palette.success : palette.danger;
+    final color =
+        pass ? const Color(0xFF2FA869) : const Color(0xFFD3453B);
+    final inkMuted = _panelInk.withValues(alpha: 0.62);
     return Row(
       children: [
         UserAvatar(name: item.student, size: 36),
@@ -466,12 +589,13 @@ class _RecentGradeRow extends StatelessWidget {
               Text(
                 item.student,
                 style: context.textTheme.titleSmall?.copyWith(
+                  color: _panelInk,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
                 item.topic,
-                style: context.textTheme.bodySmall,
+                style: context.textTheme.bodySmall?.copyWith(color: inkMuted),
                 maxLines: 1,
               ),
             ],
@@ -488,7 +612,10 @@ class _RecentGradeRow extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            Text(item.when, style: context.textTheme.labelSmall),
+            Text(
+              item.when,
+              style: context.textTheme.labelSmall?.copyWith(color: inkMuted),
+            ),
           ],
         ),
       ],

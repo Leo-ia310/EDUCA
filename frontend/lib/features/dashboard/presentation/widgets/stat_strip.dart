@@ -4,68 +4,11 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
 
-/// Franja de 3 métricas "de un vistazo" bajo el saludo del alumno: promedio,
-/// asistencia y tareas pendientes. Mismo lenguaje que el resto del panel:
-/// tarjeta pastel + ícono en círculo vívido. Los números animan con count-up.
-class DashboardStatStrip extends StatelessWidget {
-  const DashboardStatStrip({
-    super.key,
-    required this.average,
-    required this.attendanceRate,
-    required this.pendingTasks,
-  });
-
-  final double average;
-
-  /// 0..1
-  final double attendanceRate;
-  final int pendingTasks;
-
-  static const _green = Color(0xFF34C77A);
-  static const _blue = Color(0xFF4C8DF5);
-  static const _amber = Color(0xFFF3993E);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatTile(
-            icon: Icons.star_rounded,
-            base: _green,
-            value: average,
-            decimals: 1,
-            label: 'Promedio',
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatTile(
-            icon: Icons.event_available_rounded,
-            base: _blue,
-            value: attendanceRate * 100,
-            suffix: '%',
-            label: 'Asistencia',
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatTile(
-            icon: Icons.assignment_late_rounded,
-            base: pendingTasks > 0 ? _amber : _green,
-            value: pendingTasks.toDouble(),
-            label: 'Pendientes',
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile({
+/// Un tile de métrica: ícono + color + valor (con count-up) + etiqueta.
+class StatTile {
+  const StatTile({
     required this.icon,
-    required this.base,
+    required this.color,
     required this.value,
     required this.label,
     this.decimals = 0,
@@ -73,15 +16,41 @@ class _StatTile extends StatelessWidget {
   });
 
   final IconData icon;
-  final Color base;
+  final Color color;
   final double value;
   final String label;
   final int decimals;
   final String suffix;
+}
+
+/// Franja de métricas "de un vistazo" bajo el saludo. Reutilizable por cualquier
+/// rol: cada uno pasa sus [tiles]. Mismo lenguaje que el resto del panel
+/// (tarjeta pastel + ícono en círculo vívido, número con count-up).
+class DashboardStatStrip extends StatelessWidget {
+  const DashboardStatStrip({super.key, required this.tiles});
+
+  final List<StatTile> tiles;
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(base);
+    return Row(
+      children: [
+        for (var i = 0; i < tiles.length; i++) ...[
+          if (i > 0) const SizedBox(width: 12),
+          Expanded(child: _StatTileView(tile: tiles[i])),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatTileView extends StatelessWidget {
+  const _StatTileView({required this.tile});
+  final StatTile tile;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = pastelSurface(tile.color);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
@@ -95,15 +64,15 @@ class _StatTile extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-            child: Icon(icon, size: 20, color: Colors.white),
+            child: Icon(tile.icon, size: 20, color: Colors.white),
           ),
           const SizedBox(height: 10),
           TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0, end: value),
+            tween: Tween<double>(begin: 0, end: tile.value),
             duration: context.motion(AppMotion.slow),
             curve: AppMotion.standard,
             builder: (context, v, _) => Text(
-              '${v.toStringAsFixed(decimals)}$suffix',
+              '${v.toStringAsFixed(tile.decimals)}${tile.suffix}',
               style: context.textTheme.titleLarge?.copyWith(
                 color: s.ink,
                 fontWeight: FontWeight.w800,
@@ -112,7 +81,9 @@ class _StatTile extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            label,
+            tile.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: context.textTheme.labelSmall?.copyWith(
               color: s.inkMuted,
               fontWeight: FontWeight.w700,

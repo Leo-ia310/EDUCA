@@ -10,7 +10,6 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/skeleton.dart';
-import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/grades_controller.dart';
@@ -26,21 +25,11 @@ class StudentGradesScreen extends ConsumerWidget {
     final periods = ref.watch(periodsProvider);
     final performance = ref.watch(studentPerformanceProvider(studentId));
     final scaleAsync = ref.watch(defaultScaleProvider);
-    final user = ref.watch(authControllerProvider).user;
 
     return AppScaffold(
       scrollable: false,
       padding: EdgeInsets.zero,
-      bottomNav: EducaBottomNav(
-        current: null,
-        onTap: (item) => goToEducaTab(
-          context,
-          item: item,
-          current: null,
-          homeRoute:
-              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
-        ),
-      ),
+      bottomNav: const EducaBottomNav(),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),

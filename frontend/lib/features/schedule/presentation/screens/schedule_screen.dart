@@ -3,13 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
-import '../../../auth/presentation/auth_controller.dart';
 import '../../data/schedule_mock.dart';
 
 /// Horario semanal. Alimenta la pestaña "Horario" del bottom nav y los
@@ -27,7 +25,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final user = ref.watch(authControllerProvider).user;
     final slots = ScheduleMock.byDay[_selectedDay] ?? const [];
     final relation = _relationFor(_selectedDay);
 
@@ -36,16 +33,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         automaticallyImplyLeading: false,
         title: const Text('Horario'),
       ),
-      bottomNav: EducaBottomNav(
-        current: EducaNavItem.schedule,
-        onTap: (item) => goToEducaTab(
-          context,
-          item: item,
-          current: EducaNavItem.schedule,
-          homeRoute:
-              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
-        ),
-      ),
+      bottomNav: const EducaBottomNav(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

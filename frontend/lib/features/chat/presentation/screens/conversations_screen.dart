@@ -43,15 +43,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
         automaticallyImplyLeading: false,
         title: const Text('Mensajes'),
       ),
-      bottomNav: EducaBottomNav(
-        current: EducaNavItem.messages,
-        onTap: (item) => goToEducaTab(
-          context,
-          item: item,
-          current: EducaNavItem.messages,
-          homeRoute: me?.activeRole.dashboardRoute ?? Routes.studentDashboard,
-        ),
-      ),
+      bottomNav: const EducaBottomNav(),
       fab: EducaFab(
         icon: Icons.chat_bubble_outline,
         onPressed: () => context.push(Routes.chatNew),

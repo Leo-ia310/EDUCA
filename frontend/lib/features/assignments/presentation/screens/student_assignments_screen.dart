@@ -11,7 +11,6 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/skeleton.dart';
-import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/entities.dart';
 import '../controllers/assignment_detail_controller.dart';
 import '../controllers/assignments_list_controller.dart';
@@ -28,7 +27,6 @@ class StudentAssignmentsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(studentAssignmentsProvider);
     final palette = context.palette;
-    final user = ref.watch(authControllerProvider).user;
 
     return AppScaffold(
       scrollable: false,
@@ -40,16 +38,7 @@ class StudentAssignmentsScreen extends ConsumerWidget {
         ),
         title: const Text('Mis tareas'),
       ),
-      bottomNav: EducaBottomNav(
-        current: null,
-        onTap: (item) => goToEducaTab(
-          context,
-          item: item,
-          current: null,
-          homeRoute:
-              user?.activeRole.dashboardRoute ?? Routes.studentDashboard,
-        ),
-      ),
+      bottomNav: const EducaBottomNav(),
       child: SafeArea(
         bottom: false,
         child: list.when(

@@ -2,99 +2,180 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/chat/providers.dart';
-import '../constants/app_strings.dart';
+import '../../shared/models/app_role.dart';
 import '../routing/route_paths.dart';
 import '../theme/app_theme.dart';
 
-/// Navega entre las 4 pestañas principales (Inicio, Horario, Mensajes, Perfil)
-/// usando `context.go`, de modo que se reemplazan en lugar de apilarse: así las
-/// cuatro se comportan como una barra de pestañas y ninguna aparece como una
-/// "ventana" separada con flecha de retroceso. [homeRoute] es el dashboard del
-/// rol activo. Si [item] ya es la pestaña [current], no hace nada; [current]
-/// puede ser `null` en pantallas que no son una de las 4 pestañas (p. ej.
-/// materias, notas), donde cualquier ítem debe navegar siempre.
-void goToEducaTab(
-  BuildContext context, {
-  required EducaNavItem item,
-  required EducaNavItem? current,
-  required String homeRoute,
-}) {
-  if (item == current) return;
-  switch (item) {
-    case EducaNavItem.home:
-      context.go(homeRoute);
-    case EducaNavItem.schedule:
-      context.go(Routes.schedule);
-    case EducaNavItem.messages:
-      context.go(Routes.chat);
-    case EducaNavItem.profile:
-      context.go(Routes.profile);
-  }
-}
-
-/// Bottom nav con 4 ítems estándar (Inicio, Horario, Mensajes, Perfil).
-/// [current] resalta la pestaña activa; `null` no resalta ninguna (útil en
-/// pantallas navegables que no son una pestaña, como materias o notas).
-///
-/// Muestra automáticamente un badge de no leídos sobre "Mensajes"
-/// (vía [totalUnreadProvider]), de modo que aparece en todas las pantallas
-/// que usan el bottom nav sin pasarlo manualmente.
-class EducaBottomNav extends ConsumerWidget {
-  const EducaBottomNav({
-    super.key,
-    required this.current,
-    required this.onTap,
+/// Una pestaña del bottom nav: ícono, etiqueta y ruta destino.
+class EducaTab {
+  const EducaTab({
+    required this.icon,
+    required this.label,
+    required this.route,
   });
 
-  final EducaNavItem? current;
-  final ValueChanged<EducaNavItem> onTap;
+  final IconData icon;
+  final String label;
+  final String route;
+}
+
+/// Pestañas del bottom nav según el rol. Inicio/Mensajes/Perfil son comunes;
+/// las del medio cambian por rol.
+List<EducaTab> navTabsForRole(AppRole role) {
+  const messages = EducaTab(
+    icon: Icons.chat_bubble_rounded,
+    label: 'Mensajes',
+    route: Routes.chat,
+  );
+  const profile = EducaTab(
+    icon: Icons.person_rounded,
+    label: 'Perfil',
+    route: Routes.profile,
+  );
+  return switch (role) {
+    AppRole.teacher => const [
+        EducaTab(
+          icon: Icons.home_rounded,
+          label: 'Inicio',
+          route: Routes.teacherDashboard,
+        ),
+        EducaTab(
+          icon: Icons.calendar_today_rounded,
+          label: 'Horario',
+          route: Routes.schedule,
+        ),
+        EducaTab(
+          icon: Icons.assignment_rounded,
+          label: 'Tareas',
+          route: Routes.assignments,
+        ),
+        messages,
+        profile,
+      ],
+    AppRole.parent => const [
+        EducaTab(
+          icon: Icons.home_rounded,
+          label: 'Inicio',
+          route: Routes.parentDashboard,
+        ),
+        EducaTab(
+          icon: Icons.notifications_rounded,
+          label: 'Avisos',
+          route: Routes.alerts,
+        ),
+        EducaTab(
+          icon: Icons.payments_rounded,
+          label: 'Pagos',
+          route: Routes.payments,
+        ),
+        messages,
+        profile,
+      ],
+    AppRole.admin || AppRole.coordinator || AppRole.director => const [
+        EducaTab(
+          icon: Icons.home_rounded,
+          label: 'Inicio',
+          route: Routes.adminDashboard,
+        ),
+        EducaTab(
+          icon: Icons.groups_rounded,
+          label: 'Maestros',
+          route: Routes.manageTeachers,
+        ),
+        EducaTab(
+          icon: Icons.campaign_rounded,
+          label: 'Anuncios',
+          route: Routes.announcements,
+        ),
+        messages,
+        profile,
+      ],
+    AppRole.student => const [
+        EducaTab(
+          icon: Icons.home_rounded,
+          label: 'Inicio',
+          route: Routes.studentDashboard,
+        ),
+        EducaTab(
+          icon: Icons.calendar_today_rounded,
+          label: 'Horario',
+          route: Routes.schedule,
+        ),
+        messages,
+        profile,
+      ],
+  };
+}
+
+/// Bottom nav flotante, consciente del rol: lee el rol del usuario y la ruta
+/// actual para mostrar las pestañas correctas y resaltar la activa. El ítem
+/// activo se dibuja en un círculo blanco flotante con notch cóncavo. Muestra
+/// automáticamente el badge de no leídos sobre "Mensajes".
+class EducaBottomNav extends ConsumerWidget {
+  const EducaBottomNav({super.key});
 
   // Geometría de la barra (coords dentro del SizedBox).
-  static const double _flatTop = 22; // espacio sobre el cuerpo (para el círculo)
+  static const double _barTop = 8; // borde superior de la barra
+  static const double _height = 80; // alto total (barTop + cuerpo)
   static const double _circle = 40; // diámetro del círculo activo
-  static const double _notchMargin = 6; // separación entre círculo y notch
+  // Negativo => el círculo queda POR DEBAJO de la línea superior (contenido).
+  static const double _protrude = -4;
+  static const double _notchMargin = 6; // separación círculo↔notch
 
-  /// Color de la barra según la pestaña activa (cada tab su color). En
-  /// pantallas sin pestaña activa se usa un color neutro.
-  static Color _navColor(EducaNavItem? item) => switch (item) {
-        EducaNavItem.home => const Color(0xFF4C8DF5),
-        EducaNavItem.schedule => const Color(0xFF8A5CF6),
-        EducaNavItem.messages => const Color(0xFF33B7A0),
-        EducaNavItem.profile => const Color(0xFFF3993E),
-        null => const Color(0xFF3B414D),
-      };
+  // Centro vertical del círculo y elevación desde el centro del cuerpo.
+  static const double _circleCenterY = _barTop + _circle / 2 - _protrude;
+  static const double _lift =
+      _barTop + (_height - _barTop) / 2 - _circleCenterY;
+
+  /// Color único de la barra (para todas las pestañas).
+  static const Color _barColor = Color(0xFF4C8DF5);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unreadMessages = ref.watch(totalUnreadProvider).asData?.value ?? 0;
-    final barColor = _navColor(current);
-    final activeIndex = current?.index;
+    final role =
+        ref.watch(authControllerProvider).user?.activeRole ?? AppRole.student;
+    final tabs = navTabsForRole(role);
+    final unread = ref.watch(totalUnreadProvider).asData?.value ?? 0;
+    const barColor = _barColor;
+
+    // Pestaña activa por coincidencia con la ruta actual (-1 si ninguna).
+    final loc = GoRouterState.of(context).uri.path;
+    var activeIndex = -1;
+    for (var i = 0; i < tabs.length; i++) {
+      final r = tabs[i].route;
+      if (loc == r || loc.startsWith('$r/')) {
+        activeIndex = i;
+        break;
+      }
+    }
+
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
         child: SizedBox(
-          height: _flatTop + 44,
+          height: _height,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;
-              final cx = activeIndex != null
-                  ? (activeIndex + 0.5) * w / EducaNavItem.values.length
+              final cx = activeIndex >= 0
+                  ? (activeIndex + 0.5) * w / tabs.length
                   : null;
               return Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Barra pintada con un bulto alrededor del ítem activo.
+                  // Barra pintada con el notch cóncavo alrededor del círculo.
                   Positioned.fill(
                     child: CustomPaint(
                       painter: _NavBarPainter(
                         color: barColor,
-                        flatTop: _flatTop,
-                        cornerRadius: 26,
-                        notchMargin: _notchMargin,
-                        circleRadius: _circle / 2,
+                        barTop: _barTop,
+                        cornerRadius: 16,
                         cx: cx,
+                        circleCenterY: _circleCenterY,
+                        guestRadius: _circle / 2 + _notchMargin,
                       ),
                     ),
                   ),
@@ -102,20 +183,23 @@ class EducaBottomNav extends ConsumerWidget {
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: _flatTop,
+                    top: _barTop,
                     bottom: 0,
                     child: Row(
                       children: [
-                        for (final item in EducaNavItem.values)
+                        for (var i = 0; i < tabs.length; i++)
                           Expanded(
                             child: _NavSlot(
-                              item: item,
-                              active: item == current,
+                              icon: tabs[i].icon,
+                              active: i == activeIndex,
                               barColor: barColor,
-                              badge: item == EducaNavItem.messages
-                                  ? unreadMessages
-                                  : 0,
-                              onTap: () => onTap(item),
+                              lift: _lift,
+                              badge: tabs[i].route == Routes.chat ? unread : 0,
+                              onTap: () {
+                                if (i != activeIndex) {
+                                  context.go(tabs[i].route);
+                                }
+                              },
                             ),
                           ),
                       ],
@@ -131,29 +215,20 @@ class EducaBottomNav extends ConsumerWidget {
   }
 }
 
-enum EducaNavItem {
-  home(Icons.home_rounded, AppStrings.navHome),
-  schedule(Icons.calendar_today_rounded, AppStrings.navSchedule),
-  messages(Icons.chat_bubble_rounded, AppStrings.navMessages),
-  profile(Icons.person_rounded, AppStrings.navProfile);
-
-  const EducaNavItem(this.icon, this.label);
-  final IconData icon;
-  final String label;
-}
-
 class _NavSlot extends StatelessWidget {
   const _NavSlot({
-    required this.item,
+    required this.icon,
     required this.active,
     required this.barColor,
+    required this.lift,
     required this.onTap,
     this.badge = 0,
   });
 
-  final EducaNavItem item;
+  final IconData icon;
   final bool active;
   final Color barColor;
+  final double lift;
   final int badge;
   final VoidCallback onTap;
 
@@ -161,10 +236,10 @@ class _NavSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     final Widget content = active
         ? Transform.translate(
-            offset: const Offset(0, -22),
-            child: _ActiveCircle(icon: item.icon, color: barColor),
+            offset: Offset(0, -lift),
+            child: _ActiveCircle(icon: icon, color: barColor),
           )
-        : Icon(item.icon, color: Colors.white, size: 24);
+        : Icon(icon, color: Colors.white, size: 24);
 
     return InkWell(
       onTap: onTap,
@@ -240,24 +315,24 @@ class _ActiveCircle extends StatelessWidget {
 class _NavBarPainter extends CustomPainter {
   _NavBarPainter({
     required this.color,
-    required this.flatTop,
+    required this.barTop,
     required this.cornerRadius,
-    required this.notchMargin,
-    required this.circleRadius,
     required this.cx,
+    required this.circleCenterY,
+    required this.guestRadius,
   });
 
   final Color color;
-  final double flatTop;
+  final double barTop;
   final double cornerRadius;
-  final double notchMargin;
-  final double circleRadius;
   final double? cx;
+  final double circleCenterY;
+  final double guestRadius;
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
-    final host = Rect.fromLTWH(0, flatTop, w, size.height - flatTop);
+    final host = Rect.fromLTWH(0, barTop, w, size.height - barTop);
     final rounded = Path()
       ..addRRect(
         RRect.fromRectAndRadius(host, Radius.circular(cornerRadius)),
@@ -268,10 +343,10 @@ class _NavBarPainter extends CustomPainter {
     if (c == null) {
       barPath = rounded;
     } else {
-      // El círculo (con margen) centrado sobre el borde superior de la barra.
+      // Círculo (con margen) en la posición del ítem activo: talla el notch.
       final guest = Rect.fromCircle(
-        center: Offset(c, flatTop),
-        radius: circleRadius + notchMargin,
+        center: Offset(c, circleCenterY),
+        radius: guestRadius,
       );
       final notched =
           const CircularNotchedRectangle().getOuterPath(host, guest);
@@ -286,7 +361,7 @@ class _NavBarPainter extends CustomPainter {
   bool shouldRepaint(_NavBarPainter old) =>
       old.color != color ||
       old.cx != cx ||
-      old.flatTop != flatTop ||
-      old.notchMargin != notchMargin ||
-      old.circleRadius != circleRadius;
+      old.barTop != barTop ||
+      old.circleCenterY != circleCenterY ||
+      old.guestRadius != guestRadius;
 }

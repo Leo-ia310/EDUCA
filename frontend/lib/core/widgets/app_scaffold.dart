@@ -47,6 +47,8 @@ class AppScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
+      // El navbar flota y es transparente: el contenido pasa por detrás.
+      extendBody: true,
       appBar: appBar,
       body: SafeArea(bottom: false, child: body),
       bottomNavigationBar: bottomNav,

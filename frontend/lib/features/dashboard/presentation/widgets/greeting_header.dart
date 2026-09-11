@@ -117,18 +117,19 @@ class _TopIcon extends StatelessWidget {
   }
 }
 
-/// Hero de bienvenida del alumno, full-bleed: banda superior con degradado
-/// multicolor vibrante y formas decorativas, avatar + botones circulares
-/// arriba, y debajo la fecha, el saludo grande en dos líneas y un chip con las
-/// tareas del día. Base con curva. Da la sensación de "panel", no solo texto.
-class StudentGreetingHeader extends StatelessWidget {
-  const StudentGreetingHeader({
+/// Hero de bienvenida reutilizable (cualquier rol), full-bleed: banda superior
+/// con degradado multicolor, avatar + botones circulares arriba, y debajo la
+/// fecha, el saludo grande en dos líneas y un chip de contexto configurable.
+/// Da la sensación de "panel", no solo texto.
+class AppGreetingHeader extends StatelessWidget {
+  const AppGreetingHeader({
     super.key,
     required this.greeting,
     required this.name,
     required this.initials,
     required this.dateLabel,
-    this.pendingTasks = 0,
+    this.chipIcon,
+    this.chipLabel,
     this.notificationsBadge = 0,
     this.onNotificationsTap,
     this.settingsMenu,
@@ -138,7 +139,11 @@ class StudentGreetingHeader extends StatelessWidget {
   final String name;
   final String initials;
   final String dateLabel;
-  final int pendingTasks;
+
+  /// Chip de contexto opcional (ícono + texto) bajo el nombre. Cada rol pone su
+  /// dato (p. ej. "3 tareas para hoy", "2 avisos nuevos").
+  final IconData? chipIcon;
+  final String? chipLabel;
   final int notificationsBadge;
   final VoidCallback? onNotificationsTap;
 
@@ -147,10 +152,6 @@ class StudentGreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tasksLabel = pendingTasks > 0
-        ? 'Tienes $pendingTasks ${pendingTasks == 1 ? 'tarea' : 'tareas'} para hoy'
-        : 'No tienes tareas para hoy';
-
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       child: Stack(
@@ -234,34 +235,34 @@ class StudentGreetingHeader extends StatelessWidget {
                     height: 1.05,
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Chip de tareas del día.
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.assignment_turned_in_outlined,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        tasksLabel,
-                        style: context.textTheme.labelLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                if (chipLabel != null) ...[
+                  const SizedBox(height: 16),
+                  // Chip de contexto (configurable por rol).
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (chipIcon != null) ...[
+                          Icon(chipIcon, color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          chipLabel!,
+                          style: context.textTheme.labelLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
