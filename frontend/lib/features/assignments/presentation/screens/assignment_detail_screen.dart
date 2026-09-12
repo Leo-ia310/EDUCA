@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -17,7 +18,6 @@ import '../../../../shared/models/app_role.dart';
 import '../../domain/entities.dart';
 import '../controllers/assignment_detail_controller.dart';
 import '../controllers/submission_controller.dart';
-import '../widgets/assignment_status_chip.dart';
 import '../widgets/attachment_pill.dart';
 
 /// Vista común para la tarea. Cambia layout según rol:
@@ -119,40 +119,42 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
+    final s = pastelSurface(subjectColor(assignment.subjectName));
+    final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final fmt = DateFormat("EEE d MMM, HH:mm", 'es');
-    return EduCard(
-      color: palette.lime,
+    final statusLabel = switch (assignment.statusForNow(DateTime.now())) {
+      AssignmentStatus.draft => 'Borrador',
+      AssignmentStatus.open => 'Abierta',
+      AssignmentStatus.dueSoon => 'Vence pronto',
+      AssignmentStatus.overdue => 'Vencida',
+      AssignmentStatus.closed => 'Cerrada',
+    };
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [s.vivid, deep],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  assignment.kind.label,
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF1E2218),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
+              _HeroChip(label: assignment.kind.label),
               const SizedBox(width: 8),
-              AssignmentStatusChip(
-                  status: assignment.statusForNow(DateTime.now())),
+              _HeroChip(label: statusLabel),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             assignment.title,
-            style: context.textTheme.titleLarge?.copyWith(
-              color: const Color(0xFF1E2218),
+            style: context.textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -160,41 +162,51 @@ class _Header extends StatelessWidget {
           Text(
             '${assignment.subjectName} · ${assignment.groupName}',
             style: context.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF34401C),
+              color: Colors.white.withValues(alpha: 0.85),
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Row(
             children: [
-              Icon(Icons.event, size: 16, color: palette.cardContrast),
-              const SizedBox(width: 4),
+              const Icon(Icons.event, size: 16, color: Colors.white),
+              const SizedBox(width: 6),
               Text(
                 'Entrega ${fmt.format(assignment.dueAt)}',
                 style: context.textTheme.labelMedium?.copyWith(
-                  color: const Color(0xFF1E2218),
+                  color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '${assignment.maxScore.toStringAsFixed(0)} pts',
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF1E2218),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
+              _HeroChip(label: '${assignment.maxScore.toStringAsFixed(0)} pts'),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Chip translúcido blanco para los heros del panel.
+class _HeroChip extends StatelessWidget {
+  const _HeroChip({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: context.textTheme.labelSmall?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -464,16 +476,23 @@ class _GradedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-    return EduCard(
-      color: palette.cardContrast,
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.workspace_premium_rounded,
-                  color: palette.lime, size: 28),
+              const Icon(Icons.workspace_premium_rounded,
+                  color: Colors.white, size: 28),
               const SizedBox(width: 8),
               Text(
                 'Calificada',
@@ -486,7 +505,7 @@ class _GradedView extends StatelessWidget {
               Text(
                 '${submission.score!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
                 style: context.textTheme.headlineSmall?.copyWith(
-                  color: palette.lime,
+                  color: Colors.white,
                   fontWeight: FontWeight.w800,
                 ),
               ),

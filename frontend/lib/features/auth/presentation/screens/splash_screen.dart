@@ -7,8 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../auth_controller.dart';
 
 /// Pantalla de arranque. Muestra el branding un instante y luego decide a
-/// dónde ir: si ya hay sesión activa va al dashboard del rol; si no, al
-/// ingreso de código de institución.
+/// dónde ir: si ya hay sesión activa va al dashboard del rol; si no, al login.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -27,7 +26,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       if (auth.isAuthenticated) {
         context.go(auth.user!.activeRole.dashboardRoute);
       } else {
-        context.go(Routes.institutionCode);
+        context.go(Routes.login);
       }
     });
   }

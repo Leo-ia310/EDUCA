@@ -37,6 +37,24 @@ class AssignmentsFilter {
 final assignmentsFilterProvider =
     StateProvider<AssignmentsFilter>((ref) => const AssignmentsFilter());
 
+/// Marcado personal "hecha" del alumno sobre sus tareas (capa local de
+/// productividad, independiente del estado oficial de entrega). Se alterna con
+/// el swipe en el feed de tareas.
+class TasksDoneNotifier extends StateNotifier<Set<String>> {
+  TasksDoneNotifier() : super(const {});
+
+  void toggle(String assignmentId) {
+    final next = {...state};
+    if (!next.add(assignmentId)) next.remove(assignmentId);
+    state = next;
+  }
+}
+
+final tasksDoneProvider =
+    StateNotifierProvider<TasksDoneNotifier, Set<String>>(
+  (ref) => TasksDoneNotifier(),
+);
+
 /// Lista para el docente (todas las tareas que asigna, agnóstico al rol).
 final teacherAssignmentsProvider =
     FutureProvider.autoDispose<List<Assignment>>((ref) async {

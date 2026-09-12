@@ -24,6 +24,12 @@ class Env {
         : '$normalized/business-api';
   }
 
+  /// Código de institución por defecto. Ya no existe la pantalla de "código de
+  /// colegio": el login resuelve esta institución automáticamente. Configurable
+  /// con `--dart-define=INSTITUTION_CODE=...`; en demo se usa `EDU360`.
+  static const String defaultInstitutionCode =
+      String.fromEnvironment('INSTITUTION_CODE', defaultValue: 'EDU360');
+
   /// Clave pública VAPID para Web Push (no es secreta — viaja al cliente).
   /// La privada solo la usa `supabase/functions/send-push/`, nunca la app.
   /// Generar el par con `npx web-push generate-vapid-keys`.

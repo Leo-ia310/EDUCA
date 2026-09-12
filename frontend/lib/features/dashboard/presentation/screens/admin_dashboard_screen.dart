@@ -1,25 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
+import '../../../../core/widgets/open_card.dart';
 import '../../../../core/widgets/quick_actions_sheet.dart';
 import '../../../../core/widgets/section_header.dart';
-import '../../../../core/widgets/stat_card.dart';
+import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
-import '../../../chat/providers.dart';
 import '../../../notifications/providers.dart';
+import '../../../profile/presentation/widgets/account_settings_menu.dart';
 import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/greeting_header.dart';
+import '../widgets/stat_strip.dart';
+import 'announcement_detail_screen.dart';
+
+// Tarjeta clara neutra para listas funcionales (maestros).
+const Color _panelCard = Color(0xFFEFF1F6);
+const Color _panelInk = Color(0xFF232A33);
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -28,21 +35,15 @@ class AdminDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     final user = ref.watch(authControllerProvider).user!;
-    // Datos reales del backend (fallback a demo mientras carga o sin backend).
     final data = ref.watch(adminDashboardProvider).valueOrNull ??
         AdminDashboardData.mock();
+    final now = DateTime.now();
+
     return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+      padding: const EdgeInsets.only(bottom: 100),
       onRefresh: () async =>
           Future<void>.delayed(const Duration(milliseconds: 600)),
-      bottomNav: EducaBottomNav(
-        current: EducaNavItem.home,
-        onTap: (i) {
-          if (i == EducaNavItem.profile) context.go(Routes.profile);
-          if (i == EducaNavItem.alerts) context.push(Routes.alerts);
-          if (i == EducaNavItem.schedule) context.push(Routes.schedule);
-        },
-      ),
+      bottomNav: const EducaBottomNav(),
       fab: EducaFab(
         onPressed: () => showQuickActionsSheet(
           context,
@@ -74,199 +75,214 @@ class AdminDashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DashboardTopBar(
-            onSettingsTap: () => context.go(Routes.profile),
-            onNotificationsTap: () => context.push(Routes.alerts),
-            onChatTap: () => context.push(Routes.chat),
+          // Hero de bienvenida (full-bleed).
+          AppGreetingHeader(
+            greeting: _greeting(now),
+            name: user.displayFirstName,
+            initials: user.displayFirstName.isNotEmpty
+                ? user.displayFirstName.substring(0, 1).toUpperCase()
+                : '?',
+            dateLabel: toBeginningOfSentenceCase(
+              DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
+            ),
+            chipIcon: Icons.insights_rounded,
+            chipLabel:
+                '${data.attendancePct.toStringAsFixed(0)}% asistencia hoy',
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ??
                     data.systemAlerts,
-            chatBadge: ref.watch(totalUnreadProvider).asData?.value ?? 0,
+            onNotificationsTap: () => context.go(Routes.alerts),
+            settingsMenu: const AccountSettingsMenu(circular: true),
           ),
-
-          // Resumen institucional (salvia suave)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  palette.lime,
-                  Color.lerp(palette.lime, palette.limeSoft, 0.35)!,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+            child: StaggeredEntrance(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '¡Hola, ${user.displayFirstName}!',
-                  style: context.textTheme.headlineSmall?.copyWith(
-                    color: const Color(0xFF1E2218),
-                    fontWeight: FontWeight.w800,
-                  ),
+                // Resumen institucional (2 franjas de KPIs).
+                const SectionHeader(title: 'Resumen Institucional'),
+                const SizedBox(height: 10),
+                DashboardStatStrip(
+                  tiles: [
+                    StatTile(
+                      icon: Icons.event_available_rounded,
+                      color: const Color(0xFF34C77A),
+                      value: data.attendancePct,
+                      suffix: '%',
+                      label: 'Asistencia',
+                    ),
+                    StatTile(
+                      icon: Icons.star_rounded,
+                      color: const Color(0xFF4C8DF5),
+                      value: data.institutionalAvg,
+                      decimals: 1,
+                      label: 'Promedio',
+                    ),
+                    StatTile(
+                      icon: Icons.people_alt_rounded,
+                      color: const Color(0xFF9A6BE0),
+                      value: data.totalStudents.toDouble(),
+                      label: 'Estudiantes',
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Resumen Institucional',
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF34401C),
-                    fontWeight: FontWeight.w600,
-                  ),
+                const SizedBox(height: 12),
+                DashboardStatStrip(
+                  tiles: [
+                    StatTile(
+                      icon: Icons.badge_rounded,
+                      color: const Color(0xFF33B7A0),
+                      value: data.activeTeachers.toDouble(),
+                      label: 'Docentes',
+                    ),
+                    StatTile(
+                      icon: Icons.event_rounded,
+                      color: const Color(0xFFF3993E),
+                      value: data.upcomingEvents.toDouble(),
+                      label: 'Eventos',
+                    ),
+                    StatTile(
+                      icon: Icons.warning_amber_rounded,
+                      color: const Color(0xFFE5484D),
+                      value: data.systemAlerts.toDouble(),
+                      label: 'Alertas',
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 24),
+
+                // Accesos rápidos (grid pastel de 2 columnas)
+                const SectionHeader(title: 'Gestión'),
+                const SizedBox(height: 8),
+                _QuickActionsGrid(
+                  actions: [
+                    _AdminAction(
+                      Icons.school_outlined,
+                      'Asignar Maestros',
+                      const Color(0xFF4C8DF5),
+                      () => context.push(Routes.manageTeachers),
+                    ),
+                    _AdminAction(
+                      Icons.event_outlined,
+                      'Crear Evento',
+                      const Color(0xFF34C77A),
+                      () => context.push(Routes.eventNew),
+                    ),
+                    _AdminAction(
+                      Icons.schedule_outlined,
+                      'Modificar Horarios',
+                      const Color(0xFF8A5CF6),
+                      () => context.push(Routes.schedule),
+                    ),
+                    _AdminAction(
+                      Icons.grid_view_rounded,
+                      'Libro de notas',
+                      const Color(0xFFF3993E),
+                      () => context.push(Routes.gradebook),
+                    ),
+                    _AdminAction(
+                      Icons.payments_outlined,
+                      'Recaudación',
+                      const Color(0xFFEC6A9C),
+                      () => context.push(Routes.paymentsDunning),
+                    ),
+                    _AdminAction(
+                      Icons.terminal_rounded,
+                      'Panel de desarrollador',
+                      const Color(0xFF33B7A0),
+                      () => context.push(Routes.developer),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Anuncios recientes
                 Row(
                   children: [
-                    Expanded(
-                      child: _OverviewMini(
-                        value:
-                            '${data.attendancePct.toStringAsFixed(1)}%',
-                        label: 'Asistencia hoy',
-                      ),
+                    const Expanded(
+                      child: SectionHeader(title: 'Anuncios Recientes'),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _OverviewMini(
-                        value:
-                            data.institutionalAvg.toStringAsFixed(1),
-                        label: 'Promedio institucional',
+                    GestureDetector(
+                      onTap: () => context.push(Routes.announcements),
+                      child: Text(
+                        'Ver todos',
+                        style: context.textTheme.labelMedium?.copyWith(
+                          color: palette.limeDeep,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Acciones rápidas (grid de 2 columnas)
-          _QuickActionsGrid(
-            actions: [
-              _AdminAction(Icons.school_outlined, 'Asignar Maestros',
-                  palette.info, () => context.push(Routes.manageTeachers),),
-              _AdminAction(Icons.event_outlined, 'Crear Evento',
-                  AppColors.pastelMint, () => context.push(Routes.eventNew),),
-              _AdminAction(Icons.schedule_outlined, 'Modificar Horarios',
-                  AppColors.pastelLavender, () => context.push(Routes.schedule),),
-              _AdminAction(Icons.grid_view_rounded, 'Libro de notas',
-                  AppColors.pastelPeach, () => context.push(Routes.gradebook),),
-              _AdminAction(Icons.payments_outlined, 'Recaudación',
-                  AppColors.pastelRose,
-                  () => context.push(Routes.paymentsDunning),),
-              _AdminAction(Icons.terminal_rounded, 'Panel de desarrollador',
-                  palette.limeDeep, () => context.push(Routes.developer),),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Anuncios recientes
-          Row(
-            children: [
-              const Expanded(child: SectionHeader(title: 'Anuncios Recientes')),
-              GestureDetector(
-                onTap: () => context.push(Routes.announcements),
-                child: Text(
-                  'Ver todos',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: palette.limeDeep,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          for (final a in data.announcements)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _AnnouncementRow(item: a),
-            ),
-          const SizedBox(height: 16),
-
-          // Maestros activos
-          Row(
-            children: [
-              const Expanded(child: SectionHeader(title: 'Maestros Activos')),
-              GestureDetector(
-                onTap: () => context.push(Routes.manageTeachers),
-                child: Text(
-                  'Gestionar',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: palette.limeDeep,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          EduCard(
-            child: Column(
-              children: [
-                for (final t in data.teachers) ...[
-                  _TeacherRow(item: t),
-                  if (t != data.teachers.last)
-                    Divider(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                      height: 14,
+                const SizedBox(height: 8),
+                for (final a in data.announcements)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: OpenCard(
+                      closed: (context, open) => GestureDetector(
+                        onTap: open,
+                        behavior: HitTestBehavior.opaque,
+                        child: _AnnouncementRow(item: a),
+                      ),
+                      open: (context) =>
+                          AnnouncementDetailScreen(announcement: a),
                     ),
-                ],
+                  ),
+                const SizedBox(height: 16),
+
+                // Maestros activos
+                Row(
+                  children: [
+                    const Expanded(
+                      child: SectionHeader(title: 'Maestros Activos'),
+                    ),
+                    GestureDetector(
+                      onTap: () => context.push(Routes.manageTeachers),
+                      child: Text(
+                        'Gestionar',
+                        style: context.textTheme.labelMedium?.copyWith(
+                          color: palette.limeDeep,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _panelCard,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    children: [
+                      for (final t in data.teachers) ...[
+                        _TeacherRow(item: t),
+                        if (t != data.teachers.last)
+                          Divider(
+                            color: _panelInk.withValues(alpha: 0.10),
+                            height: 14,
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // Stats inferiores
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  value: '${data.totalStudents}',
-                  label: 'Total estudiantes',
-                  icon: Icons.people_outline,
-                  accent: palette.info,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: StatCard(
-                  value: '${data.activeTeachers}',
-                  label: 'Docentes activos',
-                  icon: Icons.badge_outlined,
-                  accent: palette.success,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  value: '${data.upcomingEvents}',
-                  label: 'Eventos próximos',
-                  icon: Icons.event_available_outlined,
-                  accent: palette.warning,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: StatCard(
-                  value: '${data.systemAlerts}',
-                  label: 'Alertas sistema',
-                  icon: Icons.warning_amber_outlined,
-                  accent: palette.danger,
-                ),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
+}
+
+/// Saludo según la hora del día.
+String _greeting(DateTime now) {
+  final h = now.hour;
+  if (h < 12) return 'Buenos días';
+  if (h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
 }
 
 class _AdminAction {
@@ -309,99 +325,81 @@ class _QuickActionsGrid extends StatelessWidget {
   }
 }
 
+/// Tile de acceso rápido del admin, estilo pastel.
 class _ActionTile extends StatelessWidget {
   const _ActionTile({required this.action});
   final _AdminAction action;
 
   @override
   Widget build(BuildContext context) {
-    final ink = Color.lerp(action.accent, const Color(0xFF23281E), 0.42)!;
-    return EduCard(
-      padding: const EdgeInsets.all(14),
-      onTap: action.onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: action.accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
+    final s = pastelSurface(action.accent);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: action.onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: s.surface,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration:
+                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                  child: Icon(action.icon, color: Colors.white, size: 20),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  action.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    color: s.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            child: Icon(action.icon, color: ink, size: 20),
           ),
-          const SizedBox(height: 10),
-          Text(
-            action.label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: context.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _OverviewMini extends StatelessWidget {
-  const _OverviewMini({required this.value, required this.label});
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: context.textTheme.titleLarge?.copyWith(
-              color: const Color(0xFF1E2218),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: context.textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF34401C),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
+/// Fila de anuncio, estilo pastel del panel.
 class _AnnouncementRow extends StatelessWidget {
   const _AnnouncementRow({required this.item});
   final Announcement item;
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-    return EduCard(
+    final s = pastelSurface(subjectColor(item.title));
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: s.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: palette.limeSoft,
-              borderRadius: BorderRadius.circular(10),
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+            child: const Icon(
+              Icons.campaign_rounded,
+              color: Colors.white,
+              size: 22,
             ),
-            child: Icon(Icons.campaign_outlined,
-                color: palette.limeDeep, size: 20,),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -411,15 +409,16 @@ class _AnnouncementRow extends StatelessWidget {
                 Text(
                   item.title,
                   style: context.textTheme.titleSmall?.copyWith(
+                    color: s.ink,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   item.body,
-                  style: context.textTheme.bodySmall,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
                 ),
               ],
             ),
@@ -446,18 +445,24 @@ class _TeacherRow extends StatelessWidget {
             children: [
               Text(
                 item.name,
-                style: context.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                style: context.textTheme.titleSmall?.copyWith(
+                  color: _panelInk,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-              Text(item.subject, style: context.textTheme.bodySmall),
+              Text(
+                item.subject,
+                style: context.textTheme.bodySmall
+                    ?.copyWith(color: _panelInk.withValues(alpha: 0.62)),
+              ),
             ],
           ),
         ),
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: context.palette.success,
+          decoration: const BoxDecoration(
+            color: Color(0xFF2FA869),
             shape: BoxShape.circle,
           ),
         ),
@@ -465,4 +470,3 @@ class _TeacherRow extends StatelessWidget {
     );
   }
 }
-

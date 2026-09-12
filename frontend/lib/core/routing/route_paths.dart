@@ -2,7 +2,6 @@ class Routes {
   Routes._();
 
   static const splash = '/';
-  static const institutionCode = '/institution-code';
   static const login = '/login';
   static const forgotPassword = '/forgot-password';
 
@@ -11,6 +10,7 @@ class Routes {
   static const parentDashboard = '/parent/dashboard';
   static const adminDashboard = '/admin/dashboard';
 
+  static const subjects = '/subjects';
   static const schedule = '/schedule';
   static const alerts = '/alerts';
   static const profile = '/profile';

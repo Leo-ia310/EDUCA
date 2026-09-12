@@ -7,12 +7,6 @@ class Validators {
     return null;
   }
 
-  static String? institutionCode(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Ingresa el código del colegio';
-    if (v.trim().length < 3) return 'El código es muy corto';
-    return null;
-  }
-
   static String? email(String? v) {
     if (v == null || v.trim().isEmpty) return 'Correo o usuario obligatorio';
     return null;

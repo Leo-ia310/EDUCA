@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../domain/entities.dart';
 import 'assignment_status_chip.dart';
@@ -15,6 +16,7 @@ class AssignmentCard extends StatelessWidget {
     this.showProgress = true,
     this.studentStatus,
     this.studentScore,
+    this.pastel = false,
   });
 
   final Assignment assignment;
@@ -27,8 +29,135 @@ class AssignmentCard extends StatelessWidget {
   final SubmissionStatus? studentStatus;
   final double? studentScore;
 
+  /// Estilo pastel (feed del alumno): fondo tintado por materia + ícono en
+  /// círculo vívido, igual que las tarjetas de materia. El docente usa el
+  /// estilo clásico (pastel = false).
+  final bool pastel;
+
+  static const _ink = Color(0xFF232A33);
+
+  static IconData _kindIcon(AssignmentKind kind) => switch (kind) {
+        AssignmentKind.homework => Icons.assignment_rounded,
+        AssignmentKind.exam => Icons.school_rounded,
+        AssignmentKind.project => Icons.workspaces_rounded,
+        AssignmentKind.quiz => Icons.quiz_rounded,
+        AssignmentKind.presentation => Icons.slideshow_rounded,
+      };
+
   @override
   Widget build(BuildContext context) {
+    if (pastel) return _buildPastel(context);
+    return _buildClassic(context);
+  }
+
+  Widget _buildPastel(BuildContext context) {
+    final s = pastelSurface(subjectColor(assignment.subjectName));
+    final vivid = s.vivid;
+    final cardBg = s.surface;
+    final inkMuted = s.inkMuted;
+    final status = assignment.statusForNow(DateTime.now());
+    final fmt = DateFormat("d MMM, HH:mm", 'es');
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Ícono en círculo vívido según el tipo de tarea.
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: vivid,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _kindIcon(assignment.kind),
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          AssignmentStatusChip(status: status),
+                          const Spacer(),
+                          if (studentStatus != null)
+                            SubmissionStatusChip(status: studentStatus!),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        assignment.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.textTheme.titleMedium?.copyWith(
+                          color: _ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${assignment.subjectName} · ${assignment.groupName}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.textTheme.bodySmall
+                            ?.copyWith(color: inkMuted),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_rounded,
+                              size: 14, color: inkMuted),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Entrega ${fmt.format(assignment.dueAt)}',
+                            style: context.textTheme.labelSmall
+                                ?.copyWith(color: inkMuted),
+                          ),
+                          const Spacer(),
+                          if (studentScore != null)
+                            Text(
+                              '${studentScore!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
+                              style: context.textTheme.titleSmall?.copyWith(
+                                color: const Color(0xFF2E7D46),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            )
+                          else
+                            Text(
+                              '${assignment.maxScore.toStringAsFixed(0)} pts',
+                              style: context.textTheme.labelSmall
+                                  ?.copyWith(color: inkMuted),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClassic(BuildContext context) {
     final palette = context.palette;
     final status = assignment.statusForNow(DateTime.now());
     final fmt = DateFormat("d MMM, HH:mm", 'es');

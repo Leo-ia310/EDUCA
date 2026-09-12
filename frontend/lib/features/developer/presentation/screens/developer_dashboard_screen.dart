@@ -10,6 +10,7 @@ import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/stat_card.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
@@ -37,7 +38,7 @@ class DeveloperDashboardScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: summary.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(items: 5, itemHeight: 88),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (data) => RefreshIndicator(
             color: palette.limeDeep,

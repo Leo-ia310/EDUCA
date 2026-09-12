@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/motion.dart';
 import 'edu_card.dart';
 
 /// Tarjeta de indicador canónica de la app: pastilla de ícono en acento pastel,
@@ -64,10 +65,8 @@ class StatCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Flexible(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: _AnimatedValue(
+                  value: value,
                   style: context.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -101,6 +100,49 @@ class StatCard extends StatelessWidget {
             style: context.textTheme.bodySmall,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Muestra una cifra que "cuenta" desde cero al aparecer, conservando el
+/// prefijo/sufijo (p. ej. `$`, `%`) y los decimales del texto original. Si el
+/// valor no contiene un número, o hay reduce-motion, se muestra directo.
+class _AnimatedValue extends StatelessWidget {
+  const _AnimatedValue({required this.value, this.style});
+  final String value;
+  final TextStyle? style;
+
+  static final _re = RegExp(r'^([^0-9-]*)(-?[0-9]+(?:[.,][0-9]+)?)(.*)$');
+
+  @override
+  Widget build(BuildContext context) {
+    Widget plain() => Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: style,
+        );
+
+    final m = _re.firstMatch(value);
+    if (m == null) return plain();
+    final prefix = m.group(1)!;
+    final numStr = m.group(2)!;
+    final suffix = m.group(3)!;
+    final target = double.tryParse(numStr.replaceAll(',', '.'));
+    if (target == null) return plain();
+    final decimals =
+        numStr.contains(RegExp(r'[.,]')) ? numStr.split(RegExp(r'[.,]')).last.length : 0;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: target),
+      duration: context.motion(AppMotion.slow),
+      curve: AppMotion.standard,
+      builder: (context, v, _) => Text(
+        '$prefix${v.toStringAsFixed(decimals)}$suffix',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: style,
       ),
     );
   }

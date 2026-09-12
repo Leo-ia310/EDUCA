@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../domain/entities.dart';
@@ -32,11 +33,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return AppScaffold(
       scrollable: false,
       padding: EdgeInsets.zero,
+      bottomNav: const EducaBottomNav(),
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(unread > 0 ? 'Alertas ($unread)' : 'Alertas'),
         actions: [
           PopupMenuButton<String>(

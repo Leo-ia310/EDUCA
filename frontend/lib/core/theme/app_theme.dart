@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -91,17 +92,24 @@ extension AppThemeX on BuildContext {
 class AppTheme {
   AppTheme._();
 
-  /// Transiciones de página suaves (fade + leve deslizamiento) en todas las
-  /// plataformas, para una navegación calmada. Parte del pulido "Sereno".
-  static const PageTransitionsTheme _transitions = PageTransitionsTheme(
-    builders: {
-      TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-      TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
-      TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-      TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
-      TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
-    },
-  );
+  /// Transiciones de página con eje compartido (shared-axis horizontal):
+  /// deslizado direccional + fade que refuerza hacia dónde navega el usuario.
+  /// `fillColor` es el fondo del tema para evitar destellos durante la
+  /// transición. Si el usuario pidió reducir movimiento, degrada a un fade
+  /// simple. Parte de la dirección "Sereno en movimiento".
+  static PageTransitionsTheme _transitionsFor(Color fillColor) {
+    final builder = _MotionAware(
+      SharedAxisPageTransitionsBuilder(
+        transitionType: SharedAxisTransitionType.horizontal,
+        fillColor: fillColor,
+      ),
+    );
+    return PageTransitionsTheme(
+      builders: {
+        for (final platform in TargetPlatform.values) platform: builder,
+      },
+    );
+  }
 
   static ThemeData get lightTheme {
     const scheme = ColorScheme.light(
@@ -124,12 +132,12 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.lightBg,
       canvasColor: AppColors.lightBg,
-      pageTransitionsTheme: _transitions,
+      pageTransitionsTheme: _transitionsFor(AppColors.lightBg),
       splashColor: AppColors.limePrimary.withValues(alpha: 0.12),
       highlightColor: Colors.transparent,
       hoverColor: AppColors.limeSoft.withValues(alpha: 0.5),
-      textTheme:
-          AppTypography.textTheme(AppColors.textLight, AppColors.textLightMuted),
+      textTheme: AppTypography.textTheme(
+          AppColors.textLight, AppColors.textLightMuted,),
       extensions: const [
         AppPalette(
           surfaceAlt: AppColors.lightSurfaceAlt,
@@ -273,7 +281,7 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.darkBg,
       canvasColor: AppColors.darkBg,
-      pageTransitionsTheme: _transitions,
+      pageTransitionsTheme: _transitionsFor(AppColors.darkBg),
       splashColor: AppColors.limePrimaryDark.withValues(alpha: 0.12),
       highlightColor: Colors.transparent,
       hoverColor: AppColors.limeSoftDark.withValues(alpha: 0.6),
@@ -361,7 +369,8 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.limePrimaryDark, width: 1.5),
+          borderSide:
+              const BorderSide(color: AppColors.limePrimaryDark, width: 1.5),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -394,6 +403,33 @@ class AppTheme {
         thickness: 1,
         space: 1,
       ),
+    );
+  }
+}
+
+/// Envuelve un [PageTransitionsBuilder] y lo degrada a un fade simple cuando el
+/// sistema pide reducir movimiento (accesibilidad).
+class _MotionAware extends PageTransitionsBuilder {
+  const _MotionAware(this.delegate);
+  final PageTransitionsBuilder delegate;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return FadeTransition(opacity: animation, child: child);
+    }
+    return delegate.buildTransitions(
+      route,
+      context,
+      animation,
+      secondaryAnimation,
+      child,
     );
   }
 }

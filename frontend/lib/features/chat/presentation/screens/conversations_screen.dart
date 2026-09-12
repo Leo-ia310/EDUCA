@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../providers.dart';
 import '../widgets/conversation_tile.dart';
@@ -38,12 +40,10 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       scrollable: false,
       padding: EdgeInsets.zero,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
         title: const Text('Mensajes'),
       ),
+      bottomNav: const EducaBottomNav(),
       fab: EducaFab(
         icon: Icons.chat_bubble_outline,
         onPressed: () => context.push(Routes.chatNew),
@@ -71,8 +71,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
             ),
             Expanded(
               child: conversations.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (list) {
                   final filtered = _query.isEmpty
@@ -95,14 +94,9 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                     );
                   }
                   return ListView.separated(
-                    padding: const EdgeInsets.only(bottom: 96),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      color: Theme.of(context)
-                          .dividerColor
-                          .withValues(alpha: 0.5),
-                    ),
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (_, i) => ConversationTile(
                       conversation: filtered[i],
                       currentUserId: me?.id ?? '',

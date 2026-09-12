@@ -33,6 +33,7 @@ class EduCard extends StatefulWidget {
 
 class _EduCardState extends State<EduCard> {
   bool _pressed = false;
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +41,11 @@ class _EduCardState extends State<EduCard> {
     final bg = widget.color ?? palette.cardElevated;
     final radius = BorderRadius.circular(widget.borderRadius);
 
+    // Sombra: elevada por defecto, o elevada al pasar el cursor (lift en web).
+    final lift = _hovered && widget.onTap != null;
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
       padding: widget.padding,
       decoration: BoxDecoration(
         color: bg,
@@ -50,12 +54,12 @@ class _EduCardState extends State<EduCard> {
             Border.all(
               color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
             ),
-        boxShadow: widget.elevated
+        boxShadow: (widget.elevated || lift)
             ? [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
+                  color: Colors.black.withValues(alpha: lift ? 0.08 : 0.04),
+                  blurRadius: lift ? 24 : 18,
+                  offset: Offset(0, lift ? 9 : 6),
                 ),
               ]
             : null,
@@ -72,6 +76,9 @@ class _EduCardState extends State<EduCard> {
         onTap: widget.onTap,
         onHighlightChanged: (v) {
           if (v != _pressed) setState(() => _pressed = v);
+        },
+        onHover: (v) {
+          if (v != _hovered) setState(() => _hovered = v);
         },
         borderRadius: radius,
         child: AnimatedScale(

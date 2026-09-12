@@ -13,6 +13,7 @@ class StudentDashboardData {
     required this.averageScore,
     required this.classmates,
     required this.classmatesExtra,
+    this.attendanceRate = 0,
   });
 
   final int pendingTasks;
@@ -24,6 +25,9 @@ class StudentDashboardData {
   final List<String> classmates;
   final int classmatesExtra;
 
+  /// Porcentaje de asistencia (0..1). En backend real lo llenará el datasource.
+  final double attendanceRate;
+
   /// Datos de demo (mock), para cuando no hay backend.
   factory StudentDashboardData.mock() => const StudentDashboardData(
         pendingTasks: StudentMockData.pendingTasks,
@@ -34,6 +38,7 @@ class StudentDashboardData {
         averageScore: StudentMockData.averageScore,
         classmates: StudentMockData.classmates,
         classmatesExtra: StudentMockData.classmatesExtra,
+        attendanceRate: StudentMockData.attendanceRate,
       );
 
   /// Estudiante conectado pero sin datos aún (evita pantalla vacía rota).

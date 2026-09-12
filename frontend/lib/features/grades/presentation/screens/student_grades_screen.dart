@@ -5,14 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/grades_controller.dart';
-import '../widgets/grade_pill.dart';
 import '../widgets/subject_grade_card.dart';
 
 class StudentGradesScreen extends ConsumerWidget {
@@ -29,26 +29,18 @@ class StudentGradesScreen extends ConsumerWidget {
     return AppScaffold(
       scrollable: false,
       padding: EdgeInsets.zero,
+      bottomNav: const EducaBottomNav(),
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
         title: const Text('Mis notas'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Descargar boletín',
-            onPressed: () => context.push(
-              '${Routes.reports}?studentId=$studentId',
-            ),
-          ),
-        ],
       ),
       child: SafeArea(
         bottom: false,
         child: performance.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (perfs) {
             if (perfs.isEmpty) {
@@ -120,56 +112,93 @@ class _OverallCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     final valid = performances.where((p) => p.evaluationCount > 0).toList();
     final avg = valid.isEmpty
         ? 0.0
         : valid.fold<double>(0, (a, p) => a + p.finalScore) / valid.length;
     final scored = double.parse(avg.toStringAsFixed(scale.decimals));
     final passing = performances.where((p) => p.passed).length;
-    return EduCard(
-      color: palette.cardContrast,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2FA869),
+            Color(0xFF35C97E),
+            Color(0xFF2FB39A),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Row(
         children: [
-          Text(
-            'Promedio general',
-            style: context.textTheme.labelMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.75),
-              fontWeight: FontWeight.w700,
+          Container(
+            width: 56,
+            height: 56,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.20),
+              shape: BoxShape.circle,
             ),
+            child: const Icon(Icons.star_rounded, color: Colors.white, size: 30),
           ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                scored.toStringAsFixed(scale.decimals),
-                style: context.textTheme.displaySmall?.copyWith(
-                  color: palette.lime,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  '/ ${scale.maxValue.toStringAsFixed(0)}',
-                  style: context.textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.65),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Promedio general',
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-              const Spacer(),
-              GradePill(score: scored, scale: scale),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '$passing de ${performances.length} materias aprobadas',
-            style: context.textTheme.bodySmall?.copyWith(
-              color: Colors.white.withValues(alpha: 0.75),
+                const SizedBox(height: 2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      scored.toStringAsFixed(scale.decimals),
+                      style: context.textTheme.displaySmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '/ ${scale.maxValue.toStringAsFixed(0)}',
+                      style: context.textTheme.titleMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.20),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Text(
+                    '$passing de ${performances.length} materias aprobadas',
+                    style: context.textTheme.labelMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
