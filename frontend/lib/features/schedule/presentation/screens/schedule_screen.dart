@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -146,11 +147,6 @@ class _SlotCard extends StatelessWidget {
   static const _ink = Color(0xFF16202E);
   static const _diamondBg = Color(0xFF18212F);
 
-  static int _toMinutes(String hhmm) {
-    final parts = hhmm.split(':');
-    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
-  }
-
   _SlotStatus _status() {
     switch (relation) {
       case _DayRelation.past:
@@ -160,8 +156,8 @@ class _SlotCard extends StatelessWidget {
       case _DayRelation.today:
         final now = DateTime.now();
         final nowM = now.hour * 60 + now.minute;
-        final s = _toMinutes(slot.start);
-        final e = _toMinutes(slot.end);
+        final s = DateUtilsX.hhmmToMinutes(slot.start);
+        final e = DateUtilsX.hhmmToMinutes(slot.end);
         if (nowM < s) return (label: 'Próxima', progress: 0);
         if (nowM >= e) return (label: 'Finalizada', progress: 1);
         final p = (nowM - s) / math.max(1, e - s);

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
@@ -77,7 +78,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         children: [
           // Hero de bienvenida (full-bleed).
           AppGreetingHeader(
-            greeting: _greeting(now),
+            greeting: DateUtilsX.greetingForHour(now),
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
@@ -277,13 +278,6 @@ class AdminDashboardScreen extends ConsumerWidget {
   }
 }
 
-/// Saludo según la hora del día.
-String _greeting(DateTime now) {
-  final h = now.hour;
-  if (h < 12) return 'Buenos días';
-  if (h < 19) return 'Buenas tardes';
-  return 'Buenas noches';
-}
 
 class _AdminAction {
   const _AdminAction(this.icon, this.label, this.accent, this.onTap);
