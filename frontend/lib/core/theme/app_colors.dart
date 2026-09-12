@@ -54,6 +54,11 @@ class AppColors {
   static const Color pastelRose = Color(0xFFD79FA8);
   static const Color pastelMint = Color(0xFF8FC7AC);
 
+  // Acentos del degradado multicolor de los heros (saludo, perfil).
+  // El azul base es [accent] (#4C8DF5); aquí van el morado y el teal.
+  static const Color heroPurple = Color(0xFF8A5CF6);
+  static const Color heroTeal = Color(0xFF33B7A0);
+
   // Superficie destacada oscura (neutra) para héroes/bloques.
   static const Color cardCharcoal = Color(0xFF1B1D22);
 }

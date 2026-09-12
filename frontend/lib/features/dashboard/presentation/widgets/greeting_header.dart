@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_gradients.dart';
 import '../../../../core/theme/app_theme.dart';
 
 /// Hero de bienvenida reutilizable (cualquier rol), full-bleed: banda superior
@@ -44,17 +45,7 @@ class AppGreetingHeader extends StatelessWidget {
           // Degradado multicolor vibrante.
           const Positioned.fill(
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF4C8DF5),
-                    Color(0xFF8A5CF6),
-                    Color(0xFF33B7A0),
-                  ],
-                ),
-              ),
+              decoration: BoxDecoration(gradient: AppGradients.hero),
             ),
           ),
           // Contenido.

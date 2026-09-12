@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_paths.dart';
+import '../../../core/theme/app_gradients.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/subject_palette.dart';
 import '../../../core/widgets/app_scaffold.dart';
@@ -138,17 +139,7 @@ class _ProfileHero extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF4C8DF5),
-              Color(0xFF8A5CF6),
-              Color(0xFF33B7A0),
-            ],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppGradients.hero),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
