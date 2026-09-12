@@ -94,10 +94,11 @@ class AssignmentCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          AssignmentStatusChip(status: status),
+                          AssignmentStatusChip(status: status, onPastel: true),
                           const Spacer(),
                           if (studentStatus != null)
-                            SubmissionStatusChip(status: studentStatus!),
+                            SubmissionStatusChip(
+                                status: studentStatus!, onPastel: true),
                         ],
                       ),
                       const SizedBox(height: 10),

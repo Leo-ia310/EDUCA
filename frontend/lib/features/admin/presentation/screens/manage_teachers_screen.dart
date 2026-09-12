@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../dashboard/data/mock_dashboard_data.dart';
 
@@ -101,59 +101,73 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
           ),
           const SizedBox(height: 12),
           for (final t in AdminMockData.teachers)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: EduCard(
-                child: Row(
-                  children: [
-                    UserAvatar(name: t.name, size: 44),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            t.name,
-                            style: context.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          Text(t.subject, style: context.textTheme.bodySmall),
-                          if (_assignments[t.name] != null) ...[
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: palette.limeSoft,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                _assignments[t.name]!,
-                                style: context.textTheme.labelSmall?.copyWith(
-                                  color: palette.limeDeep,
-                                  fontWeight: FontWeight.w700,
+            Builder(builder: (context) {
+              final s = pastelSurface(subjectColor(t.subject));
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: s.surface,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    children: [
+                      UserAvatar(name: t.name, size: 44),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.name,
+                              style: context.textTheme.titleSmall?.copyWith(
+                                  color: s.ink, fontWeight: FontWeight.w800),
+                            ),
+                            Text(
+                              t.subject,
+                              style: context.textTheme.bodySmall
+                                  ?.copyWith(color: s.inkMuted),
+                            ),
+                            if (_assignments[t.name] != null) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  _assignments[t.name]!,
+                                  style: context.textTheme.labelSmall?.copyWith(
+                                    color: s.ink,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    FilledButton.tonal(
-                      onPressed: () => _assign(t),
-                      // El tema fuerza minimumSize con ancho infinito (botones
-                      // full-width); aquí es un botón compacto dentro de un Row,
-                      // así que lo acotamos a su contenido.
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(0, 44),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      FilledButton.tonal(
+                        onPressed: () => _assign(t),
+                        // El tema fuerza minimumSize con ancho infinito (botones
+                        // full-width); aquí es un botón compacto dentro de un Row,
+                        // así que lo acotamos a su contenido.
+                        style: FilledButton.styleFrom(
+                          backgroundColor: s.vivid,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 44),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        child: const Text('Asignar'),
                       ),
-                      child: const Text('Asignar'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            }),
           const SizedBox(height: 24),
         ],
       ),

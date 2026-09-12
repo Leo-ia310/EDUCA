@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../domain/entities.dart';
 
 class NotificationTile extends StatelessWidget {
@@ -18,6 +19,7 @@ class NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final color = _channelColor(notification.channel, palette);
+    final s = pastelSurface(color);
     final unread = !notification.read;
 
     return InkWell(
@@ -25,7 +27,7 @@ class NotificationTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: unread ? palette.limeSoft.withValues(alpha: 0.4) : null,
+          color: unread ? s.surface.withValues(alpha: 0.6) : null,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,12 +38,10 @@ class NotificationTile extends StatelessWidget {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  decoration:
+                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
                   child: Icon(notification.channel.icon,
-                      color: color, size: 20),
+                      color: Colors.white, size: 20),
                 ),
                 if (unread)
                   Positioned(
@@ -105,13 +105,13 @@ class NotificationTile extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
+                      color: s.surface,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       notification.channel.title,
                       style: context.textTheme.labelSmall?.copyWith(
-                        color: color,
+                        color: s.ink,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
