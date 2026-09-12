@@ -78,7 +78,7 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(event.title));
+    final s = context.pastel(subjectColor(event.title));
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(

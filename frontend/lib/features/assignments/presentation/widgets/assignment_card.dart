@@ -34,8 +34,6 @@ class AssignmentCard extends StatelessWidget {
   /// estilo clásico (pastel = false).
   final bool pastel;
 
-  static const _ink = Color(0xFF232A33);
-
   static IconData _kindIcon(AssignmentKind kind) => switch (kind) {
         AssignmentKind.homework => Icons.assignment_rounded,
         AssignmentKind.exam => Icons.school_rounded,
@@ -51,7 +49,7 @@ class AssignmentCard extends StatelessWidget {
   }
 
   Widget _buildPastel(BuildContext context) {
-    final s = pastelSurface(subjectColor(assignment.subjectName));
+    final s = context.pastel(subjectColor(assignment.subjectName));
     final vivid = s.vivid;
     final cardBg = s.surface;
     final inkMuted = s.inkMuted;
@@ -107,7 +105,7 @@ class AssignmentCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: context.textTheme.titleMedium?.copyWith(
-                          color: _ink,
+                          color: s.ink,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -135,7 +133,10 @@ class AssignmentCard extends StatelessWidget {
                             Text(
                               '${studentScore!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
                               style: context.textTheme.titleSmall?.copyWith(
-                                color: const Color(0xFF2E7D46),
+                                color:
+                                    Theme.of(context).brightness == Brightness.dark
+                                        ? const Color(0xFF6FD99A)
+                                        : const Color(0xFF2E7D46),
                                 fontWeight: FontWeight.w800,
                               ),
                             )

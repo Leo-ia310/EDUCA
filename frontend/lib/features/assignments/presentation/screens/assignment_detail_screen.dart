@@ -119,7 +119,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(assignment.subjectName));
+    final s = context.pastel(subjectColor(assignment.subjectName));
     final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final fmt = DateFormat("EEE d MMM, HH:mm", 'es');
     final statusLabel = switch (assignment.statusForNow(DateTime.now())) {

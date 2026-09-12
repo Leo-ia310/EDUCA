@@ -19,7 +19,7 @@ class NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final color = _channelColor(notification.channel, palette);
-    final s = pastelSurface(color);
+    final s = context.pastel(color);
     final unread = !notification.read;
 
     return InkWell(

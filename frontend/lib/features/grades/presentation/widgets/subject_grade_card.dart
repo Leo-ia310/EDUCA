@@ -23,7 +23,7 @@ class SubjectGradeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(performance.subjectName));
+    final s = context.pastel(subjectColor(performance.subjectName));
     final isQual = scale.type == ScaleType.qualitative;
     final range = scale.ranges.firstWhere(
       (r) => r.contains(performance.finalScore),

@@ -50,7 +50,7 @@ class _StatTileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(tile.color);
+    final s = context.pastel(tile.color);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(

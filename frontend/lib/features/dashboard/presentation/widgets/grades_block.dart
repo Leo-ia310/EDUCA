@@ -38,7 +38,7 @@ class _GradeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(grade.subject));
+    final s = context.pastel(subjectColor(grade.subject));
     final statusBase = switch (grade.status) {
       GradeStatus.passed => const Color(0xFF2E9E5B),
       GradeStatus.pending => const Color(0xFFCF8A1E),

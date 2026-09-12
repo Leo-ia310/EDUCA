@@ -21,7 +21,7 @@ class ScheduleItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(slot.accent ?? subjectColor(slot.subject));
+    final s = context.pastel(slot.accent ?? subjectColor(slot.subject));
 
     return Container(
       padding: const EdgeInsets.all(12),

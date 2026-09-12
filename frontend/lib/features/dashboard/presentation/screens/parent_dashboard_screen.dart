@@ -300,7 +300,7 @@ class _SubjectTeacherRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(item.name));
+    final s = context.pastel(subjectColor(item.name));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -373,7 +373,7 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(item.tag.isEmpty ? item.title : item.tag));
+    final s = context.pastel(subjectColor(item.tag.isEmpty ? item.title : item.tag));
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(

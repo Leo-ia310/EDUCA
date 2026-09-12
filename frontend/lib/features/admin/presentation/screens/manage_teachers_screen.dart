@@ -102,7 +102,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
           const SizedBox(height: 12),
           for (final t in AdminMockData.teachers)
             Builder(builder: (context) {
-              final s = pastelSurface(subjectColor(t.subject));
+              final s = context.pastel(subjectColor(t.subject));
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Container(
@@ -141,7 +141,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
                                 child: Text(
                                   _assignments[t.name]!,
                                   style: context.textTheme.labelSmall?.copyWith(
-                                    color: s.ink,
+                                    color: const Color(0xFF232A33),
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),

@@ -18,7 +18,7 @@ class SubjectDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subject.color ?? subjectColor(subject.name));
+    final s = context.pastel(subject.color ?? subjectColor(subject.name));
     final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final pct = (subject.progress * 100).round();
 

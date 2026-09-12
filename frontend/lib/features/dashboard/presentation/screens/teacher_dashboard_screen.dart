@@ -344,7 +344,7 @@ class _ClassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(teacherClass.name));
+    final s = context.pastel(subjectColor(teacherClass.name));
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -483,7 +483,7 @@ class _AssignmentRow extends StatelessWidget {
         : item.completed
             ? 'Completado'
             : '${item.delivered}/${item.total}';
-    final s = pastelSurface(statusColor);
+    final s = context.pastel(statusColor);
 
     return Material(
       color: Colors.transparent,

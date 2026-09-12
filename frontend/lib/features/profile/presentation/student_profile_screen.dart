@@ -200,7 +200,7 @@ class _NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final accent = _channelColor(notification.channel, palette);
-    final s = pastelSurface(accent);
+    final s = context.pastel(accent);
     return Material(
       color: s.surface,
       borderRadius: BorderRadius.circular(18),

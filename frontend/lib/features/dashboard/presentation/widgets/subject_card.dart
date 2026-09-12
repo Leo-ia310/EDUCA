@@ -13,11 +13,9 @@ class SubjectProgressCard extends StatelessWidget {
   final SubjectProgress subject;
   final VoidCallback? onTap;
 
-  static const _ink = Color(0xFF232A33);
-
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subject.color ?? subjectColor(subject.name));
+    final s = context.pastel(subject.color ?? subjectColor(subject.name));
     final vivid = s.vivid;
     final cardBg = s.surface;
     final inkMuted = s.inkMuted;
@@ -59,7 +57,7 @@ class SubjectProgressCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: context.textTheme.titleSmall?.copyWith(
-                      color: _ink,
+                      color: s.ink,
                       fontWeight: FontWeight.w800,
                       height: 1.15,
                     ),

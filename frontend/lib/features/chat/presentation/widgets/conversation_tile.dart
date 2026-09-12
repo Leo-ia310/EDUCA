@@ -20,7 +20,7 @@ class ConversationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(conversation.title));
+    final s = context.pastel(subjectColor(conversation.title));
     final last = conversation.lastMessage;
     final unread = conversation.unreadCount;
     final isMine = last?.senderId == currentUserId;

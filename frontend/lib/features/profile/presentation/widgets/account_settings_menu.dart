@@ -169,7 +169,7 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(color);
+    final s = context.pastel(color);
     return Material(
       color: Colors.transparent,
       child: InkWell(

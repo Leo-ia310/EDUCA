@@ -15,7 +15,7 @@ class ChargeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final (color, label) = _chipFor(charge, palette);
-    final s = pastelSurface(color);
+    final s = context.pastel(color);
     final fmt = DateFormat("d MMM y", 'es');
     final showLateFee = charge.lateFee > 0 &&
         charge.status != ChargeStatus.paid;
@@ -71,7 +71,7 @@ class ChargeCard extends StatelessWidget {
                 child: Text(
                   label,
                   style: context.textTheme.labelSmall?.copyWith(
-                    color: s.ink,
+                    color: const Color(0xFF232A33),
                     fontWeight: FontWeight.w800,
                   ),
                 ),

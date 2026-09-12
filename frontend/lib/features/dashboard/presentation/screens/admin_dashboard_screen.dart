@@ -326,7 +326,7 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(action.accent);
+    final s = context.pastel(action.accent);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -375,7 +375,7 @@ class _AnnouncementRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(item.title));
+    final s = context.pastel(subjectColor(item.title));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
