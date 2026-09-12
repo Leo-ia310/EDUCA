@@ -219,7 +219,7 @@ class _TeacherDashboardScreenState
                       child: Text(
                         'Ver Horario',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -266,8 +266,8 @@ class _TeacherDashboardScreenState
                       icon: const Icon(Icons.add),
                       label: const Text('Asignar'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: palette.limeDeep,
-                        foregroundColor: const Color(0xFF1E2218),
+                        backgroundColor: palette.accentDeep,
+                        foregroundColor: Colors.white,
                         minimumSize: const Size(0, 40),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -411,7 +411,7 @@ class _AddClassCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_circle_outline, color: palette.limeDeep, size: 28),
+            Icon(Icons.add_circle_outline, color: palette.accentDeep, size: 28),
             const SizedBox(height: 6),
             const Text('Agregar clase', textAlign: TextAlign.center),
           ],

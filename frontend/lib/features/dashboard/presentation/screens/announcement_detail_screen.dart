@@ -34,7 +34,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: palette.limeSoft,
+                color: palette.accentSoft,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
@@ -44,11 +44,11 @@ class AnnouncementDetailScreen extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: palette.limeDeep.withValues(alpha: 0.18),
+                      color: palette.accentDeep.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(Icons.campaign_outlined,
-                        color: palette.limeDeep, size: 26,),
+                        color: palette.accentDeep, size: 26,),
                   ),
                   const SizedBox(height: 14),
                   Text(

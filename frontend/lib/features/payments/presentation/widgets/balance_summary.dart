@@ -23,8 +23,8 @@ class BalanceSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final isOk = balance.inGoodStanding && balance.totalPending == 0;
-    final bg = isOk ? palette.lime : palette.cardContrast;
-    final onBg = isOk ? const Color(0xFF1E2218) : Colors.white;
+    final bg = isOk ? palette.accent : palette.cardContrast;
+    final onBg = isOk ? Colors.white : Colors.white;
     return EduCard(
       color: bg,
       child: Column(

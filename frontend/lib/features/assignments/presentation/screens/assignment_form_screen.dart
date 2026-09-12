@@ -211,7 +211,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(Icons.calendar_today_rounded,
-                      color: palette.limeDeep),
+                      color: palette.accentDeep),
                   title: const Text('Fecha de entrega'),
                   subtitle: Text(fmt.format(state.dueAt)),
                   onTap: () => _pickDate(context, state.dueAt),
@@ -221,7 +221,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Permitir entrega tardía'),
                   value: state.allowLate,
-                  activeThumbColor: palette.limeDeep,
+                  activeThumbColor: palette.accentDeep,
                   onChanged: controller.setAllowLate,
                 ),
                 SwitchListTile.adaptive(
@@ -230,7 +230,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   subtitle:
                       const Text('Si lo apagas, queda como borrador.'),
                   value: state.published,
-                  activeThumbColor: palette.limeDeep,
+                  activeThumbColor: palette.accentDeep,
                   onChanged: controller.setPublished,
                 ),
               ],

@@ -74,7 +74,7 @@ class StudentProfileScreen extends ConsumerWidget {
                         child: Text(
                           'Ver todas',
                           style: context.textTheme.labelMedium?.copyWith(
-                            color: palette.limeDeep,
+                            color: palette.accentDeep,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -290,7 +290,7 @@ Color _channelColor(NotificationChannel channel, AppPalette palette) {
     NotificationChannel.task => palette.warning,
     NotificationChannel.grade => palette.success,
     NotificationChannel.attendance => palette.info,
-    NotificationChannel.announcement => palette.limeDeep,
+    NotificationChannel.announcement => palette.accentDeep,
     NotificationChannel.payment => palette.warning,
     NotificationChannel.system => palette.textMuted,
   };

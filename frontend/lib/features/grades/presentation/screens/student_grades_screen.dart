@@ -57,7 +57,7 @@ class StudentGradesScreen extends ConsumerWidget {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (ps) => RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async =>
                       ref.invalidate(studentPerformanceProvider(studentId)),
                   child: ListView(

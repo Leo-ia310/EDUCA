@@ -247,17 +247,17 @@ void _showAppearanceSheet(BuildContext context, WidgetRef ref) {
                       RadioListTile<ThemeMode>(
                         value: ThemeMode.system,
                         title: const Text('Seguir sistema'),
-                        activeColor: palette.limeDeep,
+                        activeColor: palette.accentDeep,
                       ),
                       RadioListTile<ThemeMode>(
                         value: ThemeMode.light,
                         title: const Text('Tema claro'),
-                        activeColor: palette.limeDeep,
+                        activeColor: palette.accentDeep,
                       ),
                       RadioListTile<ThemeMode>(
                         value: ThemeMode.dark,
                         title: const Text('Tema oscuro'),
-                        activeColor: palette.limeDeep,
+                        activeColor: palette.accentDeep,
                       ),
                     ],
                   ),

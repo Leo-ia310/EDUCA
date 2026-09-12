@@ -66,7 +66,7 @@ class StudentAssignmentsScreen extends ConsumerWidget {
                     a.statusForNow(now) == AssignmentStatus.closed)
                 .toList();
             return RefreshIndicator(
-              color: palette.limeDeep,
+              color: palette.accentDeep,
               onRefresh: () async =>
                   ref.invalidate(studentAssignmentsProvider),
               child: ListView(

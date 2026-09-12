@@ -69,7 +69,7 @@ class HelpScreen extends StatelessWidget {
                           const EdgeInsets.symmetric(horizontal: 10),
                       childrenPadding:
                           const EdgeInsets.fromLTRB(10, 0, 10, 12),
-                      iconColor: palette.limeDeep,
+                      iconColor: palette.accentDeep,
                       collapsedIconColor: palette.textMuted,
                       title: Text(
                         faq.$1,

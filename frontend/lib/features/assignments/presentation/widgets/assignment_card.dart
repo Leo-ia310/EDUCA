@@ -173,13 +173,13 @@ class AssignmentCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: palette.limeSoft,
+                  color: palette.accentSoft,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   assignment.kind.label,
                   style: context.textTheme.labelSmall?.copyWith(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

@@ -21,8 +21,8 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final bg = isMine ? palette.limeDeep : palette.cardElevated;
-    final fg = isMine ? const Color(0xFF1E2218) : Theme.of(context).colorScheme.onSurface;
+    final bg = isMine ? palette.accentDeep : palette.cardElevated;
+    final fg = isMine ? Colors.white : Theme.of(context).colorScheme.onSurface;
     final align = isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final topRadius = groupWithPrevious ? 6.0 : 18.0;
 
@@ -42,7 +42,7 @@ class MessageBubble extends StatelessWidget {
               child: Text(
                 message.senderName,
                 style: context.textTheme.labelSmall?.copyWith(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -93,7 +93,7 @@ class MessageBubble extends StatelessWidget {
                         DateFormat('HH:mm').format(message.sentAt),
                         style: context.textTheme.labelSmall?.copyWith(
                           color: (isMine
-                                  ? const Color(0xFF1E2218)
+                                  ? Colors.white
                                   : palette.textMuted)
                               .withValues(alpha: 0.7),
                           fontSize: 10,
@@ -130,7 +130,7 @@ class MessageBubble extends StatelessWidget {
       switch (s) {
         MessageDeliveryStatus.read => palette.info,
         MessageDeliveryStatus.failed => palette.danger,
-        _ => const Color(0xFF1E2218),
+        _ => Colors.white,
       };
 }
 
@@ -166,14 +166,14 @@ class _AttachmentBlock extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: (isMine ? Colors.white : palette.limeSoft)
+              color: (isMine ? Colors.white : palette.accentSoft)
                   .withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.description_outlined,
               size: 18,
-              color: isMine ? const Color(0xFF1E2218) : palette.limeDeep,
+              color: isMine ? Colors.white : palette.accentDeep,
             ),
           ),
           const SizedBox(width: 8),
@@ -185,7 +185,7 @@ class _AttachmentBlock extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: context.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: isMine ? const Color(0xFF1E2218) : null,
+                color: isMine ? Colors.white : null,
               ),
             ),
           ),

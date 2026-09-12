@@ -106,7 +106,7 @@ class _ClassCard extends ConsumerWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
+              color: palette.accentSoft,
               borderRadius: BorderRadius.circular(14),
             ),
             alignment: Alignment.center,
@@ -114,7 +114,7 @@ class _ClassCard extends ConsumerWidget {
               brief.startTime,
               style: context.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: palette.limeDeep,
+                color: palette.accentDeep,
               ),
             ),
           ),

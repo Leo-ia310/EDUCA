@@ -39,7 +39,7 @@ class DeveloperUsersScreen extends ConsumerWidget {
           data: (users) {
             final active = users.where((u) => u.active).length;
             return RefreshIndicator(
-              color: palette.limeDeep,
+              color: palette.accentDeep,
               onRefresh: () async => ref.invalidate(developerUsersProvider),
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -100,11 +100,11 @@ class _UserCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: palette.limeDeep.withValues(alpha: 0.18),
+                backgroundColor: palette.accentDeep.withValues(alpha: 0.18),
                 child: Text(
                   _initials,
                   style: context.textTheme.labelLarge?.copyWith(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

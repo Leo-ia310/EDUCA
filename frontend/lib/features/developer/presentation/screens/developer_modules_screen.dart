@@ -139,7 +139,7 @@ class _DeveloperModulesScreenState
                   });
                 final active = modules.where((m) => m.enabled).length;
                 return RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),

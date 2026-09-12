@@ -72,7 +72,7 @@ class _SubmissionsList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: EduCard(
-            color: palette.lime,
+            color: palette.accent,
             child: Row(
               children: [
                 Expanded(
@@ -140,7 +140,7 @@ class _CounterPill extends StatelessWidget {
         children: [
           Text(value,
               style: context.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w800, color: const Color(0xFF1E2218))),
+                  ?.copyWith(fontWeight: FontWeight.w800, color: Colors.white)),
           Text(label,
               style: context.textTheme.labelSmall
                   ?.copyWith(color: const Color(0xFF34401C))),
@@ -242,8 +242,8 @@ class _SubmissionRow extends ConsumerWidget {
                 FilledButton.tonal(
                   onPressed: () => _openGradeSheet(context, ref),
                   style: FilledButton.styleFrom(
-                    backgroundColor: palette.limeDeep,
-                    foregroundColor: const Color(0xFF1E2218),
+                    backgroundColor: palette.accentDeep,
+                    foregroundColor: Colors.white,
                     minimumSize: const Size(0, 38),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

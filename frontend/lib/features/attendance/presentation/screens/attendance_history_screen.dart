@@ -63,7 +63,7 @@ class AttendanceHistoryScreen extends ConsumerWidget {
                     );
                   }
                   return RefreshIndicator(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     onRefresh: () async => ref.invalidate(_historyProvider),
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -99,11 +99,11 @@ class _SyncControls extends ConsumerWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
+              color: palette.accentSoft,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.cloud_sync_outlined,
-                color: palette.limeDeep, size: 20),
+                color: palette.accentDeep, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -131,8 +131,8 @@ class _SyncControls extends ConsumerWidget {
           FilledButton.tonal(
             onPressed: status.syncing ? null : service.processQueue,
             style: FilledButton.styleFrom(
-              backgroundColor: palette.limeDeep,
-              foregroundColor: const Color(0xFF1E2218),
+              backgroundColor: palette.accentDeep,
+              foregroundColor: Colors.white,
               minimumSize: const Size(0, 40),
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

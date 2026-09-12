@@ -55,11 +55,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   child: Container(
                     width: 58,
                     decoration: BoxDecoration(
-                      color: selected ? palette.limeDeep : palette.cardElevated,
+                      color: selected ? palette.accentDeep : palette.cardElevated,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: selected
-                            ? palette.limeDeep
+                            ? palette.accentDeep
                             : Theme.of(context).dividerColor,
                       ),
                     ),
@@ -70,7 +70,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           ScheduleMock.days[i],
                           style: context.textTheme.labelMedium?.copyWith(
                             color: selected
-                                ? const Color(0xFF1E2218)
+                                ? Colors.white
                                 : palette.textMuted,
                             fontWeight: FontWeight.w800,
                           ),
@@ -83,8 +83,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                             shape: BoxShape.circle,
                             color: isToday
                                 ? (selected
-                                    ? const Color(0xFF1E2218)
-                                    : palette.limeDeep)
+                                    ? Colors.white
+                                    : palette.accentDeep)
                                 : Colors.transparent,
                           ),
                         ),

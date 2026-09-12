@@ -30,10 +30,10 @@ class EmptyState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: context.palette.limeSoft,
+                color: context.palette.accentSoft,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 32, color: context.palette.limeDeep),
+              child: Icon(icon, size: 32, color: context.palette.accentDeep),
             ),
             const SizedBox(height: 16),
             Text(title,

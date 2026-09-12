@@ -132,7 +132,7 @@ class _DeveloperFeatureFlagsScreenState
               data: (flags) {
                 final active = flags.where((f) => f.enabled).length;
                 return RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
@@ -280,7 +280,7 @@ class _RolloutBar extends StatelessWidget {
               value: clamped / 100,
               minHeight: 6,
               backgroundColor: palette.surfaceAlt,
-              valueColor: AlwaysStoppedAnimation(palette.limeDeep),
+              valueColor: AlwaysStoppedAnimation(palette.accentDeep),
             ),
           ),
         ),

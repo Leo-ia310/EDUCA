@@ -11,7 +11,6 @@ const List<Color> _subjectPastels = <Color>[
   AppColors.pastelPeach,
   AppColors.pastelRose,
   AppColors.pastelMint,
-  AppColors.limePrimary, // salvia
 ];
 
 int _hash(String name) => name
@@ -22,13 +21,13 @@ int _hash(String name) => name
 
 /// Color pastel de la materia (para barras de progreso, puntos, rellenos).
 Color subjectColor(String name) {
-  if (name.trim().isEmpty) return AppColors.limePrimary;
+  if (name.trim().isEmpty) return AppColors.pastelSky;
   return _subjectPastels[_hash(name) % _subjectPastels.length];
 }
 
 /// Versión profunda del pastel, legible como ícono/texto sobre un tinte suave.
 Color subjectInk(String name) =>
-    Color.lerp(subjectColor(name), const Color(0xFF23281E), 0.42)!;
+    Color.lerp(subjectColor(name), const Color(0xFF1A1D21), 0.42)!;
 
 /// Fondo suave (tinte) del color de la materia, para pastillas de ícono.
 Color subjectSoft(String name) => subjectColor(name).withValues(alpha: 0.16);

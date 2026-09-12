@@ -58,7 +58,7 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
                     );
                   }
                   return RefreshIndicator(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     onRefresh: () async =>
                         ref.invalidate(teacherAssignmentsProvider),
                     child: ListView.separated(
@@ -117,8 +117,8 @@ class _FilterBar extends ConsumerWidget {
           FilterChip(
             label: const Text('Abiertas'),
             selected: filter.onlyOpen,
-            selectedColor: palette.limeSoft,
-            checkmarkColor: palette.limeDeep,
+            selectedColor: palette.accentSoft,
+            checkmarkColor: palette.accentDeep,
             onSelected: (v) =>
                 notifier.update((s) => s.copyWith(onlyOpen: v)),
           ),

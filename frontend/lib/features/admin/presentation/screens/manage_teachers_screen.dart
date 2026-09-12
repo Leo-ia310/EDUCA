@@ -57,7 +57,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
               for (final c in _classes)
                 ListTile(
                   leading: Icon(Icons.class_outlined,
-                      color: context.palette.limeDeep),
+                      color: context.palette.accentDeep),
                   title: Text(c),
                   trailing: _assignments[teacher.name] == c
                       ? Icon(Icons.check_circle,

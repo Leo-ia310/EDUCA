@@ -127,7 +127,7 @@ class _Header extends StatelessWidget {
     final palette = context.palette;
     final fmt = DateFormat("EEE d MMM y", 'es');
     return EduCard(
-      color: charge.status == ChargeStatus.paid ? palette.lime : palette.cardContrast,
+      color: charge.status == ChargeStatus.paid ? palette.accent : palette.cardContrast,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -135,7 +135,7 @@ class _Header extends StatelessWidget {
             charge.conceptName,
             style: context.textTheme.titleLarge?.copyWith(
               color: charge.status == ChargeStatus.paid
-                  ? const Color(0xFF1E2218)
+                  ? Colors.white
                   : Colors.white,
               fontWeight: FontWeight.w800,
             ),
@@ -163,7 +163,7 @@ class _Header extends StatelessWidget {
                 charge.studentName,
                 style: TextStyle(
                   color: charge.status == ChargeStatus.paid
-                      ? const Color(0xFF1E2218)
+                      ? Colors.white
                       : Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
@@ -180,7 +180,7 @@ class _Header extends StatelessWidget {
                 fmt.format(charge.dueDate),
                 style: TextStyle(
                   color: charge.status == ChargeStatus.paid
-                      ? const Color(0xFF1E2218)
+                      ? Colors.white
                       : Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,

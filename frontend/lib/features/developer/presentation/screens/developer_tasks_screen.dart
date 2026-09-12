@@ -156,7 +156,7 @@ class _DeveloperTasksScreenState extends ConsumerState<DeveloperTasksScreen> {
                     ? tasks
                     : tasks.where((t) => t.status == _statusFilter).toList();
                 return RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
@@ -418,7 +418,7 @@ class _StatusPickerSheet extends StatelessWidget {
                     ? Icons.radio_button_checked_rounded
                     : Icons.radio_button_unchecked_rounded,
                 color: s == current
-                    ? palette.limeDeep
+                    ? palette.accentDeep
                     : palette.textMuted,
               ),
               title: Text(statusLabel(s)),
@@ -735,7 +735,7 @@ String statusLabel(String s) => switch (s) {
 
 (Color, String) statusVisual(String status, AppPalette palette) => switch (status) {
       'in_progress' => (palette.info, 'En progreso'),
-      'ready' => (palette.limeDeep, 'Listo'),
+      'ready' => (palette.accentDeep, 'Listo'),
       'blocked' => (palette.danger, 'Bloqueado'),
       'done' => (palette.success, 'Hecho'),
       'cancelled' => (palette.textMuted, 'Cancelado'),

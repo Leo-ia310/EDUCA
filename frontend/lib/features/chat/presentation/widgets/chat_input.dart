@@ -110,7 +110,7 @@ class _ChatInputState extends State<ChatInput> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.attach_file_rounded),
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onPressed: widget.sending ? null : widget.onPickAttachment,
                 ),
                 Expanded(
@@ -142,7 +142,7 @@ class _ChatInputState extends State<ChatInput> {
                   height: 44,
                   decoration: BoxDecoration(
                     color: _canSend && !widget.sending
-                        ? palette.limeDeep
+                        ? palette.accentDeep
                         : palette.surfaceAlt,
                     shape: BoxShape.circle,
                   ),
@@ -157,7 +157,7 @@ class _ChatInputState extends State<ChatInput> {
                         : Icon(
                             Icons.send_rounded,
                             color: _canSend
-                                ? const Color(0xFF1E2218)
+                                ? Colors.white
                                 : palette.textMuted,
                           ),
                     onPressed: (_canSend && !widget.sending) ? _send : null,
@@ -185,7 +185,7 @@ class _PendingAttachment extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: palette.limeSoft,
+          color: palette.accentSoft,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -195,7 +195,7 @@ class _PendingAttachment extends StatelessWidget {
                   ? Icons.image_outlined
                   : Icons.description_outlined,
               size: 18,
-              color: palette.limeDeep,
+              color: palette.accentDeep,
             ),
             const SizedBox(width: 8),
             Expanded(

@@ -139,7 +139,7 @@ class _EvaluationTile extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
+              color: palette.accentSoft,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -147,7 +147,7 @@ class _EvaluationTile extends StatelessWidget {
                   ? Icons.fact_check_outlined
                   : Icons.assignment_outlined,
               size: 18,
-              color: palette.limeDeep,
+              color: palette.accentDeep,
             ),
           ),
           const SizedBox(width: 10),

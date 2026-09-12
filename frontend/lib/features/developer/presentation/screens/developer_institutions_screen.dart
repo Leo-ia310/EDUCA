@@ -37,7 +37,7 @@ class DeveloperInstitutionsScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (items) => RefreshIndicator(
-            color: palette.limeDeep,
+            color: palette.accentDeep,
             onRefresh: () async =>
                 ref.invalidate(developerInstitutionsProvider),
             child: ListView(

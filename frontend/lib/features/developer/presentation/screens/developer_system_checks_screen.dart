@@ -146,7 +146,7 @@ class _DeveloperSystemChecksScreenState
                     ? checks
                     : checks.where((c) => c.status == _statusFilter).toList();
                 return RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),

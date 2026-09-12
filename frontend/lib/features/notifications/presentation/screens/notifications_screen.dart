@@ -111,7 +111,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     );
                   }
                   return RefreshIndicator(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     onRefresh: () async =>
                         ref.invalidate(notificationsFeedProvider),
                     child: ListView.separated(
@@ -222,7 +222,7 @@ class _Chip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? palette.limeDeep : palette.surfaceAlt,
+            color: selected ? palette.accentDeep : palette.surfaceAlt,
             borderRadius: BorderRadius.circular(999),
           ),
           child: Row(
@@ -231,7 +231,7 @@ class _Chip extends StatelessWidget {
                 Icon(icon,
                     size: 16,
                     color: selected
-                        ? const Color(0xFF1E2218)
+                        ? Colors.white
                         : palette.textMuted),
                 const SizedBox(width: 6),
               ],
@@ -239,7 +239,7 @@ class _Chip extends StatelessWidget {
                 label,
                 style: context.textTheme.labelMedium?.copyWith(
                   color: selected
-                      ? const Color(0xFF1E2218)
+                      ? Colors.white
                       : Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w800,
                 ),

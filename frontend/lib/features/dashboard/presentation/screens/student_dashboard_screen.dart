@@ -121,13 +121,13 @@ class StudentDashboardScreen extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: palette.limeSoft,
+                  color: palette.accentSoft,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   weekday,
                   style: context.textTheme.labelSmall?.copyWith(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

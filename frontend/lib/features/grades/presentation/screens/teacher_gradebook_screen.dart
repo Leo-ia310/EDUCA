@@ -147,7 +147,7 @@ class _Filters extends StatelessWidget {
                       value: p.id,
                       child: Text(p.name,
                           style: context.textTheme.titleSmall
-                              ?.copyWith(color: palette.limeDeep)),
+                              ?.copyWith(color: palette.accentDeep)),
                     ),
                 ],
                 onChanged: (v) {
@@ -344,7 +344,7 @@ class _EvaluationCell extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             if (score == null)
-              Icon(Icons.add, size: 16, color: palette.limeDeep)
+              Icon(Icons.add, size: 16, color: palette.accentDeep)
             else
               GradePill(
                 score: scale.normalize(score!, rawMax: evaluation.maxScore),

@@ -60,7 +60,7 @@ class _CheckoutBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         EduCard(
-          color: palette.limeSoft,
+          color: palette.accentSoft,
           child: Row(
             children: [
               Expanded(
@@ -70,10 +70,10 @@ class _CheckoutBody extends ConsumerWidget {
                     Text(charge.conceptName,
                         style: context.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: palette.limeDeep)),
+                            color: palette.accentDeep)),
                     Text(charge.description,
                         style: context.textTheme.bodySmall
-                            ?.copyWith(color: palette.limeDeep)),
+                            ?.copyWith(color: palette.accentDeep)),
                   ],
                 ),
               ),
@@ -81,7 +81,7 @@ class _CheckoutBody extends ConsumerWidget {
                 amount: charge.pending,
                 currencyCode: charge.currencyCode,
                 style: context.textTheme.titleLarge?.copyWith(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     fontWeight: FontWeight.w800),
               ),
             ],
@@ -151,10 +151,10 @@ class _MethodTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? palette.limeSoft : palette.cardElevated,
+          color: selected ? palette.accentSoft : palette.cardElevated,
           border: Border.all(
             color: selected
-                ? palette.limeDeep
+                ? palette.accentDeep
                 : Theme.of(context).dividerColor,
             width: selected ? 1.5 : 1,
           ),
@@ -166,12 +166,12 @@ class _MethodTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: (selected ? palette.limeDeep : palette.textMuted)
+                color: (selected ? palette.accentDeep : palette.textMuted)
                     .withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(_iconFor(method),
-                  color: selected ? palette.limeDeep : palette.textMuted),
+                  color: selected ? palette.accentDeep : palette.textMuted),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -192,7 +192,7 @@ class _MethodTile extends StatelessWidget {
               selected
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_off_rounded,
-              color: selected ? palette.limeDeep : palette.textMuted,
+              color: selected ? palette.accentDeep : palette.textMuted,
             ),
           ],
         ),

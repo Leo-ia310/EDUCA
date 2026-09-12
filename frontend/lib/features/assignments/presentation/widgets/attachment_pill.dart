@@ -44,7 +44,7 @@ class AttachmentPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(_icon, size: 18, color: palette.limeDeep),
+              Icon(_icon, size: 18, color: palette.accentDeep),
               const SizedBox(width: 8),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 160),

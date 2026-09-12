@@ -152,7 +152,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                             UserAvatar(
                               name: c.name,
                               size: 60,
-                              ringColor: selected ? palette.limeDeep : null,
+                              ringColor: selected ? palette.accentDeep : null,
                             ),
                             const SizedBox(height: 6),
                             Text(
@@ -210,7 +210,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                       child: Text(
                         'Ver Todo',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -236,7 +236,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                       child: Text(
                         'Ver Tareas',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

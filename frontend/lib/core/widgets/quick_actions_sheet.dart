@@ -60,10 +60,10 @@ Future<void> showQuickActionsSheet(
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: palette.limeSoft,
+                      color: palette.accentSoft,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(a.icon, color: palette.limeDeep, size: 20),
+                    child: Icon(a.icon, color: palette.accentDeep, size: 20),
                   ),
                   title: Text(
                     a.label,

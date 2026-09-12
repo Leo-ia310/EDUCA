@@ -35,7 +35,7 @@ class SectionHeader extends StatelessWidget {
               child: Text(
                 action!,
                 style: context.textTheme.labelMedium?.copyWith(
-                  color: context.palette.limeDeep,
+                  color: context.palette.accentDeep,
                   fontWeight: FontWeight.w700,
                 ),
               ),

@@ -37,7 +37,7 @@ class ActivityDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: palette.limeSoft,
+                color: palette.accentSoft,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
@@ -49,13 +49,13 @@ class ActivityDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 5,),
                         decoration: BoxDecoration(
-                          color: palette.limeDeep.withValues(alpha: 0.16),
+                          color: palette.accentDeep.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           activity.tag,
                           style: context.textTheme.labelMedium?.copyWith(
-                            color: palette.limeDeep,
+                            color: palette.accentDeep,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -91,7 +91,7 @@ class ActivityDetailScreen extends StatelessWidget {
                       Text(
                         '$pct%',
                         style: context.textTheme.titleMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -109,7 +109,7 @@ class ActivityDetailScreen extends StatelessWidget {
                         minHeight: 8,
                         backgroundColor: Colors.white.withValues(alpha: 0.5),
                         valueColor:
-                            AlwaysStoppedAnimation<Color>(palette.limeDeep),
+                            AlwaysStoppedAnimation<Color>(palette.accentDeep),
                       ),
                     ),
                   ),
@@ -128,7 +128,7 @@ class ActivityDetailScreen extends StatelessWidget {
             onTap: () => context.push(Routes.chat),
             child: Row(
               children: [
-                Icon(Icons.chat_bubble_outline, color: palette.limeDeep),
+                Icon(Icons.chat_bubble_outline, color: palette.accentDeep),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(

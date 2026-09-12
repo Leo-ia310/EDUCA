@@ -35,7 +35,7 @@ class AdminDunningScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          color: palette.limeDeep,
+          color: palette.accentDeep,
           onRefresh: () async {
             ref.invalidate(dunningMetricsProvider);
             ref.invalidate(allBalancesProvider);
@@ -163,7 +163,7 @@ class _MetricsBlock extends StatelessWidget {
                     amount: metrics.collectedThisMonth as double,
                     currencyCode: metrics.currencyCode as String,
                     style: context.textTheme.displaySmall?.copyWith(
-                      color: palette.lime,
+                      color: palette.accent,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -187,7 +187,7 @@ class _MetricsBlock extends StatelessWidget {
                   minHeight: 8,
                   backgroundColor: Colors.white.withValues(alpha: 0.15),
                   valueColor:
-                      AlwaysStoppedAnimation<Color>(palette.lime),
+                      AlwaysStoppedAnimation<Color>(palette.accent),
                 ),
               ),
               const SizedBox(height: 6),

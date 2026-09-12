@@ -39,7 +39,7 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final accentColor = accent ?? palette.limeDeep;
+    final accentColor = accent ?? palette.accentDeep;
     final deltaColor = deltaPositive ? palette.success : palette.danger;
 
     return EduCard(

@@ -208,7 +208,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                       child: Text(
                         'Ver todos',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -242,7 +242,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                       child: Text(
                         'Gestionar',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

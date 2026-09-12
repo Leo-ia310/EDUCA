@@ -131,7 +131,7 @@ class NotificationTile extends StatelessWidget {
         NotificationChannel.task => palette.warning,
         NotificationChannel.grade => palette.success,
         NotificationChannel.attendance => palette.danger,
-        NotificationChannel.announcement => palette.limeDeep,
+        NotificationChannel.announcement => palette.accentDeep,
         NotificationChannel.payment => palette.info,
         NotificationChannel.system => palette.textMuted,
       };

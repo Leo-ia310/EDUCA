@@ -83,7 +83,7 @@ class _NewConversationScreenState
                           subtitle: Text(_roleLabel(c.role),
                               style: context.textTheme.bodySmall),
                           trailing: Icon(Icons.chat_bubble_outline,
-                              color: palette.limeDeep),
+                              color: palette.accentDeep),
                           onTap: () async {
                             final repo = ref.read(chatRepositoryProvider);
                             final conv = await repo.ensureIndividual(

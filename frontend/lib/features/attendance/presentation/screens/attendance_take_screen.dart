@@ -143,7 +143,7 @@ class _HeaderSummary extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: palette.lime,
+          color: palette.accent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -166,7 +166,7 @@ class _HeaderSummary extends StatelessWidget {
                       Text(
                         '${brief.startTime} – ${brief.endTime}',
                         style: context.textTheme.titleMedium?.copyWith(
-                          color: const Color(0xFF1E2218),
+                          color: Colors.white,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -262,7 +262,7 @@ class _Pill extends StatelessWidget {
                   value,
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1E2218),
+                    color: Colors.white,
                   ),
                 ),
               ],

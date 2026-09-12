@@ -84,7 +84,7 @@ class _DeveloperApisScreenState extends ConsumerState<DeveloperApisScreen> {
             final filtered = _applyFilters(apis);
 
             return RefreshIndicator(
-              color: palette.limeDeep,
+              color: palette.accentDeep,
               onRefresh: () async => ref.invalidate(developerApisProvider),
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -195,7 +195,7 @@ class _SummaryBar extends StatelessWidget {
             child: _SummaryStat(
               value: '$pending',
               label: 'Por conectar',
-              color: palette.lime,
+              color: palette.accent,
             ),
           ),
           _divider(),

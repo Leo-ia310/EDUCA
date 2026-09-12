@@ -286,11 +286,11 @@ class _SubjectLine extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
+              color: palette.accentSoft,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.menu_book_rounded,
-                color: palette.limeDeep, size: 18),
+                color: palette.accentDeep, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(

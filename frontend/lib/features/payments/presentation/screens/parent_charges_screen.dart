@@ -51,7 +51,7 @@ class ParentChargesScreen extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => ErrorStateView(message: '$e'),
             data: (charges) => RefreshIndicator(
-              color: palette.limeDeep,
+              color: palette.accentDeep,
               onRefresh: () async {
                 ref.invalidate(studentBalanceProvider(studentId));
                 ref.invalidate(studentChargesProvider(studentId));

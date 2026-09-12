@@ -126,11 +126,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             width: 72,
                             height: 72,
                             decoration: BoxDecoration(
-                              color: palette.limeSoft,
+                              color: palette.accentSoft,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(Icons.forum_outlined,
-                                color: palette.limeDeep, size: 34),
+                                color: palette.accentDeep, size: 34),
                           ),
                           const SizedBox(height: 12),
                           Text('Empieza la conversación',

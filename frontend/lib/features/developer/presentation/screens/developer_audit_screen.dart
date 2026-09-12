@@ -37,7 +37,7 @@ class DeveloperAuditScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (events) => RefreshIndicator(
-            color: palette.limeDeep,
+            color: palette.accentDeep,
             onRefresh: () async =>
                 ref.invalidate(developerAuditEventsProvider),
             child: events.isEmpty
