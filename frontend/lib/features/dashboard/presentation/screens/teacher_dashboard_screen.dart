@@ -347,43 +347,44 @@ class _ClassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(teacherClass.name));
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 200,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: s.surface,
-          borderRadius: BorderRadius.circular(Radii.lg),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-              child: Icon(teacherClass.icon, color: Colors.white, size: 22),
-            ),
-            const Spacer(),
-            Text(
-              teacherClass.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.textTheme.titleMedium?.copyWith(
-                color: s.ink,
-                fontWeight: FontWeight.w800,
+    return Material(
+      color: s.surface,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: Container(
+          width: 200,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration:
+                    BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                child: Icon(teacherClass.icon, color: Colors.white, size: 22),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              teacherClass.room,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
-            ),
-          ],
+              const Spacer(),
+              Text(
+                teacherClass.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.titleMedium?.copyWith(
+                  color: s.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                teacherClass.room,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
+              ),
+            ],
+          ),
         ),
       ),
     );

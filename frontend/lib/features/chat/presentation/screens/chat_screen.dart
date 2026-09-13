@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/entities.dart';
@@ -45,7 +46,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     final me = ref.watch(authControllerProvider).user;
     final messages = ref.watch(messagesStreamProvider(widget.conversationId));
     final composer = ref.watch(chatComposerProvider(widget.conversationId));
@@ -116,32 +116,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   _scrollToBottom();
                 }
                 if (list.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              color: palette.accentSoft,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(Icons.forum_outlined,
-                                color: palette.accentDeep, size: 34),
-                          ),
-                          const SizedBox(height: 12),
-                          Text('Empieza la conversación',
-                              style: context.textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 4),
-                          Text('Envía el primer mensaje.',
-                              style: context.textTheme.bodySmall),
-                        ],
-                      ),
-                    ),
+                  return const EmptyState(
+                    icon: Icons.forum_outlined,
+                    title: 'Empieza la conversación',
+                    subtitle: 'Envía el primer mensaje.',
                   );
                 }
                 return _MessagesList(
