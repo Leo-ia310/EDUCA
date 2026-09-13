@@ -71,8 +71,12 @@ class AttachmentPill extends StatelessWidget {
                   message: 'Quitar',
                   child: InkWell(
                     onTap: onRemove,
-                    child: Icon(Icons.close_rounded,
-                        size: 16, color: palette.textMuted,),
+                    borderRadius: BorderRadius.circular(Radii.pill),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(Icons.close_rounded,
+                          size: 16, color: palette.textMuted,),
+                    ),
                   ),
                 ),
               ],
