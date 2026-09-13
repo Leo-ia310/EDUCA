@@ -44,6 +44,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Detalle de tarea'),
@@ -51,6 +52,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
           if (role == AppRole.teacher)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Editar',
               onPressed: () => context.push(
                 '${Routes.assignments}/$assignmentId/edit',
               ),

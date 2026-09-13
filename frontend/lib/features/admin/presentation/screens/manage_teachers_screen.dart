@@ -87,6 +87,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
         title: const Text('Gestionar docentes'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),

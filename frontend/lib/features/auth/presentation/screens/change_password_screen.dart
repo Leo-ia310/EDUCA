@@ -52,6 +52,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         title: const Text('Cambiar contraseña'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),
@@ -74,6 +75,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       labelText: 'Contraseña actual',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
+                        tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureCurrent
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined),
@@ -92,6 +94,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       labelText: 'Nueva contraseña',
                       prefixIcon: const Icon(Icons.lock_reset_outlined),
                       suffixIcon: IconButton(
+                        tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureNew
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined),
@@ -118,6 +121,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       labelText: 'Confirmar nueva contraseña',
                       prefixIcon: const Icon(Icons.lock_reset_outlined),
                       suffixIcon: IconButton(
+                        tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureNew
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined),

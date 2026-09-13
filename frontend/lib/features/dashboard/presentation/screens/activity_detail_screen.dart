@@ -25,6 +25,7 @@ class ActivityDetailScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Actividad'),

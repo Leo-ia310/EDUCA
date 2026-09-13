@@ -97,6 +97,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: Text(state.assignmentId == null ? 'Nueva tarea' : 'Editar tarea'),

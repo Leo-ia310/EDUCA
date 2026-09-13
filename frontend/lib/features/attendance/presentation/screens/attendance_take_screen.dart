@@ -71,6 +71,7 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: Text(brief.subjectName),

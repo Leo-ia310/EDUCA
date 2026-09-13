@@ -78,6 +78,7 @@ class AppGreetingHeader extends StatelessWidget {
                         icon: Icons.notifications_rounded,
                         onTap: onNotificationsTap!,
                         badge: notificationsBadge,
+                        tooltip: 'Notificaciones',
                       ),
                     if (settingsMenu != null) ...[
                       const SizedBox(width: 10),
@@ -156,11 +157,15 @@ class CircleIconButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.badge = 0,
+    this.tooltip,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final int badge;
+
+  /// Etiqueta accesible + hint al pasar el cursor (el botón es solo ícono).
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -170,13 +175,16 @@ class CircleIconButton extends StatelessWidget {
         Material(
           color: Colors.white.withValues(alpha: 0.18),
           shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: SizedBox(
-              width: 46,
-              height: 46,
-              child: Icon(icon, size: 22, color: Colors.white),
+          child: Tooltip(
+            message: tooltip ?? '',
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: SizedBox(
+                width: 46,
+                height: 46,
+                child: Icon(icon, size: 22, color: Colors.white),
+              ),
             ),
           ),
         ),

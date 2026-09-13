@@ -55,6 +55,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         titleSpacing: 0,
@@ -62,6 +63,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
+            tooltip: 'Información',
             onPressed: () => showModalBottomSheet<void>(
               context: context,
               showDragHandle: true,

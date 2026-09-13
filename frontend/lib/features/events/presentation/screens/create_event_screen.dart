@@ -77,6 +77,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
         title: const Text('Crear evento'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),

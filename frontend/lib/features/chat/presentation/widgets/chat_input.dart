@@ -110,6 +110,7 @@ class _ChatInputState extends State<ChatInput> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.attach_file_rounded),
+                  tooltip: 'Adjuntar archivo',
                   color: palette.accentDeep,
                   onPressed: widget.sending ? null : widget.onPickAttachment,
                 ),
@@ -208,10 +209,13 @@ class _PendingAttachment extends StatelessWidget {
               ),
             ),
             if (onRemove != null)
-              InkWell(
-                onTap: onRemove,
-                child: Icon(Icons.close_rounded,
-                    size: 18, color: palette.textMuted),
+              Tooltip(
+                message: 'Quitar',
+                child: InkWell(
+                  onTap: onRemove,
+                  child: Icon(Icons.close_rounded,
+                      size: 18, color: palette.textMuted),
+                ),
               ),
           ],
         ),

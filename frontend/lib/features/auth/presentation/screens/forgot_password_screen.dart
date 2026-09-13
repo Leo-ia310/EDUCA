@@ -47,6 +47,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.go(Routes.login),
         ),
       ),

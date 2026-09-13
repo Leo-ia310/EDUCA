@@ -36,6 +36,7 @@ class AnnouncementsScreen extends ConsumerWidget {
         title: const Text('Anuncios'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),

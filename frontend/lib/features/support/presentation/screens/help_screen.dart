@@ -47,6 +47,7 @@ class HelpScreen extends StatelessWidget {
         title: const Text('Ayuda y soporte'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),

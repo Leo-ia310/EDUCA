@@ -67,10 +67,13 @@ class AttachmentPill extends StatelessWidget {
               ],
               if (onRemove != null) ...[
                 const SizedBox(width: 6),
-                InkWell(
-                  onTap: onRemove,
-                  child: Icon(Icons.close_rounded,
-                      size: 16, color: palette.textMuted),
+                Tooltip(
+                  message: 'Quitar',
+                  child: InkWell(
+                    onTap: onRemove,
+                    child: Icon(Icons.close_rounded,
+                        size: 16, color: palette.textMuted),
+                  ),
                 ),
               ],
             ],
