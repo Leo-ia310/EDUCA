@@ -25,9 +25,10 @@ import '../widgets/greeting_header.dart';
 import '../widgets/stat_strip.dart';
 import 'announcement_detail_screen.dart';
 
-// Tarjeta clara neutra para listas funcionales (maestros).
-const Color _panelCard = Color(0xFFEFF1F6);
-const Color _panelInk = Color(0xFF232A33);
+// Panel neutro sensible al tema: superficie alterna + texto onSurface, para las
+// secciones densas (Maestros activos, etc.) que no usan el pastel por materia.
+Color _panelCard(BuildContext c) => c.palette.surfaceAlt;
+Color _panelInk(BuildContext c) => Theme.of(c).colorScheme.onSurface;
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -253,7 +254,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: _panelCard,
+                    color: _panelCard(context),
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Column(
@@ -262,7 +263,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                         _TeacherRow(item: t),
                         if (t != data.teachers.last)
                           Divider(
-                            color: _panelInk.withValues(alpha: 0.10),
+                            color: _panelInk(context).withValues(alpha: 0.10),
                             height: 14,
                           ),
                       ],
@@ -440,14 +441,14 @@ class _TeacherRow extends StatelessWidget {
               Text(
                 item.name,
                 style: context.textTheme.titleSmall?.copyWith(
-                  color: _panelInk,
+                  color: _panelInk(context),
                   fontWeight: FontWeight.w800,
                 ),
               ),
               Text(
                 item.subject,
                 style: context.textTheme.bodySmall
-                    ?.copyWith(color: _panelInk.withValues(alpha: 0.62)),
+                    ?.copyWith(color: _panelInk(context).withValues(alpha: 0.62)),
               ),
             ],
           ),

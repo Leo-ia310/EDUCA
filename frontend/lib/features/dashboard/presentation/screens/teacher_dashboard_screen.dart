@@ -26,9 +26,11 @@ import '../widgets/greeting_header.dart';
 import '../widgets/stat_strip.dart';
 import 'class_detail_screen.dart';
 
-// Tarjeta clara neutra para listas funcionales (asistencia, calificaciones).
-const Color _panelCard = Color(0xFFEFF1F6);
-const Color _panelInk = Color(0xFF232A33);
+// Panel neutro sensible al tema: superficie alterna + texto onSurface, para las
+// secciones densas (Asistencia rápida, Calificaciones recientes) que no usan el
+// pastel por materia.
+Color _panelCard(BuildContext c) => c.palette.surfaceAlt;
+Color _panelInk(BuildContext c) => Theme.of(c).colorScheme.onSurface;
 
 class TeacherDashboardScreen extends ConsumerStatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -156,7 +158,7 @@ class _TeacherDashboardScreenState
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: _panelCard,
+                    color: _panelCard(context),
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Column(
@@ -170,7 +172,7 @@ class _TeacherDashboardScreenState
                         ),
                         if (line != data.quickAttendance.last)
                           Divider(
-                            color: _panelInk.withValues(alpha: 0.10),
+                            color: _panelInk(context).withValues(alpha: 0.10),
                             height: 18,
                           ),
                       ],
@@ -198,7 +200,7 @@ class _TeacherDashboardScreenState
                             onPressed: () =>
                                 context.push(Routes.attendanceHistory),
                             style: TextButton.styleFrom(
-                              foregroundColor: _panelInk.withValues(alpha: 0.7),
+                              foregroundColor: _panelInk(context).withValues(alpha: 0.7),
                             ),
                             icon: const Icon(Icons.history_rounded, size: 16),
                             label: const Text('Historial'),
@@ -294,7 +296,7 @@ class _TeacherDashboardScreenState
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: _panelCard,
+                    color: _panelCard(context),
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Column(
@@ -303,7 +305,7 @@ class _TeacherDashboardScreenState
                         _RecentGradeRow(item: g),
                         if (g != data.recentGrades.last)
                           Divider(
-                            color: _panelInk.withValues(alpha: 0.10),
+                            color: _panelInk(context).withValues(alpha: 0.10),
                             height: 18,
                           ),
                       ],
@@ -313,9 +315,9 @@ class _TeacherDashboardScreenState
                         child: OutlinedButton.icon(
                           onPressed: () => context.push(Routes.gradebook),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: _panelInk,
+                            foregroundColor: _panelInk(context),
                             side: BorderSide(
-                              color: _panelInk.withValues(alpha: 0.25),
+                              color: _panelInk(context).withValues(alpha: 0.25),
                             ),
                             minimumSize: const Size(0, 44),
                           ),
@@ -444,7 +446,7 @@ class _AttendanceTile extends StatelessWidget {
             child: Text(
               name,
               style: context.textTheme.titleSmall?.copyWith(
-                color: _panelInk,
+                color: _panelInk(context),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -455,7 +457,7 @@ class _AttendanceTile extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
-            side: BorderSide(color: _panelInk.withValues(alpha: 0.4), width: 2),
+            side: BorderSide(color: _panelInk(context).withValues(alpha: 0.4), width: 2),
             activeColor: const Color(0xFF4C8DF5),
             checkColor: Colors.white,
           ),
@@ -571,7 +573,7 @@ class _RecentGradeRow extends StatelessWidget {
     final pass = item.score >= 6;
     final color =
         pass ? const Color(0xFF2FA869) : const Color(0xFFD3453B);
-    final inkMuted = _panelInk.withValues(alpha: 0.62);
+    final inkMuted = _panelInk(context).withValues(alpha: 0.62);
     return Row(
       children: [
         UserAvatar(name: item.student, size: 36),
@@ -583,7 +585,7 @@ class _RecentGradeRow extends StatelessWidget {
               Text(
                 item.student,
                 style: context.textTheme.titleSmall?.copyWith(
-                  color: _panelInk,
+                  color: _panelInk(context),
                   fontWeight: FontWeight.w700,
                 ),
               ),
