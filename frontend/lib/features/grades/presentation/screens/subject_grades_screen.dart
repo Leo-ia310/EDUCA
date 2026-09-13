@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../domain/entities.dart';
@@ -45,14 +46,14 @@ class SubjectGradesScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: scaleAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => Center(child: Text('$e')),
           data: (scale) => periods.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const SkeletonList(),
             error: (e, _) => Center(child: Text('$e')),
             data: (ps) => evalsAsync.when(
               loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+                  const SkeletonList(),
               error: (e, _) => Center(child: Text('$e')),
               data: (data) {
                 if (data.evaluations.isEmpty) {

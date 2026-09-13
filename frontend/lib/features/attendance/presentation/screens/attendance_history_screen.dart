@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../domain/attendance_sync_service.dart';
@@ -51,7 +52,7 @@ class AttendanceHistoryScreen extends ConsumerWidget {
             Expanded(
               child: history.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                    const SkeletonList(),
                 error: (e, _) => Center(child: Text('$e')),
                 data: (list) {
                   if (list.isEmpty) {

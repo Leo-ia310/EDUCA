@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -45,10 +46,10 @@ class ParentChargesScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: balanceAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (balance) => chargesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const SkeletonList(),
             error: (e, _) => ErrorStateView(message: '$e'),
             data: (charges) => RefreshIndicator(
               color: palette.accentDeep,

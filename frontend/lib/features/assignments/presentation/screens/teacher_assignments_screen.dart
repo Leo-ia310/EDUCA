@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -42,7 +43,7 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
             Expanded(
               child: list.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                    const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (items) {
                   if (items.isEmpty) {

@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -38,7 +39,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: payments.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (list) {
             if (list.isEmpty) {
