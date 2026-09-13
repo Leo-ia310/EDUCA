@@ -138,7 +138,7 @@ class _Header extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [s.vivid, deep],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(Radii.xl),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +199,7 @@ class _HeroChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         label,
@@ -484,7 +484,7 @@ class _GradedView extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

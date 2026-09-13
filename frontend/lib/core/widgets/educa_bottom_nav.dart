@@ -258,7 +258,7 @@ class _NavSlot extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
                     color: context.palette.danger,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                     border: Border.all(color: Colors.white, width: 1.5),
                   ),
                   constraints: const BoxConstraints(minWidth: 16),

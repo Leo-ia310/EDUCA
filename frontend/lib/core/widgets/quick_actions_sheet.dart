@@ -32,7 +32,7 @@ Future<void> showQuickActionsSheet(
     showDragHandle: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
     ),
     builder: (sheetContext) {
       return SafeArea(
@@ -54,14 +54,14 @@ Future<void> showQuickActionsSheet(
               for (final a in actions)
                 ListTile(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   leading: Container(
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
                       color: palette.accentSoft,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Icon(a.icon, color: palette.accentDeep, size: 20),
                   ),

@@ -203,9 +203,9 @@ class _NotificationCard extends StatelessWidget {
     final s = context.pastel(accent);
     return Material(
       color: s.surface,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(Radii.lg),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(Radii.lg),
         onTap: notification.deepLink == null
             ? null
             : () => context.push(notification.deepLink!),

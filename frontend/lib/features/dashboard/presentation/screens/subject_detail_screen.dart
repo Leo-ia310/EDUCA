@@ -44,7 +44,7 @@ class SubjectDetailScreen extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [s.vivid, deep],
               ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(Radii.xl),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,7 +100,7 @@ class SubjectDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(Radii.pill),
                   child: TweenAnimationBuilder<double>(
                     tween: Tween<double>(begin: 0, end: subject.progress),
                     duration: context.motion(AppMotion.slow),
@@ -172,11 +172,11 @@ class _PastelRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Ink(
           decoration: BoxDecoration(
             color: surface.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),

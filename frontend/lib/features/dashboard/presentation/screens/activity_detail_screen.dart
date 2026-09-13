@@ -38,7 +38,7 @@ class ActivityDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: palette.accentSoft,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(Radii.xl),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +50,7 @@ class ActivityDetailScreen extends StatelessWidget {
                             horizontal: 12, vertical: 5,),
                         decoration: BoxDecoration(
                           color: palette.accentDeep.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(Radii.pill),
                         ),
                         child: Text(
                           activity.tag,
@@ -99,7 +99,7 @@ class ActivityDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(Radii.pill),
                     child: TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: activity.progress),
                       duration: context.motion(AppMotion.slow),

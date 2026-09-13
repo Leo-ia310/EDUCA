@@ -53,7 +53,7 @@ class _GradeRow extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: s.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         children: [
@@ -133,7 +133,7 @@ class _AverageHero extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         children: [

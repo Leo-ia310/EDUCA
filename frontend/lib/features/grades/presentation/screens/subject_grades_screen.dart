@@ -76,7 +76,7 @@ class SubjectGradesScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         decoration: BoxDecoration(
                           color: context.pastel(context.palette.accent).surface,
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(Radii.lg),
                         ),
                         child: Column(
                           children: [

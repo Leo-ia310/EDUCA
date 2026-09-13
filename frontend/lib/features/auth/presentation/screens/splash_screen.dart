@@ -43,7 +43,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               height: 84,
               decoration: BoxDecoration(
                 color: context.palette.accentDeep,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(Radii.xl),
               ),
               alignment: Alignment.center,
               child: const Icon(Icons.school_rounded,

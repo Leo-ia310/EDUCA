@@ -147,7 +147,7 @@ class _MethodTile extends StatelessWidget {
     final palette = context.palette;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
@@ -158,7 +158,7 @@ class _MethodTile extends StatelessWidget {
                 : Theme.of(context).dividerColor,
             width: selected ? 1.5 : 1,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: Row(
           children: [
@@ -168,7 +168,7 @@ class _MethodTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: (selected ? palette.accentDeep : palette.textMuted)
                     .withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: Icon(_iconFor(method),
                   color: selected ? palette.accentDeep : palette.textMuted),

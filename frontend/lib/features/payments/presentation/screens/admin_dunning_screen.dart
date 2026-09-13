@@ -80,12 +80,12 @@ class AdminDunningScreen extends ConsumerWidget {
                             final s = context.pastel(palette.danger);
                             return Material(
                               color: s.surface,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(Radii.lg),
                               child: InkWell(
                                 onTap: () => context.push(
                                   '${Routes.payments}?studentId=${b.studentId}',
                                 ),
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(Radii.lg),
                                 child: Padding(
                                   padding: const EdgeInsets.all(14),
                                   child: Row(
@@ -165,7 +165,7 @@ class _MetricsBlock extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: palette.cardContrast,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(Radii.lg),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,7 +201,7 @@ class _MetricsBlock extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(Radii.xs),
                 child: LinearProgressIndicator(
                   value: pct,
                   minHeight: 8,
@@ -288,7 +288,7 @@ class _PastelMetric extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: s.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

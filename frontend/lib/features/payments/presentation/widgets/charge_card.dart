@@ -22,10 +22,10 @@ class ChargeCard extends StatelessWidget {
 
     return Material(
       color: s.surface,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(Radii.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(Radii.lg),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -66,7 +66,7 @@ class ChargeCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(Radii.pill),
                 ),
                 child: Text(
                   label,

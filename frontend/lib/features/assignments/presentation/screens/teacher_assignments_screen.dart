@@ -108,7 +108,7 @@ class _FilterBar extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                 isDense: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
               ),
             ),

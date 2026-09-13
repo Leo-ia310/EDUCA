@@ -59,7 +59,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: s.surface,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +109,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: BorderRadius.circular(Radii.pill),
                             ),
                             child: Text(
                               p.receiptNumber,

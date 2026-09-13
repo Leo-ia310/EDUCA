@@ -50,7 +50,7 @@ class _NewConversationScreenState
                   hintText: 'Buscar por nombre o rol…',
                   prefixIcon: const Icon(Icons.search_rounded),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                 ),
               ),

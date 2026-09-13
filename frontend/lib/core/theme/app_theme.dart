@@ -89,6 +89,20 @@ extension AppThemeX on BuildContext {
   ColorScheme get colors => Theme.of(this).colorScheme;
 }
 
+/// Escala de radios de esquina del producto: colapsa los radios sueltos a un
+/// puñado de tokens para consistencia. Se conservan literales sólo para casos
+/// especiales (2 en hairlines/barras, 30 en curvas grandes de hero).
+class Radii {
+  Radii._();
+
+  static const double pill = 999; // pastillas / círculos
+  static const double xl = 24; // héroes, hojas grandes
+  static const double lg = 18; // tarjetas
+  static const double md = 16; // botones, inputs, tiles
+  static const double sm = 12; // chips, pastillas de ícono chicas
+  static const double xs = 8; // elementos menudos
+}
+
 class AppTheme {
   AppTheme._();
 
@@ -165,7 +179,7 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(Radii.xl),
           side: const BorderSide(color: AppColors.lineLightSoft),
         ),
       ),
@@ -175,7 +189,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
@@ -190,7 +204,7 @@ class AppTheme {
           minimumSize: const Size.fromHeight(54),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
@@ -204,7 +218,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.lineLight),
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
         ),
       ),
@@ -215,15 +229,15 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
         hintStyle: const TextStyle(color: AppColors.textLightMuted),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.lineLight),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.lineLight),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.accentDeep, width: 1.5),
         ),
       ),
@@ -231,7 +245,7 @@ class AppTheme {
         backgroundColor: AppColors.lightSurfaceAlt,
         side: BorderSide.none,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(Radii.pill),
         ),
         labelStyle: const TextStyle(
           fontWeight: FontWeight.w600,
@@ -314,7 +328,7 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(Radii.xl),
           side: const BorderSide(color: AppColors.lineDark),
         ),
       ),
@@ -324,7 +338,7 @@ class AppTheme {
           foregroundColor: AppColors.textLight,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
@@ -339,7 +353,7 @@ class AppTheme {
           minimumSize: const Size.fromHeight(54),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
         ),
       ),
@@ -349,7 +363,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.lineDark),
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
         ),
       ),
@@ -360,15 +374,15 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
         hintStyle: const TextStyle(color: AppColors.textDarkMuted),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.lineDark),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.lineDark),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide:
               const BorderSide(color: AppColors.accentDark, width: 1.5),
         ),
@@ -377,7 +391,7 @@ class AppTheme {
         backgroundColor: AppColors.darkSurfaceAlt,
         side: BorderSide.none,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(Radii.pill),
         ),
         labelStyle: const TextStyle(
           fontWeight: FontWeight.w600,

@@ -314,7 +314,7 @@ class _DayLabel extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: context.palette.surfaceAlt,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(Radii.pill),
           ),
           child: Text(
             _label(),

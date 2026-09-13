@@ -57,7 +57,7 @@ class ProfileScreen extends ConsumerWidget {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: palette.accentSoft,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(Radii.pill),
                     ),
                     child: Text(
                       institution.name,

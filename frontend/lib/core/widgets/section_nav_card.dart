@@ -34,7 +34,7 @@ class SectionNavCard extends StatelessWidget {
     final deep = Color.lerp(color, Colors.black, 0.06)!;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(Radii.xl),
       child: Stack(
         children: [
           // Fondo con gradiente suave.
@@ -168,7 +168,7 @@ class _Badge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.24),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Text(
         text,

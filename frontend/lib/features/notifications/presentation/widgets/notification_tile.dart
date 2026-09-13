@@ -106,7 +106,7 @@ class NotificationTile extends StatelessWidget {
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: s.surface,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(Radii.pill),
                     ),
                     child: Text(
                       notification.channel.title,

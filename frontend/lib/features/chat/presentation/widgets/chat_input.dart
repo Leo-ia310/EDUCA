@@ -117,7 +117,7 @@ class _ChatInputState extends State<ChatInput> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: palette.surfaceAlt,
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(Radii.xl),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: TextField(
@@ -186,7 +186,7 @@ class _PendingAttachment extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: palette.accentSoft,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.sm),
         ),
         child: Row(
           children: [

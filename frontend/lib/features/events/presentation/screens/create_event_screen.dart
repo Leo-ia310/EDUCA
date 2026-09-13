@@ -115,7 +115,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                   const SizedBox(height: 14),
                   InkWell(
                     onTap: _pickDate,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.md),
                     child: InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'Fecha',

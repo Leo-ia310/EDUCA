@@ -80,7 +80,7 @@ class SkeletonList extends StatelessWidget {
                   height: itemHeight,
                   decoration: BoxDecoration(
                     color: palette.surfaceAlt,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                 ),
               ),

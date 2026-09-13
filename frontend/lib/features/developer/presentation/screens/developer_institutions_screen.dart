@@ -83,7 +83,7 @@ class _InstitutionCard extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: palette.info.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
                 child: Icon(Icons.apartment_rounded,
                     color: palette.info, size: 20,),
@@ -161,7 +161,7 @@ class _StatePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         active ? 'Activa' : 'Inactiva',

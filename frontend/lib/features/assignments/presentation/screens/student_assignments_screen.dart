@@ -140,7 +140,7 @@ class _StudentTile extends ConsumerWidget {
               foregroundColor: Colors.white,
               icon: done ? Icons.undo_rounded : Icons.check_circle_outline,
               label: done ? 'Pendiente' : 'Hecha',
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
           ],
         ),

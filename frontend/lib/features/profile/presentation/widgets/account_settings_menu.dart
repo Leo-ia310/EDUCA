@@ -49,7 +49,7 @@ class AccountSettingsMenu extends ConsumerWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     color: palette.cardElevated,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                     border: Border.all(color: Theme.of(context).dividerColor),
                   ),
                   child: const Icon(Icons.settings_outlined),
@@ -174,11 +174,11 @@ class _SettingsRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Ink(
           decoration: BoxDecoration(
             color: s.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),

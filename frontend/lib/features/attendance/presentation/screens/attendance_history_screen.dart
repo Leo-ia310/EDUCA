@@ -100,7 +100,7 @@ class _SyncControls extends ConsumerWidget {
             height: 38,
             decoration: BoxDecoration(
               color: palette.accentSoft,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(Icons.cloud_sync_outlined,
                 color: palette.accentDeep, size: 20),
@@ -173,7 +173,7 @@ class _SessionTile extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: palette.warning.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(Radii.pill),
                   ),
                   child: Text(
                     '${summary.pendingSync} pendiente${summary.pendingSync == 1 ? '' : 's'}',

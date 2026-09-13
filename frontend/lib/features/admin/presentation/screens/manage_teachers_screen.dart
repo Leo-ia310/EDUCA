@@ -37,7 +37,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -109,7 +109,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: s.surface,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                   child: Row(
                     children: [
@@ -136,7 +136,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
                                     horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.6),
-                                  borderRadius: BorderRadius.circular(999),
+                                  borderRadius: BorderRadius.circular(Radii.pill),
                                 ),
                                 child: Text(
                                   _assignments[t.name]!,

@@ -56,7 +56,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     width: 58,
                     decoration: BoxDecoration(
                       color: selected ? palette.accentDeep : palette.cardElevated,
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(Radii.lg),
                       border: Border.all(
                         color: selected
                             ? palette.accentDeep
@@ -269,7 +269,7 @@ class _SlotCard extends StatelessWidget {
                                   height: 38,
                                   decoration: BoxDecoration(
                                     color: _diamondBg,
-                                    borderRadius: BorderRadius.circular(13),
+                                    borderRadius: BorderRadius.circular(Radii.sm),
                                   ),
                                   child: Transform.rotate(
                                     angle: -math.pi / 4,
@@ -364,7 +364,7 @@ class _SlotCard extends StatelessWidget {
       backgroundColor: palette.cardElevated,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
       ),
       builder: (context) => SafeArea(
         child: Padding(
@@ -380,7 +380,7 @@ class _SlotCard extends StatelessWidget {
                     height: 42,
                     decoration: BoxDecoration(
                       color: slot.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Icon(slot.icon, color: slot.color, size: 22),
                   ),

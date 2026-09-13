@@ -625,7 +625,7 @@ class _TaskFormSheetState extends State<_TaskFormSheet> {
               const SizedBox(height: 4),
               InkWell(
                 onTap: _pickDue,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.sm),
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: 'Fecha límite',
@@ -691,7 +691,7 @@ class _Pill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         label,

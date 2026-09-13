@@ -138,7 +138,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                 foregroundColor: Colors.white,
                                 icon: Icons.delete_outline,
                                 label: 'Eliminar',
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(Radii.md),
                               ),
                             ],
                           ),
@@ -218,12 +218,12 @@ class _Chip extends StatelessWidget {
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             color: selected ? palette.accentDeep : palette.surfaceAlt,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(Radii.pill),
           ),
           child: Row(
             children: [

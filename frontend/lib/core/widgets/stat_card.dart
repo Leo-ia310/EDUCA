@@ -54,7 +54,7 @@ class StatCard extends StatelessWidget {
               height: 34,
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: Icon(icon, color: accentColor, size: 18),
             ),
@@ -79,7 +79,7 @@ class StatCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
                     color: deltaColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(Radii.pill),
                   ),
                   child: Text(
                     delta!,

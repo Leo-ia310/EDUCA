@@ -107,7 +107,7 @@ class _ClassCard extends ConsumerWidget {
             height: 56,
             decoration: BoxDecoration(
               color: palette.accentSoft,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             alignment: Alignment.center,
             child: Text(

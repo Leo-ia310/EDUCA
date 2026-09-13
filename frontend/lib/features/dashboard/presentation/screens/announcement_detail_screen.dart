@@ -35,7 +35,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
                 color: palette.accentSoft,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(Radii.xl),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,7 +45,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
                     height: 48,
                     decoration: BoxDecoration(
                       color: palette.accentDeep.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                     child: Icon(Icons.campaign_outlined,
                         color: palette.accentDeep, size: 26,),

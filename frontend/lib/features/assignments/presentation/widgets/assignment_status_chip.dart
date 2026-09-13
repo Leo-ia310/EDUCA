@@ -14,7 +14,7 @@ Widget _statusPill(BuildContext context, Color color, String label,
       color: onPastel
           ? Colors.white.withValues(alpha: 0.85)
           : color.withValues(alpha: 0.15),
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(Radii.pill),
     ),
     child: Text(
       label,

@@ -132,7 +132,7 @@ class _OverallCard extends StatelessWidget {
             Color(0xFF2FB39A),
           ],
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(Radii.xl),
       ),
       child: Row(
         children: [

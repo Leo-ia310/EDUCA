@@ -275,7 +275,7 @@ class _RolloutBar extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(Radii.pill),
             child: LinearProgressIndicator(
               value: clamped / 100,
               minHeight: 6,

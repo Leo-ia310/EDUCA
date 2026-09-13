@@ -81,7 +81,7 @@ class _AuditCard extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(icon, color: color, size: 20),
           ),

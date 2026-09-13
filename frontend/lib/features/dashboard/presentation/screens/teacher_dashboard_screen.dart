@@ -159,7 +159,7 @@ class _TeacherDashboardScreenState
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: _panelCard(context),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                   child: Column(
                     children: [
@@ -297,7 +297,7 @@ class _TeacherDashboardScreenState
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: _panelCard(context),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                   child: Column(
                     children: [
@@ -355,7 +355,7 @@ class _ClassCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: s.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,7 +406,7 @@ class _AddClassCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: palette.surfaceAlt,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
           border: Border.all(color: Theme.of(context).dividerColor),
         ),
         alignment: Alignment.center,
@@ -455,7 +455,7 @@ class _AttendanceTile extends StatelessWidget {
             value: present,
             onChanged: (v) => onChanged(v ?? false),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(Radii.xs),
             ),
             side: BorderSide(color: _panelInk(context).withValues(alpha: 0.4), width: 2),
             activeColor: const Color(0xFF4C8DF5),
@@ -491,11 +491,11 @@ class _AssignmentRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Ink(
           decoration: BoxDecoration(
             color: s.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -545,7 +545,7 @@ class _AssignmentRow extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: s.vivid.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(Radii.pill),
                   ),
                   child: Text(
                     chipLabel,

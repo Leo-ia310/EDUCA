@@ -39,7 +39,7 @@ class ClassDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(Radii.xl),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +49,7 @@ class ClassDetailScreen extends StatelessWidget {
                     height: 52,
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.24),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                     child: Icon(teacherClass.icon, color: ink, size: 28),
                   ),
@@ -130,7 +130,7 @@ class _Action extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(icon, color: ink, size: 20),
           ),

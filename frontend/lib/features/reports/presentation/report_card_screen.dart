@@ -287,7 +287,7 @@ class _SubjectLine extends StatelessWidget {
             height: 34,
             decoration: BoxDecoration(
               color: palette.accentSoft,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(Icons.menu_book_rounded,
                 color: palette.accentDeep, size: 18),

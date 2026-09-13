@@ -145,8 +145,8 @@ class _AttachmentBlock extends StatelessWidget {
     if (attachment.isImage) {
       return ClipRRect(
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(14),
-          topRight: Radius.circular(14),
+          topLeft: Radius.circular(Radii.md),
+          topRight: Radius.circular(Radii.md),
         ),
         child: Container(
           width: 220,
@@ -168,7 +168,7 @@ class _AttachmentBlock extends StatelessWidget {
             decoration: BoxDecoration(
               color: (isMine ? Colors.white : palette.accentSoft)
                   .withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(Radii.xs),
             ),
             child: Icon(
               Icons.description_outlined,
