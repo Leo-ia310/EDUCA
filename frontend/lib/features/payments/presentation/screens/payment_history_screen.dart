@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -54,7 +54,13 @@ class PaymentHistoryScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final p = list[i];
-                return EduCard(
+                final s = context.pastel(palette.success);
+                return Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: s.surface,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -64,11 +70,9 @@ class PaymentHistoryScreen extends ConsumerWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: palette.success.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(Icons.check_circle_rounded,
-                                color: palette.success),
+                                color: s.vivid, shape: BoxShape.circle),
+                            child: const Icon(Icons.check_circle_rounded,
+                                color: Colors.white),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -76,11 +80,13 @@ class PaymentHistoryScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(p.chargeConcept,
-                                    style: context.textTheme.titleSmall
-                                        ?.copyWith(fontWeight: FontWeight.w800)),
+                                    style: context.textTheme.titleSmall?.copyWith(
+                                        color: s.ink,
+                                        fontWeight: FontWeight.w800)),
                                 Text(
                                   '${p.method.label} · ${fmt.format(p.paidAt)}',
-                                  style: context.textTheme.bodySmall,
+                                  style: context.textTheme.bodySmall
+                                      ?.copyWith(color: s.inkMuted),
                                 ),
                               ],
                             ),
@@ -89,7 +95,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                             amount: p.amount,
                             currencyCode: p.currencyCode,
                             style: context.textTheme.titleMedium?.copyWith(
-                              color: palette.success,
+                              color: s.ink,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -102,13 +108,13 @@ class PaymentHistoryScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: palette.surfaceAlt,
+                              color: Colors.white.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
                               p.receiptNumber,
                               style: context.textTheme.labelSmall?.copyWith(
-                                color: palette.textMuted,
+                                color: const Color(0xFF232A33),
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -116,6 +122,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                           const Spacer(),
                           TextButton.icon(
                             onPressed: () => _openReceipt(context, ref, p),
+                            style: TextButton.styleFrom(foregroundColor: s.ink),
                             icon: const Icon(Icons.picture_as_pdf_outlined,
                                 size: 18),
                             label: const Text('Ver recibo'),

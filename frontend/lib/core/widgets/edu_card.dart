@@ -14,7 +14,7 @@ class EduCard extends StatefulWidget {
     this.padding = const EdgeInsets.all(16),
     this.onTap,
     this.color,
-    this.borderRadius = 20,
+    this.borderRadius = 18,
     this.border,
     this.elevated = false,
   });
