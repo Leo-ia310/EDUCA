@@ -71,7 +71,7 @@ class _TeacherDashboardScreenState
               route: Routes.assignmentNew,
             ),
             QuickActionEntry(
-              icon: Icons.how_to_reg_outlined,
+              icon: Icons.how_to_reg_rounded,
               label: 'Tomar asistencia',
               route: Routes.attendance,
             ),
@@ -510,7 +510,7 @@ class _AssignmentRow extends StatelessWidget {
                   child: Icon(
                     item.completed
                         ? Icons.check_circle_outline
-                        : Icons.assignment_outlined,
+                        : Icons.assignment_rounded,
                     color: Colors.white,
                     size: 22,
                   ),

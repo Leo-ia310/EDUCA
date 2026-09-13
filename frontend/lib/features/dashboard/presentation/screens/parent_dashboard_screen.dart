@@ -65,7 +65,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
               route: Routes.payments,
             ),
             QuickActionEntry(
-              icon: Icons.picture_as_pdf_outlined,
+              icon: Icons.picture_as_pdf_rounded,
               label: 'Boletín',
               route: Routes.reports,
             ),
@@ -90,7 +90,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
             dateLabel: toBeginningOfSentenceCase(
               DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
             ),
-            chipIcon: Icons.notifications_active_outlined,
+            chipIcon: Icons.notifications_active_rounded,
             chipLabel:
                 '${data.newNotices} avisos · ${data.monthEvents} eventos este mes',
             notificationsBadge:
@@ -263,7 +263,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => context.push(Routes.reports),
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        icon: const Icon(Icons.picture_as_pdf_rounded),
                         label: const Text('Boletín'),
                       ),
                     ),

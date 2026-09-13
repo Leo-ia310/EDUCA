@@ -75,7 +75,7 @@ class AppGreetingHeader extends StatelessWidget {
                     const Spacer(),
                     if (onNotificationsTap != null)
                       CircleIconButton(
-                        icon: Icons.notifications_outlined,
+                        icon: Icons.notifications_rounded,
                         onTap: onNotificationsTap!,
                         badge: notificationsBadge,
                       ),

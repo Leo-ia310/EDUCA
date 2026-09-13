@@ -52,22 +52,22 @@ class AdminDashboardScreen extends ConsumerWidget {
           title: 'Accesos rápidos',
           actions: const [
             QuickActionEntry(
-              icon: Icons.event_outlined,
+              icon: Icons.event_rounded,
               label: 'Crear evento',
               route: Routes.eventNew,
             ),
             QuickActionEntry(
-              icon: Icons.school_outlined,
+              icon: Icons.school_rounded,
               label: 'Asignar maestros',
               route: Routes.manageTeachers,
             ),
             QuickActionEntry(
-              icon: Icons.schedule_outlined,
+              icon: Icons.schedule_rounded,
               label: 'Modificar horarios',
               route: Routes.schedule,
             ),
             QuickActionEntry(
-              icon: Icons.payments_outlined,
+              icon: Icons.payments_rounded,
               label: 'Recaudación',
               route: Routes.paymentsDunning,
             ),
@@ -159,19 +159,19 @@ class AdminDashboardScreen extends ConsumerWidget {
                 _QuickActionsGrid(
                   actions: [
                     _AdminAction(
-                      Icons.school_outlined,
+                      Icons.school_rounded,
                       'Asignar Maestros',
                       const Color(0xFF4C8DF5),
                       () => context.push(Routes.manageTeachers),
                     ),
                     _AdminAction(
-                      Icons.event_outlined,
+                      Icons.event_rounded,
                       'Crear Evento',
                       const Color(0xFF34C77A),
                       () => context.push(Routes.eventNew),
                     ),
                     _AdminAction(
-                      Icons.schedule_outlined,
+                      Icons.schedule_rounded,
                       'Modificar Horarios',
                       const Color(0xFF8A5CF6),
                       () => context.push(Routes.schedule),
@@ -183,7 +183,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                       () => context.push(Routes.gradebook),
                     ),
                     _AdminAction(
-                      Icons.payments_outlined,
+                      Icons.payments_rounded,
                       'Recaudación',
                       const Color(0xFFEC6A9C),
                       () => context.push(Routes.paymentsDunning),

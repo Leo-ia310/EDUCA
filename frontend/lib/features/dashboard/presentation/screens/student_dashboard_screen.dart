@@ -69,7 +69,7 @@ class StudentDashboardScreen extends ConsumerWidget {
             dateLabel: toBeginningOfSentenceCase(
               DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
             ),
-            chipIcon: Icons.assignment_turned_in_outlined,
+            chipIcon: Icons.assignment_turned_in_rounded,
             chipLabel: data.pendingTasks > 0
                 ? 'Tienes ${data.pendingTasks} ${data.pendingTasks == 1 ? 'tarea' : 'tareas'} para hoy'
                 : 'No tienes tareas para hoy',
