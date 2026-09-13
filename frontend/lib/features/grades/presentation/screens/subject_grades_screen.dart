@@ -31,7 +31,7 @@ class SubjectGradesScreen extends ConsumerWidget {
     final scaleAsync = ref.watch(defaultScaleProvider);
     final evalsAsync = ref.watch(studentEvaluationsProvider(
       (studentId: studentId, classId: classId),
-    ));
+    ),);
 
     return AppScaffold(
       scrollable: false,
@@ -94,7 +94,7 @@ class SubjectGradesScreen extends ConsumerWidget {
                                     color: context
                                         .pastel(context.palette.accent)
                                         .ink
-                                        .withValues(alpha: 0.12)),
+                                        .withValues(alpha: 0.12),),
                             ],
                           ],
                         ),
@@ -174,7 +174,7 @@ class _EvaluationTile extends StatelessWidget {
           if (rawScore == null)
             Text('Pendiente',
                 style: context.textTheme.labelSmall
-                    ?.copyWith(color: s.inkMuted))
+                    ?.copyWith(color: s.inkMuted),)
           else
             GradePill(
               score: scale.normalize(rawScore!, rawMax: evaluation.maxScore),

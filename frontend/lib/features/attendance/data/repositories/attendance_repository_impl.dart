@@ -167,7 +167,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         absent: absent,
         late: late,
         pendingSync: pending,
-      ));
+      ),);
       if (result.length >= limit) break;
     }
     return result;

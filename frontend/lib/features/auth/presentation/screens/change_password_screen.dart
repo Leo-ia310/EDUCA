@@ -78,9 +78,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureCurrent
                             ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined),
+                            : Icons.visibility_outlined,),
                         onPressed: () => setState(
-                            () => _obscureCurrent = !_obscureCurrent),
+                            () => _obscureCurrent = !_obscureCurrent,),
                       ),
                     ),
                   ),
@@ -97,7 +97,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureNew
                             ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined),
+                            : Icons.visibility_outlined,),
                         onPressed: () =>
                             setState(() => _obscureNew = !_obscureNew),
                       ),
@@ -124,7 +124,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureNew
                             ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined),
+                            : Icons.visibility_outlined,),
                         onPressed: () =>
                             setState(() => _obscureNew = !_obscureNew),
                       ),

@@ -143,7 +143,7 @@ class ChatMockSeed {
     final javier =
         _p('u-javier', 'Javier Rojas (padre)', 'parent', online: false);
     final director = _p('u-director', 'Dir. Roberto Castillo', 'director');
-    final grupo = ChatParticipant(
+    const grupo = ChatParticipant(
       userId: 'u-group-4a',
       name: 'Padres 4°A',
       role: 'group',
@@ -203,7 +203,7 @@ class ChatMockSeed {
       role: 'admin',
       isMe: true,
     );
-    final claustro = ChatParticipant(
+    const claustro = ChatParticipant(
       userId: 'u-group-claustro',
       name: 'Claustro docente',
       role: 'group',
@@ -268,7 +268,7 @@ class ChatMockSeed {
     for (var i = 0; i < samplePairs.length; i++) {
       final pair = samplePairs[i];
       result.add(Message(
-        id: 'm-${conversationId}-${i}a',
+        id: 'm-$conversationId-${i}a',
         uuid: _uuid.v4(),
         conversationId: conversationId,
         senderId: meId,
@@ -276,9 +276,9 @@ class ChatMockSeed {
         sentAt: base.subtract(Duration(minutes: (samplePairs.length - i) * 15 + 8)),
         content: pair[0],
         status: MessageDeliveryStatus.read,
-      ));
+      ),);
       result.add(Message(
-        id: 'm-${conversationId}-${i}b',
+        id: 'm-$conversationId-${i}b',
         uuid: _uuid.v4(),
         conversationId: conversationId,
         senderId: other.userId,
@@ -287,7 +287,7 @@ class ChatMockSeed {
         sentAt: base.subtract(Duration(minutes: (samplePairs.length - i) * 15 + 2)),
         content: pair[1],
         status: MessageDeliveryStatus.read,
-      ));
+      ),);
     }
     if (lastMessage != null) result.add(lastMessage);
     return result;

@@ -47,12 +47,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               ),
               alignment: Alignment.center,
               child: const Icon(Icons.school_rounded,
-                  color: Colors.white, size: 40),
+                  color: Colors.white, size: 40,),
             ),
             const SizedBox(height: 16),
             Text('Educa360',
                 style: context.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800)),
+                    ?.copyWith(fontWeight: FontWeight.w800),),
             const SizedBox(height: 24),
             const SizedBox(
               width: 28,

@@ -71,10 +71,10 @@ class _CheckoutBody extends ConsumerWidget {
                     Text(charge.conceptName,
                         style: context.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: palette.accentDeep)),
+                            color: palette.accentDeep,),),
                     Text(charge.description,
                         style: context.textTheme.bodySmall
-                            ?.copyWith(color: palette.accentDeep)),
+                            ?.copyWith(color: palette.accentDeep),),
                   ],
                 ),
               ),
@@ -83,7 +83,7 @@ class _CheckoutBody extends ConsumerWidget {
                 currencyCode: charge.currencyCode,
                 style: context.textTheme.titleLarge?.copyWith(
                     color: palette.accentDeep,
-                    fontWeight: FontWeight.w800),
+                    fontWeight: FontWeight.w800,),
               ),
             ],
           ),
@@ -105,7 +105,7 @@ class _CheckoutBody extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(state.errorMessage!,
-                style: TextStyle(color: palette.danger)),
+                style: TextStyle(color: palette.danger),),
           ),
         FilledButton.icon(
           onPressed: state.stage == CheckoutStage.processing
@@ -113,11 +113,11 @@ class _CheckoutBody extends ConsumerWidget {
               : () => ctrl.pay(charge: charge),
           icon: state.stage == CheckoutStage.processing
               ? const SizedBox(
-                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2),)
               : const Icon(Icons.lock_rounded),
           label: Text(state.stage == CheckoutStage.processing
               ? 'Procesando…'
-              : 'Confirmar pago'),
+              : 'Confirmar pago',),
         ),
         const SizedBox(height: 12),
         Center(
@@ -172,7 +172,7 @@ class _MethodTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: Icon(_iconFor(method),
-                  color: selected ? palette.accentDeep : palette.textMuted),
+                  color: selected ? palette.accentDeep : palette.textMuted,),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -181,7 +181,7 @@ class _MethodTile extends StatelessWidget {
                 children: [
                   Text(method.label,
                       style: context.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w800)),
+                          ?.copyWith(fontWeight: FontWeight.w800),),
                   Text(
                     _descFor(method),
                     style: context.textTheme.bodySmall,
@@ -238,14 +238,14 @@ class _SuccessView extends ConsumerWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.check_circle_rounded,
-                  color: palette.success, size: 54),
+                  color: palette.success, size: 54,),
             ),
           ),
           const SizedBox(height: 16),
           Center(
             child: Text('¡Pago confirmado!',
                 style: context.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800)),
+                    ?.copyWith(fontWeight: FontWeight.w800),),
           ),
           const SizedBox(height: 4),
           Center(
@@ -303,7 +303,7 @@ class _Kv extends StatelessWidget {
           Expanded(child: Text(label, style: context.textTheme.bodySmall)),
           Text(value,
               style: context.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w800)),
+                  ?.copyWith(fontWeight: FontWeight.w800),),
         ],
       ),
     );

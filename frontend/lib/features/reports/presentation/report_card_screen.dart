@@ -33,7 +33,7 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
     final scaleAsync = ref.watch(defaultScaleProvider);
     final card = ref.watch(reportCardProvider(
       StudentGradesArgs(studentId: widget.studentId, periodId: _periodId),
-    ));
+    ),);
 
     return AppScaffold(
       appBar: AppBar(
@@ -96,7 +96,7 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
                               height: 1,
                               color: Theme.of(context)
                                   .dividerColor
-                                  .withValues(alpha: 0.5)),
+                                  .withValues(alpha: 0.5),),
                       ],
                     ],
                   ),
@@ -204,10 +204,10 @@ class _Header extends StatelessWidget {
                         style: context.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                        )),
+                        ),),
                     Text('${card.gradeLevel} · ${card.institutionName}',
                         style: context.textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7))),
+                            color: Colors.white.withValues(alpha: 0.7),),),
                   ],
                 ),
               ),
@@ -258,13 +258,13 @@ class _HeaderStat extends StatelessWidget {
               style: context.textTheme.labelSmall?.copyWith(
                 color: Colors.white.withValues(alpha: 0.55),
                 fontWeight: FontWeight.w600,
-              )),
+              ),),
           const SizedBox(height: 2),
           Text(value,
               style: context.textTheme.titleSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
-              )),
+              ),),
         ],
       ),
     );
@@ -291,7 +291,7 @@ class _SubjectLine extends StatelessWidget {
               borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(Icons.menu_book_rounded,
-                color: palette.accentDeep, size: 18),
+                color: palette.accentDeep, size: 18,),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -300,7 +300,7 @@ class _SubjectLine extends StatelessWidget {
               children: [
                 Text(line.subjectName,
                     style: context.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w800)),
+                        ?.copyWith(fontWeight: FontWeight.w800),),
                 Text(line.teacherName, style: context.textTheme.bodySmall),
               ],
             ),

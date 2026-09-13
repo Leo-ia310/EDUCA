@@ -74,7 +74,7 @@ final studentAssignmentsProvider =
 });
 
 List<Assignment> _applyFilters(
-    List<Assignment> list, AssignmentsFilter filter) {
+    List<Assignment> list, AssignmentsFilter filter,) {
   final now = DateTime.now();
   Iterable<Assignment> filtered = list;
   if (filter.kind != null) {
@@ -90,7 +90,7 @@ List<Assignment> _applyFilters(
   if (text.isNotEmpty) {
     filtered = filtered.where((a) =>
         a.title.toLowerCase().contains(text) ||
-        a.subjectName.toLowerCase().contains(text));
+        a.subjectName.toLowerCase().contains(text),);
   }
   return filtered.toList();
 }

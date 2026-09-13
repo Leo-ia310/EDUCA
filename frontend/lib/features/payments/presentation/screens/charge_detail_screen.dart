@@ -83,7 +83,7 @@ class ChargeDetailScreen extends ConsumerWidget {
                     Divider(
                         color: Theme.of(context)
                             .dividerColor
-                            .withValues(alpha: 0.5)),
+                            .withValues(alpha: 0.5),),
                     _KV(
                       label: charge.status == ChargeStatus.paid
                           ? 'Total pagado'
@@ -158,7 +158,7 @@ class _Header extends StatelessWidget {
                   size: 16,
                   color: charge.status == ChargeStatus.paid
                       ? const Color(0xFF34401C)
-                      : Colors.white),
+                      : Colors.white,),
               const SizedBox(width: 4),
               Text(
                 charge.studentName,
@@ -175,7 +175,7 @@ class _Header extends StatelessWidget {
                   size: 16,
                   color: charge.status == ChargeStatus.paid
                       ? const Color(0xFF34401C)
-                      : Colors.white),
+                      : Colors.white,),
               const SizedBox(width: 4),
               Text(
                 fmt.format(charge.dueDate),

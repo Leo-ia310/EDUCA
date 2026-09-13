@@ -232,7 +232,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               final classId =
                   int.tryParse(state.pathParameters['classId'] ?? '') ?? 0;
               final studentId = int.tryParse(
-                      state.uri.queryParameters['studentId'] ?? '') ??
+                      state.uri.queryParameters['studentId'] ?? '',) ??
                   1001;
               return SubjectGradesScreen(
                 studentId: studentId,

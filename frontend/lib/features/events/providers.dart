@@ -40,7 +40,7 @@ final upcomingEventsViewProvider =
       .select('title, description, start_at, audience, type')
       .eq('institution_id', auth.institution!.id)
       .gte('start_at',
-          DateTime.now().subtract(const Duration(days: 1)).toIso8601String())
+          DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),)
       .order('start_at');
   return (rows as List).map((r) {
     final m = r as Map<String, dynamic>;

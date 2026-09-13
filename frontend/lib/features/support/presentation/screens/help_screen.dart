@@ -81,7 +81,7 @@ class HelpScreen extends StatelessWidget {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(faq.$2,
-                              style: context.textTheme.bodyMedium),
+                              style: context.textTheme.bodyMedium,),
                         ),
                       ],
                     ),
@@ -118,7 +118,7 @@ class HelpScreen extends StatelessWidget {
                   color:
                       Theme.of(context).dividerColor.withValues(alpha: 0.5),
                 ),
-                _ContactTile(
+                const _ContactTile(
                   icon: Icons.schedule_outlined,
                   label: 'Horario de atención',
                   value: 'Lun a Vie · 8:00 – 17:00',
@@ -168,7 +168,7 @@ class _ContactTile extends StatelessWidget {
       leading: Icon(icon, color: context.palette.textMuted),
       title: Text(label,
           style: context.textTheme.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700)),
+              ?.copyWith(fontWeight: FontWeight.w700),),
       subtitle: Text(value),
       trailing:
           onTap != null ? const Icon(Icons.copy_rounded, size: 18) : null,

@@ -57,11 +57,11 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
               for (final c in _classes)
                 ListTile(
                   leading: Icon(Icons.class_outlined,
-                      color: context.palette.accentDeep),
+                      color: context.palette.accentDeep,),
                   title: Text(c),
                   trailing: _assignments[teacher.name] == c
                       ? Icon(Icons.check_circle,
-                          color: context.palette.success)
+                          color: context.palette.success,)
                       : null,
                   onTap: () => Navigator.of(ctx).pop(c),
                 ),
@@ -123,7 +123,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
                             Text(
                               t.name,
                               style: context.textTheme.titleSmall?.copyWith(
-                                  color: s.ink, fontWeight: FontWeight.w800),
+                                  color: s.ink, fontWeight: FontWeight.w800,),
                             ),
                             Text(
                               t.subject,
@@ -134,7 +134,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
                               const SizedBox(height: 4),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
+                                    horizontal: 8, vertical: 2,),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.6),
                                   borderRadius: BorderRadius.circular(Radii.pill),
@@ -168,7 +168,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
                   ),
                 ),
               );
-            }),
+            },),
           const SizedBox(height: 24),
         ],
       ),

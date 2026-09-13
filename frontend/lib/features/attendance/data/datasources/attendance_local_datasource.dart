@@ -56,7 +56,7 @@ class AttendanceLocalDataSource {
         .where((r) =>
             r.classId == classId &&
             r.recordedAtMs >= dayStart &&
-            r.recordedAtMs <= dayEnd)
+            r.recordedAtMs <= dayEnd,)
         .toList();
   }
 

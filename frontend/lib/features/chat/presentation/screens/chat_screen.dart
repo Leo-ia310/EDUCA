@@ -79,7 +79,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Conversación silenciada.')),
+                              content: Text('Conversación silenciada.'),),
                         );
                       },
                     ),
@@ -95,7 +95,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Reporte enviado a coordinación.')),
+                              content: Text('Reporte enviado a coordinación.'),),
                         );
                       },
                     ),

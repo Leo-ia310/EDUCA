@@ -96,7 +96,7 @@ class AssignmentCard extends StatelessWidget {
                           const Spacer(),
                           if (studentStatus != null)
                             SubmissionStatusChip(
-                                status: studentStatus!, onPastel: true),
+                                status: studentStatus!, onPastel: true,),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -121,7 +121,7 @@ class AssignmentCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.calendar_today_rounded,
-                              size: 14, color: inkMuted),
+                              size: 14, color: inkMuted,),
                           const SizedBox(width: 4),
                           Text(
                             'Entrega ${fmt.format(assignment.dueAt)}',
@@ -210,7 +210,7 @@ class AssignmentCard extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.calendar_today_rounded,
-                  size: 14, color: palette.textMuted),
+                  size: 14, color: palette.textMuted,),
               const SizedBox(width: 4),
               Text(
                 'Entrega ${fmt.format(assignment.dueAt)}',
@@ -243,7 +243,7 @@ class AssignmentCard extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.attach_file_rounded,
-                    size: 14, color: palette.textMuted),
+                    size: 14, color: palette.textMuted,),
                 const SizedBox(width: 4),
                 Text(
                   '${assignment.attachments.length} archivo${assignment.attachments.length == 1 ? '' : 's'}',
@@ -321,7 +321,7 @@ class _ProgressBar extends StatelessWidget {
             ),
             Text(count,
                 style: context.textTheme.labelSmall
-                    ?.copyWith(fontWeight: FontWeight.w800, color: color)),
+                    ?.copyWith(fontWeight: FontWeight.w800, color: color),),
           ],
         ),
         const SizedBox(height: 4),

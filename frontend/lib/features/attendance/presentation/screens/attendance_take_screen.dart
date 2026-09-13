@@ -83,6 +83,8 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
           ),
         ],
       ),
+      bottomNav: null,
+      fab: null,
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -113,8 +115,6 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
           ],
         ),
       ),
-      bottomNav: null,
-      fab: null,
     );
   }
 }
@@ -311,7 +311,7 @@ class _StudentTile extends StatelessWidget {
                 ),
                 if (row.student.studentCode != null)
                   Text(row.student.studentCode!,
-                      style: context.textTheme.bodySmall),
+                      style: context.textTheme.bodySmall,),
               ],
             ),
           ),
@@ -321,7 +321,7 @@ class _StudentTile extends StatelessWidget {
               child: Tooltip(
                 message: 'Pendiente de guardar',
                 child: Icon(Icons.cloud_off_outlined,
-                    size: 14, color: palette.warning),
+                    size: 14, color: palette.warning,),
               ),
             ),
           PopupMenuButton<AttendanceStatus>(
@@ -427,7 +427,7 @@ class _FinishedSheet extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.check_circle_rounded,
-                    color: palette.success, size: 56),
+                    color: palette.success, size: 56,),
               ).center,
               const SizedBox(height: 16),
               Text(
@@ -474,7 +474,7 @@ class _FinishedSheet extends StatelessWidget {
 
 class _SummaryStat extends StatelessWidget {
   const _SummaryStat(
-      {required this.label, required this.value, required this.color});
+      {required this.label, required this.value, required this.color,});
   final String label;
   final String value;
   final Color color;

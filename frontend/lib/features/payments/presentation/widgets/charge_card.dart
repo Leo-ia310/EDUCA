@@ -108,7 +108,7 @@ class ChargeCard extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.warning_amber_rounded,
-                    size: 14, color: palette.warning),
+                    size: 14, color: palette.warning,),
                 const SizedBox(width: 4),
                 Text(
                   'Incluye mora ${Money.format(charge.lateFee, charge.currencyCode)}',

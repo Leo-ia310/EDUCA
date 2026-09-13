@@ -59,7 +59,7 @@ class SupabaseAuthRepository implements AuthRepository {
       if (me == null) {
         await _client.auth.signOut();
         throw const AuthFailure(
-            'Tu usuario no pertenece a este colegio.');
+            'Tu usuario no pertenece a este colegio.',);
       }
 
       final roleCodes = (me['user_roles'] as List? ?? const [])

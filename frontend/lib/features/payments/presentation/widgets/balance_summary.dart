@@ -102,7 +102,7 @@ class BalanceSummary extends StatelessWidget {
                     onPressed: onSeeHistory,
                     icon: Icon(Icons.history_rounded, color: onBg),
                     label: Text('Historial',
-                        style: TextStyle(color: onBg)),
+                        style: TextStyle(color: onBg),),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: onBg.withValues(alpha: 0.3)),
                     ),

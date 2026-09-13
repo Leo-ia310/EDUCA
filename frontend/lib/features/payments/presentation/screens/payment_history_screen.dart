@@ -72,9 +72,9 @@ class PaymentHistoryScreen extends ConsumerWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                                color: s.vivid, shape: BoxShape.circle),
+                                color: s.vivid, shape: BoxShape.circle,),
                             child: const Icon(Icons.check_circle_rounded,
-                                color: Colors.white),
+                                color: Colors.white,),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -84,7 +84,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                                 Text(p.chargeConcept,
                                     style: context.textTheme.titleSmall?.copyWith(
                                         color: s.ink,
-                                        fontWeight: FontWeight.w800)),
+                                        fontWeight: FontWeight.w800,),),
                                 Text(
                                   '${p.method.label} · ${fmt.format(p.paidAt)}',
                                   style: context.textTheme.bodySmall
@@ -108,7 +108,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                                horizontal: 8, vertical: 3,),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(Radii.pill),
@@ -126,7 +126,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                             onPressed: () => _openReceipt(context, ref, p),
                             style: TextButton.styleFrom(foregroundColor: s.ink),
                             icon: const Icon(Icons.picture_as_pdf_outlined,
-                                size: 18),
+                                size: 18,),
                             label: const Text('Ver recibo'),
                           ),
                         ],
@@ -143,7 +143,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
   }
 
   Future<void> _openReceipt(
-      BuildContext context, WidgetRef ref, Payment payment) async {
+      BuildContext context, WidgetRef ref, Payment payment,) async {
     final repo = ref.read(paymentsRepositoryProvider);
     final charge = await repo.chargeById(payment.chargeId);
     if (charge == null) return;

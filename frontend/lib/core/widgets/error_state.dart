@@ -21,7 +21,7 @@ class ErrorStateView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.error_outline_rounded,
-                color: context.palette.danger, size: 56),
+                color: context.palette.danger, size: 56,),
             const SizedBox(height: 12),
             Text(
               message,

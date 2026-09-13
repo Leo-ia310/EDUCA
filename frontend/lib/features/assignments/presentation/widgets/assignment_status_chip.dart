@@ -7,7 +7,7 @@ import '../../domain/entities.dart';
 /// superficie pastel ([onPastel]) usa fondo blanco sólido para que la píldora
 /// resalte sin lavarse contra el tinte de la tarjeta.
 Widget _statusPill(BuildContext context, Color color, String label,
-    {required bool onPastel}) {
+    {required bool onPastel,}) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(

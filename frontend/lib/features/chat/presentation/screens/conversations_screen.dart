@@ -82,7 +82,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                           (c.lastMessage?.content
                                   ?.toLowerCase()
                                   .contains(_query) ??
-                              false)).toList();
+                              false),).toList();
                   if (filtered.isEmpty) {
                     return EmptyState(
                       icon: Icons.forum_outlined,

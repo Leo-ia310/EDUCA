@@ -62,7 +62,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   Icon(Icons.mark_email_read_outlined, size: 18),
                   SizedBox(width: 8),
                   Text('Marcar todas leídas'),
-                ]),
+                ],),
               ),
               PopupMenuItem(
                 value: 'clear',
@@ -70,7 +70,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   Icon(Icons.delete_sweep_outlined, size: 18),
                   SizedBox(width: 8),
                   Text('Vaciar bandeja'),
-                ]),
+                ],),
               ),
               PopupMenuItem(
                 value: 'simulate',
@@ -78,7 +78,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   Icon(Icons.notifications_active_outlined, size: 18),
                   SizedBox(width: 8),
                   Text('Simular una (demo)'),
-                ]),
+                ],),
               ),
             ],
           ),
@@ -187,7 +187,7 @@ class _FilterBar extends StatelessWidget {
             onTap: () => onSelect(null),
           ),
           for (final ch in NotificationChannel.values.where(
-              (c) => c != NotificationChannel.system))
+              (c) => c != NotificationChannel.system,))
             _Chip(
               label: ch.title,
               icon: ch.icon,
@@ -233,7 +233,7 @@ class _Chip extends StatelessWidget {
                     size: 16,
                     color: selected
                         ? Colors.white
-                        : palette.textMuted),
+                        : palette.textMuted,),
                 const SizedBox(width: 6),
               ],
               Text(

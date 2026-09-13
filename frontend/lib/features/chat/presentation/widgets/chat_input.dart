@@ -214,7 +214,7 @@ class _PendingAttachment extends StatelessWidget {
                 child: InkWell(
                   onTap: onRemove,
                   child: Icon(Icons.close_rounded,
-                      size: 18, color: palette.textMuted),
+                      size: 18, color: palette.textMuted,),
                 ),
               ),
           ],

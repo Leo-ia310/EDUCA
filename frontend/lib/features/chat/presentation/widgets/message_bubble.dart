@@ -68,7 +68,7 @@ class MessageBubble extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (message.attachment != null) _AttachmentBlock(
-                    attachment: message.attachment!, isMine: isMine),
+                    attachment: message.attachment!, isMine: isMine,),
                 if (message.hasText)
                   Padding(
                     padding: message.attachment != null

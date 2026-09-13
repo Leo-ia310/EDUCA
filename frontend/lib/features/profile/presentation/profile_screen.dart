@@ -148,7 +148,7 @@ class ProfileScreen extends ConsumerWidget {
             },
             icon: Icon(Icons.logout, color: palette.danger),
             label: Text('Cerrar sesión',
-                style: TextStyle(color: palette.danger)),
+                style: TextStyle(color: palette.danger),),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: palette.danger.withValues(alpha: 0.4)),
             ),
@@ -176,7 +176,7 @@ class _ProfileAction extends StatelessWidget {
       leading: Icon(icon, color: context.palette.textMuted),
       title: Text(label,
           style: context.textTheme.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700)),
+              ?.copyWith(fontWeight: FontWeight.w700),),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
     );

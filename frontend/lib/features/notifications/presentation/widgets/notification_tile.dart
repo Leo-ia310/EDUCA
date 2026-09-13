@@ -41,7 +41,7 @@ class NotificationTile extends StatelessWidget {
                   decoration:
                       BoxDecoration(color: s.vivid, shape: BoxShape.circle),
                   child: Icon(notification.channel.icon,
-                      color: Colors.white, size: 20),
+                      color: Colors.white, size: 20,),
                 ),
                 if (unread)
                   Positioned(
@@ -103,7 +103,7 @@ class NotificationTile extends StatelessWidget {
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                        horizontal: 8, vertical: 3,),
                     decoration: BoxDecoration(
                       color: s.surface,
                       borderRadius: BorderRadius.circular(Radii.pill),

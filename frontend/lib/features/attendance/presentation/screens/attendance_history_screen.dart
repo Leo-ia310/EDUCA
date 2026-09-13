@@ -105,7 +105,7 @@ class _SyncControls extends ConsumerWidget {
               borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(Icons.cloud_sync_outlined,
-                color: palette.accentDeep, size: 20),
+                color: palette.accentDeep, size: 20,),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -126,7 +126,7 @@ class _SyncControls extends ConsumerWidget {
                   )
                 else
                   Text('Sin sincronizar todavía',
-                      style: context.textTheme.bodySmall),
+                      style: context.textTheme.bodySmall,),
               ],
             ),
           ),

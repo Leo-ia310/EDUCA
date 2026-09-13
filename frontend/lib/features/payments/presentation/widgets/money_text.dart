@@ -29,7 +29,7 @@ class Money {
 
 class MoneyText extends StatelessWidget {
   const MoneyText(
-      {super.key, required this.amount, required this.currencyCode, this.style});
+      {super.key, required this.amount, required this.currencyCode, this.style,});
   final double amount;
   final String currencyCode;
   final TextStyle? style;

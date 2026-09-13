@@ -28,7 +28,7 @@ class ConversationAvatar extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Icon(Icons.groups_rounded,
-            color: Colors.white, size: size * 0.55),
+            color: Colors.white, size: size * 0.55,),
       );
     }
     final other = conversation.counterpart;

@@ -58,7 +58,7 @@ const Color _pastelInk = Color(0xFF232A33);
 /// círculo [vivid] es idéntico en ambos temas. En widgets prefiere
 /// `context.pastel(base)`, que toma el brillo del tema automáticamente.
 PastelSurface pastelSurface(Color base,
-    {Brightness brightness = Brightness.light}) {
+    {Brightness brightness = Brightness.light,}) {
   final hsl = HSLColor.fromColor(base);
   final vivid = hsl
       .withSaturation(hsl.saturation.clamp(0.5, 1.0))

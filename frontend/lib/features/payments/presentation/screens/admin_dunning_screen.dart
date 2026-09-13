@@ -104,7 +104,7 @@ class AdminDunningScreen extends ConsumerWidget {
                                                     ?.copyWith(
                                                         color: s.ink,
                                                         fontWeight:
-                                                            FontWeight.w800)),
+                                                            FontWeight.w800,),),
                                             Text(
                                               '${b.overdueCount} cargo${b.overdueCount == 1 ? '' : 's'} vencido${b.overdueCount == 1 ? '' : 's'}',
                                               style: context.textTheme.bodySmall
@@ -130,7 +130,7 @@ class AdminDunningScreen extends ConsumerWidget {
                                               style: context
                                                   .textTheme.labelSmall
                                                   ?.copyWith(
-                                                      color: s.inkMuted)),
+                                                      color: s.inkMuted,),),
                                         ],
                                       ),
                                     ],
@@ -138,7 +138,7 @@ class AdminDunningScreen extends ConsumerWidget {
                                 ),
                               ),
                             );
-                          }),
+                          },),
                         ),
                     ],
                   );
@@ -175,7 +175,7 @@ class _MetricsBlock extends StatelessWidget {
                   style: context.textTheme.labelMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w700,
-                  )),
+                  ),),
               const SizedBox(height: 6),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -303,7 +303,7 @@ class _PastelMetric extends StatelessWidget {
           const SizedBox(height: 10),
           child,
           Text(label,
-              style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted)),
+              style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),),
         ],
       ),
     );

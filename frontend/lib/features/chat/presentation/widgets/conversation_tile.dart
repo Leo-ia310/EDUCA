@@ -121,7 +121,7 @@ class ConversationTile extends StatelessWidget {
                             Container(
                               margin: const EdgeInsets.only(left: 8),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                                  horizontal: 8, vertical: 2,),
                               constraints: const BoxConstraints(minWidth: 22),
                               decoration: BoxDecoration(
                                 color: s.vivid,

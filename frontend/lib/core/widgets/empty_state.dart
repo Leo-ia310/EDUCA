@@ -38,7 +38,7 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(title,
                 style: context.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+                    ?.copyWith(fontWeight: FontWeight.w700),),
             if (subtitle != null) ...[
               const SizedBox(height: 6),
               Text(

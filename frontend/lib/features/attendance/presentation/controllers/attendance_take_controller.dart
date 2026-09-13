@@ -33,7 +33,7 @@ class AttendanceTakeState {
       .where((r) =>
           r.status == AttendanceStatus.present ||
           r.status == AttendanceStatus.excused ||
-          r.status == AttendanceStatus.permission)
+          r.status == AttendanceStatus.permission,)
       .length;
   int get absent =>
       rows.where((r) => r.status == AttendanceStatus.absent).length;

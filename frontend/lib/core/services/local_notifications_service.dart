@@ -49,7 +49,7 @@ class LocalNotificationsService {
         ch.title,
         description: ch.description,
         importance: _importanceFor(ch),
-      ));
+      ),);
     }
 
     _initialized = true;

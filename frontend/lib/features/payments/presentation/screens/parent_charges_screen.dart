@@ -88,7 +88,7 @@ class ParentChargesScreen extends ConsumerWidget {
     final pending = charges
         .where((c) =>
             (c.status == ChargeStatus.pending || c.status == ChargeStatus.partial) &&
-            !c.isOverdue)
+            !c.isOverdue,)
         .toList();
     final paid = charges.where((c) => c.status == ChargeStatus.paid).toList();
 
@@ -107,7 +107,7 @@ class ParentChargesScreen extends ConsumerWidget {
                     ctx.push('${Routes.payments}/${c.id}'),
               ),
             );
-          }),
+          },),
         ],
         const SizedBox(height: 12),
       ];

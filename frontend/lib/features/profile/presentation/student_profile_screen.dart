@@ -235,7 +235,7 @@ class _NotificationCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.textTheme.titleSmall?.copyWith(
-                          color: s.ink, fontWeight: FontWeight.w800),
+                          color: s.ink, fontWeight: FontWeight.w800,),
                     ),
                     const SizedBox(height: 2),
                     Text(

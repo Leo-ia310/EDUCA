@@ -66,7 +66,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
         data: (a) {
           if (a == null) {
             return const EmptyState(
-                icon: Icons.error_outline, title: 'No encontrada');
+                icon: Icons.error_outline, title: 'No encontrada',);
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +78,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 EduCard(
                   child: Text(a.description!,
-                      style: context.textTheme.bodyMedium),
+                      style: context.textTheme.bodyMedium,),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -87,7 +87,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 EduCard(
                   child: Text(a.instructions!,
-                      style: context.textTheme.bodyMedium),
+                      style: context.textTheme.bodyMedium,),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -340,7 +340,7 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
               child: Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
-          )),
+          ),),
           error: (e, _) => EduCard(child: Text('$e')),
           data: (existing) {
             if (existing?.status == SubmissionStatus.graded) {
@@ -420,10 +420,10 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                                 width: 14,
                                 height: 14,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2))
+                                    strokeWidth: 2,),)
                             : const Icon(Icons.upload_file_rounded),
                         label: Text(
-                            state.uploading ? 'Subiendo…' : 'Adjuntar'),
+                            state.uploading ? 'Subiendo…' : 'Adjuntar',),
                       ),
                       const Spacer(),
                       FilledButton.icon(
@@ -452,14 +452,14 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                             ? 'Enviando…'
                             : (existing == null
                                 ? 'Enviar entrega'
-                                : 'Reemplazar entrega')),
+                                : 'Reemplazar entrega'),),
                       ),
                     ],
                   ),
                   if (state.error != null) ...[
                     const SizedBox(height: 8),
                     Text(state.error!,
-                        style: TextStyle(color: palette.danger)),
+                        style: TextStyle(color: palette.danger),),
                   ],
                 ],
               ),
@@ -494,7 +494,7 @@ class _GradedView extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.workspace_premium_rounded,
-                  color: Colors.white, size: 28),
+                  color: Colors.white, size: 28,),
               const SizedBox(width: 8),
               Text(
                 'Calificada',

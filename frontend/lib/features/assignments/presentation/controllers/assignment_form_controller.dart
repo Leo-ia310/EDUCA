@@ -154,7 +154,7 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
         allowLate: state.allowLate,
         published: state.published,
         attachments: state.attachments,
-      ));
+      ),);
       state = state.copyWith(saving: false);
       return created;
     } catch (e) {

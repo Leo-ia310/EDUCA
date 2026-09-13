@@ -59,12 +59,12 @@ class StudentAssignmentsScreen extends ConsumerWidget {
             final pending = items
                 .where((a) =>
                     a.statusForNow(now) == AssignmentStatus.open ||
-                    a.statusForNow(now) == AssignmentStatus.dueSoon)
+                    a.statusForNow(now) == AssignmentStatus.dueSoon,)
                 .toList();
             final past = items
                 .where((a) =>
                     a.statusForNow(now) == AssignmentStatus.overdue ||
-                    a.statusForNow(now) == AssignmentStatus.closed)
+                    a.statusForNow(now) == AssignmentStatus.closed,)
                 .toList();
             return RefreshIndicator(
               color: palette.accentDeep,
@@ -120,7 +120,7 @@ class _StudentTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mine = ref.watch(mySubmissionProvider(
-        (assignmentId: assignment.id, studentId: studentId)));
+        (assignmentId: assignment.id, studentId: studentId),),);
     final status = mine.asData?.value?.status;
     final score = mine.asData?.value?.score;
     final done = ref.watch(tasksDoneProvider).contains(assignment.id);

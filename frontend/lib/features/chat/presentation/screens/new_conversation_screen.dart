@@ -81,11 +81,11 @@ class _NewConversationScreenState
                           leading: UserAvatar(name: c.name, size: 40),
                           title: Text(c.name,
                               style: context.textTheme.titleSmall
-                                  ?.copyWith(fontWeight: FontWeight.w800)),
+                                  ?.copyWith(fontWeight: FontWeight.w800),),
                           subtitle: Text(_roleLabel(c.role),
-                              style: context.textTheme.bodySmall),
+                              style: context.textTheme.bodySmall,),
                           trailing: Icon(Icons.chat_bubble_outline,
-                              color: palette.accentDeep),
+                              color: palette.accentDeep,),
                           onTap: () async {
                             final repo = ref.read(chatRepositoryProvider);
                             final conv = await repo.ensureIndividual(

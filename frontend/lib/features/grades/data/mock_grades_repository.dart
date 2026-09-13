@@ -121,7 +121,7 @@ class MockGradesRepository implements GradesRepository {
         periodGrades: periodGrades,
         periods: periods,
         scale: s,
-      ));
+      ),);
     }
     return result;
   }
@@ -153,7 +153,7 @@ class MockGradesRepository implements GradesRepository {
         finalScore: score,
         qualitativeLabel: s.labelFor(score),
         passed: s.isPassing(score),
-      ));
+      ),);
     }
     final overall = targetPeriod == null
         ? _calc.overallAverage(performances)
@@ -194,7 +194,7 @@ class MockGradesRepository implements GradesRepository {
         final g = _grades.firstWhere(
           (gg) => gg.studentId == id && gg.evaluationId == e.id,
           orElse: () => const GradeEntry(
-              evaluationId: '', studentId: -1, rawScore: -1),
+              evaluationId: '', studentId: -1, rawScore: -1,),
         );
         grades[id]![e.id] = g.studentId == -1 ? null : g.rawScore;
       }
@@ -203,7 +203,7 @@ class MockGradesRepository implements GradesRepository {
       evaluations: evaluations,
       students: studentIds
           .map((id) =>
-              (studentId: id, name: AssignmentsMockSeed.studentNames[id]!))
+              (studentId: id, name: AssignmentsMockSeed.studentNames[id]!),)
           .toList(),
       grades: grades,
     );
