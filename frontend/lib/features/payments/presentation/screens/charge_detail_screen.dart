@@ -39,7 +39,7 @@ class ChargeDetailScreen extends ConsumerWidget {
         data: (charge) {
           if (charge == null) {
             return const EmptyState(
-              icon: Icons.receipt_long_outlined,
+              icon: Icons.receipt_long_rounded,
               title: 'Cargo no encontrado',
             );
           }

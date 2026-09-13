@@ -276,7 +276,7 @@ class _SuccessView extends ConsumerWidget {
             onPressed: () => context.push(
               '${Routes.paymentsReceipt}?paymentId=${payment.id}&studentId=${payment.studentName}',
             ),
-            icon: const Icon(Icons.picture_as_pdf_outlined),
+            icon: const Icon(Icons.picture_as_pdf_rounded),
             label: const Text('Ver recibo en PDF'),
           ),
           const SizedBox(height: 10),

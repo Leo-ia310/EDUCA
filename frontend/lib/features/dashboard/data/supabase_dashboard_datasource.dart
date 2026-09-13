@@ -664,11 +664,11 @@ class _ChildRef {
 IconData iconForSubject(String name) {
   final n = name.toLowerCase();
   if (n.contains('matem')) return Icons.calculate_rounded;
-  if (n.contains('histor')) return Icons.account_balance_outlined;
+  if (n.contains('histor')) return Icons.account_balance_rounded;
   if (n.contains('fís') || n.contains('fis') || n.contains('cuánt')) {
-    return Icons.science_outlined;
+    return Icons.science_rounded;
   }
-  if (n.contains('biolog') || n.contains('celul')) return Icons.biotech_outlined;
+  if (n.contains('biolog') || n.contains('celul')) return Icons.biotech_rounded;
   if (n.contains('litera') || n.contains('lengua')) return Icons.menu_book_rounded;
   if (n.contains('geograf')) return Icons.public_rounded;
   if (n.contains('geometr')) return Icons.architecture_rounded;

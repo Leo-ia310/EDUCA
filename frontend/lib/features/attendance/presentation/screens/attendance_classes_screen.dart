@@ -70,7 +70,7 @@ class AttendanceClassesScreen extends ConsumerWidget {
                 data: (list) {
                   if (list.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.event_busy_outlined,
+                      icon: Icons.event_busy_rounded,
                       title: 'Sin clases hoy',
                       subtitle: 'No tienes clases programadas para hoy.',
                     );

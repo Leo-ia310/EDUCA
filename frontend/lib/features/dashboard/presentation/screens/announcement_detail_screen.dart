@@ -48,7 +48,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
                       color: palette.accentDeep.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(Radii.md),
                     ),
-                    child: Icon(Icons.campaign_outlined,
+                    child: Icon(Icons.campaign_rounded,
                         color: palette.accentDeep, size: 26,),
                   ),
                   const SizedBox(height: 14),

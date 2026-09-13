@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 /// para que el usuario pueda silenciar por tipo desde Ajustes del sistema).
 enum NotificationChannel {
   message('message', 'Mensajes', 'Mensajes del chat', Icons.chat_bubble_outline),
-  task('task', 'Tareas', 'Nuevas tareas o vencimientos', Icons.assignment_outlined),
-  grade('grade', 'Calificaciones', 'Notas publicadas', Icons.grade_outlined),
-  attendance('attendance', 'Asistencia', 'Ausencias y avisos', Icons.event_available_outlined),
-  announcement('announcement', 'Comunicados', 'Avisos institucionales', Icons.campaign_outlined),
-  payment('payment', 'Pagos', 'Cargos y recibos', Icons.payments_outlined),
-  system('system', 'Sistema', 'Alertas técnicas', Icons.info_outlined);
+  task('task', 'Tareas', 'Nuevas tareas o vencimientos', Icons.assignment_rounded),
+  grade('grade', 'Calificaciones', 'Notas publicadas', Icons.grade_rounded),
+  attendance('attendance', 'Asistencia', 'Ausencias y avisos', Icons.event_available_rounded),
+  announcement('announcement', 'Comunicados', 'Avisos institucionales', Icons.campaign_rounded),
+  payment('payment', 'Pagos', 'Cargos y recibos', Icons.payments_rounded),
+  system('system', 'Sistema', 'Alertas técnicas', Icons.info_rounded);
 
   const NotificationChannel(this.code, this.title, this.description, this.icon);
   final String code;

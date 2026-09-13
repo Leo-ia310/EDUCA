@@ -59,7 +59,7 @@ class SubjectGradesScreen extends ConsumerWidget {
               data: (data) {
                 if (data.evaluations.isEmpty) {
                   return const EmptyState(
-                    icon: Icons.assessment_outlined,
+                    icon: Icons.assessment_rounded,
                     title: 'Sin evaluaciones',
                     subtitle: 'Todavía no hay actividades registradas.',
                   );
@@ -148,8 +148,8 @@ class _EvaluationTile extends StatelessWidget {
             decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
             child: Icon(
               evaluation.kind == 'exam'
-                  ? Icons.fact_check_outlined
-                  : Icons.assignment_outlined,
+                  ? Icons.fact_check_rounded
+                  : Icons.assignment_rounded,
               size: 18,
               color: Colors.white,
             ),

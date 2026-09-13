@@ -121,7 +121,7 @@ class ActivityDetailScreen extends StatelessWidget {
           const SizedBox(height: 22),
           FilledButton.icon(
             onPressed: () => context.push(Routes.assignments),
-            icon: const Icon(Icons.assignment_outlined),
+            icon: const Icon(Icons.assignment_rounded),
             label: const Text('Ver tareas del hijo'),
           ),
           const SizedBox(height: 10),

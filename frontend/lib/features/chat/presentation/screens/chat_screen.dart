@@ -73,7 +73,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.notifications_off_outlined),
+                      leading: const Icon(Icons.notifications_off_rounded),
                       title: const Text('Silenciar conversación'),
                       onTap: () {
                         Navigator.of(ctx).pop();
@@ -89,7 +89,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       onTap: () => Navigator.of(ctx).pop(),
                     ),
                     ListTile(
-                      leading: const Icon(Icons.report_gmailerrorred_outlined),
+                      leading: const Icon(Icons.report_gmailerrorred_rounded),
                       title: const Text('Reportar'),
                       onTap: () {
                         Navigator.of(ctx).pop();
@@ -119,7 +119,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 }
                 if (list.isEmpty) {
                   return const EmptyState(
-                    icon: Icons.forum_outlined,
+                    icon: Icons.forum_rounded,
                     title: 'Empieza la conversación',
                     subtitle: 'Envía el primer mensaje.',
                   );

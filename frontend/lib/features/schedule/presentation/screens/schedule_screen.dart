@@ -102,7 +102,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             const Padding(
               padding: EdgeInsets.only(top: 40),
               child: EmptyState(
-                icon: Icons.event_available_outlined,
+                icon: Icons.event_available_rounded,
                 title: 'Día libre',
                 subtitle: 'No hay clases programadas para este día.',
               ),
@@ -397,7 +397,7 @@ class _SlotCard extends StatelessWidget {
               const SizedBox(height: 16),
               _DetailRow(icon: Icons.schedule, text: '${slot.start} – ${slot.end}'),
               _DetailRow(icon: Icons.person_outline, text: slot.teacher),
-              _DetailRow(icon: Icons.place_outlined, text: slot.room),
+              _DetailRow(icon: Icons.place_rounded, text: slot.room),
             ],
           ),
         ),

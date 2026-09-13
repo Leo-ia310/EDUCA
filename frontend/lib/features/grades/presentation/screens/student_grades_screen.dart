@@ -46,7 +46,7 @@ class StudentGradesScreen extends ConsumerWidget {
           data: (perfs) {
             if (perfs.isEmpty) {
               return const EmptyState(
-                icon: Icons.school_outlined,
+                icon: Icons.school_rounded,
                 title: 'Sin notas todavía',
                 subtitle: 'Cuando el maestro registre notas, aparecerán aquí.',
               );

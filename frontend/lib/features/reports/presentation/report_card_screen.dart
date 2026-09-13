@@ -46,7 +46,7 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
         actions: [
           card.maybeWhen(
             data: (data) => IconButton(
-              icon: const Icon(Icons.picture_as_pdf_outlined),
+              icon: const Icon(Icons.picture_as_pdf_rounded),
               tooltip: 'Ver PDF',
               onPressed: () => _openPdf(data),
             ),
@@ -54,7 +54,7 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
           ),
           card.maybeWhen(
             data: (data) => IconButton(
-              icon: const Icon(Icons.ios_share_outlined),
+              icon: const Icon(Icons.ios_share_rounded),
               tooltip: 'Compartir',
               onPressed: () => _sharePdf(data),
             ),

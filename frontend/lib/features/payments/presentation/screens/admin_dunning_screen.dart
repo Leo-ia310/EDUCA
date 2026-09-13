@@ -67,7 +67,7 @@ class AdminDunningScreen extends ConsumerWidget {
                       .toList();
                   if (overdue.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.verified_outlined,
+                      icon: Icons.verified_rounded,
                       title: '¡Sin mora!',
                       subtitle: 'Todos los estudiantes están al día.',
                     );
@@ -244,7 +244,7 @@ class _MetricsBlock extends StatelessWidget {
             Expanded(
               child: _PastelMetric(
                 color: palette.warning,
-                icon: Icons.person_off_outlined,
+                icon: Icons.person_off_rounded,
                 label: 'Cargos en mora',
                 child: Text(
                   '${metrics.overdueCount}',

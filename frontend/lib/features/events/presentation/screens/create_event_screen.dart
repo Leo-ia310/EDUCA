@@ -120,7 +120,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                     child: InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'Fecha',
-                        prefixIcon: Icon(Icons.calendar_month_outlined),
+                        prefixIcon: Icon(Icons.calendar_month_rounded),
                       ),
                       child: Text(
                         DateFormat("EEEE d 'de' MMMM y", 'es').format(_date),

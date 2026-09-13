@@ -45,7 +45,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
           data: (list) {
             if (list.isEmpty) {
               return const EmptyState(
-                icon: Icons.receipt_outlined,
+                icon: Icons.receipt_rounded,
                 title: 'Sin pagos registrados',
                 subtitle: 'Cuando realices un pago aparecerá aquí.',
               );
@@ -125,7 +125,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                           TextButton.icon(
                             onPressed: () => _openReceipt(context, ref, p),
                             style: TextButton.styleFrom(foregroundColor: s.ink),
-                            icon: const Icon(Icons.picture_as_pdf_outlined,
+                            icon: const Icon(Icons.picture_as_pdf_rounded,
                                 size: 18,),
                             label: const Text('Ver recibo'),
                           ),

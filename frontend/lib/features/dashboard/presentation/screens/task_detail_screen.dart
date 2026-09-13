@@ -102,7 +102,7 @@ class TaskDetailScreen extends StatelessWidget {
                     color:
                         Theme.of(context).dividerColor.withValues(alpha: 0.5),),
                 _InfoRow(
-                  icon: Icons.event_outlined,
+                  icon: Icons.event_rounded,
                   label: 'Entrega',
                   value: task.dueDate ?? 'Sin fecha',
                 ),

@@ -77,8 +77,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       suffixIcon: IconButton(
                         tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureCurrent
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,),
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,),
                         onPressed: () => setState(
                             () => _obscureCurrent = !_obscureCurrent,),
                       ),
@@ -92,12 +92,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     validator: Validators.password,
                     decoration: InputDecoration(
                       labelText: 'Nueva contraseña',
-                      prefixIcon: const Icon(Icons.lock_reset_outlined),
+                      prefixIcon: const Icon(Icons.lock_reset_rounded),
                       suffixIcon: IconButton(
                         tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureNew
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,),
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,),
                         onPressed: () =>
                             setState(() => _obscureNew = !_obscureNew),
                       ),
@@ -119,12 +119,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     },
                     decoration: InputDecoration(
                       labelText: 'Confirmar nueva contraseña',
-                      prefixIcon: const Icon(Icons.lock_reset_outlined),
+                      prefixIcon: const Icon(Icons.lock_reset_rounded),
                       suffixIcon: IconButton(
                         tooltip: 'Mostrar u ocultar contraseña',
                         icon: Icon(_obscureNew
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,),
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,),
                         onPressed: () =>
                             setState(() => _obscureNew = !_obscureNew),
                       ),

@@ -193,8 +193,8 @@ class _PendingAttachment extends StatelessWidget {
           children: [
             Icon(
               attachment.isImage
-                  ? Icons.image_outlined
-                  : Icons.description_outlined,
+                  ? Icons.image_rounded
+                  : Icons.description_rounded,
               size: 18,
               color: palette.accentDeep,
             ),

@@ -153,7 +153,7 @@ class _AttachmentBlock extends StatelessWidget {
           height: 160,
           color: palette.surfaceAlt,
           alignment: Alignment.center,
-          child: const Icon(Icons.image_outlined, size: 42),
+          child: const Icon(Icons.image_rounded, size: 42),
         ),
       );
     }
@@ -171,7 +171,7 @@ class _AttachmentBlock extends StatelessWidget {
               borderRadius: BorderRadius.circular(Radii.xs),
             ),
             child: Icon(
-              Icons.description_outlined,
+              Icons.description_rounded,
               size: 18,
               color: isMine ? Colors.white : palette.accentDeep,
             ),

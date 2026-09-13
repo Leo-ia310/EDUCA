@@ -11,21 +11,21 @@ class StudentMockData {
       endTime: '09:30',
       subject: 'Matemáticas Avanzadas',
       room: 'Aula 402',
-      icon: Icons.calculate_outlined,
+      icon: Icons.calculate_rounded,
     ),
     ScheduleSlot(
       startTime: '09:45',
       endTime: '11:15',
       subject: 'Historia Universal',
       room: 'Aula 108',
-      icon: Icons.account_balance_outlined,
+      icon: Icons.account_balance_rounded,
     ),
     ScheduleSlot(
       startTime: '11:30',
       endTime: '13:00',
       subject: 'Física Cuántica',
       room: 'Aula 25',
-      icon: Icons.science_outlined,
+      icon: Icons.science_rounded,
     ),
   ];
 

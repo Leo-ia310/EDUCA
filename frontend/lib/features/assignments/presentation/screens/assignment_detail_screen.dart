@@ -51,7 +51,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
         actions: [
           if (role == AppRole.teacher)
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
+              icon: const Icon(Icons.edit_rounded),
               tooltip: 'Editar',
               onPressed: () => context.push(
                 '${Routes.assignments}/$assignmentId/edit',
@@ -255,7 +255,7 @@ class _TeacherActions extends StatelessWidget {
                       minimumSize: const Size(0, 44),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
-                    icon: const Icon(Icons.fact_check_outlined),
+                    icon: const Icon(Icons.fact_check_rounded),
                     label: const Text('Calificar'),
                   ),
                 ],

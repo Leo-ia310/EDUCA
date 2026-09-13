@@ -48,7 +48,7 @@ class StudentAssignmentsScreen extends ConsumerWidget {
           data: (items) {
             if (items.isEmpty) {
               return EmptyState(
-                icon: Icons.task_alt_outlined,
+                icon: Icons.task_alt_rounded,
                 title: 'Todo al día',
                 subtitle: 'No tienes tareas asignadas en este momento.',
                 actionLabel: 'Ver horario',

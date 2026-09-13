@@ -81,7 +81,7 @@ class ChargeCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              Icon(Icons.event_outlined, size: 14, color: s.inkMuted),
+              Icon(Icons.event_rounded, size: 14, color: s.inkMuted),
               const SizedBox(width: 4),
               Text(
                 charge.isOverdue && charge.status != ChargeStatus.paid
@@ -130,19 +130,19 @@ class ChargeCard extends StatelessWidget {
   IconData _iconFor(Charge c) {
     if (c.conceptName.toLowerCase().contains('matrícula') ||
         c.conceptName.toLowerCase().contains('matricula')) {
-      return Icons.school_outlined;
+      return Icons.school_rounded;
     }
     if (c.conceptName.toLowerCase().contains('mensualidad') ||
         c.conceptName.toLowerCase().contains('colegiatura')) {
-      return Icons.calendar_month_outlined;
+      return Icons.calendar_month_rounded;
     }
     if (c.conceptName.toLowerCase().contains('uniforme')) {
-      return Icons.checkroom_outlined;
+      return Icons.checkroom_rounded;
     }
     if (c.conceptName.toLowerCase().contains('libro')) {
-      return Icons.menu_book_outlined;
+      return Icons.menu_book_rounded;
     }
-    return Icons.receipt_long_outlined;
+    return Icons.receipt_long_rounded;
   }
 
   (Color, String) _chipFor(Charge c, AppPalette palette) {

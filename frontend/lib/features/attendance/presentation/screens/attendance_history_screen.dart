@@ -58,7 +58,7 @@ class AttendanceHistoryScreen extends ConsumerWidget {
                 data: (list) {
                   if (list.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.fact_check_outlined,
+                      icon: Icons.fact_check_rounded,
                       title: 'Sin pases registrados',
                       subtitle:
                           'Cuando finalices un pase de asistencia, lo verás aquí.',
@@ -104,7 +104,7 @@ class _SyncControls extends ConsumerWidget {
               color: palette.accentSoft,
               borderRadius: BorderRadius.circular(Radii.sm),
             ),
-            child: Icon(Icons.cloud_sync_outlined,
+            child: Icon(Icons.cloud_sync_rounded,
                 color: palette.accentDeep, size: 20,),
           ),
           const SizedBox(width: 12),

@@ -16,10 +16,10 @@ class AttachmentPill extends StatelessWidget {
   final VoidCallback? onRemove;
 
   IconData get _icon {
-    if (attachment.isImage) return Icons.image_outlined;
-    if (attachment.extension == 'PDF') return Icons.picture_as_pdf_outlined;
-    if (attachment.extension == 'DOCX') return Icons.description_outlined;
-    return Icons.insert_drive_file_outlined;
+    if (attachment.isImage) return Icons.image_rounded;
+    if (attachment.extension == 'PDF') return Icons.picture_as_pdf_rounded;
+    if (attachment.extension == 'DOCX') return Icons.description_rounded;
+    return Icons.insert_drive_file_rounded;
   }
 
   String get _size {

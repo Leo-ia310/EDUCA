@@ -49,7 +49,7 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
                 data: (items) {
                   if (items.isEmpty) {
                     return EmptyState(
-                      icon: Icons.assignment_outlined,
+                      icon: Icons.assignment_rounded,
                       title: 'Sin tareas aún',
                       subtitle:
                           'Crea tu primera tarea o examen con el botón flotante.',

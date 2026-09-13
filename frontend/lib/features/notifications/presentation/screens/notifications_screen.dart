@@ -59,7 +59,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               PopupMenuItem(
                 value: 'read_all',
                 child: Row(children: [
-                  Icon(Icons.mark_email_read_outlined, size: 18),
+                  Icon(Icons.mark_email_read_rounded, size: 18),
                   SizedBox(width: 8),
                   Text('Marcar todas leídas'),
                 ],),
@@ -67,7 +67,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               PopupMenuItem(
                 value: 'clear',
                 child: Row(children: [
-                  Icon(Icons.delete_sweep_outlined, size: 18),
+                  Icon(Icons.delete_sweep_rounded, size: 18),
                   SizedBox(width: 8),
                   Text('Vaciar bandeja'),
                 ],),
@@ -75,7 +75,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               PopupMenuItem(
                 value: 'simulate',
                 child: Row(children: [
-                  Icon(Icons.notifications_active_outlined, size: 18),
+                  Icon(Icons.notifications_active_rounded, size: 18),
                   SizedBox(width: 8),
                   Text('Simular una (demo)'),
                 ],),
@@ -103,7 +103,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       : items.where((n) => n.channel == _filter).toList();
                   if (filtered.isEmpty) {
                     return EmptyState(
-                      icon: Icons.notifications_off_outlined,
+                      icon: Icons.notifications_off_rounded,
                       title: _filter == null
                           ? 'Sin alertas'
                           : 'Sin alertas de ${_filter!.title}',

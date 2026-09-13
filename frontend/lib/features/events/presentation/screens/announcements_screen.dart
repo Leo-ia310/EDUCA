@@ -55,7 +55,7 @@ class AnnouncementsScreen extends ConsumerWidget {
             const Padding(
               padding: EdgeInsets.only(top: 60),
               child: EmptyState(
-                icon: Icons.campaign_outlined,
+                icon: Icons.campaign_rounded,
                 title: 'Sin anuncios',
                 subtitle: 'Aún no se han publicado anuncios.',
               ),

@@ -63,7 +63,7 @@ class ClassDetailScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.meeting_room_outlined,
+                      Icon(Icons.meeting_room_rounded,
                           size: 16, color: context.palette.textMuted,),
                       const SizedBox(width: 6),
                       Text(teacherClass.room,
@@ -78,7 +78,7 @@ class ClassDetailScreen extends StatelessWidget {
           const SectionHeader(title: 'Acciones'),
           const SizedBox(height: 8),
           _Action(
-            icon: Icons.how_to_reg_outlined,
+            icon: Icons.how_to_reg_rounded,
             label: 'Tomar asistencia',
             accent: accent,
             ink: ink,
@@ -94,7 +94,7 @@ class ClassDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _Action(
-            icon: Icons.assignment_outlined,
+            icon: Icons.assignment_rounded,
             label: 'Tareas y exámenes',
             accent: accent,
             ink: ink,

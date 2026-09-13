@@ -5,7 +5,7 @@ import '../theme/app_theme.dart';
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
-    this.icon = Icons.inbox_outlined,
+    this.icon = Icons.inbox_rounded,
     this.title = 'Nada por aquí',
     this.subtitle,
     this.actionLabel,

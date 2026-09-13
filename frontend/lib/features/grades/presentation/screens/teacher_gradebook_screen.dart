@@ -66,7 +66,7 @@ class _TeacherGradebookScreenState
                 data: (matrix) {
                   if (matrix.evaluations.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.assessment_outlined,
+                      icon: Icons.assessment_rounded,
                       title: 'Sin evaluaciones',
                       subtitle:
                           'Crea una tarea o examen para calificar aquí.',

@@ -85,7 +85,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                               false),).toList();
                   if (filtered.isEmpty) {
                     return EmptyState(
-                      icon: Icons.forum_outlined,
+                      icon: Icons.forum_rounded,
                       title: _query.isEmpty
                           ? 'Sin conversaciones'
                           : 'Sin coincidencias',

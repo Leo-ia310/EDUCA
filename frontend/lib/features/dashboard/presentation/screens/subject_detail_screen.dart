@@ -135,14 +135,14 @@ class SubjectDetailScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _PastelRow(
             surface: s,
-            icon: Icons.assignment_outlined,
+            icon: Icons.assignment_rounded,
             label: 'Tareas de la materia',
             onTap: () => context.push(Routes.assignments),
           ),
           const SizedBox(height: 10),
           _PastelRow(
             surface: s,
-            icon: Icons.grade_outlined,
+            icon: Icons.grade_rounded,
             label: 'Calificaciones',
             onTap: () => context.push(Routes.grades),
           ),

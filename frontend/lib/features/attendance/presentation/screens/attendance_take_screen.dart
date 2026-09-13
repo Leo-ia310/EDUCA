@@ -320,7 +320,7 @@ class _StudentTile extends StatelessWidget {
               padding: const EdgeInsets.only(right: 6),
               child: Tooltip(
                 message: 'Pendiente de guardar',
-                child: Icon(Icons.cloud_off_outlined,
+                child: Icon(Icons.cloud_off_rounded,
                     size: 14, color: palette.warning,),
               ),
             ),

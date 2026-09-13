@@ -116,7 +116,7 @@ class ParentChargesScreen extends ConsumerWidget {
     return [
       if (overdue.isEmpty && pending.isEmpty && paid.isEmpty)
         const EmptyState(
-          icon: Icons.receipt_long_outlined,
+          icon: Icons.receipt_long_rounded,
           title: 'Sin cargos',
           subtitle: 'No hay cargos registrados para el estudiante.',
         ),
