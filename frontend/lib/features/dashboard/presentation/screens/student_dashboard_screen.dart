@@ -49,8 +49,6 @@ class StudentDashboardScreen extends ConsumerWidget {
       DateFormat('EEEE', 'es').format(now),
     );
 
-    final classmatesTotal = data.classmates.length + data.classmatesExtra;
-
     return AppScaffold(
       padding: EdgeInsets.zero,
       topSafeArea: false,
@@ -88,55 +86,49 @@ class StudentDashboardScreen extends ConsumerWidget {
               child: StaggeredEntrance(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SectionHeader(title: 'Panel Principal'),
+                  const SizedBox(height: 12),
                   // Grilla de accesos rápidos (tarjetas cuadradas).
                   _HomeTilesGrid(
-            tiles: [
-              _TileData(
-                icon: Icons.note_alt_rounded,
-                title: 'Tareas',
-                color: const Color(0xFFF3993E),
-                value: data.pendingTasks > 0
-                    ? '${data.pendingTasks} pend.'
-                    : 'Al día',
-                onTap: () => context.push(Routes.assignments),
-              ),
-              _TileData(
-                icon: Icons.menu_book_rounded,
-                title: 'Materias',
-                color: const Color(0xFF4C8DF5),
-                value: '${data.subjects.length}',
-                onTap: () => context.push(Routes.subjects),
-              ),
-              _TileData(
-                icon: Icons.grade_rounded,
-                title: 'Notas',
-                color: const Color(0xFF9A6BE0),
-                value: data.averageScore.toStringAsFixed(1),
-                onTap: () => context.push(Routes.grades),
-              ),
-              _TileData(
-                icon: Icons.event_available_rounded,
-                title: 'Asistencia',
-                color: const Color(0xFF34C77A),
-                value: '${(data.attendanceRate * 100).round()}%',
-                // Sin pantalla de alumno todavía: tarjeta inerte por ahora.
-              ),
-              _TileData(
-                icon: Icons.calendar_month_rounded,
-                title: 'Horario',
-                color: const Color(0xFF33B7A0),
-                value: '${data.todaySchedule.length} hoy',
-                onTap: () => context.push(Routes.schedule),
-              ),
-              _TileData(
-                icon: Icons.groups_rounded,
-                title: 'Compañeros',
-                color: const Color(0xFFEC6A9C),
-                value: '$classmatesTotal',
-                // Sin pantalla dedicada todavía: tarjeta inerte por ahora.
-              ),
-            ],
-          ),
+                    tiles: [
+                      _TileData(
+                        icon: Icons.note_alt_rounded,
+                        title: 'Tareas',
+                        color: const Color(0xFFF3993E),
+                        onTap: () => context.push(Routes.assignments),
+                      ),
+                      _TileData(
+                        icon: Icons.menu_book_rounded,
+                        title: 'Materias',
+                        color: const Color(0xFF4C8DF5),
+                        onTap: () => context.push(Routes.subjects),
+                      ),
+                      _TileData(
+                        icon: Icons.grade_rounded,
+                        title: 'Notas',
+                        color: const Color(0xFF9A6BE0),
+                        onTap: () => context.push(Routes.grades),
+                      ),
+                      _TileData(
+                        icon: Icons.event_available_rounded,
+                        title: 'Asistencia',
+                        color: const Color(0xFF34C77A),
+                        onTap: () => context.push(Routes.myAttendance),
+                      ),
+                      _TileData(
+                        icon: Icons.calendar_month_rounded,
+                        title: 'Horario',
+                        color: const Color(0xFF33B7A0),
+                        onTap: () => context.push(Routes.schedule),
+                      ),
+                      _TileData(
+                        icon: Icons.groups_rounded,
+                        title: 'Compañeros',
+                        color: const Color(0xFFEC6A9C),
+                        onTap: () => context.push(Routes.classmates),
+                      ),
+                    ],
+                  ),
           const SizedBox(height: 24),
 
           // Horario de hoy
@@ -203,14 +195,12 @@ class _TileData {
     required this.icon,
     required this.title,
     required this.color,
-    this.value,
     this.onTap,
   });
 
   final IconData icon;
   final String title;
   final Color color;
-  final String? value;
   final VoidCallback? onTap;
 }
 
@@ -239,7 +229,6 @@ class _HomeTilesGrid extends StatelessWidget {
                   icon: t.icon,
                   title: t.title,
                   color: t.color,
-                  value: t.value,
                   onTap: t.onTap,
                 ),
               ),
