@@ -408,53 +408,63 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                       ],
                     ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: state.uploading ? null : _pickFiles,
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(0, 44),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      spacing: 10,
+                      runSpacing: 10,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: state.uploading ? null : _pickFiles,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 44),
+                          ),
+                          icon: state.uploading
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.upload_file_rounded),
+                          label: Text(
+                            state.uploading ? 'Subiendo…' : 'Adjuntar',
+                          ),
                         ),
-                        icon: state.uploading
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2,),)
-                            : const Icon(Icons.upload_file_rounded),
-                        label: Text(
-                            state.uploading ? 'Subiendo…' : 'Adjuntar',),
-                      ),
-                      const Spacer(),
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(0, 44),
-                        ),
-                        onPressed: state.saving
-                            ? null
-                            : () async {
-                                final result =
-                                    await controller.submit();
-                                if (result != null && context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        result.isLate
-                                            ? 'Entregado tarde'
-                                            : '¡Entrega enviada!',
+                        FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 44),
+                          ),
+                          onPressed: state.saving
+                              ? null
+                              : () async {
+                                  final result = await controller.submit();
+                                  if (result != null && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          result.isLate
+                                              ? 'Entregado tarde'
+                                              : '¡Entrega enviada!',
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                }
-                              },
-                        icon: const Icon(Icons.send_rounded),
-                        label: Text(state.saving
-                            ? 'Enviando…'
-                            : (existing == null
-                                ? 'Enviar entrega'
-                                : 'Reemplazar entrega'),),
-                      ),
-                    ],
+                                    );
+                                  }
+                                },
+                          icon: const Icon(Icons.send_rounded),
+                          label: Text(
+                            state.saving
+                                ? 'Enviando…'
+                                : (existing == null
+                                    ? 'Enviar entrega'
+                                    : 'Reemplazar entrega'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   if (state.error != null) ...[
                     const SizedBox(height: 8),
