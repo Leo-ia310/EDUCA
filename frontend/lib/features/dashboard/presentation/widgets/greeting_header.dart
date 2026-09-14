@@ -14,6 +14,7 @@ class AppGreetingHeader extends StatelessWidget {
     required this.name,
     required this.initials,
     required this.dateLabel,
+    this.avatarUrl,
     this.chipIcon,
     this.chipLabel,
     this.notificationsBadge = 0,
@@ -25,6 +26,9 @@ class AppGreetingHeader extends StatelessWidget {
   final String name;
   final String initials;
   final String dateLabel;
+
+  /// Foto del usuario. Si es null o falla la carga, se muestran las iniciales.
+  final String? avatarUrl;
 
   /// Chip de contexto opcional (ícono + texto) bajo el nombre. Cada rol pone su
   /// dato (p. ej. "3 tareas para hoy", "2 avisos nuevos").
@@ -64,13 +68,22 @@ class AppGreetingHeader extends StatelessWidget {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: Text(
-                        initials,
-                        style: context.textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF5B3EA6),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      child: (avatarUrl != null && avatarUrl!.isNotEmpty)
+                          ? ClipOval(
+                              child: Image.network(
+                                avatarUrl!,
+                                width: 54,
+                                height: 54,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, progress) =>
+                                    progress == null
+                                        ? child
+                                        : _initialsLabel(context),
+                                errorBuilder: (_, __, ___) =>
+                                    _initialsLabel(context),
+                              ),
+                            )
+                          : _initialsLabel(context),
                     ),
                     const Spacer(),
                     if (onNotificationsTap != null)
@@ -148,6 +161,13 @@ class AppGreetingHeader extends StatelessWidget {
     );
   }
 
+  Widget _initialsLabel(BuildContext context) => Text(
+        initials,
+        style: context.textTheme.titleLarge?.copyWith(
+          color: const Color(0xFF5B3EA6),
+          fontWeight: FontWeight.w800,
+        ),
+      );
 }
 
 /// Botón de acción circular para el hero (blanco translúcido), con badge.

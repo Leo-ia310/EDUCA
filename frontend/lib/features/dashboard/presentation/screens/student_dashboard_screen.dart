@@ -66,6 +66,10 @@ class StudentDashboardScreen extends ConsumerWidget {
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
                 : '?',
+            // Sin fotos reales: avatar placeholder determinista por usuario
+            // (DiceBear permite CORS, a diferencia de los servicios de rostros).
+            avatarUrl: user.avatarUrl ??
+                'https://api.dicebear.com/9.x/avataaars/png?seed=${user.id}',
             dateLabel: toBeginningOfSentenceCase(
               DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
             ),
