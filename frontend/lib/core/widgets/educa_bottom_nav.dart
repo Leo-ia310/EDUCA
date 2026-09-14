@@ -99,9 +99,9 @@ List<EducaTab> navTabsForRole(AppRole role) {
           route: Routes.studentDashboard,
         ),
         EducaTab(
-          icon: Icons.calendar_today_rounded,
-          label: 'Horario',
-          route: Routes.schedule,
+          icon: Icons.calendar_month_rounded,
+          label: 'Calendario',
+          route: Routes.calendar,
         ),
         messages,
         profile,

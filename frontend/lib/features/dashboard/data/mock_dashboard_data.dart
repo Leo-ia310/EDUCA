@@ -124,6 +124,23 @@ class StudentMockData {
     'Mario Díaz',
   ];
   static const classmatesExtra = 14;
+
+  /// Compañeros del grado con sus indicadores (para la pantalla "Compañeros").
+  static const grade = '4° Grado A';
+  static const classmateList = <Classmate>[
+    Classmate(name: 'Ana López', grade: grade, attendanceRate: 0.98, average: 9.1),
+    Classmate(name: 'Luis Pérez', grade: grade, attendanceRate: 0.92, average: 8.4),
+    Classmate(name: 'Carla Soto', grade: grade, attendanceRate: 0.95, average: 8.9),
+    Classmate(name: 'Mario Díaz', grade: grade, attendanceRate: 0.88, average: 7.6),
+    Classmate(name: 'Sofía Ramírez', grade: grade, attendanceRate: 0.99, average: 9.4),
+    Classmate(name: 'Diego Fuentes', grade: grade, attendanceRate: 0.90, average: 8.0),
+    Classmate(name: 'Valentina Cruz', grade: grade, attendanceRate: 0.97, average: 9.2),
+    Classmate(name: 'Javier Núñez', grade: grade, attendanceRate: 0.85, average: 7.3),
+    Classmate(name: 'Camila Torres', grade: grade, attendanceRate: 0.96, average: 8.7),
+    Classmate(name: 'Andrés Vega', grade: grade, attendanceRate: 0.91, average: 8.2),
+    Classmate(name: 'Lucía Herrera', grade: grade, attendanceRate: 0.94, average: 8.8),
+    Classmate(name: 'Pablo Méndez', grade: grade, attendanceRate: 0.89, average: 7.9),
+  ];
 }
 
 class AttendanceLine {

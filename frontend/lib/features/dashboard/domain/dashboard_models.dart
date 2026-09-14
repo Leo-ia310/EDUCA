@@ -80,3 +80,27 @@ class GradeBrief extends Equatable {
 }
 
 enum GradeStatus { passed, pending, lowPerformance }
+
+/// Compañero de grado del estudiante (para la lista de "Compañeros").
+class Classmate extends Equatable {
+  const Classmate({
+    required this.name,
+    required this.grade,
+    required this.attendanceRate,
+    required this.average,
+    this.color,
+  });
+
+  final String name;
+  final String grade;
+
+  /// Asistencia 0..1.
+  final double attendanceRate;
+
+  /// Promedio en la misma escala que el dashboard (0..10).
+  final double average;
+  final Color? color;
+
+  @override
+  List<Object?> get props => [name, grade];
+}

@@ -12,6 +12,9 @@ class Routes {
 
   static const subjects = '/subjects';
   static const schedule = '/schedule';
+  static const calendar = '/calendar';
+  static const classmates = '/classmates';
+  static const myAttendance = '/my-attendance';
   static const alerts = '/alerts';
   static const profile = '/profile';
   static const changePassword = '/change-password';

@@ -46,7 +46,10 @@ import '../../features/schedule/presentation/screens/schedule_screen.dart';
 import '../../features/support/presentation/screens/help_screen.dart';
 import '../../features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/all_subjects_screen.dart';
+import '../../features/dashboard/presentation/screens/classmates_screen.dart';
 import '../../features/dashboard/presentation/screens/parent_dashboard_screen.dart';
+import '../../features/dashboard/presentation/screens/school_calendar_screen.dart';
+import '../../features/dashboard/presentation/screens/student_attendance_screen.dart';
 import '../../features/dashboard/presentation/screens/student_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -349,6 +352,28 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.schedule,
         builder: (_, __) => const ScheduleScreen(),
+      ),
+
+      // ----- Calendario escolar (tab del navbar del alumno) -----
+      GoRoute(
+        path: Routes.calendar,
+        builder: (_, __) => const SchoolCalendarScreen(),
+      ),
+
+      // ----- Compañeros / Asistencia del alumno -----
+      GoRoute(
+        path: Routes.classmates,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.student},
+          child: ClassmatesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.myAttendance,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.student},
+          child: StudentAttendanceScreen(),
+        ),
       ),
 
       // ----- Anuncios / Eventos -----
