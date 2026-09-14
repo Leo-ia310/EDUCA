@@ -21,20 +21,20 @@ void main() {
     test('saluda según la franja del día', () {
       expect(DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 8)), 'Buenos días');
       expect(
-          DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 15)), 'Buenas tardes');
+          DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 15)), 'Buenas tardes',);
       expect(
-          DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 21)), 'Buenas noches');
+          DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 21)), 'Buenas noches',);
     });
 
     test('límites de franja: 12 pasa a tarde, 19 pasa a noche', () {
       expect(DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 11, 59)),
-          'Buenos días');
+          'Buenos días',);
       expect(
-          DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 12)), 'Buenas tardes');
+          DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 12)), 'Buenas tardes',);
       expect(DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 18, 59)),
-          'Buenas tardes');
+          'Buenas tardes',);
       expect(
-          DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 19)), 'Buenas noches');
+          DateUtilsX.greetingForHour(DateTime(2026, 1, 1, 19)), 'Buenas noches',);
     });
   });
 }

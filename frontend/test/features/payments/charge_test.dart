@@ -50,17 +50,17 @@ void main() {
 
     test('vencido: pasada la fecha y sin pagar', () {
       expect(_charge(dueDate: past, status: ChargeStatus.pending).isOverdue,
-          isTrue);
+          isTrue,);
     });
 
     test('no vencido si ya está pagado, aunque haya pasado la fecha', () {
       expect(
-          _charge(dueDate: past, status: ChargeStatus.paid).isOverdue, isFalse);
+          _charge(dueDate: past, status: ChargeStatus.paid).isOverdue, isFalse,);
     });
 
     test('no vencido si la fecha aún no llega', () {
       expect(_charge(dueDate: future, status: ChargeStatus.pending).isOverdue,
-          isFalse);
+          isFalse,);
     });
   });
 }

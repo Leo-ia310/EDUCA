@@ -33,48 +33,48 @@ void main() {
   group('Assignment.statusForNow', () {
     test('no publicada -> draft', () {
       expect(_assignment(published: false).statusForNow(now),
-          AssignmentStatus.draft);
+          AssignmentStatus.draft,);
     });
 
     test('todas calificadas -> closed', () {
       expect(_assignment(totalStudents: 30, gradedCount: 30).statusForNow(now),
-          AssignmentStatus.closed);
+          AssignmentStatus.closed,);
     });
 
     test('pasada la fecha -> overdue', () {
       expect(
           _assignment(dueAt: now.subtract(const Duration(hours: 1)))
               .statusForNow(now),
-          AssignmentStatus.overdue);
+          AssignmentStatus.overdue,);
     });
 
     test('vence en <= 48h -> dueSoon', () {
       expect(
           _assignment(dueAt: now.add(const Duration(hours: 24)))
               .statusForNow(now),
-          AssignmentStatus.dueSoon);
+          AssignmentStatus.dueSoon,);
     });
 
     test('vence lejos -> open', () {
       expect(
           _assignment(dueAt: now.add(const Duration(days: 10)))
               .statusForNow(now),
-          AssignmentStatus.open);
+          AssignmentStatus.open,);
     });
 
     test('closed tiene prioridad sobre overdue', () {
       expect(
           _assignment(
-                  gradedCount: 30, dueAt: now.subtract(const Duration(days: 1)))
+                  gradedCount: 30, dueAt: now.subtract(const Duration(days: 1)),)
               .statusForNow(now),
-          AssignmentStatus.closed);
+          AssignmentStatus.closed,);
     });
   });
 
   group('Assignment progreso', () {
     test('submissionProgress y gradingProgress', () {
       final a = _assignment(
-          totalStudents: 20, submittedCount: 10, gradedCount: 5);
+          totalStudents: 20, submittedCount: 10, gradedCount: 5,);
       expect(a.submissionProgress, 0.5);
       expect(a.gradingProgress, 0.5);
     });

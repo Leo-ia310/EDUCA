@@ -30,12 +30,12 @@ void main() {
     test('la superficie cambia y es más oscura en modo oscuro', () {
       expect(light.surface, isNot(dark.surface));
       expect(dark.surface.computeLuminance(),
-          lessThan(light.surface.computeLuminance()));
+          lessThan(light.surface.computeLuminance()),);
     });
 
     test('la tinta es más clara en oscuro (texto sobre fondo oscuro)', () {
       expect(dark.ink.computeLuminance(),
-          greaterThan(light.ink.computeLuminance()));
+          greaterThan(light.ink.computeLuminance()),);
     });
   });
 }

@@ -15,7 +15,7 @@ const _scale = GradingScale(
 );
 
 Evaluation _eval(String id,
-        {double maxScore = 100, double weight = 1, String period = 'p1'}) =>
+        {double maxScore = 100, double weight = 1, String period = 'p1',}) =>
     Evaluation(
       id: id,
       classId: 1,
@@ -34,7 +34,7 @@ void main() {
   const calc = GradesCalculator();
 
   PeriodGrade compute(
-          {required List<Evaluation> evals, required List<GradeEntry> grades}) =>
+          {required List<Evaluation> evals, required List<GradeEntry> grades,}) =>
       calc.computePeriodGrade(
         studentId: 7,
         subjectName: 'Matemáticas',
