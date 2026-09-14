@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/open_card.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
 import '../../data/dashboard_data.dart';
 import '../../domain/dashboard_models.dart';
 import '../../providers.dart';
+import '../widgets/student_chrome.dart';
 import '../widgets/subject_card.dart';
 import 'subject_detail_screen.dart';
 
@@ -24,17 +22,8 @@ class AllSubjectsScreen extends ConsumerWidget {
         StudentDashboardData.mock();
     final subjects = data.subjects;
 
-    return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Todas las Materias'),
-      ),
-      bottomNav: const EducaBottomNav(),
+    return StudentDetailScaffold(
+      title: 'Todas las Materias',
       child: StaggeredEntrance(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

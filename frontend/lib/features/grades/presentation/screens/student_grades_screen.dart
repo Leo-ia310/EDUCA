@@ -4,12 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/grades_controller.dart';
@@ -26,18 +25,10 @@ class StudentGradesScreen extends ConsumerWidget {
     final performance = ref.watch(studentPerformanceProvider(studentId));
     final scaleAsync = ref.watch(defaultScaleProvider);
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Mis notas',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      bottomNav: const EducaBottomNav(),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Mis notas'),
-      ),
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: performance.when(
@@ -62,7 +53,7 @@ class StudentGradesScreen extends ConsumerWidget {
                   onRefresh: () async =>
                       ref.invalidate(studentPerformanceProvider(studentId)),
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                    padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
                     children: [
                       _OverallCard(
                         performances: perfs,

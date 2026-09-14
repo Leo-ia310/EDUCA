@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/grades_controller.dart';
@@ -33,17 +32,10 @@ class SubjectGradesScreen extends ConsumerWidget {
       (studentId: studentId, classId: classId),
     ),);
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Detalle por materia',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Detalle por materia'),
-      ),
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: scaleAsync.when(
@@ -66,7 +58,7 @@ class SubjectGradesScreen extends ConsumerWidget {
                 }
                 final groups = _groupByPeriod(data.evaluations, ps);
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
                   children: [
                     for (final entry in groups.entries) ...[
                       Padding(

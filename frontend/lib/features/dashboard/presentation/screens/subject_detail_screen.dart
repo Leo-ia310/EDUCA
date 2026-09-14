@@ -5,9 +5,9 @@ import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../domain/dashboard_models.dart';
+import '../widgets/student_chrome.dart';
 
 /// Detalle de una materia. Destino del container-transform desde la tarjeta de
 /// materia del dashboard del alumno. Estilo panel: hero con degradado en el
@@ -22,16 +22,9 @@ class SubjectDetailScreen extends StatelessWidget {
     final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final pct = (subject.progress * 100).round();
 
-    return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: Text(subject.name),
-      ),
+    return StudentDetailScaffold(
+      title: subject.name,
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

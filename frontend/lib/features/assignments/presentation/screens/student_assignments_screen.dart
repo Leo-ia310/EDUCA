@@ -5,12 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../controllers/assignment_detail_controller.dart';
 import '../controllers/assignments_list_controller.dart';
@@ -28,18 +27,10 @@ class StudentAssignmentsScreen extends ConsumerWidget {
     final list = ref.watch(studentAssignmentsProvider);
     final palette = context.palette;
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Mis tareas',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Mis tareas'),
-      ),
-      bottomNav: const EducaBottomNav(),
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: list.when(
@@ -71,7 +62,7 @@ class StudentAssignmentsScreen extends ConsumerWidget {
               onRefresh: () async =>
                   ref.invalidate(studentAssignmentsProvider),
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
                 children: [
                   if (pending.isNotEmpty) ...[
                     const SectionHeader(title: 'Por entregar'),
