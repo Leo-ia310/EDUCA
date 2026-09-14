@@ -59,40 +59,29 @@ class AppGreetingHeader extends StatelessWidget {
               decoration: BoxDecoration(gradient: AppGradients.hero),
             ),
           ),
-          // Foto grande del alumno, anclada a la derecha y desvanecida por el
-          // borde izquierdo para integrarse al degradado.
+          // Foto grande del alumno, anclada a la derecha. Un recorte sin fondo
+          // (asset) se integra directo; una foto de red se desvanece por el
+          // borde izquierdo para fundirse en el degradado.
           if (heroImageUrl != null && heroImageUrl!.isNotEmpty)
             Positioned.fill(
               child: Align(
-                alignment: Alignment.centerRight,
+                alignment: Alignment.bottomRight,
                 child: FractionallySizedBox(
-                  widthFactor: 0.46,
+                  widthFactor: 0.5,
                   heightFactor: 1,
-                  child: ShaderMask(
-                    blendMode: BlendMode.dstIn,
-                    shaderCallback: (rect) => const LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [Colors.transparent, Colors.white, Colors.white],
-                      stops: [0.0, 0.4, 1.0],
-                    ).createShader(rect),
-                    child: Image.network(
-                      heroImageUrl!,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                      loadingBuilder: (context, child, progress) =>
-                          progress == null
-                              ? child
-                              : const SizedBox.shrink(),
-                    ),
-                  ),
+                  child: _buildHeroPhoto(heroImageUrl!),
                 ),
               ),
             ),
-          // Contenido.
+          // Contenido. Con foto grande el hero crece un poco para dar aire a la
+          // figura (cabeza + torso).
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              10,
+              20,
+              (heroImageUrl != null && heroImageUrl!.isNotEmpty) ? 56 : 24,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -219,6 +208,37 @@ class AppGreetingHeader extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       );
+
+  Widget _buildHeroPhoto(String src) {
+    final isNetwork = src.startsWith('http');
+    final Widget image = isNetwork
+        ? Image.network(
+            src,
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            loadingBuilder: (context, child, progress) =>
+                progress == null ? child : const SizedBox.shrink(),
+          )
+        : Image.asset(
+            src,
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          );
+    // Recorte transparente (asset): sin desvanecido, se integra tal cual.
+    if (!isNetwork) return image;
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (rect) => const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [Colors.transparent, Colors.white, Colors.white],
+        stops: [0.0, 0.4, 1.0],
+      ).createShader(rect),
+      child: image,
+    );
+  }
 }
 
 /// Botón de acción circular para el hero (blanco translúcido), con badge.

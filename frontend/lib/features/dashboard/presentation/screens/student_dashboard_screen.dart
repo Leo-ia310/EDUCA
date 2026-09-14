@@ -66,12 +66,11 @@ class StudentDashboardScreen extends ConsumerWidget {
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
                 : '?',
-            // Foto grande integrada al hero. Sin fotos reales: placeholder de
-            // Unsplash (permite CORS en web). En producción sería la foto del
-            // alumno servida por el backend (p. ej. Supabase Storage).
+            // Foto grande integrada al hero (recorte sin fondo). En producción
+            // sería la foto del alumno servida por el backend (Supabase
+            // Storage); aquí un asset local de placeholder.
             heroImageUrl: user.avatarUrl ??
-                'https://images.unsplash.com/photo-1494790108377-be9c29b29330'
-                    '?w=500&q=80&auto=format',
+                'assets/images/persona-removebg-preview.png',
             dateLabel: toBeginningOfSentenceCase(
               DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
             ),
