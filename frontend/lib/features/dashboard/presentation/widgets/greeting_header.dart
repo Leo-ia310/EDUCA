@@ -15,6 +15,7 @@ class AppGreetingHeader extends StatelessWidget {
     required this.initials,
     required this.dateLabel,
     this.avatarUrl,
+    this.heroImageUrl,
     this.chipIcon,
     this.chipLabel,
     this.notificationsBadge = 0,
@@ -27,8 +28,14 @@ class AppGreetingHeader extends StatelessWidget {
   final String initials;
   final String dateLabel;
 
-  /// Foto del usuario. Si es null o falla la carga, se muestran las iniciales.
+  /// Foto del usuario para el avatar circular. Si es null o falla la carga, se
+  /// muestran las iniciales.
   final String? avatarUrl;
+
+  /// Foto grande integrada al fondo del hero (a la derecha, desvanecida hacia el
+  /// degradado), estilo "tarjeta de perfil". Si se pasa, se oculta el avatar
+  /// circular. Solo el panel del alumno la usa por ahora.
+  final String? heroImageUrl;
 
   /// Chip de contexto opcional (ícono + texto) bajo el nombre. Cada rol pone su
   /// dato (p. ej. "3 tareas para hoy", "2 avisos nuevos").
@@ -52,6 +59,37 @@ class AppGreetingHeader extends StatelessWidget {
               decoration: BoxDecoration(gradient: AppGradients.hero),
             ),
           ),
+          // Foto grande del alumno, anclada a la derecha y desvanecida por el
+          // borde izquierdo para integrarse al degradado.
+          if (heroImageUrl != null && heroImageUrl!.isNotEmpty)
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FractionallySizedBox(
+                  widthFactor: 0.46,
+                  heightFactor: 1,
+                  child: ShaderMask(
+                    blendMode: BlendMode.dstIn,
+                    shaderCallback: (rect) => const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [Colors.transparent, Colors.white, Colors.white],
+                      stops: [0.0, 0.4, 1.0],
+                    ).createShader(rect),
+                    child: Image.network(
+                      heroImageUrl!,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      loadingBuilder: (context, child, progress) =>
+                          progress == null
+                              ? child
+                              : const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           // Contenido.
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
@@ -60,7 +98,8 @@ class AppGreetingHeader extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
+                    if (heroImageUrl == null || heroImageUrl!.isEmpty)
+                      Container(
                       width: 54,
                       height: 54,
                       alignment: Alignment.center,
@@ -100,6 +139,15 @@ class AppGreetingHeader extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 18),
+                FractionallySizedBox(
+                  widthFactor:
+                      (heroImageUrl != null && heroImageUrl!.isNotEmpty)
+                          ? 0.6
+                          : 1.0,
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 Text(
                   dateLabel,
                   style: context.textTheme.labelMedium?.copyWith(
@@ -153,6 +201,9 @@ class AppGreetingHeader extends StatelessWidget {
                     ),
                   ),
                 ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
