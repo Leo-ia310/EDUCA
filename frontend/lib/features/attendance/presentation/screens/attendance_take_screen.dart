@@ -99,7 +99,7 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
             ),
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 itemCount: state.rows.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (_, i) {

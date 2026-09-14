@@ -47,9 +47,9 @@ class AppScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
-      // El body se extiende hasta abajo; el navbar pinta su propio fondo opaco
-      // (color de la página) para no dejar ver el contenido por detrás.
-      extendBody: true,
+      // El navbar es opaco y reserva su propio espacio: el contenido termina por
+      // encima de él (no queda tapado al llegar al final del scroll).
+      extendBody: false,
       appBar: appBar,
       body: SafeArea(bottom: false, child: body),
       bottomNavigationBar: bottomNav,

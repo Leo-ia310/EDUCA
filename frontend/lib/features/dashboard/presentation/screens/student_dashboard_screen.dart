@@ -53,7 +53,7 @@ class StudentDashboardScreen extends ConsumerWidget {
     );
 
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 100),
+      padding: const EdgeInsets.only(bottom: 24),
       onRefresh: () async => Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
       child: Column(
