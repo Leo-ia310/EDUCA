@@ -131,7 +131,7 @@ class AppGreetingHeader extends StatelessWidget {
                 FractionallySizedBox(
                   widthFactor:
                       (heroImageUrl != null && heroImageUrl!.isNotEmpty)
-                          ? 0.6
+                          ? 0.64
                           : 1.0,
                   alignment: Alignment.centerLeft,
                   child: Column(
@@ -179,11 +179,15 @@ class AppGreetingHeader extends StatelessWidget {
                           Icon(chipIcon, color: Colors.white, size: 18),
                           const SizedBox(width: 8),
                         ],
-                        Text(
-                          chipLabel!,
-                          style: context.textTheme.labelLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                        Flexible(
+                          child: Text(
+                            chipLabel!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.labelLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
