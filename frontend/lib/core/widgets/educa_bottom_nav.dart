@@ -151,63 +151,70 @@ class EducaBottomNav extends ConsumerWidget {
       }
     }
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-        child: SizedBox(
-          height: _height,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final cx = activeIndex >= 0
-                  ? (activeIndex + 0.5) * w / tabs.length
-                  : null;
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Barra pintada con el notch cóncavo alrededor del círculo.
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _NavBarPainter(
-                        color: barColor,
-                        barTop: _barTop,
-                        cornerRadius: 16,
-                        cx: cx,
-                        circleCenterY: _circleCenterY,
-                        guestRadius: _circle / 2 + _notchMargin,
+    // Fondo opaco del color de la página: cubre el contenido del panel en toda
+    // la franja del navbar (márgenes y notch incluidos), para que la barra
+    // flotante no deje ver las tarjetas por detrás.
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+          child: SizedBox(
+            height: _height,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final cx = activeIndex >= 0
+                    ? (activeIndex + 0.5) * w / tabs.length
+                    : null;
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Barra pintada con el notch cóncavo alrededor del círculo.
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _NavBarPainter(
+                          color: barColor,
+                          barTop: _barTop,
+                          cornerRadius: 16,
+                          cx: cx,
+                          circleCenterY: _circleCenterY,
+                          guestRadius: _circle / 2 + _notchMargin,
+                        ),
                       ),
                     ),
-                  ),
-                  // Íconos dentro del cuerpo de la barra.
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: _barTop,
-                    bottom: 0,
-                    child: Row(
-                      children: [
-                        for (var i = 0; i < tabs.length; i++)
-                          Expanded(
-                            child: _NavSlot(
-                              icon: tabs[i].icon,
-                              active: i == activeIndex,
-                              barColor: barColor,
-                              lift: _lift,
-                              badge: tabs[i].route == Routes.chat ? unread : 0,
-                              onTap: () {
-                                if (i != activeIndex) {
-                                  context.go(tabs[i].route);
-                                }
-                              },
+                    // Íconos dentro del cuerpo de la barra.
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: _barTop,
+                      bottom: 0,
+                      child: Row(
+                        children: [
+                          for (var i = 0; i < tabs.length; i++)
+                            Expanded(
+                              child: _NavSlot(
+                                icon: tabs[i].icon,
+                                active: i == activeIndex,
+                                barColor: barColor,
+                                lift: _lift,
+                                badge:
+                                    tabs[i].route == Routes.chat ? unread : 0,
+                                onTap: () {
+                                  if (i != activeIndex) {
+                                    context.go(tabs[i].route);
+                                  }
+                                },
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -354,7 +361,11 @@ class _NavBarPainter extends CustomPainter {
     }
 
     canvas.drawShadow(barPath, Colors.black, 6, false);
-    canvas.drawPath(barPath, Paint()..color = color..isAntiAlias = true);
+    canvas.drawPath(
+        barPath,
+        Paint()
+          ..color = color
+          ..isAntiAlias = true,);
   }
 
   @override
