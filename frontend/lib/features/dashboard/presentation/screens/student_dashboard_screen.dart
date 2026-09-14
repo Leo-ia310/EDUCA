@@ -9,17 +9,15 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/section_header.dart';
-import '../../../../core/widgets/section_nav_card.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
-import '../../../profile/presentation/widgets/account_settings_menu.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/classmates_strip.dart';
-import '../widgets/greeting_header.dart';
+import '../widgets/home_tile_card.dart';
 import '../widgets/schedule_item.dart';
-import '../widgets/stat_strip.dart';
+import '../widgets/student_home_header.dart';
 
 class StudentDashboardScreen extends ConsumerWidget {
   const StudentDashboardScreen({super.key});
@@ -29,9 +27,8 @@ class StudentDashboardScreen extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user!;
     final palette = context.palette;
     // Datos reales del backend (fallback a demo mientras carga o sin backend).
-    final data =
-        ref.watch(studentDashboardProvider).valueOrNull ??
-            StudentDashboardData.mock();
+    final data = ref.watch(studentDashboardProvider).valueOrNull ??
+        StudentDashboardData.mock();
 
     // Estado del horario respecto a la hora actual: clase en curso y siguiente.
     final now = DateTime.now();
@@ -52,70 +49,94 @@ class StudentDashboardScreen extends ConsumerWidget {
       DateFormat('EEEE', 'es').format(now),
     );
 
+    final classmatesTotal = data.classmates.length + data.classmatesExtra;
+
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 24),
-      onRefresh: () async => Future<void>.delayed(const Duration(milliseconds: 600)),
+      padding: EdgeInsets.zero,
+      topSafeArea: false,
+      onRefresh: () async =>
+          Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Hero de bienvenida (full-bleed, sin padding lateral).
-          AppGreetingHeader(
-            greeting: DateUtilsX.greetingForHour(now),
+          // Barra superior full-bleed (avatar + nombre a la izquierda,
+          // acciones a la derecha), con fondo azul hasta el borde superior.
+          StudentHomeHeader(
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
                 : '?',
-            // Foto grande integrada al hero (recorte sin fondo). En producción
-            // sería la foto del alumno servida por el backend (Supabase
-            // Storage); aquí un asset local de placeholder.
-            heroImageUrl: user.avatarUrl ??
-                'assets/images/persona-removebg-preview.png',
-            dateLabel: toBeginningOfSentenceCase(
-              DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
-            ),
-            chipIcon: Icons.assignment_turned_in_rounded,
-            chipLabel: data.pendingTasks > 0
-                ? 'Tienes ${data.pendingTasks} ${data.pendingTasks == 1 ? 'tarea' : 'tareas'} para hoy'
-                : 'No tienes tareas para hoy',
+            avatarUrl: user.avatarUrl,
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
             onNotificationsTap: () => context.go(Routes.alerts),
-            settingsMenu: const AccountSettingsMenu(circular: true),
           ),
-          // Resto del contenido, con padding lateral y entrada escalonada.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
-            child: StaggeredEntrance(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // KPIs de un vistazo (promedio · asistencia · pendientes)
-                DashboardStatStrip(
-                  tiles: [
-                    StatTile(
-                      icon: Icons.star_rounded,
-                      color: const Color(0xFF34C77A),
-                      value: data.averageScore,
-                      decimals: 1,
-                      label: 'Promedio',
-                    ),
-                    StatTile(
-                      icon: Icons.event_available_rounded,
-                      color: const Color(0xFF4C8DF5),
-                      value: data.attendanceRate * 100,
-                      suffix: '%',
-                      label: 'Asistencia',
-                    ),
-                    StatTile(
-                      icon: Icons.assignment_late_rounded,
-                      color: data.pendingTasks > 0
-                          ? const Color(0xFFF3993E)
-                          : const Color(0xFF34C77A),
-                      value: data.pendingTasks.toDouble(),
-                      label: 'Pendientes',
-                    ),
-                  ],
+          // Panel del contenido: se monta sobre la barra azul con esquinas
+          // superiores redondeadas (solape = radio), de modo que la curva
+          // parezca del panel (cóncava) y no de la barra.
+          Transform.translate(
+            offset: const Offset(0, -_panelRadius),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(_panelRadius),
                 ),
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 44, 16, 24),
+              child: StaggeredEntrance(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Grilla de accesos rápidos (tarjetas cuadradas).
+                  _HomeTilesGrid(
+            tiles: [
+              _TileData(
+                icon: Icons.note_alt_rounded,
+                title: 'Tareas',
+                color: const Color(0xFFF3993E),
+                value: data.pendingTasks > 0
+                    ? '${data.pendingTasks} pend.'
+                    : 'Al día',
+                onTap: () => context.push(Routes.assignments),
+              ),
+              _TileData(
+                icon: Icons.menu_book_rounded,
+                title: 'Materias',
+                color: const Color(0xFF4C8DF5),
+                value: '${data.subjects.length}',
+                onTap: () => context.push(Routes.subjects),
+              ),
+              _TileData(
+                icon: Icons.grade_rounded,
+                title: 'Notas',
+                color: const Color(0xFF9A6BE0),
+                value: data.averageScore.toStringAsFixed(1),
+                onTap: () => context.push(Routes.grades),
+              ),
+              _TileData(
+                icon: Icons.event_available_rounded,
+                title: 'Asistencia',
+                color: const Color(0xFF34C77A),
+                value: '${(data.attendanceRate * 100).round()}%',
+                // Sin pantalla de alumno todavía: tarjeta inerte por ahora.
+              ),
+              _TileData(
+                icon: Icons.calendar_month_rounded,
+                title: 'Horario',
+                color: const Color(0xFF33B7A0),
+                value: '${data.todaySchedule.length} hoy',
+                onTap: () => context.push(Routes.schedule),
+              ),
+              _TileData(
+                icon: Icons.groups_rounded,
+                title: 'Compañeros',
+                color: const Color(0xFFEC6A9C),
+                value: '$classmatesTotal',
+                // Sin pantalla dedicada todavía: tarjeta inerte por ahora.
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
 
           // Horario de hoy
@@ -149,7 +170,10 @@ class StudentDashboardScreen extends ConsumerWidget {
                   ? 'Ahora'
                   : i == nextIdx
                       ? _inLabel(
-                          DateUtilsX.hhmmToMinutes(data.todaySchedule[i].startTime) - nowMin,
+                          DateUtilsX.hhmmToMinutes(
+                                data.todaySchedule[i].startTime,
+                              ) -
+                              nowMin,
                         )
                       : null,
             ),
@@ -159,53 +183,75 @@ class StudentDashboardScreen extends ConsumerWidget {
           // Compañeros
           const SectionHeader(title: 'Compañeros'),
           const SizedBox(height: 12),
-          ClassmatesStrip(
-            names: data.classmates,
-            extraCount: data.classmatesExtra,
-          ),
-          const SizedBox(height: 24),
-
-          // Materias — tarjeta de acceso a la lista completa.
-          SectionNavCard(
-            icon: Icons.menu_book_rounded,
-            title: 'Materias',
-            subtitle: 'Todas tus materias y su progreso',
-            color: const Color(0xFF4C8DF5),
-            badge: '${data.subjects.length} materias',
-            onTap: () => context.push(Routes.subjects),
-          ),
-          const SizedBox(height: 14),
-
-          // Tareas — tarjeta de acceso al feed de tareas.
-          SectionNavCard(
-            icon: Icons.note_alt_rounded,
-            title: 'Tareas',
-            subtitle: 'Tus entregas y actividades',
-            color: const Color(0xFFF3993E),
-            badge: data.pendingTasks > 0
-                ? '${data.pendingTasks} pendientes'
-                : 'Al día',
-            onTap: () => context.push(Routes.assignments),
-          ),
-          const SizedBox(height: 14),
-
-          // Notas — tarjeta de acceso al boletín/calificaciones.
-          SectionNavCard(
-            icon: Icons.edit_rounded,
-            title: 'Notas',
-            subtitle: 'Boletín y calificaciones',
-            color: const Color(0xFF9A6BE0),
-            badge: 'Prom. ${data.averageScore.toStringAsFixed(1)}',
-            onTap: () => context.push(Routes.grades),
-          ),
+                ClassmatesStrip(
+                  names: data.classmates,
+                  extraCount: data.classmatesExtra,
+                ),
               ],
             ),
           ),
+        ),
         ],
       ),
     );
   }
 }
+
+/// Datos de una tarjeta cuadrada del home.
+class _TileData {
+  const _TileData({
+    required this.icon,
+    required this.title,
+    required this.color,
+    this.value,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color color;
+  final String? value;
+  final VoidCallback? onTap;
+}
+
+/// Grilla responsiva de 3 columnas con tarjetas cuadradas (1:1).
+class _HomeTilesGrid extends StatelessWidget {
+  const _HomeTilesGrid({required this.tiles});
+
+  final List<_TileData> tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    const cols = 3;
+    const gap = 12.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tileSize = (constraints.maxWidth - gap * (cols - 1)) / cols;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final t in tiles)
+              SizedBox(
+                width: tileSize,
+                height: tileSize,
+                child: HomeTileCard(
+                  icon: t.icon,
+                  title: t.title,
+                  color: t.color,
+                  value: t.value,
+                  onTap: t.onTap,
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Radio de la curva con que el panel se monta sobre la barra azul (cóncava).
+const double _panelRadius = 24;
 
 /// Etiqueta "En X min" / "En Yh Zm" para la próxima clase.
 String _inLabel(int minutes) {

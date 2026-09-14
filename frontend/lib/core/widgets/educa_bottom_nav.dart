@@ -129,8 +129,9 @@ class EducaBottomNav extends ConsumerWidget {
   static const double _lift =
       _barTop + (_height - _barTop) / 2 - _circleCenterY;
 
-  /// Color único de la barra (para todas las pestañas).
-  static const Color _barColor = Color(0xFF4C8DF5);
+  /// Color único de la barra (para todas las pestañas). Público para que otras
+  /// superficies (p. ej. la barra superior del home) puedan igualarlo.
+  static const Color barColor = Color(0xFF4C8DF5);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -138,7 +139,6 @@ class EducaBottomNav extends ConsumerWidget {
         ref.watch(authControllerProvider).user?.activeRole ?? AppRole.student;
     final tabs = navTabsForRole(role);
     final unread = ref.watch(totalUnreadProvider).asData?.value ?? 0;
-    const barColor = _barColor;
 
     // Pestaña activa por coincidencia con la ruta actual (-1 si ninguna).
     final loc = GoRouterState.of(context).uri.path;

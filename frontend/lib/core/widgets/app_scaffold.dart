@@ -15,6 +15,7 @@ class AppScaffold extends StatelessWidget {
     this.scrollable = true,
     this.onRefresh,
     this.backgroundColor,
+    this.topSafeArea = true,
   });
 
   final Widget child;
@@ -25,6 +26,11 @@ class AppScaffold extends StatelessWidget {
   final bool scrollable;
   final Future<void> Function()? onRefresh;
   final Color? backgroundColor;
+
+  /// Reserva el inset superior (status bar / notch). Se desactiva cuando el
+  /// contenido dibuja su propia banda full-bleed hasta el borde superior (p. ej.
+  /// la barra del home), que ya gestiona el inset por dentro.
+  final bool topSafeArea;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +57,7 @@ class AppScaffold extends StatelessWidget {
       // encima de él (no queda tapado al llegar al final del scroll).
       extendBody: false,
       appBar: appBar,
-      body: SafeArea(bottom: false, child: body),
+      body: SafeArea(top: topSafeArea, bottom: false, child: body),
       bottomNavigationBar: bottomNav,
       floatingActionButton: fab,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
