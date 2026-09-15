@@ -143,17 +143,28 @@ class ComparisonMetric {
   final double classAvg;
 }
 
-/// Barras agrupadas "Tú vs tu clase" por métrica (el gancho de estadísticas).
+/// Barras agrupadas comparando dos partes por métrica (el gancho de
+/// estadísticas). Por defecto "Tú vs tu clase", pero acepta etiquetas propias
+/// (p. ej. comparar contra un compañero) y color del comparado.
 class ComparisonBars extends StatelessWidget {
-  const ComparisonBars({super.key, required this.metrics});
+  const ComparisonBars({
+    super.key,
+    required this.metrics,
+    this.youLabel = 'Tú',
+    this.otherLabel = 'Tu clase',
+    this.otherColor,
+  });
 
   final List<ComparisonMetric> metrics;
+  final String youLabel;
+  final String otherLabel;
+  final Color? otherColor;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final you = palette.accent;
-    final other = palette.textMuted.withValues(alpha: 0.45);
+    final other = otherColor ?? palette.textMuted.withValues(alpha: 0.45);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -224,9 +235,9 @@ class ComparisonBars extends StatelessWidget {
         const SizedBox(height: 10),
         Row(
           children: [
-            _LegendDot(color: you, label: 'Tú'),
+            _LegendDot(color: you, label: youLabel),
             const SizedBox(width: 16),
-            _LegendDot(color: other, label: 'Tu clase'),
+            _LegendDot(color: other, label: otherLabel),
           ],
         ),
       ],

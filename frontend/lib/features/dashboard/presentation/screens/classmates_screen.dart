@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/depth_card.dart';
-import '../../../../core/widgets/glass.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../domain/dashboard_models.dart';
 import '../widgets/student_chrome.dart';
+import 'classmate_profile_screen.dart';
 
 /// Lista de compañeros del grado del estudiante. Barra de búsqueda + lista de
 /// usuarios; al tocar uno se muestra un resumen (asistencia, promedio).
@@ -67,7 +67,7 @@ class _ClassmatesScreenState extends State<ClassmatesScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, i) => _ClassmateRow(
                       classmate: filtered[i],
-                      onTap: () => _showSummary(context, filtered[i]),
+                      onTap: () => _openProfile(context, filtered[i]),
                     ),
                   ),
           ),
@@ -76,10 +76,11 @@ class _ClassmatesScreenState extends State<ClassmatesScreen> {
     );
   }
 
-  void _showSummary(BuildContext context, Classmate c) {
-    showGlassSheet<void>(
-      context,
-      builder: (_) => _ClassmateSummary(classmate: c),
+  void _openProfile(BuildContext context, Classmate c) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ClassmateProfileScreen(classmate: c),
+      ),
     );
   }
 }
@@ -123,108 +124,6 @@ class _ClassmateRow extends StatelessWidget {
             ),
           ),
           Icon(Icons.chevron_right_rounded, color: s.inkMuted),
-        ],
-      ),
-    );
-  }
-}
-
-class _ClassmateSummary extends StatelessWidget {
-  const _ClassmateSummary({required this.classmate});
-  final Classmate classmate;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                _Avatar(name: classmate.name, size: 56),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        classmate.name,
-                        style: context.textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      Text(
-                        classmate.grade,
-                        style: TextStyle(color: palette.textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Expanded(
-                  child: _StatBox(
-                    icon: Icons.event_available_rounded,
-                    color: const Color(0xFF34C77A),
-                    value: '${(classmate.attendanceRate * 100).round()}%',
-                    label: 'Asistencia',
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatBox(
-                    icon: Icons.grade_rounded,
-                    color: const Color(0xFF9A6BE0),
-                    value: classmate.average.toStringAsFixed(1),
-                    label: 'Promedio',
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatBox extends StatelessWidget {
-  const _StatBox({
-    required this.icon,
-    required this.color,
-    required this.value,
-    required this.label,
-  });
-  final IconData icon;
-  final Color color;
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = context.pastel(color);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: s.surface,
-        borderRadius: BorderRadius.circular(Radii.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: s.vivid, size: 26),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: context.textTheme.titleLarge
-                ?.copyWith(color: s.ink, fontWeight: FontWeight.w800),
-          ),
-          Text(label, style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted)),
         ],
       ),
     );
