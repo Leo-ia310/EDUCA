@@ -1,30 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Escala tipográfica de Educa360. Usa Plus Jakarta Sans para una vibra
-/// moderna y juvenil. Devolvemos un [TextTheme] que se inyecta en
-/// [AppTheme.lightTheme] y [AppTheme.darkTheme].
+/// Escala tipográfica de Educa360 (v3 "Depth & Data"). Pareja de fuentes:
+/// **Sora** para los títulos y cifras grandes (carácter de marca, geométrica) y
+/// **Plus Jakarta Sans** para títulos intermedios, cuerpo y etiquetas (lectura
+/// cómoda). Devolvemos un [TextTheme] que se inyecta en los temas claro/oscuro.
 class AppTypography {
   AppTypography._();
 
   static TextTheme textTheme(Color base, Color muted) {
     final jakarta = GoogleFonts.plusJakartaSansTextTheme();
-    // Dirección "Sereno": disciplina de peso. El w800 se reserva para cifras y
-    // títulos grandes; los encabezados intermedios respiran en 600–700, con un
-    // leve tracking negativo para una lectura más elegante.
+    final sora = GoogleFonts.soraTextTheme(jakarta);
+    // Sora manda en display/headline; el w800 se reserva para cifras y títulos
+    // grandes, con leve tracking negativo para una lectura más elegante.
     return jakarta.copyWith(
-      displayLarge: jakarta.displayLarge
+      displayLarge: sora.displayLarge
           ?.copyWith(color: base, fontWeight: FontWeight.w800, letterSpacing: -0.5),
-      displayMedium: jakarta.displayMedium
+      displayMedium: sora.displayMedium
           ?.copyWith(color: base, fontWeight: FontWeight.w800, letterSpacing: -0.4),
-      displaySmall: jakarta.displaySmall
+      displaySmall: sora.displaySmall
           ?.copyWith(color: base, fontWeight: FontWeight.w700, letterSpacing: -0.3),
-      headlineLarge: jakarta.headlineLarge
+      headlineLarge: sora.headlineLarge
           ?.copyWith(color: base, fontWeight: FontWeight.w700, letterSpacing: -0.2),
       headlineMedium:
-          jakarta.headlineMedium?.copyWith(color: base, fontWeight: FontWeight.w600),
+          sora.headlineMedium?.copyWith(color: base, fontWeight: FontWeight.w700),
       headlineSmall:
-          jakarta.headlineSmall?.copyWith(color: base, fontWeight: FontWeight.w600),
+          sora.headlineSmall?.copyWith(color: base, fontWeight: FontWeight.w700),
       titleLarge:
           jakarta.titleLarge?.copyWith(color: base, fontWeight: FontWeight.w700),
       titleMedium:
