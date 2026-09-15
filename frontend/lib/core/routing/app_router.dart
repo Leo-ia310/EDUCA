@@ -47,6 +47,7 @@ import '../../features/support/presentation/screens/help_screen.dart';
 import '../../features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/all_subjects_screen.dart';
 import '../../features/dashboard/presentation/screens/classmates_screen.dart';
+import '../../features/dashboard/presentation/screens/my_teachers_screen.dart';
 import '../../features/dashboard/presentation/screens/parent_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/school_calendar_screen.dart';
 import '../../features/dashboard/presentation/screens/student_attendance_screen.dart';
@@ -373,6 +374,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RoleGuard(
           allowed: {AppRole.student},
           child: StudentAttendanceScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.teachers,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.student},
+          child: MyTeachersScreen(),
         ),
       ),
 

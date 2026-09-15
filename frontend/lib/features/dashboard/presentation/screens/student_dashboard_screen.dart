@@ -24,6 +24,7 @@ import '../widgets/home_summary_sections.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/schedule_item.dart';
 import '../widgets/student_home_header.dart';
+import 'my_teachers_screen.dart';
 
 class StudentDashboardScreen extends ConsumerWidget {
   const StudentDashboardScreen({super.key});
@@ -330,6 +331,20 @@ class StudentDashboardScreen extends ConsumerWidget {
             names: data.classmates,
             extraCount: data.classmatesExtra,
           ),
+          const SizedBox(height: 24),
+
+          // Maestros (resumen)
+          Row(
+            children: [
+              const Expanded(child: SectionHeader(title: 'Maestros')),
+              TextButton(
+                onPressed: () => context.push(Routes.teachers),
+                child: const Text('Ver todo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _TeachersStrip(teachers: teachersFrom(data)),
               ],
             ),
           ),
@@ -450,6 +465,64 @@ class _AttendanceSummaryCard extends StatelessWidget {
           ),
           const Icon(Icons.chevron_right_rounded, color: Colors.white),
         ],
+      ),
+    );
+  }
+}
+
+/// Carrusel horizontal de maestros (avatar con iniciales + nombre). Toca → la
+/// pantalla completa de "Mis maestros".
+class _TeachersStrip extends StatelessWidget {
+  const _TeachersStrip({required this.teachers});
+  final List<Teacher> teachers;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 92,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.zero,
+        itemCount: teachers.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (context, i) {
+          final t = teachers[i];
+          final first = t.firstName;
+          final initials = t.initials;
+          return GestureDetector(
+            onTap: () => context.push(Routes.teachers),
+            child: SizedBox(
+              width: 66,
+              child: Column(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    alignment: Alignment.center,
+                    decoration:
+                        BoxDecoration(color: t.color, shape: BoxShape.circle),
+                    child: Text(
+                      initials,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    first,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: context.textTheme.labelSmall,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

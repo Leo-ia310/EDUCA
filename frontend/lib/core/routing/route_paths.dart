@@ -15,6 +15,7 @@ class Routes {
   static const calendar = '/calendar';
   static const classmates = '/classmates';
   static const myAttendance = '/my-attendance';
+  static const teachers = '/teachers';
   static const alerts = '/alerts';
   static const profile = '/profile';
   static const changePassword = '/change-password';
