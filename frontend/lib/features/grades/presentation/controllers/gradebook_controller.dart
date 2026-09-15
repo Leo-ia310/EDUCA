@@ -1,12 +1,16 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/grades_repository.dart';
 import '../../providers.dart';
 
-class GradebookArgs {
+class GradebookArgs extends Equatable {
   const GradebookArgs({required this.classId, required this.periodId});
   final int classId;
   final String periodId;
+
+  @override
+  List<Object?> get props => [classId, periodId];
 }
 
 final gradebookProvider = FutureProvider.autoDispose

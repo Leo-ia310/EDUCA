@@ -121,8 +121,11 @@ class SkeletonList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    // ClampingScrollPhysics deshabilitado: solo evita el overflow cuando el
+    // esqueleto se coloca dentro de un alto acotado (p. ej. un Expanded).
+    return SingleChildScrollView(
       padding: padding,
+      physics: const NeverScrollableScrollPhysics(),
       child: SkeletonShimmer(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
