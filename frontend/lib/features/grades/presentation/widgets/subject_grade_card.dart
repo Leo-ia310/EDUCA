@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/charts.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../domain/entities.dart';
 
 /// Tarjeta de notas por materia, estilo pastel del panel: fondo tintado por la
@@ -33,101 +35,119 @@ class SubjectGradeCard extends StatelessWidget {
         ? range.label
         : performance.finalScore.toStringAsFixed(scale.decimals);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.lg),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: s.surface,
-            borderRadius: BorderRadius.circular(Radii.lg),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    // Trayectoria por período (solo los que ya tienen nota real > 0), para la
+    // tendencia; evita que un período sin registrar tire la línea a cero.
+    final trend = <double>[
+      for (final p in periods)
+        if ((performance.periodScores[p.id] ?? 0) > 0)
+          performance.periodScores[p.id]!,
+    ];
+    // Límites ajustados a los datos para que la trayectoria se aprecie.
+    var tMin = trend.isEmpty ? 0.0 : trend.first;
+    var tMax = trend.isEmpty ? scale.maxValue : trend.first;
+    for (final v in trend) {
+      if (v < tMin) tMin = v;
+      if (v > tMax) tMax = v;
+    }
+    final trendMinY = (tMin - 8).clamp(0, scale.maxValue).toDouble();
+    final trendMaxY = (tMax + 6).clamp(tMin + 1, scale.maxValue).toDouble();
+
+    return DepthCard(
+      color: s.surface,
+      accent: s.vivid,
+      soft: true,
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: s.vivid,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.menu_book_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: s.vivid,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.menu_book_rounded,
-                        color: Colors.white,
-                        size: 24,
+                    Text(
+                      performance.subjectName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        color: s.ink,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            performance.subjectName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.titleMedium?.copyWith(
-                              color: s.ink,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            performance.teacherName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.bodySmall?.copyWith(
-                              color: s.inkMuted,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 2),
+                    Text(
+                      performance.teacherName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: s.inkMuted,
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Nota como número grande.
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          headline,
-                          style: context.textTheme.headlineMedium?.copyWith(
-                            color: s.ink,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        if (!isQual) ...[
-                          const SizedBox(width: 2),
-                          Text(
-                            '/${scale.maxValue.toStringAsFixed(0)}',
-                            style: context.textTheme.labelSmall?.copyWith(
-                              color: s.inkMuted,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                _PeriodBars(
-                  performance: performance,
-                  periods: periods,
-                  scale: scale,
-                  ink: s.ink,
-                  inkMuted: s.inkMuted,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              // Nota como número grande.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    headline,
+                    style: context.textTheme.headlineMedium?.copyWith(
+                      color: s.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (!isQual) ...[
+                    const SizedBox(width: 2),
+                    Text(
+                      '/${scale.maxValue.toStringAsFixed(0)}',
+                      style: context.textTheme.labelSmall?.copyWith(
+                        color: s.inkMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ),
-        ),
+          if (trend.length >= 2) ...[
+            const SizedBox(height: 12),
+            MiniTrendChart(
+              values: trend,
+              color: s.vivid,
+              minY: trendMinY,
+              maxY: trendMaxY,
+              height: 40,
+            ),
+          ],
+          const SizedBox(height: 12),
+          _PeriodBars(
+            performance: performance,
+            periods: periods,
+            scale: scale,
+            ink: s.ink,
+            inkMuted: s.inkMuted,
+          ),
+        ],
       ),
     );
   }
