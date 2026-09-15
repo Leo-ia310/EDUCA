@@ -8,6 +8,7 @@ import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/glass.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../data/schedule_mock.dart';
 
@@ -358,17 +359,10 @@ class _SlotCard extends StatelessWidget {
   }
 
   void _showDetails(BuildContext context) {
-    final palette = context.palette;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: palette.cardElevated,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+    showGlassSheet<void>(
+      context,
+      builder: (context) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,7 +395,6 @@ class _SlotCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }

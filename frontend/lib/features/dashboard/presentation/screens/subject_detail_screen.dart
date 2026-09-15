@@ -5,6 +5,7 @@ import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../domain/dashboard_models.dart';
 import '../widgets/student_chrome.dart';
@@ -39,6 +40,7 @@ class SubjectDetailScreen extends StatelessWidget {
                 colors: [s.vivid, deep],
               ),
               borderRadius: BorderRadius.circular(Radii.xl),
+              boxShadow: AppShadows.lifted(context),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,46 +164,38 @@ class _PastelRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.md),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: surface.surface,
-            borderRadius: BorderRadius.circular(Radii.md),
+    return DepthCard(
+      color: surface.surface,
+      accent: surface.vivid,
+      soft: true,
+      onTap: onTap,
+      borderRadius: Radii.md,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: surface.vivid,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: surface.vivid,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.titleSmall?.copyWith(
-                      color: surface.ink,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Icon(trailing, color: surface.inkMuted, size: 20),
-              ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.titleSmall?.copyWith(
+                color: surface.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ),
+          Icon(trailing, color: surface.inkMuted, size: 20),
+        ],
       ),
     );
   }
