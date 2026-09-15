@@ -43,10 +43,10 @@ class StudentGradesScreen extends ConsumerWidget {
               );
             }
             return scaleAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const SkeletonList(),
               error: (e, _) => ErrorStateView(message: '$e'),
               data: (scale) => periods.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (ps) => RefreshIndicator(
                   color: palette.accentDeep,

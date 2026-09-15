@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/env.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 
@@ -69,6 +70,11 @@ final studentAssignmentsProvider =
     FutureProvider.autoDispose<List<Assignment>>((ref) async {
   final repo = ref.watch(assignmentRepositoryProvider);
   final filter = ref.watch(assignmentsFilterProvider);
+  // En demo los datos son instantáneos: un breve retardo deja apreciar el
+  // estado de carga con shimmer (en backend real esto no aplica).
+  if (Env.isDemoMode) {
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+  }
   final list = await repo.assignmentsForStudent();
   return _applyFilters(list, filter);
 });

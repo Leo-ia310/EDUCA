@@ -50,13 +50,68 @@ class SkeletonShimmer extends StatelessWidget {
   }
 }
 
+/// Placeholder de una fila-tarjeta: círculo (avatar/ícono) + dos líneas, para
+/// imitar la forma real del contenido mientras carga.
+class SkeletonTile extends StatelessWidget {
+  const SkeletonTile({super.key, this.height = 72});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    Widget bar(double w, double h) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+            color: palette.surfaceAlt,
+            borderRadius: BorderRadius.circular(6),
+          ),
+        );
+    return Container(
+      height: height,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: palette.cardElevated,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: palette.surfaceAlt,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                bar(double.infinity, 12),
+                const SizedBox(height: 8),
+                bar(120, 10),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Estado de carga por defecto para dashboards y listas: N tarjetas-esqueleto
-/// con el brillo de shimmer. Reemplaza al spinner para una carga más ordenada.
+/// (círculo + líneas) con el brillo de shimmer. Reemplaza al spinner para una
+/// carga más ordenada y acorde al contenido real.
 class SkeletonList extends StatelessWidget {
   const SkeletonList({
     super.key,
     this.items = 4,
-    this.itemHeight = 76,
+    this.itemHeight = 72,
     this.padding = const EdgeInsets.fromLTRB(16, 12, 16, 16),
   });
 
@@ -66,7 +121,6 @@ class SkeletonList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     return Padding(
       padding: padding,
       child: SkeletonShimmer(
@@ -76,13 +130,7 @@ class SkeletonList extends StatelessWidget {
             for (var i = 0; i < items; i++)
               Padding(
                 padding: EdgeInsets.only(bottom: i < items - 1 ? 12 : 0),
-                child: Container(
-                  height: itemHeight,
-                  decoration: BoxDecoration(
-                    color: palette.surfaceAlt,
-                    borderRadius: BorderRadius.circular(Radii.lg),
-                  ),
-                ),
+                child: SkeletonTile(height: itemHeight),
               ),
           ],
         ),
