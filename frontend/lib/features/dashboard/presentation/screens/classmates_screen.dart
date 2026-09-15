@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/depth_card.dart';
+import '../../../../core/widgets/glass.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../domain/dashboard_models.dart';
 import '../widgets/student_chrome.dart';
@@ -76,9 +77,8 @@ class _ClassmatesScreenState extends State<ClassmatesScreen> {
   }
 
   void _showSummary(BuildContext context, Classmate c) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
+    showGlassSheet<void>(
+      context,
       builder: (_) => _ClassmateSummary(classmate: c),
     );
   }

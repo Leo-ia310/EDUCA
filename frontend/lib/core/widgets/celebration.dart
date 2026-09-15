@@ -7,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 import '../theme/motion.dart';
 import '../theme/subject_palette.dart';
+import 'glass.dart';
 
 /// Muestra una micro-celebración a pantalla completa: un estallido de
 /// partículas de colores + una tarjeta con ícono y mensaje que entra con
@@ -113,14 +114,9 @@ class _CelebrationViewState extends State<_CelebrationView> {
                   )
                   .rotate(begin: 0, end: p.rotation, duration: 900.ms)
                   .fadeOut(delay: 600.ms, duration: 500.ms),
-            // Tarjeta central con ícono + mensaje.
-            Container(
+            // Tarjeta central de vidrio esmerilado con ícono + mensaje.
+            GlassSurface(
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
-              decoration: BoxDecoration(
-                color: palette.cardElevated,
-                borderRadius: BorderRadius.circular(Radii.xl),
-                boxShadow: AppShadows.lifted(context),
-              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
