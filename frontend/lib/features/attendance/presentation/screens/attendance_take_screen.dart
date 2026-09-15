@@ -71,6 +71,7 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: Text(brief.subjectName),
@@ -82,6 +83,8 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
           ),
         ],
       ),
+      bottomNav: null,
+      fab: null,
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -96,7 +99,7 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
             ),
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 itemCount: state.rows.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (_, i) {
@@ -112,8 +115,6 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
           ],
         ),
       ),
-      bottomNav: null,
-      fab: null,
     );
   }
 }
@@ -143,8 +144,8 @@ class _HeaderSummary extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: palette.lime,
-          borderRadius: BorderRadius.circular(20),
+          color: palette.accent,
+          borderRadius: BorderRadius.circular(Radii.lg),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +167,7 @@ class _HeaderSummary extends StatelessWidget {
                       Text(
                         '${brief.startTime} – ${brief.endTime}',
                         style: context.textTheme.titleMedium?.copyWith(
-                          color: const Color(0xFF1E2218),
+                          color: Colors.white,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -249,7 +250,7 @@ class _Pill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.sm),
         ),
         child: Column(
           children: [
@@ -262,7 +263,7 @@ class _Pill extends StatelessWidget {
                   value,
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1E2218),
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -310,7 +311,7 @@ class _StudentTile extends StatelessWidget {
                 ),
                 if (row.student.studentCode != null)
                   Text(row.student.studentCode!,
-                      style: context.textTheme.bodySmall),
+                      style: context.textTheme.bodySmall,),
               ],
             ),
           ),
@@ -319,8 +320,8 @@ class _StudentTile extends StatelessWidget {
               padding: const EdgeInsets.only(right: 6),
               child: Tooltip(
                 message: 'Pendiente de guardar',
-                child: Icon(Icons.cloud_off_outlined,
-                    size: 14, color: palette.warning),
+                child: Icon(Icons.cloud_off_rounded,
+                    size: 14, color: palette.warning,),
               ),
             ),
           PopupMenuButton<AttendanceStatus>(
@@ -351,7 +352,7 @@ class _StudentTile extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(Radii.pill),
               ),
               child: Row(
                 children: [
@@ -426,7 +427,7 @@ class _FinishedSheet extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.check_circle_rounded,
-                    color: palette.success, size: 56),
+                    color: palette.success, size: 56,),
               ).center,
               const SizedBox(height: 16),
               Text(
@@ -473,7 +474,7 @@ class _FinishedSheet extends StatelessWidget {
 
 class _SummaryStat extends StatelessWidget {
   const _SummaryStat(
-      {required this.label, required this.value, required this.color});
+      {required this.label, required this.value, required this.color,});
   final String label;
   final String value;
   final Color color;

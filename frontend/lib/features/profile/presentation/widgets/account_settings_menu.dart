@@ -32,7 +32,7 @@ class AccountSettingsMenu extends ConsumerWidget {
     return PopupMenuButton<String>(
       tooltip: 'Opciones',
       padding: (boxed || circular) ? EdgeInsets.zero : const EdgeInsets.all(8),
-      icon: (boxed || circular) ? null : const Icon(Icons.settings_outlined),
+      icon: (boxed || circular) ? null : const Icon(Icons.settings_rounded),
       child: circular
           ? Container(
               width: 46,
@@ -41,7 +41,7 @@ class AccountSettingsMenu extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.18),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.settings_outlined, color: Colors.white),
+              child: const Icon(Icons.settings_rounded, color: Colors.white),
             )
           : boxed
               ? Container(
@@ -49,10 +49,10 @@ class AccountSettingsMenu extends ConsumerWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     color: palette.cardElevated,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                     border: Border.all(color: Theme.of(context).dividerColor),
                   ),
-                  child: const Icon(Icons.settings_outlined),
+                  child: const Icon(Icons.settings_rounded),
                 )
               : null,
       onSelected: (v) async {
@@ -71,7 +71,7 @@ class AccountSettingsMenu extends ConsumerWidget {
         }
       },
       itemBuilder: (_) => [
-        _item('appearance', Icons.palette_outlined, 'Apariencia'),
+        _item('appearance', Icons.palette_rounded, 'Apariencia'),
         _item('password', Icons.lock_outline, 'Cambiar contraseña'),
         _item('notifications', Icons.notifications_none, 'Notificaciones'),
         _item('help', Icons.help_outline, 'Ayuda y soporte'),
@@ -113,7 +113,7 @@ class AccountSettingsList extends ConsumerWidget {
     return Column(
       children: [
         _SettingsRow(
-          icon: Icons.palette_outlined,
+          icon: Icons.palette_rounded,
           label: 'Apariencia',
           color: const Color(0xFF8A5CF6),
           onTap: () => _showAppearanceSheet(context, ref),
@@ -169,16 +169,16 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(color);
+    final s = context.pastel(color);
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Ink(
           decoration: BoxDecoration(
             color: s.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -247,17 +247,17 @@ void _showAppearanceSheet(BuildContext context, WidgetRef ref) {
                       RadioListTile<ThemeMode>(
                         value: ThemeMode.system,
                         title: const Text('Seguir sistema'),
-                        activeColor: palette.limeDeep,
+                        activeColor: palette.accentDeep,
                       ),
                       RadioListTile<ThemeMode>(
                         value: ThemeMode.light,
                         title: const Text('Tema claro'),
-                        activeColor: palette.limeDeep,
+                        activeColor: palette.accentDeep,
                       ),
                       RadioListTile<ThemeMode>(
                         value: ThemeMode.dark,
                         title: const Text('Tema oscuro'),
-                        activeColor: palette.limeDeep,
+                        activeColor: palette.accentDeep,
                       ),
                     ],
                   ),

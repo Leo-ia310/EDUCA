@@ -15,11 +15,11 @@ class ReportPdfService {
     final doc = pw.Document(
       title: 'Boletín ${card.periodName} — ${card.studentName}',
     );
-    final green = PdfColor.fromInt(0xFF9BE000);
-    final dark = PdfColor.fromInt(0xFF1E2218);
-    final muted = PdfColor.fromInt(0xFF5C6354);
-    final surfaceAlt = PdfColor.fromInt(0xFFF1F4E2);
-    final divider = PdfColor.fromInt(0xFFE3E7D2);
+    const green = PdfColor.fromInt(0xFF9BE000);
+    const dark = PdfColor.fromInt(0xFF1E2218);
+    const muted = PdfColor.fromInt(0xFF5C6354);
+    const surfaceAlt = PdfColor.fromInt(0xFFF1F4E2);
+    const divider = PdfColor.fromInt(0xFFE3E7D2);
 
     final fmt = DateFormat('d MMM y', 'es');
 
@@ -36,10 +36,10 @@ class ReportPdfService {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text('Educa360 — Boletín generado',
-                  style: pw.TextStyle(fontSize: 8, color: muted)),
+                  style: const pw.TextStyle(fontSize: 8, color: muted),),
               pw.Text(
                 'Página ${ctx.pageNumber} de ${ctx.pagesCount}',
-                style: pw.TextStyle(fontSize: 8, color: muted),
+                style: const pw.TextStyle(fontSize: 8, color: muted),
               ),
             ],
           ),
@@ -52,7 +52,7 @@ class ReportPdfService {
         pw.SizedBox(height: 18),
         _legend(dark, muted, divider),
       ],
-    ));
+    ),);
 
     return doc.save();
   }
@@ -102,7 +102,7 @@ class ReportPdfService {
                   style: pw.TextStyle(
                       color: dark,
                       fontSize: 14,
-                      fontWeight: pw.FontWeight.bold),
+                      fontWeight: pw.FontWeight.bold,),
                 ),
                 pw.Text(
                   'Boletín de calificaciones · ${card.periodName}',
@@ -134,13 +134,13 @@ class ReportPdfService {
                 style: pw.TextStyle(
                     fontSize: 8,
                     color: muted,
-                    fontWeight: pw.FontWeight.bold)),
+                    fontWeight: pw.FontWeight.bold,),),
             pw.SizedBox(height: 2),
             pw.Text(value,
                 style: pw.TextStyle(
                     fontSize: 12,
                     color: dark,
-                    fontWeight: pw.FontWeight.bold)),
+                    fontWeight: pw.FontWeight.bold,),),
           ],
         );
     return pw.Row(
@@ -160,22 +160,22 @@ class ReportPdfService {
                     style: pw.TextStyle(
                         fontSize: 16,
                         color: dark,
-                        fontWeight: pw.FontWeight.bold)),
+                        fontWeight: pw.FontWeight.bold,),),
                 pw.SizedBox(height: 2),
                 pw.Text(card.gradeLevel,
-                    style: pw.TextStyle(fontSize: 10, color: muted)),
+                    style: pw.TextStyle(fontSize: 10, color: muted),),
                 pw.SizedBox(height: 10),
                 pw.Row(children: [
                   pw.Expanded(child: cell('Periodo', card.periodName)),
                   pw.Expanded(
                       child: cell(
                           'Asistencia',
-                          '${card.attendancePct.toStringAsFixed(1)}%')),
+                          '${card.attendancePct.toStringAsFixed(1)}%',),),
                   pw.Expanded(
                       child: cell(
                           'Posición',
-                          '${card.rank} de ${card.totalPeers}')),
-                ]),
+                          '${card.rank} de ${card.totalPeers}',),),
+                ],),
               ],
             ),
           ),
@@ -196,14 +196,14 @@ class ReportPdfService {
                     style: pw.TextStyle(
                         color: dark,
                         fontSize: 9,
-                        fontWeight: pw.FontWeight.bold)),
+                        fontWeight: pw.FontWeight.bold,),),
                 pw.SizedBox(height: 4),
                 pw.Text(
                   card.overallAverage.toStringAsFixed(2),
                   style: pw.TextStyle(
                       color: dark,
                       fontSize: 32,
-                      fontWeight: pw.FontWeight.bold),
+                      fontWeight: pw.FontWeight.bold,),
                 ),
                 if (card.overallLabel != null)
                   pw.Text(
@@ -211,7 +211,7 @@ class ReportPdfService {
                     style: pw.TextStyle(
                         color: dark,
                         fontSize: 10,
-                        fontWeight: pw.FontWeight.bold),
+                        fontWeight: pw.FontWeight.bold,),
                   ),
               ],
             ),
@@ -256,14 +256,14 @@ class ReportPdfService {
               _cell(line.subjectName, dark, bold: true),
               _cell(line.teacherName, muted),
               _cell(line.finalScore.toStringAsFixed(2), dark,
-                  align: pw.TextAlign.right, bold: true),
+                  align: pw.TextAlign.right, bold: true,),
               _cell(line.qualitativeLabel ?? '—', muted,
-                  align: pw.TextAlign.right),
+                  align: pw.TextAlign.right,),
               _cell(line.passed ? 'Aprobado' : 'Reprobado',
                   line.passed
-                      ? PdfColor.fromInt(0xFF15803D)
-                      : PdfColor.fromInt(0xFFB91C1C),
-                  align: pw.TextAlign.right, bold: true),
+                      ? const PdfColor.fromInt(0xFF15803D)
+                      : const PdfColor.fromInt(0xFFB91C1C),
+                  align: pw.TextAlign.right, bold: true,),
             ],
           ),
       ],
@@ -279,12 +279,12 @@ class ReportPdfService {
           style: pw.TextStyle(
               color: color,
               fontSize: 9,
-              fontWeight: pw.FontWeight.bold),
+              fontWeight: pw.FontWeight.bold,),
         ),
       );
 
   pw.Widget _cell(String value, PdfColor color,
-          {pw.TextAlign? align, bool bold = false}) =>
+          {pw.TextAlign? align, bool bold = false,}) =>
       pw.Padding(
         padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: pw.Text(
@@ -312,7 +312,7 @@ class ReportPdfService {
               style: pw.TextStyle(
                   color: dark,
                   fontSize: 9,
-                  fontWeight: pw.FontWeight.bold)),
+                  fontWeight: pw.FontWeight.bold,),),
           pw.SizedBox(height: 4),
           pw.Text(
             'Este boletín refleja el rendimiento académico del estudiante durante el periodo indicado. '

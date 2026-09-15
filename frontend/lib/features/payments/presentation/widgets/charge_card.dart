@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../domain/entities.dart';
 import 'money_text.dart';
 
@@ -15,13 +15,20 @@ class ChargeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final (color, label) = _chipFor(charge, palette);
+    final s = context.pastel(color);
     final fmt = DateFormat("d MMM y", 'es');
     final showLateFee = charge.lateFee > 0 &&
         charge.status != ChargeStatus.paid;
 
-    return EduCard(
-      onTap: onTap,
-      child: Column(
+    return Material(
+      color: s.surface,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -29,11 +36,9 @@ class ChargeCard extends StatelessWidget {
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(_iconFor(charge), color: color, size: 20),
+                decoration:
+                    BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                child: Icon(_iconFor(charge), color: Colors.white, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -43,12 +48,13 @@ class ChargeCard extends StatelessWidget {
                     Text(
                       charge.conceptName,
                       style: context.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                          ?.copyWith(color: s.ink, fontWeight: FontWeight.w800),
                     ),
                     if (charge.description.isNotEmpty)
                       Text(
                         charge.description,
-                        style: context.textTheme.bodySmall,
+                        style: context.textTheme.bodySmall
+                            ?.copyWith(color: s.inkMuted),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -59,13 +65,13 @@ class ChargeCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(999),
+                  color: Colors.white.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(Radii.pill),
                 ),
                 child: Text(
                   label,
                   style: context.textTheme.labelSmall?.copyWith(
-                    color: color,
+                    color: const Color(0xFF232A33),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -75,15 +81,14 @@ class ChargeCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              Icon(Icons.event_outlined, size: 14, color: palette.textMuted),
+              Icon(Icons.event_rounded, size: 14, color: s.inkMuted),
               const SizedBox(width: 4),
               Text(
                 charge.isOverdue && charge.status != ChargeStatus.paid
                     ? 'Vencía ${fmt.format(charge.dueDate)}'
                     : 'Vence ${fmt.format(charge.dueDate)}',
                 style: context.textTheme.labelSmall?.copyWith(
-                  color:
-                      charge.isOverdue ? palette.danger : palette.textMuted,
+                  color: charge.isOverdue ? palette.danger : s.inkMuted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -93,9 +98,7 @@ class ChargeCard extends StatelessWidget {
                 currencyCode: charge.currencyCode,
                 style: context.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: charge.status == ChargeStatus.paid
-                      ? palette.success
-                      : Theme.of(context).colorScheme.onSurface,
+                  color: s.ink,
                 ),
               ),
             ],
@@ -105,7 +108,7 @@ class ChargeCard extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.warning_amber_rounded,
-                    size: 14, color: palette.warning),
+                    size: 14, color: palette.warning,),
                 const SizedBox(width: 4),
                 Text(
                   'Incluye mora ${Money.format(charge.lateFee, charge.currencyCode)}',
@@ -118,6 +121,8 @@ class ChargeCard extends StatelessWidget {
             ),
           ],
         ],
+          ),
+        ),
       ),
     );
   }
@@ -125,19 +130,19 @@ class ChargeCard extends StatelessWidget {
   IconData _iconFor(Charge c) {
     if (c.conceptName.toLowerCase().contains('matrícula') ||
         c.conceptName.toLowerCase().contains('matricula')) {
-      return Icons.school_outlined;
+      return Icons.school_rounded;
     }
     if (c.conceptName.toLowerCase().contains('mensualidad') ||
         c.conceptName.toLowerCase().contains('colegiatura')) {
-      return Icons.calendar_month_outlined;
+      return Icons.calendar_month_rounded;
     }
     if (c.conceptName.toLowerCase().contains('uniforme')) {
-      return Icons.checkroom_outlined;
+      return Icons.checkroom_rounded;
     }
     if (c.conceptName.toLowerCase().contains('libro')) {
-      return Icons.menu_book_outlined;
+      return Icons.menu_book_rounded;
     }
-    return Icons.receipt_long_outlined;
+    return Icons.receipt_long_rounded;
   }
 
   (Color, String) _chipFor(Charge c, AppPalette palette) {

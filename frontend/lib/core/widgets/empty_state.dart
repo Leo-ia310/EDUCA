@@ -5,7 +5,7 @@ import '../theme/app_theme.dart';
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
-    this.icon = Icons.inbox_outlined,
+    this.icon = Icons.inbox_rounded,
     this.title = 'Nada por aquí',
     this.subtitle,
     this.actionLabel,
@@ -30,15 +30,15 @@ class EmptyState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: context.palette.limeSoft,
+                color: context.palette.accentSoft,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 32, color: context.palette.limeDeep),
+              child: Icon(icon, size: 32, color: context.palette.accentDeep),
             ),
             const SizedBox(height: 16),
             Text(title,
                 style: context.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700)),
+                    ?.copyWith(fontWeight: FontWeight.w700),),
             if (subtitle != null) ...[
               const SizedBox(height: 6),
               Text(

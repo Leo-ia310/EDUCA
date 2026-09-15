@@ -42,17 +42,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               width: 84,
               height: 84,
               decoration: BoxDecoration(
-                color: context.palette.limeDeep,
-                borderRadius: BorderRadius.circular(24),
+                color: context.palette.accentDeep,
+                borderRadius: BorderRadius.circular(Radii.xl),
               ),
               alignment: Alignment.center,
               child: const Icon(Icons.school_rounded,
-                  color: Color(0xFF1E2218), size: 40),
+                  color: Colors.white, size: 40,),
             ),
             const SizedBox(height: 16),
             Text('Educa360',
                 style: context.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800)),
+                    ?.copyWith(fontWeight: FontWeight.w800),),
             const SizedBox(height: 24),
             const SizedBox(
               width: 28,

@@ -47,6 +47,7 @@ class HelpScreen extends StatelessWidget {
         title: const Text('Ayuda y soporte'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),
@@ -69,7 +70,7 @@ class HelpScreen extends StatelessWidget {
                           const EdgeInsets.symmetric(horizontal: 10),
                       childrenPadding:
                           const EdgeInsets.fromLTRB(10, 0, 10, 12),
-                      iconColor: palette.limeDeep,
+                      iconColor: palette.accentDeep,
                       collapsedIconColor: palette.textMuted,
                       title: Text(
                         faq.$1,
@@ -80,7 +81,7 @@ class HelpScreen extends StatelessWidget {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(faq.$2,
-                              style: context.textTheme.bodyMedium),
+                              style: context.textTheme.bodyMedium,),
                         ),
                       ],
                     ),
@@ -107,7 +108,7 @@ class HelpScreen extends StatelessWidget {
                       Theme.of(context).dividerColor.withValues(alpha: 0.5),
                 ),
                 _ContactTile(
-                  icon: Icons.phone_outlined,
+                  icon: Icons.phone_rounded,
                   label: 'Teléfono',
                   value: '+505 8888 0000',
                   onTap: () => _copied(context, '+505 8888 0000'),
@@ -117,8 +118,8 @@ class HelpScreen extends StatelessWidget {
                   color:
                       Theme.of(context).dividerColor.withValues(alpha: 0.5),
                 ),
-                _ContactTile(
-                  icon: Icons.schedule_outlined,
+                const _ContactTile(
+                  icon: Icons.schedule_rounded,
                   label: 'Horario de atención',
                   value: 'Lun a Vie · 8:00 – 17:00',
                   onTap: null,
@@ -167,7 +168,7 @@ class _ContactTile extends StatelessWidget {
       leading: Icon(icon, color: context.palette.textMuted),
       title: Text(label,
           style: context.textTheme.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700)),
+              ?.copyWith(fontWeight: FontWeight.w700),),
       subtitle: Text(value),
       trailing:
           onTap != null ? const Icon(Icons.copy_rounded, size: 18) : null,

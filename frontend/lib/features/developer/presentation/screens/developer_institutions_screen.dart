@@ -27,6 +27,7 @@ class DeveloperInstitutionsScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Instituciones'),
@@ -37,7 +38,7 @@ class DeveloperInstitutionsScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (items) => RefreshIndicator(
-            color: palette.limeDeep,
+            color: palette.accentDeep,
             onRefresh: () async =>
                 ref.invalidate(developerInstitutionsProvider),
             child: ListView(
@@ -83,7 +84,7 @@ class _InstitutionCard extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: palette.info.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
                 child: Icon(Icons.apartment_rounded,
                     color: palette.info, size: 20,),
@@ -161,7 +162,7 @@ class _StatePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         active ? 'Activa' : 'Inactiva',

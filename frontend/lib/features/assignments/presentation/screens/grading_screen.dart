@@ -30,6 +30,7 @@ class GradingScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: assignmentAsync.maybeWhen(
@@ -45,7 +46,7 @@ class GradingScreen extends ConsumerWidget {
           data: (a) {
             if (a == null) {
               return const EmptyState(
-                  icon: Icons.error_outline, title: 'No encontrada');
+                  icon: Icons.error_outline, title: 'No encontrada',);
             }
             return submissionsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -72,7 +73,7 @@ class _SubmissionsList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: EduCard(
-            color: palette.lime,
+            color: palette.accent,
             child: Row(
               children: [
                 Expanded(
@@ -88,7 +89,7 @@ class _SubmissionsList extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       AssignmentStatusChip(
-                          status: assignment.statusForNow(DateTime.now())),
+                          status: assignment.statusForNow(DateTime.now()),),
                     ],
                   ),
                 ),
@@ -134,16 +135,16 @@ class _CounterPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Column(
         children: [
           Text(value,
               style: context.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w800, color: const Color(0xFF1E2218))),
+                  ?.copyWith(fontWeight: FontWeight.w800, color: Colors.white),),
           Text(label,
               style: context.textTheme.labelSmall
-                  ?.copyWith(color: const Color(0xFF34401C))),
+                  ?.copyWith(color: const Color(0xFF34401C)),),
         ],
       ),
     );
@@ -183,7 +184,7 @@ class _SubmissionRow extends ConsumerWidget {
                       )
                     else
                       Text('Sin entregar',
-                          style: context.textTheme.bodySmall),
+                          style: context.textTheme.bodySmall,),
                   ],
                 ),
               ),
@@ -242,15 +243,15 @@ class _SubmissionRow extends ConsumerWidget {
                 FilledButton.tonal(
                   onPressed: () => _openGradeSheet(context, ref),
                   style: FilledButton.styleFrom(
-                    backgroundColor: palette.limeDeep,
-                    foregroundColor: const Color(0xFF1E2218),
+                    backgroundColor: palette.accentDeep,
+                    foregroundColor: Colors.white,
                     minimumSize: const Size(0, 38),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   ),
                   child: Text(submission.hasGrade
                       ? 'Ajustar nota'
-                      : 'Calificar'),
+                      : 'Calificar',),
                 ),
             ],
           ),
@@ -261,7 +262,7 @@ class _SubmissionRow extends ConsumerWidget {
 
   void _openGradeSheet(BuildContext context, WidgetRef ref) {
     final scoreCtrl = TextEditingController(
-        text: submission.score?.toStringAsFixed(1) ?? '');
+        text: submission.score?.toStringAsFixed(1) ?? '',);
     final feedbackCtrl =
         TextEditingController(text: submission.feedback ?? '');
     final palette = context.palette;
@@ -271,7 +272,7 @@ class _SubmissionRow extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(
@@ -306,7 +307,7 @@ class _SubmissionRow extends ConsumerWidget {
                 TextField(
                   controller: scoreCtrl,
                   keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true),
+                      decimal: true,),
                   decoration: InputDecoration(
                     labelText:
                         'Puntaje (max ${assignment.maxScore.toStringAsFixed(0)})',

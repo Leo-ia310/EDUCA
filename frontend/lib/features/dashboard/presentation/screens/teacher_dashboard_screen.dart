@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
@@ -25,9 +26,11 @@ import '../widgets/greeting_header.dart';
 import '../widgets/stat_strip.dart';
 import 'class_detail_screen.dart';
 
-// Tarjeta clara neutra para listas funcionales (asistencia, calificaciones).
-const Color _panelCard = Color(0xFFEFF1F6);
-const Color _panelInk = Color(0xFF232A33);
+// Panel neutro sensible al tema: superficie alterna + texto onSurface, para las
+// secciones densas (Asistencia rápida, Calificaciones recientes) que no usan el
+// pastel por materia.
+Color _panelCard(BuildContext c) => c.palette.surfaceAlt;
+Color _panelInk(BuildContext c) => Theme.of(c).colorScheme.onSurface;
 
 class TeacherDashboardScreen extends ConsumerStatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -53,7 +56,7 @@ class _TeacherDashboardScreenState
     final now = DateTime.now();
 
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 100),
+      padding: const EdgeInsets.only(bottom: 24),
       onRefresh: () async =>
           Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
@@ -68,7 +71,7 @@ class _TeacherDashboardScreenState
               route: Routes.assignmentNew,
             ),
             QuickActionEntry(
-              icon: Icons.how_to_reg_outlined,
+              icon: Icons.how_to_reg_rounded,
               label: 'Tomar asistencia',
               route: Routes.attendance,
             ),
@@ -90,7 +93,7 @@ class _TeacherDashboardScreenState
         children: [
           // Hero de bienvenida (full-bleed).
           AppGreetingHeader(
-            greeting: _greeting(now),
+            greeting: DateUtilsX.greetingForHour(now),
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
@@ -155,8 +158,8 @@ class _TeacherDashboardScreenState
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: _panelCard,
-                    borderRadius: BorderRadius.circular(18),
+                    color: _panelCard(context),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                   child: Column(
                     children: [
@@ -169,7 +172,7 @@ class _TeacherDashboardScreenState
                         ),
                         if (line != data.quickAttendance.last)
                           Divider(
-                            color: _panelInk.withValues(alpha: 0.10),
+                            color: _panelInk(context).withValues(alpha: 0.10),
                             height: 18,
                           ),
                       ],
@@ -197,7 +200,7 @@ class _TeacherDashboardScreenState
                             onPressed: () =>
                                 context.push(Routes.attendanceHistory),
                             style: TextButton.styleFrom(
-                              foregroundColor: _panelInk.withValues(alpha: 0.7),
+                              foregroundColor: _panelInk(context).withValues(alpha: 0.7),
                             ),
                             icon: const Icon(Icons.history_rounded, size: 16),
                             label: const Text('Historial'),
@@ -218,7 +221,7 @@ class _TeacherDashboardScreenState
                       child: Text(
                         'Ver Horario',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -265,8 +268,8 @@ class _TeacherDashboardScreenState
                       icon: const Icon(Icons.add),
                       label: const Text('Asignar'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: palette.limeDeep,
-                        foregroundColor: const Color(0xFF1E2218),
+                        backgroundColor: palette.accentDeep,
+                        foregroundColor: Colors.white,
                         minimumSize: const Size(0, 40),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -293,8 +296,8 @@ class _TeacherDashboardScreenState
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: _panelCard,
-                    borderRadius: BorderRadius.circular(18),
+                    color: _panelCard(context),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                   child: Column(
                     children: [
@@ -302,7 +305,7 @@ class _TeacherDashboardScreenState
                         _RecentGradeRow(item: g),
                         if (g != data.recentGrades.last)
                           Divider(
-                            color: _panelInk.withValues(alpha: 0.10),
+                            color: _panelInk(context).withValues(alpha: 0.10),
                             height: 18,
                           ),
                       ],
@@ -312,9 +315,9 @@ class _TeacherDashboardScreenState
                         child: OutlinedButton.icon(
                           onPressed: () => context.push(Routes.gradebook),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: _panelInk,
+                            foregroundColor: _panelInk(context),
                             side: BorderSide(
-                              color: _panelInk.withValues(alpha: 0.25),
+                              color: _panelInk(context).withValues(alpha: 0.25),
                             ),
                             minimumSize: const Size(0, 44),
                           ),
@@ -334,13 +337,6 @@ class _TeacherDashboardScreenState
   }
 }
 
-/// Saludo según la hora del día.
-String _greeting(DateTime now) {
-  final h = now.hour;
-  if (h < 12) return 'Buenos días';
-  if (h < 19) return 'Buenas tardes';
-  return 'Buenas noches';
-}
 
 /// Tarjeta de clase (Mis Clases) en estilo pastel del panel.
 class _ClassCard extends StatelessWidget {
@@ -350,44 +346,45 @@ class _ClassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(teacherClass.name));
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 200,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: s.surface,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-              child: Icon(teacherClass.icon, color: Colors.white, size: 22),
-            ),
-            const Spacer(),
-            Text(
-              teacherClass.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.textTheme.titleMedium?.copyWith(
-                color: s.ink,
-                fontWeight: FontWeight.w800,
+    final s = context.pastel(subjectColor(teacherClass.name));
+    return Material(
+      color: s.surface,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: Container(
+          width: 200,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration:
+                    BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                child: Icon(teacherClass.icon, color: Colors.white, size: 22),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              teacherClass.room,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
-            ),
-          ],
+              const Spacer(),
+              Text(
+                teacherClass.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.titleMedium?.copyWith(
+                  color: s.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                teacherClass.room,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -410,14 +407,14 @@ class _AddClassCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: palette.surfaceAlt,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
           border: Border.all(color: Theme.of(context).dividerColor),
         ),
         alignment: Alignment.center,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_circle_outline, color: palette.limeDeep, size: 28),
+            Icon(Icons.add_circle_outline, color: palette.accentDeep, size: 28),
             const SizedBox(height: 6),
             const Text('Agregar clase', textAlign: TextAlign.center),
           ],
@@ -450,7 +447,7 @@ class _AttendanceTile extends StatelessWidget {
             child: Text(
               name,
               style: context.textTheme.titleSmall?.copyWith(
-                color: _panelInk,
+                color: _panelInk(context),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -459,9 +456,9 @@ class _AttendanceTile extends StatelessWidget {
             value: present,
             onChanged: (v) => onChanged(v ?? false),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(Radii.xs),
             ),
-            side: BorderSide(color: _panelInk.withValues(alpha: 0.4), width: 2),
+            side: BorderSide(color: _panelInk(context).withValues(alpha: 0.4), width: 2),
             activeColor: const Color(0xFF4C8DF5),
             checkColor: Colors.white,
           ),
@@ -489,17 +486,17 @@ class _AssignmentRow extends StatelessWidget {
         : item.completed
             ? 'Completado'
             : '${item.delivered}/${item.total}';
-    final s = pastelSurface(statusColor);
+    final s = context.pastel(statusColor);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Ink(
           decoration: BoxDecoration(
             color: s.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -513,7 +510,7 @@ class _AssignmentRow extends StatelessWidget {
                   child: Icon(
                     item.completed
                         ? Icons.check_circle_outline
-                        : Icons.assignment_outlined,
+                        : Icons.assignment_rounded,
                     color: Colors.white,
                     size: 22,
                   ),
@@ -549,7 +546,7 @@ class _AssignmentRow extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: s.vivid.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(Radii.pill),
                   ),
                   child: Text(
                     chipLabel,
@@ -577,7 +574,7 @@ class _RecentGradeRow extends StatelessWidget {
     final pass = item.score >= 6;
     final color =
         pass ? const Color(0xFF2FA869) : const Color(0xFFD3453B);
-    final inkMuted = _panelInk.withValues(alpha: 0.62);
+    final inkMuted = _panelInk(context).withValues(alpha: 0.62);
     return Row(
       children: [
         UserAvatar(name: item.student, size: 36),
@@ -589,7 +586,7 @@ class _RecentGradeRow extends StatelessWidget {
               Text(
                 item.student,
                 style: context.textTheme.titleSmall?.copyWith(
-                  color: _panelInk,
+                  color: _panelInk(context),
                   fontWeight: FontWeight.w700,
                 ),
               ),

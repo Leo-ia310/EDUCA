@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
@@ -24,9 +25,10 @@ import '../widgets/greeting_header.dart';
 import '../widgets/stat_strip.dart';
 import 'announcement_detail_screen.dart';
 
-// Tarjeta clara neutra para listas funcionales (maestros).
-const Color _panelCard = Color(0xFFEFF1F6);
-const Color _panelInk = Color(0xFF232A33);
+// Panel neutro sensible al tema: superficie alterna + texto onSurface, para las
+// secciones densas (Maestros activos, etc.) que no usan el pastel por materia.
+Color _panelCard(BuildContext c) => c.palette.surfaceAlt;
+Color _panelInk(BuildContext c) => Theme.of(c).colorScheme.onSurface;
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -40,7 +42,7 @@ class AdminDashboardScreen extends ConsumerWidget {
     final now = DateTime.now();
 
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 100),
+      padding: const EdgeInsets.only(bottom: 24),
       onRefresh: () async =>
           Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
@@ -50,22 +52,22 @@ class AdminDashboardScreen extends ConsumerWidget {
           title: 'Accesos rápidos',
           actions: const [
             QuickActionEntry(
-              icon: Icons.event_outlined,
+              icon: Icons.event_rounded,
               label: 'Crear evento',
               route: Routes.eventNew,
             ),
             QuickActionEntry(
-              icon: Icons.school_outlined,
+              icon: Icons.school_rounded,
               label: 'Asignar maestros',
               route: Routes.manageTeachers,
             ),
             QuickActionEntry(
-              icon: Icons.schedule_outlined,
+              icon: Icons.schedule_rounded,
               label: 'Modificar horarios',
               route: Routes.schedule,
             ),
             QuickActionEntry(
-              icon: Icons.payments_outlined,
+              icon: Icons.payments_rounded,
               label: 'Recaudación',
               route: Routes.paymentsDunning,
             ),
@@ -77,7 +79,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         children: [
           // Hero de bienvenida (full-bleed).
           AppGreetingHeader(
-            greeting: _greeting(now),
+            greeting: DateUtilsX.greetingForHour(now),
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
@@ -157,19 +159,19 @@ class AdminDashboardScreen extends ConsumerWidget {
                 _QuickActionsGrid(
                   actions: [
                     _AdminAction(
-                      Icons.school_outlined,
+                      Icons.school_rounded,
                       'Asignar Maestros',
                       const Color(0xFF4C8DF5),
                       () => context.push(Routes.manageTeachers),
                     ),
                     _AdminAction(
-                      Icons.event_outlined,
+                      Icons.event_rounded,
                       'Crear Evento',
                       const Color(0xFF34C77A),
                       () => context.push(Routes.eventNew),
                     ),
                     _AdminAction(
-                      Icons.schedule_outlined,
+                      Icons.schedule_rounded,
                       'Modificar Horarios',
                       const Color(0xFF8A5CF6),
                       () => context.push(Routes.schedule),
@@ -181,7 +183,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                       () => context.push(Routes.gradebook),
                     ),
                     _AdminAction(
-                      Icons.payments_outlined,
+                      Icons.payments_rounded,
                       'Recaudación',
                       const Color(0xFFEC6A9C),
                       () => context.push(Routes.paymentsDunning),
@@ -207,7 +209,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                       child: Text(
                         'Ver todos',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -241,7 +243,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                       child: Text(
                         'Gestionar',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -252,8 +254,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: _panelCard,
-                    borderRadius: BorderRadius.circular(18),
+                    color: _panelCard(context),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                   child: Column(
                     children: [
@@ -261,7 +263,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                         _TeacherRow(item: t),
                         if (t != data.teachers.last)
                           Divider(
-                            color: _panelInk.withValues(alpha: 0.10),
+                            color: _panelInk(context).withValues(alpha: 0.10),
                             height: 14,
                           ),
                       ],
@@ -277,13 +279,6 @@ class AdminDashboardScreen extends ConsumerWidget {
   }
 }
 
-/// Saludo según la hora del día.
-String _greeting(DateTime now) {
-  final h = now.hour;
-  if (h < 12) return 'Buenos días';
-  if (h < 19) return 'Buenas tardes';
-  return 'Buenas noches';
-}
 
 class _AdminAction {
   const _AdminAction(this.icon, this.label, this.accent, this.onTap);
@@ -332,16 +327,16 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(action.accent);
+    final s = context.pastel(action.accent);
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: action.onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(Radii.lg),
         child: Ink(
           decoration: BoxDecoration(
             color: s.surface,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(Radii.lg),
           ),
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -381,12 +376,12 @@ class _AnnouncementRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(item.title));
+    final s = context.pastel(subjectColor(item.title));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: s.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,14 +441,14 @@ class _TeacherRow extends StatelessWidget {
               Text(
                 item.name,
                 style: context.textTheme.titleSmall?.copyWith(
-                  color: _panelInk,
+                  color: _panelInk(context),
                   fontWeight: FontWeight.w800,
                 ),
               ),
               Text(
                 item.subject,
                 style: context.textTheme.bodySmall
-                    ?.copyWith(color: _panelInk.withValues(alpha: 0.62)),
+                    ?.copyWith(color: _panelInk(context).withValues(alpha: 0.62)),
               ),
             ],
           ),

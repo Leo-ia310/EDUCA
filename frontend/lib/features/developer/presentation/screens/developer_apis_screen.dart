@@ -66,6 +66,7 @@ class _DeveloperApisScreenState extends ConsumerState<DeveloperApisScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('APIs por conectar'),
@@ -84,7 +85,7 @@ class _DeveloperApisScreenState extends ConsumerState<DeveloperApisScreen> {
             final filtered = _applyFilters(apis);
 
             return RefreshIndicator(
-              color: palette.limeDeep,
+              color: palette.accentDeep,
               onRefresh: () async => ref.invalidate(developerApisProvider),
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -195,7 +196,7 @@ class _SummaryBar extends StatelessWidget {
             child: _SummaryStat(
               value: '$pending',
               label: 'Por conectar',
-              color: palette.lime,
+              color: palette.accent,
             ),
           ),
           _divider(),
@@ -447,7 +448,7 @@ class _MethodBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.xs),
       ),
       child: Text(
         method,
@@ -472,7 +473,7 @@ class _StatusPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         label,

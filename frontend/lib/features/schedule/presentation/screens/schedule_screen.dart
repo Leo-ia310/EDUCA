@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -54,11 +55,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   child: Container(
                     width: 58,
                     decoration: BoxDecoration(
-                      color: selected ? palette.limeDeep : palette.cardElevated,
-                      borderRadius: BorderRadius.circular(18),
+                      color: selected ? palette.accentDeep : palette.cardElevated,
+                      borderRadius: BorderRadius.circular(Radii.lg),
                       border: Border.all(
                         color: selected
-                            ? palette.limeDeep
+                            ? palette.accentDeep
                             : Theme.of(context).dividerColor,
                       ),
                     ),
@@ -69,7 +70,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           ScheduleMock.days[i],
                           style: context.textTheme.labelMedium?.copyWith(
                             color: selected
-                                ? const Color(0xFF1E2218)
+                                ? Colors.white
                                 : palette.textMuted,
                             fontWeight: FontWeight.w800,
                           ),
@@ -82,8 +83,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                             shape: BoxShape.circle,
                             color: isToday
                                 ? (selected
-                                    ? const Color(0xFF1E2218)
-                                    : palette.limeDeep)
+                                    ? Colors.white
+                                    : palette.accentDeep)
                                 : Colors.transparent,
                           ),
                         ),
@@ -101,7 +102,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             const Padding(
               padding: EdgeInsets.only(top: 40),
               child: EmptyState(
-                icon: Icons.event_available_outlined,
+                icon: Icons.event_available_rounded,
                 title: 'Día libre',
                 subtitle: 'No hay clases programadas para este día.',
               ),
@@ -146,11 +147,6 @@ class _SlotCard extends StatelessWidget {
   static const _ink = Color(0xFF16202E);
   static const _diamondBg = Color(0xFF18212F);
 
-  static int _toMinutes(String hhmm) {
-    final parts = hhmm.split(':');
-    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
-  }
-
   _SlotStatus _status() {
     switch (relation) {
       case _DayRelation.past:
@@ -160,8 +156,8 @@ class _SlotCard extends StatelessWidget {
       case _DayRelation.today:
         final now = DateTime.now();
         final nowM = now.hour * 60 + now.minute;
-        final s = _toMinutes(slot.start);
-        final e = _toMinutes(slot.end);
+        final s = DateUtilsX.hhmmToMinutes(slot.start);
+        final e = DateUtilsX.hhmmToMinutes(slot.end);
         if (nowM < s) return (label: 'Próxima', progress: 0);
         if (nowM >= e) return (label: 'Finalizada', progress: 1);
         final p = (nowM - s) / math.max(1, e - s);
@@ -273,7 +269,7 @@ class _SlotCard extends StatelessWidget {
                                   height: 38,
                                   decoration: BoxDecoration(
                                     color: _diamondBg,
-                                    borderRadius: BorderRadius.circular(13),
+                                    borderRadius: BorderRadius.circular(Radii.sm),
                                   ),
                                   child: Transform.rotate(
                                     angle: -math.pi / 4,
@@ -368,7 +364,7 @@ class _SlotCard extends StatelessWidget {
       backgroundColor: palette.cardElevated,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
       ),
       builder: (context) => SafeArea(
         child: Padding(
@@ -384,7 +380,7 @@ class _SlotCard extends StatelessWidget {
                     height: 42,
                     decoration: BoxDecoration(
                       color: slot.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Icon(slot.icon, color: slot.color, size: 22),
                   ),
@@ -401,7 +397,7 @@ class _SlotCard extends StatelessWidget {
               const SizedBox(height: 16),
               _DetailRow(icon: Icons.schedule, text: '${slot.start} – ${slot.end}'),
               _DetailRow(icon: Icons.person_outline, text: slot.teacher),
-              _DetailRow(icon: Icons.place_outlined, text: slot.room),
+              _DetailRow(icon: Icons.place_rounded, text: slot.room),
             ],
           ),
         ),

@@ -65,7 +65,7 @@ class AuthController extends StateNotifier<AuthState> {
       return false;
     } catch (_) {
       state = state.copyWith(
-          loading: false, error: 'No se pudo validar el código.');
+          loading: false, error: 'No se pudo validar el código.',);
       return false;
     }
   }
@@ -84,14 +84,14 @@ class AuthController extends StateNotifier<AuthState> {
         password: password,
       );
       state = state.copyWith(
-          user: user, institution: institution, loading: false);
+          user: user, institution: institution, loading: false,);
       return user.activeRole;
     } on Failure catch (e) {
       state = state.copyWith(loading: false, error: e.message);
       return null;
     } catch (_) {
       state = state.copyWith(
-          loading: false, error: 'No se pudo iniciar sesión.');
+          loading: false, error: 'No se pudo iniciar sesión.',);
       return null;
     }
   }

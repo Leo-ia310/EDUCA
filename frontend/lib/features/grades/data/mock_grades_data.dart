@@ -220,12 +220,12 @@ class GradesMockSeed {
             maxScore: 100,
             weight: 1,
             kind: i.isEven ? 'homework' : 'exam',
-          ));
+          ),);
           grades.add(GradeEntry(
             evaluationId: id,
             studentId: studentId,
             rawScore: entry.value[i],
-          ));
+          ),);
           counter++;
         }
       }
@@ -236,7 +236,7 @@ class GradesMockSeed {
   static List<({int classId, String name, String teacher})>
       subjectsForStudent(int studentId) => _subjects
           .map((s) =>
-              (classId: s.classId, name: s.name, teacher: s.teacher))
+              (classId: s.classId, name: s.name, teacher: s.teacher),)
           .toList();
 }
 

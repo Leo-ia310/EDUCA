@@ -33,19 +33,20 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
     final scaleAsync = ref.watch(defaultScaleProvider);
     final card = ref.watch(reportCardProvider(
       StudentGradesArgs(studentId: widget.studentId, periodId: _periodId),
-    ));
+    ),);
 
     return AppScaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Boletín'),
         actions: [
           card.maybeWhen(
             data: (data) => IconButton(
-              icon: const Icon(Icons.picture_as_pdf_outlined),
+              icon: const Icon(Icons.picture_as_pdf_rounded),
               tooltip: 'Ver PDF',
               onPressed: () => _openPdf(data),
             ),
@@ -53,7 +54,7 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
           ),
           card.maybeWhen(
             data: (data) => IconButton(
-              icon: const Icon(Icons.ios_share_outlined),
+              icon: const Icon(Icons.ios_share_rounded),
               tooltip: 'Compartir',
               onPressed: () => _sharePdf(data),
             ),
@@ -95,7 +96,7 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
                               height: 1,
                               color: Theme.of(context)
                                   .dividerColor
-                                  .withValues(alpha: 0.5)),
+                                  .withValues(alpha: 0.5),),
                       ],
                     ],
                   ),
@@ -203,10 +204,10 @@ class _Header extends StatelessWidget {
                         style: context.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                        )),
+                        ),),
                     Text('${card.gradeLevel} · ${card.institutionName}',
                         style: context.textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7))),
+                            color: Colors.white.withValues(alpha: 0.7),),),
                   ],
                 ),
               ),
@@ -257,13 +258,13 @@ class _HeaderStat extends StatelessWidget {
               style: context.textTheme.labelSmall?.copyWith(
                 color: Colors.white.withValues(alpha: 0.55),
                 fontWeight: FontWeight.w600,
-              )),
+              ),),
           const SizedBox(height: 2),
           Text(value,
               style: context.textTheme.titleSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
-              )),
+              ),),
         ],
       ),
     );
@@ -286,11 +287,11 @@ class _SubjectLine extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
-              borderRadius: BorderRadius.circular(10),
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(Icons.menu_book_rounded,
-                color: palette.limeDeep, size: 18),
+                color: palette.accentDeep, size: 18,),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -299,7 +300,7 @@ class _SubjectLine extends StatelessWidget {
               children: [
                 Text(line.subjectName,
                     style: context.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w800)),
+                        ?.copyWith(fontWeight: FontWeight.w800),),
                 Text(line.teacherName, style: context.textTheme.bodySmall),
               ],
             ),

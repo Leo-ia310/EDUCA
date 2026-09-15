@@ -17,9 +17,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.warning,
     required this.danger,
     required this.info,
-    required this.lime,
-    required this.limeDeep,
-    required this.limeSoft,
+    required this.accent,
+    required this.accentDeep,
+    required this.accentSoft,
   });
 
   final Color surfaceAlt;
@@ -30,9 +30,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color warning;
   final Color danger;
   final Color info;
-  final Color lime;
-  final Color limeDeep;
-  final Color limeSoft;
+  final Color accent;
+  final Color accentDeep;
+  final Color accentSoft;
 
   @override
   AppPalette copyWith({
@@ -44,9 +44,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? warning,
     Color? danger,
     Color? info,
-    Color? lime,
-    Color? limeDeep,
-    Color? limeSoft,
+    Color? accent,
+    Color? accentDeep,
+    Color? accentSoft,
   }) {
     return AppPalette(
       surfaceAlt: surfaceAlt ?? this.surfaceAlt,
@@ -57,9 +57,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       warning: warning ?? this.warning,
       danger: danger ?? this.danger,
       info: info ?? this.info,
-      lime: lime ?? this.lime,
-      limeDeep: limeDeep ?? this.limeDeep,
-      limeSoft: limeSoft ?? this.limeSoft,
+      accent: accent ?? this.accent,
+      accentDeep: accentDeep ?? this.accentDeep,
+      accentSoft: accentSoft ?? this.accentSoft,
     );
   }
 
@@ -75,9 +75,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
       warning: Color.lerp(warning, other.warning, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
       info: Color.lerp(info, other.info, t)!,
-      lime: Color.lerp(lime, other.lime, t)!,
-      limeDeep: Color.lerp(limeDeep, other.limeDeep, t)!,
-      limeSoft: Color.lerp(limeSoft, other.limeSoft, t)!,
+      accent: Color.lerp(accent, other.accent, t)!,
+      accentDeep: Color.lerp(accentDeep, other.accentDeep, t)!,
+      accentSoft: Color.lerp(accentSoft, other.accentSoft, t)!,
     );
   }
 }
@@ -87,6 +87,20 @@ extension AppThemeX on BuildContext {
   AppPalette get palette => Theme.of(this).extension<AppPalette>()!;
   TextTheme get textTheme => Theme.of(this).textTheme;
   ColorScheme get colors => Theme.of(this).colorScheme;
+}
+
+/// Escala de radios de esquina del producto: colapsa los radios sueltos a un
+/// puñado de tokens para consistencia. Se conservan literales sólo para casos
+/// especiales (2 en hairlines/barras, 30 en curvas grandes de hero).
+class Radii {
+  Radii._();
+
+  static const double pill = 999; // pastillas / círculos
+  static const double xl = 24; // héroes, hojas grandes
+  static const double lg = 18; // tarjetas
+  static const double md = 16; // botones, inputs, tiles
+  static const double sm = 12; // chips, pastillas de ícono chicas
+  static const double xs = 8; // elementos menudos
 }
 
 class AppTheme {
@@ -113,12 +127,12 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     const scheme = ColorScheme.light(
-      primary: AppColors.limeDeep,
-      onPrimary: AppColors.textLight,
-      primaryContainer: AppColors.limeSoft,
-      onPrimaryContainer: AppColors.textLight,
-      secondary: AppColors.limePrimary,
-      onSecondary: AppColors.textLight,
+      primary: AppColors.accentDeep,
+      onPrimary: Colors.white,
+      primaryContainer: AppColors.accentSoft,
+      onPrimaryContainer: AppColors.accentDeep,
+      secondary: AppColors.accent,
+      onSecondary: Colors.white,
       surface: AppColors.lightSurface,
       onSurface: AppColors.textLight,
       surfaceContainerHighest: AppColors.lightSurfaceAlt,
@@ -133,9 +147,9 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.lightBg,
       canvasColor: AppColors.lightBg,
       pageTransitionsTheme: _transitionsFor(AppColors.lightBg),
-      splashColor: AppColors.limePrimary.withValues(alpha: 0.12),
+      splashColor: AppColors.accent.withValues(alpha: 0.12),
       highlightColor: Colors.transparent,
-      hoverColor: AppColors.limeSoft.withValues(alpha: 0.5),
+      hoverColor: AppColors.accentSoft.withValues(alpha: 0.5),
       textTheme: AppTypography.textTheme(
           AppColors.textLight, AppColors.textLightMuted,),
       extensions: const [
@@ -148,9 +162,9 @@ class AppTheme {
           warning: AppColors.warning,
           danger: AppColors.danger,
           info: AppColors.info,
-          lime: AppColors.limePrimary,
-          limeDeep: AppColors.limeDeep,
-          limeSoft: AppColors.limeSoft,
+          accent: AppColors.accent,
+          accentDeep: AppColors.accentDeep,
+          accentSoft: AppColors.accentSoft,
         ),
       ],
       appBarTheme: const AppBarTheme(
@@ -165,17 +179,17 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(Radii.xl),
           side: const BorderSide(color: AppColors.lineLightSoft),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.limePrimary,
-          foregroundColor: AppColors.textLight,
+          backgroundColor: AppColors.accent,
+          foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
@@ -190,7 +204,7 @@ class AppTheme {
           minimumSize: const Size.fromHeight(54),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
@@ -204,7 +218,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.lineLight),
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
         ),
       ),
@@ -215,23 +229,23 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
         hintStyle: const TextStyle(color: AppColors.textLightMuted),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.lineLight),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.lineLight),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.limeDeep, width: 1.5),
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: const BorderSide(color: AppColors.accentDeep, width: 1.5),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.lightSurfaceAlt,
         side: BorderSide.none,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(Radii.pill),
         ),
         labelStyle: const TextStyle(
           fontWeight: FontWeight.w600,
@@ -240,15 +254,15 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.lightSurface,
-        selectedItemColor: AppColors.limeDeep,
+        selectedItemColor: AppColors.accentDeep,
         unselectedItemColor: AppColors.textLightMuted,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.limeDeep,
-        foregroundColor: AppColors.textLight,
+        backgroundColor: AppColors.accentDeep,
+        foregroundColor: Colors.white,
         elevation: 4,
         shape: CircleBorder(),
       ),
@@ -262,11 +276,11 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     const scheme = ColorScheme.dark(
-      primary: AppColors.limePrimaryDark,
+      primary: AppColors.accentDark,
       onPrimary: AppColors.textLight,
-      primaryContainer: AppColors.limeSoftDark,
-      onPrimaryContainer: AppColors.limePrimaryDark,
-      secondary: AppColors.limeDeepDark,
+      primaryContainer: AppColors.accentSoftDark,
+      onPrimaryContainer: AppColors.accentDark,
+      secondary: AppColors.accentDeepDark,
       onSecondary: AppColors.textLight,
       surface: AppColors.darkSurface,
       onSurface: AppColors.textDark,
@@ -282,24 +296,24 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.darkBg,
       canvasColor: AppColors.darkBg,
       pageTransitionsTheme: _transitionsFor(AppColors.darkBg),
-      splashColor: AppColors.limePrimaryDark.withValues(alpha: 0.12),
+      splashColor: AppColors.accentDark.withValues(alpha: 0.12),
       highlightColor: Colors.transparent,
-      hoverColor: AppColors.limeSoftDark.withValues(alpha: 0.6),
+      hoverColor: AppColors.accentSoftDark.withValues(alpha: 0.6),
       textTheme:
           AppTypography.textTheme(AppColors.textDark, AppColors.textDarkMuted),
       extensions: const [
         AppPalette(
           surfaceAlt: AppColors.darkSurfaceAlt,
           cardElevated: AppColors.darkSurface,
-          cardContrast: Color(0xFF0A0C07),
+          cardContrast: Color(0xFF08090B),
           textMuted: AppColors.textDarkMuted,
           success: AppColors.success,
           warning: AppColors.warning,
           danger: AppColors.danger,
           info: AppColors.info,
-          lime: AppColors.limePrimaryDark,
-          limeDeep: AppColors.limeDeepDark,
-          limeSoft: AppColors.limeSoftDark,
+          accent: AppColors.accentDark,
+          accentDeep: AppColors.accentDeepDark,
+          accentSoft: AppColors.accentSoftDark,
         ),
       ],
       appBarTheme: const AppBarTheme(
@@ -314,17 +328,17 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(Radii.xl),
           side: const BorderSide(color: AppColors.lineDark),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.limePrimaryDark,
+          backgroundColor: AppColors.accentDark,
           foregroundColor: AppColors.textLight,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w700,
@@ -334,12 +348,12 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0A0C07),
+          backgroundColor: const Color(0xFF08090B),
           foregroundColor: AppColors.textDark,
           minimumSize: const Size.fromHeight(54),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
         ),
       ),
@@ -349,7 +363,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.lineDark),
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
         ),
       ),
@@ -360,24 +374,24 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
         hintStyle: const TextStyle(color: AppColors.textDarkMuted),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.lineDark),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.lineDark),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide:
-              const BorderSide(color: AppColors.limePrimaryDark, width: 1.5),
+              const BorderSide(color: AppColors.accentDark, width: 1.5),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.darkSurfaceAlt,
         side: BorderSide.none,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(Radii.pill),
         ),
         labelStyle: const TextStyle(
           fontWeight: FontWeight.w600,
@@ -386,14 +400,14 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.darkSurface,
-        selectedItemColor: AppColors.limePrimaryDark,
+        selectedItemColor: AppColors.accentDark,
         unselectedItemColor: AppColors.textDarkMuted,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.limePrimaryDark,
+        backgroundColor: AppColors.accentDark,
         foregroundColor: AppColors.textLight,
         elevation: 4,
         shape: CircleBorder(),

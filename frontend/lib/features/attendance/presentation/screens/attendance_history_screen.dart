@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../domain/attendance_sync_service.dart';
@@ -30,6 +31,7 @@ class AttendanceHistoryScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Historial de Asistencia'),
@@ -51,19 +53,19 @@ class AttendanceHistoryScreen extends ConsumerWidget {
             Expanded(
               child: history.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                    const SkeletonList(),
                 error: (e, _) => Center(child: Text('$e')),
                 data: (list) {
                   if (list.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.fact_check_outlined,
+                      icon: Icons.fact_check_rounded,
                       title: 'Sin pases registrados',
                       subtitle:
                           'Cuando finalices un pase de asistencia, lo verás aquí.',
                     );
                   }
                   return RefreshIndicator(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     onRefresh: () async => ref.invalidate(_historyProvider),
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -99,11 +101,11 @@ class _SyncControls extends ConsumerWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
-              borderRadius: BorderRadius.circular(10),
+              color: palette.accentSoft,
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
-            child: Icon(Icons.cloud_sync_outlined,
-                color: palette.limeDeep, size: 20),
+            child: Icon(Icons.cloud_sync_rounded,
+                color: palette.accentDeep, size: 20,),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -124,15 +126,15 @@ class _SyncControls extends ConsumerWidget {
                   )
                 else
                   Text('Sin sincronizar todavía',
-                      style: context.textTheme.bodySmall),
+                      style: context.textTheme.bodySmall,),
               ],
             ),
           ),
           FilledButton.tonal(
             onPressed: status.syncing ? null : service.processQueue,
             style: FilledButton.styleFrom(
-              backgroundColor: palette.limeDeep,
-              foregroundColor: const Color(0xFF1E2218),
+              backgroundColor: palette.accentDeep,
+              foregroundColor: Colors.white,
               minimumSize: const Size(0, 40),
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -173,7 +175,7 @@ class _SessionTile extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: palette.warning.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(Radii.pill),
                   ),
                   child: Text(
                     '${summary.pendingSync} pendiente${summary.pendingSync == 1 ? '' : 's'}',

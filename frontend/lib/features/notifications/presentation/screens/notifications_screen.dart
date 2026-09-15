@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -58,26 +59,26 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               PopupMenuItem(
                 value: 'read_all',
                 child: Row(children: [
-                  Icon(Icons.mark_email_read_outlined, size: 18),
+                  Icon(Icons.mark_email_read_rounded, size: 18),
                   SizedBox(width: 8),
                   Text('Marcar todas leídas'),
-                ]),
+                ],),
               ),
               PopupMenuItem(
                 value: 'clear',
                 child: Row(children: [
-                  Icon(Icons.delete_sweep_outlined, size: 18),
+                  Icon(Icons.delete_sweep_rounded, size: 18),
                   SizedBox(width: 8),
                   Text('Vaciar bandeja'),
-                ]),
+                ],),
               ),
               PopupMenuItem(
                 value: 'simulate',
                 child: Row(children: [
-                  Icon(Icons.notifications_active_outlined, size: 18),
+                  Icon(Icons.notifications_active_rounded, size: 18),
                   SizedBox(width: 8),
                   Text('Simular una (demo)'),
-                ]),
+                ],),
               ),
             ],
           ),
@@ -94,7 +95,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             Expanded(
               child: feed.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                    const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (items) {
                   final filtered = _filter == null
@@ -102,7 +103,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       : items.where((n) => n.channel == _filter).toList();
                   if (filtered.isEmpty) {
                     return EmptyState(
-                      icon: Icons.notifications_off_outlined,
+                      icon: Icons.notifications_off_rounded,
                       title: _filter == null
                           ? 'Sin alertas'
                           : 'Sin alertas de ${_filter!.title}',
@@ -111,7 +112,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     );
                   }
                   return RefreshIndicator(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     onRefresh: () async =>
                         ref.invalidate(notificationsFeedProvider),
                     child: ListView.separated(
@@ -138,7 +139,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                 foregroundColor: Colors.white,
                                 icon: Icons.delete_outline,
                                 label: 'Eliminar',
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(Radii.md),
                               ),
                             ],
                           ),
@@ -186,7 +187,7 @@ class _FilterBar extends StatelessWidget {
             onTap: () => onSelect(null),
           ),
           for (final ch in NotificationChannel.values.where(
-              (c) => c != NotificationChannel.system))
+              (c) => c != NotificationChannel.system,))
             _Chip(
               label: ch.title,
               icon: ch.icon,
@@ -218,12 +219,12 @@ class _Chip extends StatelessWidget {
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? palette.limeDeep : palette.surfaceAlt,
-            borderRadius: BorderRadius.circular(999),
+            color: selected ? palette.accentDeep : palette.surfaceAlt,
+            borderRadius: BorderRadius.circular(Radii.pill),
           ),
           child: Row(
             children: [
@@ -231,15 +232,15 @@ class _Chip extends StatelessWidget {
                 Icon(icon,
                     size: 16,
                     color: selected
-                        ? const Color(0xFF1E2218)
-                        : palette.textMuted),
+                        ? Colors.white
+                        : palette.textMuted,),
                 const SizedBox(width: 6),
               ],
               Text(
                 label,
                 style: context.textTheme.labelMedium?.copyWith(
                   color: selected
-                      ? const Color(0xFF1E2218)
+                      ? Colors.white
                       : Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w800,
                 ),

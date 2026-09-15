@@ -33,6 +33,7 @@ class StudentGradesScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Mis notas'),
@@ -45,7 +46,7 @@ class StudentGradesScreen extends ConsumerWidget {
           data: (perfs) {
             if (perfs.isEmpty) {
               return const EmptyState(
-                icon: Icons.school_outlined,
+                icon: Icons.school_rounded,
                 title: 'Sin notas todavía',
                 subtitle: 'Cuando el maestro registre notas, aparecerán aquí.',
               );
@@ -57,7 +58,7 @@ class StudentGradesScreen extends ConsumerWidget {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (ps) => RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async =>
                       ref.invalidate(studentPerformanceProvider(studentId)),
                   child: ListView(
@@ -132,7 +133,7 @@ class _OverallCard extends StatelessWidget {
             Color(0xFF2FB39A),
           ],
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(Radii.xl),
       ),
       child: Row(
         children: [

@@ -113,6 +113,7 @@ class _DeveloperFeatureFlagsScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Feature flags'),
@@ -132,7 +133,7 @@ class _DeveloperFeatureFlagsScreenState
               data: (flags) {
                 final active = flags.where((f) => f.enabled).length;
                 return RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
@@ -275,12 +276,12 @@ class _RolloutBar extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(Radii.pill),
             child: LinearProgressIndicator(
               value: clamped / 100,
               minHeight: 6,
               backgroundColor: palette.surfaceAlt,
-              valueColor: AlwaysStoppedAnimation(palette.limeDeep),
+              valueColor: AlwaysStoppedAnimation(palette.accentDeep),
             ),
           ),
         ),

@@ -45,7 +45,7 @@ class MockPaymentsRepository implements PaymentsRepository {
     final list = _charges[studentId] ?? const <Charge>[];
     final overdue = list.where((c) => c.isOverdue && c.status != ChargeStatus.paid);
     final upcoming = list.where(
-        (c) => c.status == ChargeStatus.pending && !c.isOverdue);
+        (c) => c.status == ChargeStatus.pending && !c.isOverdue,);
     final totalPending = list
         .where((c) => c.status != ChargeStatus.paid && c.status != ChargeStatus.cancelled)
         .fold<double>(0, (a, c) => a + c.pending);

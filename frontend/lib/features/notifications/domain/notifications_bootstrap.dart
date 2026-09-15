@@ -136,7 +136,7 @@ final notificationsBootstrapProvider =
 
 /// Handy: dispara la simulación (solo si el PushService actual es demo).
 Future<void> simulateDemoNotification(WidgetRef ref,
-    {NotificationChannel? channel}) async {
+    {NotificationChannel? channel,}) async {
   final push = ref.read(pushServiceProvider);
   if (push is DemoPushService) {
     await push.triggerSample(channel: channel);

@@ -113,6 +113,7 @@ class _DeveloperModulesScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Módulos'),
@@ -139,7 +140,7 @@ class _DeveloperModulesScreenState
                   });
                 final active = modules.where((m) => m.enabled).length;
                 return RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
@@ -303,7 +304,7 @@ class _RolePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: palette.info.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.xs),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

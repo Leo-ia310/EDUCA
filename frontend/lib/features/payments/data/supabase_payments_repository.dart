@@ -45,7 +45,7 @@ class SupabasePaymentsRepository implements PaymentsRepository {
     final charges = await chargesFor(studentId);
     final active = charges
         .where((c) =>
-            c.status != ChargeStatus.paid && c.status != ChargeStatus.cancelled)
+            c.status != ChargeStatus.paid && c.status != ChargeStatus.cancelled,)
         .toList();
     final overdue = active.where((c) => c.isOverdue).toList();
     final upcoming = active.where((c) => !c.isOverdue).toList()
@@ -110,7 +110,7 @@ class SupabasePaymentsRepository implements PaymentsRepository {
   }
 
   Future<Map<String, double>> _paidAmountsByCharge(
-      List<dynamic> chargeIds) async {
+      List<dynamic> chargeIds,) async {
     if (chargeIds.isEmpty) return {};
     final rows = await _c
         .from('payments')
@@ -304,7 +304,7 @@ class SupabasePaymentsRepository implements PaymentsRepository {
     final collectedThisMonth = (paymentsRows as List)
         .cast<Map<String, dynamic>>()
         .fold<double>(
-            0, (a, p) => a + ((p['amount'] as num?)?.toDouble() ?? 0));
+            0, (a, p) => a + ((p['amount'] as num?)?.toDouble() ?? 0),);
 
     return DunningMetrics(
       totalOverdueAmount: totalOverdueAmount,

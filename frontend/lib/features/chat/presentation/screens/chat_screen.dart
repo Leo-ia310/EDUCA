@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/entities.dart';
@@ -45,7 +46,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
     final me = ref.watch(authControllerProvider).user;
     final messages = ref.watch(messagesStreamProvider(widget.conversationId));
     final composer = ref.watch(chatComposerProvider(widget.conversationId));
@@ -55,6 +55,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         titleSpacing: 0,
@@ -62,6 +63,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
+            tooltip: 'Información',
             onPressed: () => showModalBottomSheet<void>(
               context: context,
               showDragHandle: true,
@@ -71,13 +73,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.notifications_off_outlined),
+                      leading: const Icon(Icons.notifications_off_rounded),
                       title: const Text('Silenciar conversación'),
                       onTap: () {
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Conversación silenciada.')),
+                              content: Text('Conversación silenciada.'),),
                         );
                       },
                     ),
@@ -87,13 +89,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       onTap: () => Navigator.of(ctx).pop(),
                     ),
                     ListTile(
-                      leading: const Icon(Icons.report_gmailerrorred_outlined),
+                      leading: const Icon(Icons.report_gmailerrorred_rounded),
                       title: const Text('Reportar'),
                       onTap: () {
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Reporte enviado a coordinación.')),
+                              content: Text('Reporte enviado a coordinación.'),),
                         );
                       },
                     ),
@@ -116,32 +118,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   _scrollToBottom();
                 }
                 if (list.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              color: palette.limeSoft,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(Icons.forum_outlined,
-                                color: palette.limeDeep, size: 34),
-                          ),
-                          const SizedBox(height: 12),
-                          Text('Empieza la conversación',
-                              style: context.textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 4),
-                          Text('Envía el primer mensaje.',
-                              style: context.textTheme.bodySmall),
-                        ],
-                      ),
-                    ),
+                  return const EmptyState(
+                    icon: Icons.forum_rounded,
+                    title: 'Empieza la conversación',
+                    subtitle: 'Envía el primer mensaje.',
                   );
                 }
                 return _MessagesList(
@@ -314,7 +294,7 @@ class _DayLabel extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: context.palette.surfaceAlt,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(Radii.pill),
           ),
           child: Text(
             _label(),

@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../../shared/models/app_role.dart';
@@ -36,6 +36,7 @@ class AnnouncementsScreen extends ConsumerWidget {
         title: const Text('Anuncios'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),
@@ -54,7 +55,7 @@ class AnnouncementsScreen extends ConsumerWidget {
             const Padding(
               padding: EdgeInsets.only(top: 60),
               child: EmptyState(
-                icon: Icons.campaign_outlined,
+                icon: Icons.campaign_rounded,
                 title: 'Sin anuncios',
                 subtitle: 'Aún no se han publicado anuncios.',
               ),
@@ -78,19 +79,21 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-    return EduCard(
+    final s = context.pastel(subjectColor(event.title));
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: s.surface,
+        borderRadius: BorderRadius.circular(Radii.lg),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 42,
             height: 42,
-            decoration: BoxDecoration(
-              color: palette.limeSoft,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(event.icon, color: palette.limeDeep, size: 22),
+            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+            child: Icon(event.icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -100,12 +103,12 @@ class _EventCard extends StatelessWidget {
                 Text(
                   event.title,
                   style: context.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                      ?.copyWith(color: s.ink, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   event.description,
-                  style: context.textTheme.bodySmall,
+                  style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -138,22 +141,22 @@ class _MetaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
+    const ink = Color(0xFF232A33);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: palette.surfaceAlt,
-        borderRadius: BorderRadius.circular(999),
+        color: Colors.white.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: palette.textMuted),
+          Icon(icon, size: 12, color: ink.withValues(alpha: 0.62)),
           const SizedBox(width: 4),
           Text(
             label,
             style: context.textTheme.labelSmall
-                ?.copyWith(color: palette.textMuted),
+                ?.copyWith(color: ink.withValues(alpha: 0.62)),
           ),
         ],
       ),

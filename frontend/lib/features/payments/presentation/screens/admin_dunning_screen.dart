@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -28,6 +28,7 @@ class AdminDunningScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Recaudación y morosidad'),
@@ -35,7 +36,7 @@ class AdminDunningScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          color: palette.limeDeep,
+          color: palette.accentDeep,
           onRefresh: () async {
             ref.invalidate(dunningMetricsProvider);
             ref.invalidate(allBalancesProvider);
@@ -66,7 +67,7 @@ class AdminDunningScreen extends ConsumerWidget {
                       .toList();
                   if (overdue.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.verified_outlined,
+                      icon: Icons.verified_rounded,
                       title: '¡Sin mora!',
                       subtitle: 'Todos los estudiantes están al día.',
                     );
@@ -76,52 +77,68 @@ class AdminDunningScreen extends ConsumerWidget {
                       for (final b in overdue)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
-                          child: EduCard(
-                            onTap: () => context.push(
-                              '${Routes.payments}?studentId=${b.studentId}',
-                            ),
-                            child: Row(
-                              children: [
-                                UserAvatar(name: b.studentName, size: 40),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                          child: Builder(builder: (context) {
+                            final s = context.pastel(palette.danger);
+                            return Material(
+                              color: s.surface,
+                              borderRadius: BorderRadius.circular(Radii.lg),
+                              child: InkWell(
+                                onTap: () => context.push(
+                                  '${Routes.payments}?studentId=${b.studentId}',
+                                ),
+                                borderRadius: BorderRadius.circular(Radii.lg),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Row(
                                     children: [
-                                      Text(b.studentName,
-                                          style: context.textTheme.titleSmall
-                                              ?.copyWith(
-                                                  fontWeight:
-                                                      FontWeight.w800)),
-                                      Text(
-                                        '${b.overdueCount} cargo${b.overdueCount == 1 ? '' : 's'} vencido${b.overdueCount == 1 ? '' : 's'}',
-                                        style: context.textTheme.bodySmall,
+                                      UserAvatar(name: b.studentName, size: 40),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(b.studentName,
+                                                style: context
+                                                    .textTheme.titleSmall
+                                                    ?.copyWith(
+                                                        color: s.ink,
+                                                        fontWeight:
+                                                            FontWeight.w800,),),
+                                            Text(
+                                              '${b.overdueCount} cargo${b.overdueCount == 1 ? '' : 's'} vencido${b.overdueCount == 1 ? '' : 's'}',
+                                              style: context.textTheme.bodySmall
+                                                  ?.copyWith(color: s.inkMuted),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          MoneyText(
+                                            amount: b.totalOverdue,
+                                            currencyCode: b.currencyCode,
+                                            style: context.textTheme.titleSmall
+                                                ?.copyWith(
+                                              color: s.ink,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          Text('vencido',
+                                              style: context
+                                                  .textTheme.labelSmall
+                                                  ?.copyWith(
+                                                      color: s.inkMuted,),),
+                                        ],
                                       ),
                                     ],
                                   ),
                                 ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    MoneyText(
-                                      amount: b.totalOverdue,
-                                      currencyCode: b.currencyCode,
-                                      style: context.textTheme.titleSmall
-                                          ?.copyWith(
-                                        color: palette.danger,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    Text('vencido',
-                                        style: context.textTheme.labelSmall
-                                            ?.copyWith(
-                                                color: palette.textMuted)),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            );
+                          },),
                         ),
                     ],
                   );
@@ -145,8 +162,12 @@ class _MetricsBlock extends StatelessWidget {
     final pct = (metrics.collectionRate as double).clamp(0.0, 1.0);
     return Column(
       children: [
-        EduCard(
-          color: palette.cardContrast,
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: palette.cardContrast,
+            borderRadius: BorderRadius.circular(Radii.lg),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -154,7 +175,7 @@ class _MetricsBlock extends StatelessWidget {
                   style: context.textTheme.labelMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w700,
-                  )),
+                  ),),
               const SizedBox(height: 6),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -163,7 +184,7 @@ class _MetricsBlock extends StatelessWidget {
                     amount: metrics.collectedThisMonth as double,
                     currencyCode: metrics.currencyCode as String,
                     style: context.textTheme.displaySmall?.copyWith(
-                      color: palette.lime,
+                      color: palette.accent,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -181,13 +202,13 @@ class _MetricsBlock extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(Radii.xs),
                 child: LinearProgressIndicator(
                   value: pct,
                   minHeight: 8,
                   backgroundColor: Colors.white.withValues(alpha: 0.15),
                   valueColor:
-                      AlwaysStoppedAnimation<Color>(palette.lime),
+                      AlwaysStoppedAnimation<Color>(palette.accent),
                 ),
               ),
               const SizedBox(height: 6),
@@ -205,48 +226,32 @@ class _MetricsBlock extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: EduCard(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.warning_amber_rounded,
-                        color: palette.danger, size: 18),
-                    const SizedBox(height: 8),
-                    MoneyText(
-                      amount: metrics.totalOverdueAmount as double,
-                      currencyCode: metrics.currencyCode as String,
-                      style: context.textTheme.titleMedium?.copyWith(
-                        color: palette.danger,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    Text('Total vencido',
-                        style: context.textTheme.bodySmall),
-                  ],
+              child: _PastelMetric(
+                color: palette.danger,
+                icon: Icons.warning_amber_rounded,
+                label: 'Total vencido',
+                child: MoneyText(
+                  amount: metrics.totalOverdueAmount as double,
+                  currencyCode: metrics.currencyCode as String,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: context.pastel(palette.danger).ink,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: EduCard(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.person_off_outlined,
-                        color: palette.warning, size: 18),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${metrics.overdueCount}',
-                      style: context.textTheme.titleMedium?.copyWith(
-                        color: palette.warning,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    Text('Cargos en mora',
-                        style: context.textTheme.bodySmall),
-                  ],
+              child: _PastelMetric(
+                color: palette.warning,
+                icon: Icons.person_off_rounded,
+                label: 'Cargos en mora',
+                child: Text(
+                  '${metrics.overdueCount}',
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: context.pastel(palette.warning).ink,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
@@ -259,5 +264,48 @@ class _MetricsBlock extends StatelessWidget {
   String _short(double v, String code) {
     if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k $code';
     return '${v.toStringAsFixed(0)} $code';
+  }
+}
+
+/// Mini-KPI pastel (superficie tintada + ícono en círculo vívido) para las
+/// métricas de morosidad, en el mismo lenguaje que DashboardStatStrip.
+class _PastelMetric extends StatelessWidget {
+  const _PastelMetric({
+    required this.color,
+    required this.icon,
+    required this.label,
+    required this.child,
+  });
+
+  final Color color;
+  final IconData icon;
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.pastel(color);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: s.surface,
+        borderRadius: BorderRadius.circular(Radii.lg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+          const SizedBox(height: 10),
+          child,
+          Text(label,
+              style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),),
+        ],
+      ),
+    );
   }
 }

@@ -27,6 +27,7 @@ class DeveloperAuditScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Auditoría'),
@@ -37,7 +38,7 @@ class DeveloperAuditScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (events) => RefreshIndicator(
-            color: palette.limeDeep,
+            color: palette.accentDeep,
             onRefresh: () async =>
                 ref.invalidate(developerAuditEventsProvider),
             child: events.isEmpty
@@ -81,7 +82,7 @@ class _AuditCard extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(icon, color: color, size: 20),
           ),

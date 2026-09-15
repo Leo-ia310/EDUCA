@@ -110,14 +110,15 @@ class _ChatInputState extends State<ChatInput> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.attach_file_rounded),
-                  color: palette.limeDeep,
+                  tooltip: 'Adjuntar archivo',
+                  color: palette.accentDeep,
                   onPressed: widget.sending ? null : widget.onPickAttachment,
                 ),
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
                       color: palette.surfaceAlt,
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(Radii.xl),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: TextField(
@@ -142,7 +143,7 @@ class _ChatInputState extends State<ChatInput> {
                   height: 44,
                   decoration: BoxDecoration(
                     color: _canSend && !widget.sending
-                        ? palette.limeDeep
+                        ? palette.accentDeep
                         : palette.surfaceAlt,
                     shape: BoxShape.circle,
                   ),
@@ -157,7 +158,7 @@ class _ChatInputState extends State<ChatInput> {
                         : Icon(
                             Icons.send_rounded,
                             color: _canSend
-                                ? const Color(0xFF1E2218)
+                                ? Colors.white
                                 : palette.textMuted,
                           ),
                     onPressed: (_canSend && !widget.sending) ? _send : null,
@@ -185,17 +186,17 @@ class _PendingAttachment extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: palette.limeSoft,
-          borderRadius: BorderRadius.circular(12),
+          color: palette.accentSoft,
+          borderRadius: BorderRadius.circular(Radii.sm),
         ),
         child: Row(
           children: [
             Icon(
               attachment.isImage
-                  ? Icons.image_outlined
-                  : Icons.description_outlined,
+                  ? Icons.image_rounded
+                  : Icons.description_rounded,
               size: 18,
-              color: palette.limeDeep,
+              color: palette.accentDeep,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -208,10 +209,17 @@ class _PendingAttachment extends StatelessWidget {
               ),
             ),
             if (onRemove != null)
-              InkWell(
-                onTap: onRemove,
-                child: Icon(Icons.close_rounded,
-                    size: 18, color: palette.textMuted),
+              Tooltip(
+                message: 'Quitar',
+                child: InkWell(
+                  onTap: onRemove,
+                  borderRadius: BorderRadius.circular(Radii.pill),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(Icons.close_rounded,
+                        size: 18, color: palette.textMuted,),
+                  ),
+                ),
               ),
           ],
         ),

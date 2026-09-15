@@ -23,7 +23,7 @@ class SubjectGradeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(performance.subjectName));
+    final s = context.pastel(subjectColor(performance.subjectName));
     final isQual = scale.type == ScaleType.qualitative;
     final range = scale.ranges.firstWhere(
       (r) => r.contains(performance.finalScore),
@@ -37,11 +37,11 @@ class SubjectGradeCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(Radii.lg),
         child: Ink(
           decoration: BoxDecoration(
             color: s.surface,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(Radii.lg),
           ),
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -169,7 +169,7 @@ class _PeriodBars extends StatelessWidget {
                 ),
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(Radii.xs),
                     child: LinearProgressIndicator(
                       value: (performance.periodScores[p.id] ?? 0) /
                           scale.maxValue,

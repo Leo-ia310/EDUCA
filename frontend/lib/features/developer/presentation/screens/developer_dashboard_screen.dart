@@ -31,6 +31,7 @@ class DeveloperDashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Panel de desarrollador'),
@@ -41,7 +42,7 @@ class DeveloperDashboardScreen extends ConsumerWidget {
           loading: () => const SkeletonList(items: 5, itemHeight: 88),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (data) => RefreshIndicator(
-            color: palette.limeDeep,
+            color: palette.accentDeep,
             onRefresh: () async => ref.invalidate(developerSummaryProvider),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -128,7 +129,7 @@ class _Hero extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.terminal_rounded, color: palette.lime, size: 22),
+              Icon(Icons.terminal_rounded, color: palette.accent, size: 22),
               const SizedBox(width: 8),
               Text(
                 'Resumen técnico',
@@ -146,7 +147,7 @@ class _Hero extends StatelessWidget {
                 child: _HeroStat(
                   value: '${counts.pendingApis}',
                   label: 'APIs por conectar',
-                  color: palette.lime,
+                  color: palette.accent,
                 ),
               ),
               Container(
@@ -226,7 +227,7 @@ class _StatsGrid extends StatelessWidget {
       _Stat('Instituciones', '${counts.institutions}', Icons.apartment_rounded,
           palette.info,),
       _Stat('Usuarios', '${counts.users}', Icons.people_alt_outlined,
-          palette.limeDeep,),
+          palette.accentDeep,),
       _Stat(
           'Módulos', '${counts.modules}', Icons.widgets_outlined, palette.info,),
       _Stat('Feature flags', '${counts.featureFlags}', Icons.flag_outlined,
@@ -341,7 +342,7 @@ class _AreaCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(area.icon,
-              color: built ? palette.limeDeep : palette.textMuted, size: 22,),
+              color: built ? palette.accentDeep : palette.textMuted, size: 22,),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -433,7 +434,7 @@ class _AuditTile extends StatelessWidget {
           height: 34,
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(Radii.sm),
           ),
           child: Icon(icon, color: color, size: 18),
         ),
@@ -473,7 +474,7 @@ class _Pill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         label,
@@ -509,7 +510,7 @@ class _MetaText extends StatelessWidget {
 (Color, String) _taskStatus(String status, AppPalette palette) {
   return switch (status) {
     'in_progress' => (palette.info, 'En progreso'),
-    'ready' => (palette.limeDeep, 'Listo'),
+    'ready' => (palette.accentDeep, 'Listo'),
     'blocked' => (palette.danger, 'Bloqueado'),
     'done' => (palette.success, 'Hecho'),
     'cancelled' => (palette.textMuted, 'Cancelado'),

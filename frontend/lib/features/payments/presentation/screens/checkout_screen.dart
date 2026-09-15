@@ -25,6 +25,7 @@ class CheckoutScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Pagar cargo'),
@@ -60,7 +61,7 @@ class _CheckoutBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         EduCard(
-          color: palette.limeSoft,
+          color: palette.accentSoft,
           child: Row(
             children: [
               Expanded(
@@ -70,10 +71,10 @@ class _CheckoutBody extends ConsumerWidget {
                     Text(charge.conceptName,
                         style: context.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: palette.limeDeep)),
+                            color: palette.accentDeep,),),
                     Text(charge.description,
                         style: context.textTheme.bodySmall
-                            ?.copyWith(color: palette.limeDeep)),
+                            ?.copyWith(color: palette.accentDeep),),
                   ],
                 ),
               ),
@@ -81,8 +82,8 @@ class _CheckoutBody extends ConsumerWidget {
                 amount: charge.pending,
                 currencyCode: charge.currencyCode,
                 style: context.textTheme.titleLarge?.copyWith(
-                    color: palette.limeDeep,
-                    fontWeight: FontWeight.w800),
+                    color: palette.accentDeep,
+                    fontWeight: FontWeight.w800,),
               ),
             ],
           ),
@@ -104,7 +105,7 @@ class _CheckoutBody extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(state.errorMessage!,
-                style: TextStyle(color: palette.danger)),
+                style: TextStyle(color: palette.danger),),
           ),
         FilledButton.icon(
           onPressed: state.stage == CheckoutStage.processing
@@ -112,11 +113,11 @@ class _CheckoutBody extends ConsumerWidget {
               : () => ctrl.pay(charge: charge),
           icon: state.stage == CheckoutStage.processing
               ? const SizedBox(
-                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2),)
               : const Icon(Icons.lock_rounded),
           label: Text(state.stage == CheckoutStage.processing
               ? 'Procesando…'
-              : 'Confirmar pago'),
+              : 'Confirmar pago',),
         ),
         const SizedBox(height: 12),
         Center(
@@ -147,18 +148,18 @@ class _MethodTile extends StatelessWidget {
     final palette = context.palette;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? palette.limeSoft : palette.cardElevated,
+          color: selected ? palette.accentSoft : palette.cardElevated,
           border: Border.all(
             color: selected
-                ? palette.limeDeep
+                ? palette.accentDeep
                 : Theme.of(context).dividerColor,
             width: selected ? 1.5 : 1,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: Row(
           children: [
@@ -166,12 +167,12 @@ class _MethodTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: (selected ? palette.limeDeep : palette.textMuted)
+                color: (selected ? palette.accentDeep : palette.textMuted)
                     .withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: Icon(_iconFor(method),
-                  color: selected ? palette.limeDeep : palette.textMuted),
+                  color: selected ? palette.accentDeep : palette.textMuted,),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -180,7 +181,7 @@ class _MethodTile extends StatelessWidget {
                 children: [
                   Text(method.label,
                       style: context.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w800)),
+                          ?.copyWith(fontWeight: FontWeight.w800),),
                   Text(
                     _descFor(method),
                     style: context.textTheme.bodySmall,
@@ -192,7 +193,7 @@ class _MethodTile extends StatelessWidget {
               selected
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_off_rounded,
-              color: selected ? palette.limeDeep : palette.textMuted,
+              color: selected ? palette.accentDeep : palette.textMuted,
             ),
           ],
         ),
@@ -237,14 +238,14 @@ class _SuccessView extends ConsumerWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.check_circle_rounded,
-                  color: palette.success, size: 54),
+                  color: palette.success, size: 54,),
             ),
           ),
           const SizedBox(height: 16),
           Center(
             child: Text('¡Pago confirmado!',
                 style: context.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800)),
+                    ?.copyWith(fontWeight: FontWeight.w800),),
           ),
           const SizedBox(height: 4),
           Center(
@@ -275,7 +276,7 @@ class _SuccessView extends ConsumerWidget {
             onPressed: () => context.push(
               '${Routes.paymentsReceipt}?paymentId=${payment.id}&studentId=${payment.studentName}',
             ),
-            icon: const Icon(Icons.picture_as_pdf_outlined),
+            icon: const Icon(Icons.picture_as_pdf_rounded),
             label: const Text('Ver recibo en PDF'),
           ),
           const SizedBox(height: 10),
@@ -302,7 +303,7 @@ class _Kv extends StatelessWidget {
           Expanded(child: Text(label, style: context.textTheme.bodySmall)),
           Text(value,
               style: context.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w800)),
+                  ?.copyWith(fontWeight: FontWeight.w800),),
         ],
       ),
     );

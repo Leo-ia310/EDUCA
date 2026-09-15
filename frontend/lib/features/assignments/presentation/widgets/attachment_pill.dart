@@ -16,10 +16,10 @@ class AttachmentPill extends StatelessWidget {
   final VoidCallback? onRemove;
 
   IconData get _icon {
-    if (attachment.isImage) return Icons.image_outlined;
-    if (attachment.extension == 'PDF') return Icons.picture_as_pdf_outlined;
-    if (attachment.extension == 'DOCX') return Icons.description_outlined;
-    return Icons.insert_drive_file_outlined;
+    if (attachment.isImage) return Icons.image_rounded;
+    if (attachment.extension == 'PDF') return Icons.picture_as_pdf_rounded;
+    if (attachment.extension == 'DOCX') return Icons.description_rounded;
+    return Icons.insert_drive_file_rounded;
   }
 
   String get _size {
@@ -35,16 +35,16 @@ class AttachmentPill extends StatelessWidget {
     final palette = context.palette;
     return Material(
       color: palette.surfaceAlt,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(_icon, size: 18, color: palette.limeDeep),
+              Icon(_icon, size: 18, color: palette.accentDeep),
               const SizedBox(width: 8),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 160),
@@ -67,10 +67,17 @@ class AttachmentPill extends StatelessWidget {
               ],
               if (onRemove != null) ...[
                 const SizedBox(width: 6),
-                InkWell(
-                  onTap: onRemove,
-                  child: Icon(Icons.close_rounded,
-                      size: 16, color: palette.textMuted),
+                Tooltip(
+                  message: 'Quitar',
+                  child: InkWell(
+                    onTap: onRemove,
+                    borderRadius: BorderRadius.circular(Radii.pill),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(Icons.close_rounded,
+                          size: 16, color: palette.textMuted,),
+                    ),
+                  ),
                 ),
               ],
             ],

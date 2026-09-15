@@ -135,6 +135,7 @@ class _DeveloperTasksScreenState extends ConsumerState<DeveloperTasksScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Tareas técnicas'),
@@ -156,7 +157,7 @@ class _DeveloperTasksScreenState extends ConsumerState<DeveloperTasksScreen> {
                     ? tasks
                     : tasks.where((t) => t.status == _statusFilter).toList();
                 return RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
@@ -418,7 +419,7 @@ class _StatusPickerSheet extends StatelessWidget {
                     ? Icons.radio_button_checked_rounded
                     : Icons.radio_button_unchecked_rounded,
                 color: s == current
-                    ? palette.limeDeep
+                    ? palette.accentDeep
                     : palette.textMuted,
               ),
               title: Text(statusLabel(s)),
@@ -625,7 +626,7 @@ class _TaskFormSheetState extends State<_TaskFormSheet> {
               const SizedBox(height: 4),
               InkWell(
                 onTap: _pickDue,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.sm),
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: 'Fecha límite',
@@ -691,7 +692,7 @@ class _Pill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         label,
@@ -735,7 +736,7 @@ String statusLabel(String s) => switch (s) {
 
 (Color, String) statusVisual(String status, AppPalette palette) => switch (status) {
       'in_progress' => (palette.info, 'En progreso'),
-      'ready' => (palette.limeDeep, 'Listo'),
+      'ready' => (palette.accentDeep, 'Listo'),
       'blocked' => (palette.danger, 'Bloqueado'),
       'done' => (palette.success, 'Hecho'),
       'cancelled' => (palette.textMuted, 'Cancelado'),

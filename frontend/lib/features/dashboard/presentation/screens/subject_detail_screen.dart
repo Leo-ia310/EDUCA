@@ -18,7 +18,7 @@ class SubjectDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subject.color ?? subjectColor(subject.name));
+    final s = context.pastel(subject.color ?? subjectColor(subject.name));
     final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final pct = (subject.progress * 100).round();
 
@@ -27,6 +27,7 @@ class SubjectDetailScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: Text(subject.name),
@@ -44,7 +45,7 @@ class SubjectDetailScreen extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [s.vivid, deep],
               ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(Radii.xl),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,7 +101,7 @@ class SubjectDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(Radii.pill),
                   child: TweenAnimationBuilder<double>(
                     tween: Tween<double>(begin: 0, end: subject.progress),
                     duration: context.motion(AppMotion.slow),
@@ -134,14 +135,14 @@ class SubjectDetailScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _PastelRow(
             surface: s,
-            icon: Icons.assignment_outlined,
+            icon: Icons.assignment_rounded,
             label: 'Tareas de la materia',
             onTap: () => context.push(Routes.assignments),
           ),
           const SizedBox(height: 10),
           _PastelRow(
             surface: s,
-            icon: Icons.grade_outlined,
+            icon: Icons.grade_rounded,
             label: 'Calificaciones',
             onTap: () => context.push(Routes.grades),
           ),
@@ -172,11 +173,11 @@ class _PastelRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Ink(
           decoration: BoxDecoration(
             color: surface.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Padding(
             padding: const EdgeInsets.all(12),

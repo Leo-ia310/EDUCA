@@ -27,6 +27,7 @@ class DeveloperUsersScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Usuarios'),
@@ -39,7 +40,7 @@ class DeveloperUsersScreen extends ConsumerWidget {
           data: (users) {
             final active = users.where((u) => u.active).length;
             return RefreshIndicator(
-              color: palette.limeDeep,
+              color: palette.accentDeep,
               onRefresh: () async => ref.invalidate(developerUsersProvider),
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -100,11 +101,11 @@ class _UserCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: palette.limeDeep.withValues(alpha: 0.18),
+                backgroundColor: palette.accentDeep.withValues(alpha: 0.18),
                 child: Text(
                   _initials,
                   style: context.textTheme.labelLarge?.copyWith(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -172,7 +173,7 @@ class _RolePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: palette.info.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.xs),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -204,7 +205,7 @@ class _StatePill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         active ? 'Activo' : 'Inactivo',

@@ -206,7 +206,7 @@ class SupabaseChatRepository implements ChatRepository {
         ),
         callback: (payload) {
           ctrl.add(
-              [_msgFromRow(payload.newRecord, participants: participants)]);
+              [_msgFromRow(payload.newRecord, participants: participants)],);
         },
       );
       ch.subscribe();

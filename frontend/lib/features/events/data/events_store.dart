@@ -9,7 +9,7 @@ class SchoolEvent {
     required this.description,
     required this.date,
     required this.audience,
-    this.icon = Icons.campaign_outlined,
+    this.icon = Icons.campaign_rounded,
   });
 
   final String title;
@@ -31,7 +31,7 @@ class EventsStore extends StateNotifier<List<SchoolEvent>> {
           'Discusión sobre nuevos lineamientos de tecnología y plan de becas 2026.',
       date: DateTime.now().add(const Duration(days: 3)),
       audience: 'Padres y tutores',
-      icon: Icons.groups_outlined,
+      icon: Icons.groups_rounded,
     ),
     SchoolEvent(
       title: 'Feria de Ciencias 2026',
@@ -39,7 +39,7 @@ class EventsStore extends StateNotifier<List<SchoolEvent>> {
           'Convocatoria abierta a estudiantes para presentar proyectos.',
       date: DateTime.now().add(const Duration(days: 12)),
       audience: 'Toda la institución',
-      icon: Icons.science_outlined,
+      icon: Icons.science_rounded,
     ),
     SchoolEvent(
       title: 'Mantenimiento de Servidores',
@@ -47,7 +47,7 @@ class EventsStore extends StateNotifier<List<SchoolEvent>> {
           'El portal EduCore estará fuera de servicio el sábado por la noche.',
       date: DateTime.now().add(const Duration(days: 5)),
       audience: 'Toda la institución',
-      icon: Icons.build_outlined,
+      icon: Icons.build_rounded,
     ),
   ];
 

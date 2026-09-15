@@ -31,11 +31,11 @@ class _NotificationSettingsScreenState
 
   static const Map<String, IconData> _icons = {
     'Mensajes': Icons.chat_bubble_outline,
-    'Tareas': Icons.assignment_outlined,
-    'Calificaciones': Icons.grade_outlined,
-    'Asistencia': Icons.how_to_reg_outlined,
-    'Anuncios': Icons.campaign_outlined,
-    'Pagos': Icons.payments_outlined,
+    'Tareas': Icons.assignment_rounded,
+    'Calificaciones': Icons.grade_rounded,
+    'Asistencia': Icons.how_to_reg_rounded,
+    'Anuncios': Icons.campaign_rounded,
+    'Pagos': Icons.payments_rounded,
   };
 
   @override
@@ -46,6 +46,7 @@ class _NotificationSettingsScreenState
         title: const Text('Notificaciones'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),
@@ -62,15 +63,15 @@ class _NotificationSettingsScreenState
                 SwitchListTile.adaptive(
                   value: _pushEnabled,
                   onChanged: (v) => setState(() => _pushEnabled = v),
-                  activeThumbColor: palette.limeDeep,
-                  secondary: const Icon(Icons.notifications_active_outlined),
+                  activeThumbColor: palette.accentDeep,
+                  secondary: const Icon(Icons.notifications_active_rounded),
                   title: const Text('Notificaciones push'),
                   subtitle: const Text('Avisos en este dispositivo'),
                 ),
                 SwitchListTile.adaptive(
                   value: _emailEnabled,
                   onChanged: (v) => setState(() => _emailEnabled = v),
-                  activeThumbColor: palette.limeDeep,
+                  activeThumbColor: palette.accentDeep,
                   secondary: const Icon(Icons.mail_outline),
                   title: const Text('Correo electrónico'),
                   subtitle: const Text('Resumen por email'),
@@ -91,7 +92,7 @@ class _NotificationSettingsScreenState
                     onChanged: _pushEnabled
                         ? (v) => setState(() => _channels[entry.key] = v)
                         : null,
-                    activeThumbColor: palette.limeDeep,
+                    activeThumbColor: palette.accentDeep,
                     secondary: Icon(_icons[entry.key]),
                     title: Text(entry.key),
                   ),

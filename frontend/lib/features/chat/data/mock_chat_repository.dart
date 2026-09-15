@@ -266,20 +266,20 @@ class MockChatRepository implements ChatRepository {
   @override
   Future<List<ChatParticipant>> discoverableContacts({String? query}) async {
     final pool = <ChatParticipant>[
-      ChatParticipant(userId: 'u-elena', name: 'Prof. Elena Ramírez', role: 'teacher'),
-      ChatParticipant(userId: 'u-carlos', name: 'Prof. Carlos Mendoza', role: 'teacher'),
-      ChatParticipant(userId: 'u-sara', name: 'Prof. Sara Núñez', role: 'teacher'),
-      ChatParticipant(userId: 'u-coord', name: 'Coordinación Académica', role: 'coordinator'),
-      ChatParticipant(userId: 'u-director', name: 'Dir. Roberto Castillo', role: 'director'),
-      ChatParticipant(userId: 'u-marta', name: 'Marta Hernández (madre)', role: 'parent'),
-      ChatParticipant(userId: 'u-javier', name: 'Javier Rojas (padre)', role: 'parent'),
+      const ChatParticipant(userId: 'u-elena', name: 'Prof. Elena Ramírez', role: 'teacher'),
+      const ChatParticipant(userId: 'u-carlos', name: 'Prof. Carlos Mendoza', role: 'teacher'),
+      const ChatParticipant(userId: 'u-sara', name: 'Prof. Sara Núñez', role: 'teacher'),
+      const ChatParticipant(userId: 'u-coord', name: 'Coordinación Académica', role: 'coordinator'),
+      const ChatParticipant(userId: 'u-director', name: 'Dir. Roberto Castillo', role: 'director'),
+      const ChatParticipant(userId: 'u-marta', name: 'Marta Hernández (madre)', role: 'parent'),
+      const ChatParticipant(userId: 'u-javier', name: 'Javier Rojas (padre)', role: 'parent'),
     ];
     final q = query?.toLowerCase().trim() ?? '';
     if (q.isEmpty) return pool;
     return pool
         .where((p) =>
             p.name.toLowerCase().contains(q) ||
-            p.role.toLowerCase().contains(q))
+            p.role.toLowerCase().contains(q),)
         .toList();
   }
 

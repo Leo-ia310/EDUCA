@@ -75,7 +75,7 @@ class ChatComposerController extends StateNotifier<ComposerState> {
       );
     } catch (e) {
       state = state.copyWith(
-          uploading: false, error: 'No se pudo adjuntar: $e');
+          uploading: false, error: 'No se pudo adjuntar: $e',);
     }
   }
 

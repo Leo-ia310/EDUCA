@@ -77,6 +77,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
         title: const Text('Crear evento'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),
@@ -115,11 +116,11 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                   const SizedBox(height: 14),
                   InkWell(
                     onTap: _pickDate,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.md),
                     child: InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'Fecha',
-                        prefixIcon: Icon(Icons.calendar_month_outlined),
+                        prefixIcon: Icon(Icons.calendar_month_rounded),
                       ),
                       child: Text(
                         DateFormat("EEEE d 'de' MMMM y", 'es').format(_date),

@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../domain/entities.dart';
@@ -30,7 +31,7 @@ class SubjectGradesScreen extends ConsumerWidget {
     final scaleAsync = ref.watch(defaultScaleProvider);
     final evalsAsync = ref.watch(studentEvaluationsProvider(
       (studentId: studentId, classId: classId),
-    ));
+    ),);
 
     return AppScaffold(
       scrollable: false,
@@ -38,6 +39,7 @@ class SubjectGradesScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Detalle por materia'),
@@ -45,19 +47,19 @@ class SubjectGradesScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: scaleAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => Center(child: Text('$e')),
           data: (scale) => periods.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const SkeletonList(),
             error: (e, _) => Center(child: Text('$e')),
             data: (ps) => evalsAsync.when(
               loading: () =>
-                  const Center(child: CircularProgressIndicator()),
+                  const SkeletonList(),
               error: (e, _) => Center(child: Text('$e')),
               data: (data) {
                 if (data.evaluations.isEmpty) {
                   return const EmptyState(
-                    icon: Icons.assessment_outlined,
+                    icon: Icons.assessment_rounded,
                     title: 'Sin evaluaciones',
                     subtitle: 'Todavía no hay actividades registradas.',
                   );
@@ -72,8 +74,12 @@ class SubjectGradesScreen extends ConsumerWidget {
                             const EdgeInsets.symmetric(vertical: 8),
                         child: SectionHeader(title: entry.key.name),
                       ),
-                      EduCard(
+                      Container(
                         padding: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(
+                          color: context.pastel(context.palette.accent).surface,
+                          borderRadius: BorderRadius.circular(Radii.lg),
+                        ),
                         child: Column(
                           children: [
                             for (final e in entry.value) ...[
@@ -85,9 +91,10 @@ class SubjectGradesScreen extends ConsumerWidget {
                               if (e != entry.value.last)
                                 Divider(
                                     height: 1,
-                                    color: Theme.of(context)
-                                        .dividerColor
-                                        .withValues(alpha: 0.5)),
+                                    color: context
+                                        .pastel(context.palette.accent)
+                                        .ink
+                                        .withValues(alpha: 0.12),),
                             ],
                           ],
                         ),
@@ -129,7 +136,7 @@ class _EvaluationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
+    final s = context.pastel(context.palette.accent);
     final fmt = DateFormat('d MMM', 'es');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
@@ -138,16 +145,13 @@ class _EvaluationTile extends StatelessWidget {
           Container(
             width: 34,
             height: 34,
-            decoration: BoxDecoration(
-              color: palette.limeSoft,
-              borderRadius: BorderRadius.circular(10),
-            ),
+            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
             child: Icon(
               evaluation.kind == 'exam'
-                  ? Icons.fact_check_outlined
-                  : Icons.assignment_outlined,
+                  ? Icons.fact_check_rounded
+                  : Icons.assignment_rounded,
               size: 18,
-              color: palette.limeDeep,
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 10),
@@ -158,11 +162,11 @@ class _EvaluationTile extends StatelessWidget {
                 Text(
                   evaluation.title,
                   style: context.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
+                      ?.copyWith(color: s.ink, fontWeight: FontWeight.w800),
                 ),
                 Text(
                   '${fmt.format(evaluation.date)} · ${evaluation.maxScore.toStringAsFixed(0)} pts',
-                  style: context.textTheme.bodySmall,
+                  style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
                 ),
               ],
             ),
@@ -170,7 +174,7 @@ class _EvaluationTile extends StatelessWidget {
           if (rawScore == null)
             Text('Pendiente',
                 style: context.textTheme.labelSmall
-                    ?.copyWith(color: palette.textMuted))
+                    ?.copyWith(color: s.inkMuted),)
           else
             GradePill(
               score: scale.normalize(rawScore!, rawMax: evaluation.maxScore),

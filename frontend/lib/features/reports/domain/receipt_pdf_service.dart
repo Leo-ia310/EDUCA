@@ -16,11 +16,11 @@ class ReceiptPdfService {
     final doc = pw.Document(
       title: 'Recibo ${r.payment.receiptNumber}',
     );
-    final green = PdfColor.fromInt(0xFF9BE000);
-    final dark = PdfColor.fromInt(0xFF1E2218);
-    final muted = PdfColor.fromInt(0xFF5C6354);
-    final surface = PdfColor.fromInt(0xFFF1F4E2);
-    final divider = PdfColor.fromInt(0xFFE3E7D2);
+    const green = PdfColor.fromInt(0xFF9BE000);
+    const dark = PdfColor.fromInt(0xFF1E2218);
+    const muted = PdfColor.fromInt(0xFF5C6354);
+    const surface = PdfColor.fromInt(0xFFF1F4E2);
+    const divider = PdfColor.fromInt(0xFFE3E7D2);
 
     doc.addPage(pw.Page(
       pageFormat: PdfPageFormat.a5,
@@ -60,14 +60,14 @@ class ReceiptPdfService {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text('Total pagado',
-                  style: pw.TextStyle(
-                      color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                  style: const pw.TextStyle(
+                      color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold,),),
               pw.Text(
                 Money.format(r.payment.amount, r.payment.currencyCode),
-                style: pw.TextStyle(
+                style: const pw.TextStyle(
                     color: PdfColor.fromInt(0xFF15803D),
                     fontSize: 22,
-                    fontWeight: pw.FontWeight.bold),
+                    fontWeight: pw.FontWeight.bold,),
               ),
             ],
           ),
@@ -75,13 +75,13 @@ class ReceiptPdfService {
           _footer(r, muted),
         ],
       ),
-    ));
+    ),);
 
     return doc.save();
   }
 
   pw.Widget _header(
-      Receipt r, PdfColor green, PdfColor dark, PdfColor muted) {
+      Receipt r, PdfColor green, PdfColor dark, PdfColor muted,) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
@@ -95,7 +95,7 @@ class ReceiptPdfService {
           alignment: pw.Alignment.center,
           child: pw.Text('E360',
               style: pw.TextStyle(
-                  color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                  color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold,),),
         ),
         pw.SizedBox(width: 12),
         pw.Expanded(
@@ -106,9 +106,9 @@ class ReceiptPdfService {
                   style: pw.TextStyle(
                       color: dark,
                       fontSize: 14,
-                      fontWeight: pw.FontWeight.bold)),
+                      fontWeight: pw.FontWeight.bold,),),
               pw.Text('Recibo oficial de pago',
-                  style: pw.TextStyle(color: muted, fontSize: 10)),
+                  style: pw.TextStyle(color: muted, fontSize: 10),),
             ],
           ),
         ),
@@ -116,10 +116,10 @@ class ReceiptPdfService {
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
             pw.Text('Recibo',
-                style: pw.TextStyle(color: muted, fontSize: 8)),
+                style: pw.TextStyle(color: muted, fontSize: 8),),
             pw.Text(r.payment.receiptNumber,
                 style: pw.TextStyle(
-                    color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                    color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold,),),
           ],
         ),
       ],
@@ -127,7 +127,7 @@ class ReceiptPdfService {
   }
 
   pw.Widget _summary(
-      Receipt r, PdfColor dark, PdfColor muted, PdfColor surface) {
+      Receipt r, PdfColor dark, PdfColor muted, PdfColor surface,) {
     final fmt = DateFormat("d 'de' MMMM 'de' y, HH:mm", 'es');
     return pw.Container(
       padding: const pw.EdgeInsets.all(14),
@@ -139,11 +139,11 @@ class ReceiptPdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text('Emitido',
-              style: pw.TextStyle(color: muted, fontSize: 9)),
+              style: pw.TextStyle(color: muted, fontSize: 9),),
           pw.Text(
             fmt.format(r.issuedAt),
             style: pw.TextStyle(
-                color: dark, fontSize: 11, fontWeight: pw.FontWeight.bold),
+                color: dark, fontSize: 11, fontWeight: pw.FontWeight.bold,),
           ),
         ],
       ),
@@ -151,7 +151,7 @@ class ReceiptPdfService {
   }
 
   pw.Widget _detailRow(
-      String k, String v, PdfColor dark, PdfColor muted, PdfColor divider) {
+      String k, String v, PdfColor dark, PdfColor muted, PdfColor divider,) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(vertical: 6),
       decoration: pw.BoxDecoration(
@@ -163,11 +163,11 @@ class ReceiptPdfService {
           pw.SizedBox(
               width: 100,
               child: pw.Text(k,
-                  style: pw.TextStyle(color: muted, fontSize: 9))),
+                  style: pw.TextStyle(color: muted, fontSize: 9),),),
           pw.Expanded(
             child: pw.Text(v,
                 style: pw.TextStyle(
-                    color: dark, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                    color: dark, fontSize: 10, fontWeight: pw.FontWeight.bold,),),
           ),
         ],
       ),
@@ -179,9 +179,9 @@ class ReceiptPdfService {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text('Documento emitido electrónicamente por Educa360.',
-            style: pw.TextStyle(color: muted, fontSize: 8)),
+            style: pw.TextStyle(color: muted, fontSize: 8),),
         pw.Text('Este recibo tiene validez como comprobante interno.',
-            style: pw.TextStyle(color: muted, fontSize: 8)),
+            style: pw.TextStyle(color: muted, fontSize: 8),),
       ],
     );
   }

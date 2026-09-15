@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
@@ -44,7 +45,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     final now = DateTime.now();
 
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 100),
+      padding: const EdgeInsets.only(bottom: 24),
       onRefresh: () async =>
           Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
@@ -64,7 +65,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
               route: Routes.payments,
             ),
             QuickActionEntry(
-              icon: Icons.picture_as_pdf_outlined,
+              icon: Icons.picture_as_pdf_rounded,
               label: 'Boletín',
               route: Routes.reports,
             ),
@@ -81,7 +82,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         children: [
           // Hero de bienvenida (full-bleed).
           AppGreetingHeader(
-            greeting: _greeting(now),
+            greeting: DateUtilsX.greetingForHour(now),
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
@@ -89,7 +90,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
             dateLabel: toBeginningOfSentenceCase(
               DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
             ),
-            chipIcon: Icons.notifications_active_outlined,
+            chipIcon: Icons.notifications_active_rounded,
             chipLabel:
                 '${data.newNotices} avisos · ${data.monthEvents} eventos este mes',
             notificationsBadge:
@@ -151,7 +152,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                             UserAvatar(
                               name: c.name,
                               size: 60,
-                              ringColor: selected ? palette.limeDeep : null,
+                              ringColor: selected ? palette.accentDeep : null,
                             ),
                             const SizedBox(height: 6),
                             Text(
@@ -209,7 +210,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                       child: Text(
                         'Ver Todo',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -235,7 +236,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                       child: Text(
                         'Ver Tareas',
                         style: context.textTheme.labelMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -262,7 +263,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => context.push(Routes.reports),
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        icon: const Icon(Icons.picture_as_pdf_rounded),
                         label: const Text('Boletín'),
                       ),
                     ),
@@ -291,13 +292,6 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   }
 }
 
-/// Saludo según la hora del día.
-String _greeting(DateTime now) {
-  final h = now.hour;
-  if (h < 12) return 'Buenos días';
-  if (h < 19) return 'Buenas tardes';
-  return 'Buenas noches';
-}
 
 /// Fila de materia + profesor, estilo pastel del panel.
 class _SubjectTeacherRow extends StatelessWidget {
@@ -306,12 +300,12 @@ class _SubjectTeacherRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(item.name));
+    final s = context.pastel(subjectColor(item.name));
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: s.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         children: [
@@ -379,12 +373,12 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(item.tag.isEmpty ? item.title : item.tag));
+    final s = context.pastel(subjectColor(item.tag.isEmpty ? item.title : item.tag));
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: s.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,7 +390,7 @@ class _ActivityCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: s.vivid.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(Radii.pill),
                 ),
                 child: Text(
                   item.tag,
@@ -432,7 +426,7 @@ class _ActivityCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(Radii.xs),
             child: LinearProgressIndicator(
               value: item.progress,
               minHeight: 6,

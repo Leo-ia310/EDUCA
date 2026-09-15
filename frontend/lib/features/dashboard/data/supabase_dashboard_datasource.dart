@@ -40,7 +40,7 @@ class SupabaseDashboardDatasource {
               teacher: c.teacher ?? 'Docente',
               progress: (avg / 100).clamp(0, 1).toDouble(),
               icon: iconForSubject(c.subject),
-            ))
+            ),)
         .toList();
 
     final pending = tasks.where((t) => t.status == TaskStatus.pending).length;
@@ -88,8 +88,8 @@ class SupabaseDashboardDatasource {
               name: (c['subjects'] as Map?)?['name'] as String? ?? 'Clase',
               room: (c['groups'] as Map?)?['name'] as String? ?? '',
               icon: iconForSubject(
-                  (c['subjects'] as Map?)?['name'] as String? ?? ''),
-            ))
+                  (c['subjects'] as Map?)?['name'] as String? ?? '',),
+            ),)
         .toList();
 
     return TeacherDashboardData(
@@ -103,7 +103,7 @@ class SupabaseDashboardDatasource {
   }
 
   Future<List<UpcomingAssignment>> _teacherAssignments(
-      List<int> classIds, List<int> groupIds) async {
+      List<int> classIds, List<int> groupIds,) async {
     final rows = await _c
         .from('assignments')
         .select('id, title, due_at, class_id, classes(groups(name))')
@@ -170,7 +170,7 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('grades')
         .select(
-            'score, evaluation_id, created_at, students(persons(first_name, last_name)), evaluations(max_score)')
+            'score, evaluation_id, created_at, students(persons(first_name, last_name)), evaluations(max_score)',)
         .inFilter('evaluation_id', evalTitles.keys.toList())
         .not('score', 'is', null)
         .order('created_at', ascending: false)
@@ -245,7 +245,7 @@ class SupabaseDashboardDatasource {
       final name =
           '${p?['first_name'] ?? ''} ${p?['last_name'] ?? ''}'.trim();
       return _ChildRef((m['student_id'] as num).toInt(),
-          name.isEmpty ? 'Hijo' : name);
+          name.isEmpty ? 'Hijo' : name,);
     }).toList();
     if (kids.isEmpty) return ParentDashboardData.empty();
 
@@ -285,7 +285,7 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('grades')
         .select(
-            'score, created_at, evaluations(title, max_score)')
+            'score, created_at, evaluations(title, max_score)',)
         .eq('student_id', studentId)
         .not('score', 'is', null)
         .order('created_at', ascending: false)
@@ -371,7 +371,7 @@ class SupabaseDashboardDatasource {
         .toList();
     if (vals.isEmpty) return 0;
     return double.parse(
-        (vals.reduce((a, b) => a + b) / vals.length / 10).toStringAsFixed(1));
+        (vals.reduce((a, b) => a + b) / vals.length / 10).toStringAsFixed(1),);
   }
 
   Future<List<Announcement>> _announcements() async {
@@ -384,7 +384,7 @@ class SupabaseDashboardDatasource {
         .limit(5);
     return (rows as List)
         .map((r) => Announcement(
-            r['title'] as String? ?? 'Anuncio', r['content'] as String? ?? ''))
+            r['title'] as String? ?? 'Anuncio', r['content'] as String? ?? '',),)
         .toList();
   }
 
@@ -432,7 +432,7 @@ class SupabaseDashboardDatasource {
     const presentStatusId = 1; // catalog_attendance_statuses code 'PRE'
     final present = list
         .where((r) => (r['attendance_status_id'] as num?)?.toInt() ==
-            presentStatusId)
+            presentStatusId,)
         .length;
     return double.parse((100.0 * present / list.length).toStringAsFixed(1));
   }
@@ -485,7 +485,7 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('schedules')
         .select(
-            'start_time, end_time, weekday_id, classes(subjects(name)), classrooms(name)')
+            'start_time, end_time, weekday_id, classes(subjects(name)), classrooms(name)',)
         .inFilter('class_id', classIds)
         .eq('weekday_id', today)
         .order('start_time');
@@ -505,7 +505,7 @@ class SupabaseDashboardDatasource {
   }
 
   Future<List<TaskBrief>> _studentAssignments(
-      List<int> classIds, int studentId) async {
+      List<int> classIds, int studentId,) async {
     final rows = await _c
         .from('assignments')
         .select('id, title, due_at, classes(subjects(name))')
@@ -555,7 +555,7 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('grades')
         .select(
-            'score, evaluations(title, max_score, classes(subjects(name)))')
+            'score, evaluations(title, max_score, classes(subjects(name)))',)
         .eq('student_id', studentId)
         .not('score', 'is', null)
         .limit(5);
@@ -664,11 +664,11 @@ class _ChildRef {
 IconData iconForSubject(String name) {
   final n = name.toLowerCase();
   if (n.contains('matem')) return Icons.calculate_rounded;
-  if (n.contains('histor')) return Icons.account_balance_outlined;
+  if (n.contains('histor')) return Icons.account_balance_rounded;
   if (n.contains('fís') || n.contains('fis') || n.contains('cuánt')) {
-    return Icons.science_outlined;
+    return Icons.science_rounded;
   }
-  if (n.contains('biolog') || n.contains('celul')) return Icons.biotech_outlined;
+  if (n.contains('biolog') || n.contains('celul')) return Icons.biotech_rounded;
   if (n.contains('litera') || n.contains('lengua')) return Icons.menu_book_rounded;
   if (n.contains('geograf')) return Icons.public_rounded;
   if (n.contains('geometr')) return Icons.architecture_rounded;

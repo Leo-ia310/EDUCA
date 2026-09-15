@@ -40,7 +40,7 @@ final upcomingEventsViewProvider =
       .select('title, description, start_at, audience, type')
       .eq('institution_id', auth.institution!.id)
       .gte('start_at',
-          DateTime.now().subtract(const Duration(days: 1)).toIso8601String())
+          DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),)
       .order('start_at');
   return (rows as List).map((r) {
     final m = r as Map<String, dynamic>;
@@ -70,16 +70,16 @@ String _audienceLabel(String? code) {
 IconData _eventIcon(String? type) {
   switch (type) {
     case 'meeting':
-      return Icons.groups_outlined;
+      return Icons.groups_rounded;
     case 'academic':
-      return Icons.school_outlined;
+      return Icons.school_rounded;
     case 'drill':
-      return Icons.warning_amber_outlined;
+      return Icons.warning_amber_rounded;
     case 'holiday':
-      return Icons.celebration_outlined;
+      return Icons.celebration_rounded;
     case 'sport':
-      return Icons.sports_soccer_outlined;
+      return Icons.sports_soccer_rounded;
     default:
-      return Icons.campaign_outlined;
+      return Icons.campaign_rounded;
   }
 }

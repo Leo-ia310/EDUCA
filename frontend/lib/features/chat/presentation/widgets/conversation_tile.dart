@@ -20,7 +20,7 @@ class ConversationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(conversation.title));
+    final s = context.pastel(subjectColor(conversation.title));
     final last = conversation.lastMessage;
     final unread = conversation.unreadCount;
     final isMine = last?.senderId == currentUserId;
@@ -29,11 +29,11 @@ class ConversationTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Ink(
           decoration: BoxDecoration(
             color: s.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -121,11 +121,11 @@ class ConversationTile extends StatelessWidget {
                             Container(
                               margin: const EdgeInsets.only(left: 8),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                                  horizontal: 8, vertical: 2,),
                               constraints: const BoxConstraints(minWidth: 22),
                               decoration: BoxDecoration(
                                 color: s.vivid,
-                                borderRadius: BorderRadius.circular(999),
+                                borderRadius: BorderRadius.circular(Radii.pill),
                               ),
                               alignment: Alignment.center,
                               child: Text(

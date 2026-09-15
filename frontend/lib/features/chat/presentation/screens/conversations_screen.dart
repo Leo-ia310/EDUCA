@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
@@ -64,7 +65,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                   isDense: true,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                 ),
               ),
@@ -81,10 +82,10 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                           (c.lastMessage?.content
                                   ?.toLowerCase()
                                   .contains(_query) ??
-                              false)).toList();
+                              false),).toList();
                   if (filtered.isEmpty) {
                     return EmptyState(
-                      icon: Icons.forum_outlined,
+                      icon: Icons.forum_rounded,
                       title: _query.isEmpty
                           ? 'Sin conversaciones'
                           : 'Sin coincidencias',

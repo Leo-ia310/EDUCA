@@ -44,13 +44,15 @@ class AssignmentDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Detalle de tarea'),
         actions: [
           if (role == AppRole.teacher)
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
+              icon: const Icon(Icons.edit_rounded),
+              tooltip: 'Editar',
               onPressed: () => context.push(
                 '${Routes.assignments}/$assignmentId/edit',
               ),
@@ -64,7 +66,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
         data: (a) {
           if (a == null) {
             return const EmptyState(
-                icon: Icons.error_outline, title: 'No encontrada');
+                icon: Icons.error_outline, title: 'No encontrada',);
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +78,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 EduCard(
                   child: Text(a.description!,
-                      style: context.textTheme.bodyMedium),
+                      style: context.textTheme.bodyMedium,),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -85,7 +87,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 EduCard(
                   child: Text(a.instructions!,
-                      style: context.textTheme.bodyMedium),
+                      style: context.textTheme.bodyMedium,),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -119,7 +121,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(assignment.subjectName));
+    final s = context.pastel(subjectColor(assignment.subjectName));
     final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final fmt = DateFormat("EEE d MMM, HH:mm", 'es');
     final statusLabel = switch (assignment.statusForNow(DateTime.now())) {
@@ -138,7 +140,7 @@ class _Header extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [s.vivid, deep],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(Radii.xl),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +201,7 @@ class _HeroChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         label,
@@ -253,7 +255,7 @@ class _TeacherActions extends StatelessWidget {
                       minimumSize: const Size(0, 44),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
-                    icon: const Icon(Icons.fact_check_outlined),
+                    icon: const Icon(Icons.fact_check_rounded),
                     label: const Text('Calificar'),
                   ),
                 ],
@@ -338,7 +340,7 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
               child: Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
-          )),
+          ),),
           error: (e, _) => EduCard(child: Text('$e')),
           data: (existing) {
             if (existing?.status == SubmissionStatus.graded) {
@@ -418,10 +420,10 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                                 width: 14,
                                 height: 14,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2))
+                                    strokeWidth: 2,),)
                             : const Icon(Icons.upload_file_rounded),
                         label: Text(
-                            state.uploading ? 'Subiendo…' : 'Adjuntar'),
+                            state.uploading ? 'Subiendo…' : 'Adjuntar',),
                       ),
                       const Spacer(),
                       FilledButton.icon(
@@ -450,14 +452,14 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                             ? 'Enviando…'
                             : (existing == null
                                 ? 'Enviar entrega'
-                                : 'Reemplazar entrega')),
+                                : 'Reemplazar entrega'),),
                       ),
                     ],
                   ),
                   if (state.error != null) ...[
                     const SizedBox(height: 8),
                     Text(state.error!,
-                        style: TextStyle(color: palette.danger)),
+                        style: TextStyle(color: palette.danger),),
                   ],
                 ],
               ),
@@ -484,7 +486,7 @@ class _GradedView extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,7 +494,7 @@ class _GradedView extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.workspace_premium_rounded,
-                  color: Colors.white, size: 28),
+                  color: Colors.white, size: 28,),
               const SizedBox(width: 8),
               Text(
                 'Calificada',

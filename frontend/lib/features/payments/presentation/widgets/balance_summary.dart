@@ -23,8 +23,8 @@ class BalanceSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final isOk = balance.inGoodStanding && balance.totalPending == 0;
-    final bg = isOk ? palette.lime : palette.cardContrast;
-    final onBg = isOk ? const Color(0xFF1E2218) : Colors.white;
+    final bg = isOk ? palette.accent : palette.cardContrast;
+    final onBg = isOk ? Colors.white : Colors.white;
     return EduCard(
       color: bg,
       child: Column(
@@ -102,7 +102,7 @@ class BalanceSummary extends StatelessWidget {
                     onPressed: onSeeHistory,
                     icon: Icon(Icons.history_rounded, color: onBg),
                     label: Text('Historial',
-                        style: TextStyle(color: onBg)),
+                        style: TextStyle(color: onBg),),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: onBg.withValues(alpha: 0.3)),
                     ),
@@ -128,7 +128,7 @@ class _NextDue extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: onColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Row(
         children: [

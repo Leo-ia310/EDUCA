@@ -42,6 +42,7 @@ class _TeacherGradebookScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Libro de notas'),
@@ -65,7 +66,7 @@ class _TeacherGradebookScreenState
                 data: (matrix) {
                   if (matrix.evaluations.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.assessment_outlined,
+                      icon: Icons.assessment_rounded,
                       title: 'Sin evaluaciones',
                       subtitle:
                           'Crea una tarea o examen para calificar aquí.',
@@ -147,7 +148,7 @@ class _Filters extends StatelessWidget {
                       value: p.id,
                       child: Text(p.name,
                           style: context.textTheme.titleSmall
-                              ?.copyWith(color: palette.limeDeep)),
+                              ?.copyWith(color: palette.accentDeep),),
                     ),
                 ],
                 onChanged: (v) {
@@ -185,7 +186,7 @@ class _Matrix extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: 10),
               child: EduCard(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 12),
+                    horizontal: 12, vertical: 12,),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -246,7 +247,7 @@ class _Matrix extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(
@@ -274,12 +275,12 @@ class _Matrix extends ConsumerWidget {
                 style: Theme.of(ctx)
                     .textTheme
                     .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w800)),
+                    ?.copyWith(fontWeight: FontWeight.w800),),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
               keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true),
+                  decimal: true,),
               decoration: InputDecoration(
                 labelText: 'Puntaje sobre ${evaluation.maxScore.toStringAsFixed(0)}',
               ),
@@ -325,12 +326,12 @@ class _EvaluationCell extends StatelessWidget {
     final palette = context.palette;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(Radii.sm),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: palette.surfaceAlt,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.sm),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -344,7 +345,7 @@ class _EvaluationCell extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             if (score == null)
-              Icon(Icons.add, size: 16, color: palette.limeDeep)
+              Icon(Icons.add, size: 16, color: palette.accentDeep)
             else
               GradePill(
                 score: scale.normalize(score!, rawMax: evaluation.maxScore),

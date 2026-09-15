@@ -40,6 +40,7 @@ class TaskDetailScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Tarea'),
@@ -53,7 +54,7 @@ class TaskDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(Radii.xl),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +66,7 @@ class TaskDetailScreen extends StatelessWidget {
                         height: 44,
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(Radii.md),
                         ),
                         child: Icon(icon, color: color, size: 24),
                       ),
@@ -101,7 +102,7 @@ class TaskDetailScreen extends StatelessWidget {
                     color:
                         Theme.of(context).dividerColor.withValues(alpha: 0.5),),
                 _InfoRow(
-                  icon: Icons.event_outlined,
+                  icon: Icons.event_rounded,
                   label: 'Entrega',
                   value: task.dueDate ?? 'Sin fecha',
                 ),
@@ -178,7 +179,7 @@ class _Pill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         label,

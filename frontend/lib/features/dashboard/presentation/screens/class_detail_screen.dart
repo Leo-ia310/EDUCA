@@ -26,6 +26,7 @@ class ClassDetailScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: Text(teacherClass.name),
@@ -39,7 +40,7 @@ class ClassDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(Radii.xl),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +50,7 @@ class ClassDetailScreen extends StatelessWidget {
                     height: 52,
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.24),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                     child: Icon(teacherClass.icon, color: ink, size: 28),
                   ),
@@ -62,7 +63,7 @@ class ClassDetailScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.meeting_room_outlined,
+                      Icon(Icons.meeting_room_rounded,
                           size: 16, color: context.palette.textMuted,),
                       const SizedBox(width: 6),
                       Text(teacherClass.room,
@@ -77,7 +78,7 @@ class ClassDetailScreen extends StatelessWidget {
           const SectionHeader(title: 'Acciones'),
           const SizedBox(height: 8),
           _Action(
-            icon: Icons.how_to_reg_outlined,
+            icon: Icons.how_to_reg_rounded,
             label: 'Tomar asistencia',
             accent: accent,
             ink: ink,
@@ -93,7 +94,7 @@ class ClassDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _Action(
-            icon: Icons.assignment_outlined,
+            icon: Icons.assignment_rounded,
             label: 'Tareas y exámenes',
             accent: accent,
             ink: ink,
@@ -130,7 +131,7 @@ class _Action extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: Icon(icon, color: ink, size: 20),
           ),

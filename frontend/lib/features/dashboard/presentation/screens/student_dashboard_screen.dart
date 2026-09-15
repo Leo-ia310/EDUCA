@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
@@ -38,8 +39,8 @@ class StudentDashboardScreen extends ConsumerWidget {
     int? currentIdx;
     int? nextIdx;
     for (var i = 0; i < data.todaySchedule.length; i++) {
-      final start = _toMinutes(data.todaySchedule[i].startTime);
-      final end = _toMinutes(data.todaySchedule[i].endTime);
+      final start = DateUtilsX.hhmmToMinutes(data.todaySchedule[i].startTime);
+      final end = DateUtilsX.hhmmToMinutes(data.todaySchedule[i].endTime);
       if (nowMin >= start && nowMin < end) {
         currentIdx = i;
       } else if (start > nowMin && nextIdx == null) {
@@ -52,7 +53,7 @@ class StudentDashboardScreen extends ConsumerWidget {
     );
 
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 100),
+      padding: const EdgeInsets.only(bottom: 24),
       onRefresh: () async => Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
       child: Column(
@@ -60,15 +61,20 @@ class StudentDashboardScreen extends ConsumerWidget {
         children: [
           // Hero de bienvenida (full-bleed, sin padding lateral).
           AppGreetingHeader(
-            greeting: _greeting(now),
+            greeting: DateUtilsX.greetingForHour(now),
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
                 : '?',
+            // Foto grande integrada al hero (recorte sin fondo). En producción
+            // sería la foto del alumno servida por el backend (Supabase
+            // Storage); aquí un asset local de placeholder.
+            heroImageUrl: user.avatarUrl ??
+                'assets/images/persona-removebg-preview.png',
             dateLabel: toBeginningOfSentenceCase(
               DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
             ),
-            chipIcon: Icons.assignment_turned_in_outlined,
+            chipIcon: Icons.assignment_turned_in_rounded,
             chipLabel: data.pendingTasks > 0
                 ? 'Tienes ${data.pendingTasks} ${data.pendingTasks == 1 ? 'tarea' : 'tareas'} para hoy'
                 : 'No tienes tareas para hoy',
@@ -120,13 +126,13 @@ class StudentDashboardScreen extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: palette.limeSoft,
-                  borderRadius: BorderRadius.circular(999),
+                  color: palette.accentSoft,
+                  borderRadius: BorderRadius.circular(Radii.pill),
                 ),
                 child: Text(
                   weekday,
                   style: context.textTheme.labelSmall?.copyWith(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -143,7 +149,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                   ? 'Ahora'
                   : i == nextIdx
                       ? _inLabel(
-                          _toMinutes(data.todaySchedule[i].startTime) - nowMin,
+                          DateUtilsX.hhmmToMinutes(data.todaySchedule[i].startTime) - nowMin,
                         )
                       : null,
             ),
@@ -199,22 +205,6 @@ class StudentDashboardScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// Saludo según la hora del día.
-String _greeting(DateTime now) {
-  final h = now.hour;
-  if (h < 12) return 'Buenos días';
-  if (h < 19) return 'Buenas tardes';
-  return 'Buenas noches';
-}
-
-/// Convierte "HH:MM" en minutos desde medianoche.
-int _toMinutes(String hhmm) {
-  final parts = hhmm.split(':');
-  final h = int.tryParse(parts.first) ?? 0;
-  final m = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
-  return h * 60 + m;
 }
 
 /// Etiqueta "En X min" / "En Yh Zm" para la próxima clase.

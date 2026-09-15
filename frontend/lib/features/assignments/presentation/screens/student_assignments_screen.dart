@@ -34,6 +34,7 @@ class StudentAssignmentsScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Mis tareas'),
@@ -47,7 +48,7 @@ class StudentAssignmentsScreen extends ConsumerWidget {
           data: (items) {
             if (items.isEmpty) {
               return EmptyState(
-                icon: Icons.task_alt_outlined,
+                icon: Icons.task_alt_rounded,
                 title: 'Todo al día',
                 subtitle: 'No tienes tareas asignadas en este momento.',
                 actionLabel: 'Ver horario',
@@ -58,15 +59,15 @@ class StudentAssignmentsScreen extends ConsumerWidget {
             final pending = items
                 .where((a) =>
                     a.statusForNow(now) == AssignmentStatus.open ||
-                    a.statusForNow(now) == AssignmentStatus.dueSoon)
+                    a.statusForNow(now) == AssignmentStatus.dueSoon,)
                 .toList();
             final past = items
                 .where((a) =>
                     a.statusForNow(now) == AssignmentStatus.overdue ||
-                    a.statusForNow(now) == AssignmentStatus.closed)
+                    a.statusForNow(now) == AssignmentStatus.closed,)
                 .toList();
             return RefreshIndicator(
-              color: palette.limeDeep,
+              color: palette.accentDeep,
               onRefresh: () async =>
                   ref.invalidate(studentAssignmentsProvider),
               child: ListView(
@@ -119,7 +120,7 @@ class _StudentTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mine = ref.watch(mySubmissionProvider(
-        (assignmentId: assignment.id, studentId: studentId)));
+        (assignmentId: assignment.id, studentId: studentId),),);
     final status = mine.asData?.value?.status;
     final score = mine.asData?.value?.score;
     final done = ref.watch(tasksDoneProvider).contains(assignment.id);
@@ -140,7 +141,7 @@ class _StudentTile extends ConsumerWidget {
               foregroundColor: Colors.white,
               icon: done ? Icons.undo_rounded : Icons.check_circle_outline,
               label: done ? 'Pendiente' : 'Hecha',
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
           ],
         ),

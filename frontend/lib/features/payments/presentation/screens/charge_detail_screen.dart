@@ -27,6 +27,7 @@ class ChargeDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Detalle del cargo'),
@@ -38,7 +39,7 @@ class ChargeDetailScreen extends ConsumerWidget {
         data: (charge) {
           if (charge == null) {
             return const EmptyState(
-              icon: Icons.receipt_long_outlined,
+              icon: Icons.receipt_long_rounded,
               title: 'Cargo no encontrado',
             );
           }
@@ -82,7 +83,7 @@ class ChargeDetailScreen extends ConsumerWidget {
                     Divider(
                         color: Theme.of(context)
                             .dividerColor
-                            .withValues(alpha: 0.5)),
+                            .withValues(alpha: 0.5),),
                     _KV(
                       label: charge.status == ChargeStatus.paid
                           ? 'Total pagado'
@@ -127,7 +128,7 @@ class _Header extends StatelessWidget {
     final palette = context.palette;
     final fmt = DateFormat("EEE d MMM y", 'es');
     return EduCard(
-      color: charge.status == ChargeStatus.paid ? palette.lime : palette.cardContrast,
+      color: charge.status == ChargeStatus.paid ? palette.accent : palette.cardContrast,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -135,7 +136,7 @@ class _Header extends StatelessWidget {
             charge.conceptName,
             style: context.textTheme.titleLarge?.copyWith(
               color: charge.status == ChargeStatus.paid
-                  ? const Color(0xFF1E2218)
+                  ? Colors.white
                   : Colors.white,
               fontWeight: FontWeight.w800,
             ),
@@ -157,13 +158,13 @@ class _Header extends StatelessWidget {
                   size: 16,
                   color: charge.status == ChargeStatus.paid
                       ? const Color(0xFF34401C)
-                      : Colors.white),
+                      : Colors.white,),
               const SizedBox(width: 4),
               Text(
                 charge.studentName,
                 style: TextStyle(
                   color: charge.status == ChargeStatus.paid
-                      ? const Color(0xFF1E2218)
+                      ? Colors.white
                       : Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
@@ -174,13 +175,13 @@ class _Header extends StatelessWidget {
                   size: 16,
                   color: charge.status == ChargeStatus.paid
                       ? const Color(0xFF34401C)
-                      : Colors.white),
+                      : Colors.white,),
               const SizedBox(width: 4),
               Text(
                 fmt.format(charge.dueDate),
                 style: TextStyle(
                   color: charge.status == ChargeStatus.paid
-                      ? const Color(0xFF1E2218)
+                      ? Colors.white
                       : Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,

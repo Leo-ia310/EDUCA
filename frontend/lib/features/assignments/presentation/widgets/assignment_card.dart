@@ -34,8 +34,6 @@ class AssignmentCard extends StatelessWidget {
   /// estilo clásico (pastel = false).
   final bool pastel;
 
-  static const _ink = Color(0xFF232A33);
-
   static IconData _kindIcon(AssignmentKind kind) => switch (kind) {
         AssignmentKind.homework => Icons.assignment_rounded,
         AssignmentKind.exam => Icons.school_rounded,
@@ -51,7 +49,7 @@ class AssignmentCard extends StatelessWidget {
   }
 
   Widget _buildPastel(BuildContext context) {
-    final s = pastelSurface(subjectColor(assignment.subjectName));
+    final s = context.pastel(subjectColor(assignment.subjectName));
     final vivid = s.vivid;
     final cardBg = s.surface;
     final inkMuted = s.inkMuted;
@@ -62,11 +60,11 @@ class AssignmentCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(Radii.lg),
         child: Ink(
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(Radii.lg),
           ),
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -94,10 +92,11 @@ class AssignmentCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          AssignmentStatusChip(status: status),
+                          AssignmentStatusChip(status: status, onPastel: true),
                           const Spacer(),
                           if (studentStatus != null)
-                            SubmissionStatusChip(status: studentStatus!),
+                            SubmissionStatusChip(
+                                status: studentStatus!, onPastel: true,),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -106,7 +105,7 @@ class AssignmentCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: context.textTheme.titleMedium?.copyWith(
-                          color: _ink,
+                          color: s.ink,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -122,7 +121,7 @@ class AssignmentCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.calendar_today_rounded,
-                              size: 14, color: inkMuted),
+                              size: 14, color: inkMuted,),
                           const SizedBox(width: 4),
                           Text(
                             'Entrega ${fmt.format(assignment.dueAt)}',
@@ -134,7 +133,10 @@ class AssignmentCard extends StatelessWidget {
                             Text(
                               '${studentScore!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
                               style: context.textTheme.titleSmall?.copyWith(
-                                color: const Color(0xFF2E7D46),
+                                color:
+                                    Theme.of(context).brightness == Brightness.dark
+                                        ? const Color(0xFF6FD99A)
+                                        : const Color(0xFF2E7D46),
                                 fontWeight: FontWeight.w800,
                               ),
                             )
@@ -172,13 +174,13 @@ class AssignmentCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: palette.limeSoft,
-                  borderRadius: BorderRadius.circular(999),
+                  color: palette.accentSoft,
+                  borderRadius: BorderRadius.circular(Radii.pill),
                 ),
                 child: Text(
                   assignment.kind.label,
                   style: context.textTheme.labelSmall?.copyWith(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -208,7 +210,7 @@ class AssignmentCard extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.calendar_today_rounded,
-                  size: 14, color: palette.textMuted),
+                  size: 14, color: palette.textMuted,),
               const SizedBox(width: 4),
               Text(
                 'Entrega ${fmt.format(assignment.dueAt)}',
@@ -241,7 +243,7 @@ class AssignmentCard extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.attach_file_rounded,
-                    size: 14, color: palette.textMuted),
+                    size: 14, color: palette.textMuted,),
                 const SizedBox(width: 4),
                 Text(
                   '${assignment.attachments.length} archivo${assignment.attachments.length == 1 ? '' : 's'}',
@@ -319,12 +321,12 @@ class _ProgressBar extends StatelessWidget {
             ),
             Text(count,
                 style: context.textTheme.labelSmall
-                    ?.copyWith(fontWeight: FontWeight.w800, color: color)),
+                    ?.copyWith(fontWeight: FontWeight.w800, color: color),),
           ],
         ),
         const SizedBox(height: 4),
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(Radii.xs),
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 6,

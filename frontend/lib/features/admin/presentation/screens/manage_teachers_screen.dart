@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../dashboard/data/mock_dashboard_data.dart';
 
@@ -37,7 +37,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -56,12 +56,12 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
               ),
               for (final c in _classes)
                 ListTile(
-                  leading: Icon(Icons.class_outlined,
-                      color: context.palette.limeDeep),
+                  leading: Icon(Icons.class_rounded,
+                      color: context.palette.accentDeep,),
                   title: Text(c),
                   trailing: _assignments[teacher.name] == c
                       ? Icon(Icons.check_circle,
-                          color: context.palette.success)
+                          color: context.palette.success,)
                       : null,
                   onTap: () => Navigator.of(ctx).pop(c),
                 ),
@@ -87,6 +87,7 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
         title: const Text('Gestionar docentes'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
       ),
@@ -101,59 +102,73 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
           ),
           const SizedBox(height: 12),
           for (final t in AdminMockData.teachers)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: EduCard(
-                child: Row(
-                  children: [
-                    UserAvatar(name: t.name, size: 44),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            t.name,
-                            style: context.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          Text(t.subject, style: context.textTheme.bodySmall),
-                          if (_assignments[t.name] != null) ...[
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: palette.limeSoft,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                _assignments[t.name]!,
-                                style: context.textTheme.labelSmall?.copyWith(
-                                  color: palette.limeDeep,
-                                  fontWeight: FontWeight.w700,
+            Builder(builder: (context) {
+              final s = context.pastel(subjectColor(t.subject));
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: s.surface,
+                    borderRadius: BorderRadius.circular(Radii.lg),
+                  ),
+                  child: Row(
+                    children: [
+                      UserAvatar(name: t.name, size: 44),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.name,
+                              style: context.textTheme.titleSmall?.copyWith(
+                                  color: s.ink, fontWeight: FontWeight.w800,),
+                            ),
+                            Text(
+                              t.subject,
+                              style: context.textTheme.bodySmall
+                                  ?.copyWith(color: s.inkMuted),
+                            ),
+                            if (_assignments[t.name] != null) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2,),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(Radii.pill),
+                                ),
+                                child: Text(
+                                  _assignments[t.name]!,
+                                  style: context.textTheme.labelSmall?.copyWith(
+                                    color: const Color(0xFF232A33),
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    FilledButton.tonal(
-                      onPressed: () => _assign(t),
-                      // El tema fuerza minimumSize con ancho infinito (botones
-                      // full-width); aquí es un botón compacto dentro de un Row,
-                      // así que lo acotamos a su contenido.
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(0, 44),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      FilledButton.tonal(
+                        onPressed: () => _assign(t),
+                        // El tema fuerza minimumSize con ancho infinito (botones
+                        // full-width); aquí es un botón compacto dentro de un Row,
+                        // así que lo acotamos a su contenido.
+                        style: FilledButton.styleFrom(
+                          backgroundColor: s.vivid,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 44),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        child: const Text('Asignar'),
                       ),
-                      child: const Text('Asignar'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },),
           const SizedBox(height: 24),
         ],
       ),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -29,6 +30,7 @@ class ParentChargesScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Pagos y estado de cuenta'),
@@ -45,13 +47,13 @@ class ParentChargesScreen extends ConsumerWidget {
       child: SafeArea(
         bottom: false,
         child: balanceAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (balance) => chargesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const SkeletonList(),
             error: (e, _) => ErrorStateView(message: '$e'),
             data: (charges) => RefreshIndicator(
-              color: palette.limeDeep,
+              color: palette.accentDeep,
               onRefresh: () async {
                 ref.invalidate(studentBalanceProvider(studentId));
                 ref.invalidate(studentChargesProvider(studentId));
@@ -86,7 +88,7 @@ class ParentChargesScreen extends ConsumerWidget {
     final pending = charges
         .where((c) =>
             (c.status == ChargeStatus.pending || c.status == ChargeStatus.partial) &&
-            !c.isOverdue)
+            !c.isOverdue,)
         .toList();
     final paid = charges.where((c) => c.status == ChargeStatus.paid).toList();
 
@@ -105,7 +107,7 @@ class ParentChargesScreen extends ConsumerWidget {
                     ctx.push('${Routes.payments}/${c.id}'),
               ),
             );
-          }),
+          },),
         ],
         const SizedBox(height: 12),
       ];
@@ -114,7 +116,7 @@ class ParentChargesScreen extends ConsumerWidget {
     return [
       if (overdue.isEmpty && pending.isEmpty && paid.isEmpty)
         const EmptyState(
-          icon: Icons.receipt_long_outlined,
+          icon: Icons.receipt_long_rounded,
           title: 'Sin cargos',
           subtitle: 'No hay cargos registrados para el estudiante.',
         ),

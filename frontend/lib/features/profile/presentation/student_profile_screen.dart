@@ -4,9 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/routing/route_paths.dart';
+import '../../../core/theme/app_gradients.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/subject_palette.dart';
 import '../../../core/widgets/app_scaffold.dart';
-import '../../../core/widgets/edu_card.dart';
 import '../../../core/widgets/educa_bottom_nav.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/section_header.dart';
@@ -74,7 +75,7 @@ class StudentProfileScreen extends ConsumerWidget {
                         child: Text(
                           'Ver todas',
                           style: context.textTheme.labelMedium?.copyWith(
-                            color: palette.limeDeep,
+                            color: palette.accentDeep,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -138,17 +139,7 @@ class _ProfileHero extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF4C8DF5),
-              Color(0xFF8A5CF6),
-              Color(0xFF33B7A0),
-            ],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppGradients.hero),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -209,67 +200,76 @@ class _NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final accent = _channelColor(notification.channel, palette);
-    return EduCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      onTap: notification.deepLink == null
-          ? null
-          : () => context.push(notification.deepLink!),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(notification.iconOverride ?? notification.channel.icon,
-                color: accent, size: 20,),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  notification.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  notification.body,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.bodySmall
-                      ?.copyWith(color: palette.textMuted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+    final s = context.pastel(accent);
+    return Material(
+      color: s.surface,
+      borderRadius: BorderRadius.circular(Radii.lg),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        onTap: notification.deepLink == null
+            ? null
+            : () => context.push(notification.deepLink!),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _relative(notification.receivedAt),
-                style: context.textTheme.labelSmall
-                    ?.copyWith(color: palette.textMuted),
-              ),
-              const SizedBox(height: 6),
-              if (!notification.read)
-                Container(
-                  width: 9,
-                  height: 9,
-                  decoration:
-                      BoxDecoration(color: accent, shape: BoxShape.circle),
+              Container(
+                width: 38,
+                height: 38,
+                decoration:
+                    BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                child: Icon(
+                  notification.iconOverride ?? notification.channel.icon,
+                  color: Colors.white,
+                  size: 20,
                 ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      notification.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.titleSmall?.copyWith(
+                          color: s.ink, fontWeight: FontWeight.w800,),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      notification.body,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodySmall
+                          ?.copyWith(color: s.inkMuted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _relative(notification.receivedAt),
+                    style: context.textTheme.labelSmall
+                        ?.copyWith(color: s.inkMuted),
+                  ),
+                  const SizedBox(height: 6),
+                  if (!notification.read)
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration:
+                          BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -281,7 +281,7 @@ Color _channelColor(NotificationChannel channel, AppPalette palette) {
     NotificationChannel.task => palette.warning,
     NotificationChannel.grade => palette.success,
     NotificationChannel.attendance => palette.info,
-    NotificationChannel.announcement => palette.limeDeep,
+    NotificationChannel.announcement => palette.accentDeep,
     NotificationChannel.payment => palette.warning,
     NotificationChannel.system => palette.textMuted,
   };

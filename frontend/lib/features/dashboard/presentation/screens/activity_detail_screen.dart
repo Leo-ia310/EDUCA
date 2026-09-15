@@ -25,6 +25,7 @@ class ActivityDetailScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Actividad'),
@@ -37,8 +38,8 @@ class ActivityDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: palette.limeSoft,
-                borderRadius: BorderRadius.circular(24),
+                color: palette.accentSoft,
+                borderRadius: BorderRadius.circular(Radii.xl),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,13 +50,13 @@ class ActivityDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 5,),
                         decoration: BoxDecoration(
-                          color: palette.limeDeep.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(999),
+                          color: palette.accentDeep.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(Radii.pill),
                         ),
                         child: Text(
                           activity.tag,
                           style: context.textTheme.labelMedium?.copyWith(
-                            color: palette.limeDeep,
+                            color: palette.accentDeep,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -91,7 +92,7 @@ class ActivityDetailScreen extends StatelessWidget {
                       Text(
                         '$pct%',
                         style: context.textTheme.titleMedium?.copyWith(
-                          color: palette.limeDeep,
+                          color: palette.accentDeep,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -99,7 +100,7 @@ class ActivityDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(Radii.pill),
                     child: TweenAnimationBuilder<double>(
                       tween: Tween<double>(begin: 0, end: activity.progress),
                       duration: context.motion(AppMotion.slow),
@@ -109,7 +110,7 @@ class ActivityDetailScreen extends StatelessWidget {
                         minHeight: 8,
                         backgroundColor: Colors.white.withValues(alpha: 0.5),
                         valueColor:
-                            AlwaysStoppedAnimation<Color>(palette.limeDeep),
+                            AlwaysStoppedAnimation<Color>(palette.accentDeep),
                       ),
                     ),
                   ),
@@ -120,7 +121,7 @@ class ActivityDetailScreen extends StatelessWidget {
           const SizedBox(height: 22),
           FilledButton.icon(
             onPressed: () => context.push(Routes.assignments),
-            icon: const Icon(Icons.assignment_outlined),
+            icon: const Icon(Icons.assignment_rounded),
             label: const Text('Ver tareas del hijo'),
           ),
           const SizedBox(height: 10),
@@ -128,7 +129,7 @@ class ActivityDetailScreen extends StatelessWidget {
             onTap: () => context.push(Routes.chat),
             child: Row(
               children: [
-                Icon(Icons.chat_bubble_outline, color: palette.limeDeep),
+                Icon(Icons.chat_bubble_outline, color: palette.accentDeep),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(

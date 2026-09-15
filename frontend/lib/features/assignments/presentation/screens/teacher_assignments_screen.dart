@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -26,6 +27,7 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Tareas y exámenes'),
@@ -42,12 +44,12 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
             Expanded(
               child: list.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                    const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (items) {
                   if (items.isEmpty) {
                     return EmptyState(
-                      icon: Icons.assignment_outlined,
+                      icon: Icons.assignment_rounded,
                       title: 'Sin tareas aún',
                       subtitle:
                           'Crea tu primera tarea o examen con el botón flotante.',
@@ -58,7 +60,7 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
                     );
                   }
                   return RefreshIndicator(
-                    color: palette.limeDeep,
+                    color: palette.accentDeep,
                     onRefresh: () async =>
                         ref.invalidate(teacherAssignmentsProvider),
                     child: ListView.separated(
@@ -108,7 +110,7 @@ class _FilterBar extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                 isDense: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
               ),
             ),
@@ -117,8 +119,8 @@ class _FilterBar extends ConsumerWidget {
           FilterChip(
             label: const Text('Abiertas'),
             selected: filter.onlyOpen,
-            selectedColor: palette.limeSoft,
-            checkmarkColor: palette.limeDeep,
+            selectedColor: palette.accentSoft,
+            checkmarkColor: palette.accentDeep,
             onSelected: (v) =>
                 notifier.update((s) => s.copyWith(onlyOpen: v)),
           ),

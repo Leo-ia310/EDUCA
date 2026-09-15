@@ -125,6 +125,7 @@ class _DeveloperSystemChecksScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('System checks'),
@@ -146,7 +147,7 @@ class _DeveloperSystemChecksScreenState
                     ? checks
                     : checks.where((c) => c.status == _statusFilter).toList();
                 return RefreshIndicator(
-                  color: palette.limeDeep,
+                  color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
@@ -346,7 +347,7 @@ class _CheckCard extends StatelessWidget {
                 height: 34,
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
                 child: Icon(statusIcon, color: statusColor, size: 18),
               ),
@@ -682,7 +683,7 @@ class _Pill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Text(
         label,

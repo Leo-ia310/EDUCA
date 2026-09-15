@@ -28,7 +28,7 @@ class SyncStatusBadge extends ConsumerWidget {
     } else if (status.pending > 0) {
       bg = palette.warning.withValues(alpha: 0.15);
       fg = palette.warning;
-      icon = Icons.cloud_off_outlined;
+      icon = Icons.cloud_off_rounded;
       label = compact
           ? '${status.pending} pend.'
           : '${status.pending} pendientes de sincronizar';
@@ -40,7 +40,7 @@ class SyncStatusBadge extends ConsumerWidget {
     } else {
       bg = palette.success.withValues(alpha: 0.15);
       fg = palette.success;
-      icon = Icons.cloud_done_outlined;
+      icon = Icons.cloud_done_rounded;
       label = compact ? 'Al día' : 'Sincronizado';
     }
 
@@ -48,7 +48,7 @@ class SyncStatusBadge extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(Radii.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

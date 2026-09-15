@@ -83,13 +83,13 @@ class _ExtraTile extends StatelessWidget {
             height: ClassmatesStrip._avatar,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: palette.limeSoft,
+              color: palette.accentSoft,
               shape: BoxShape.circle,
             ),
             child: Text(
               '+$count',
               style: context.textTheme.titleSmall?.copyWith(
-                color: palette.limeDeep,
+                color: palette.accentDeep,
                 fontWeight: FontWeight.w800,
               ),
             ),

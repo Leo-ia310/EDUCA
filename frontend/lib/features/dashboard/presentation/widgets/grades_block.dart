@@ -38,7 +38,7 @@ class _GradeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = pastelSurface(subjectColor(grade.subject));
+    final s = context.pastel(subjectColor(grade.subject));
     final statusBase = switch (grade.status) {
       GradeStatus.passed => const Color(0xFF2E9E5B),
       GradeStatus.pending => const Color(0xFFCF8A1E),
@@ -53,7 +53,7 @@ class _GradeRow extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: s.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         children: [
@@ -133,7 +133,7 @@ class _AverageHero extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         children: [

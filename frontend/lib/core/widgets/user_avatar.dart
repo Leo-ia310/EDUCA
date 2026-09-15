@@ -28,7 +28,7 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vivid = pastelSurface(subjectColor(name)).vivid;
+    final vivid = context.pastel(subjectColor(name)).vivid;
     final core = Container(
       width: size,
       height: size,

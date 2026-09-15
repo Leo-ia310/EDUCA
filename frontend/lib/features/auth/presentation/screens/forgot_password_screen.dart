@@ -47,6 +47,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.go(Routes.login),
         ),
       ),
@@ -120,11 +121,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           width: 88,
           height: 88,
           decoration: BoxDecoration(
-            color: palette.limeSoft,
+            color: palette.accentSoft,
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.mark_email_read_outlined,
-              size: 42, color: palette.limeDeep),
+          child: Icon(Icons.mark_email_read_rounded,
+              size: 42, color: palette.accentDeep,),
         ),
         const SizedBox(height: 24),
         Text(

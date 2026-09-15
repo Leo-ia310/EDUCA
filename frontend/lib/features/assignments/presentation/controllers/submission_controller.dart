@@ -95,7 +95,7 @@ class SubmissionController extends StateNotifier<SubmissionFormState> {
   Future<Submission?> submit() async {
     if (state.attachments.isEmpty && state.notes.trim().isEmpty) {
       state = state.copyWith(
-          error: 'Adjunta al menos un archivo o agrega un comentario.');
+          error: 'Adjunta al menos un archivo o agrega un comentario.',);
       return null;
     }
     state = state.copyWith(saving: true, clearError: true);
@@ -109,7 +109,7 @@ class SubmissionController extends StateNotifier<SubmissionFormState> {
       _ref.invalidate(mySubmissionProvider((
         assignmentId: state.assignmentId,
         studentId: state.studentId,
-      )));
+      ),),);
       _ref.invalidate(assignmentByIdProvider(state.assignmentId));
       _ref.invalidate(studentAssignmentsProvider);
       state = state.copyWith(saving: false);

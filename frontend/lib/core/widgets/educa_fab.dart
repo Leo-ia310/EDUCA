@@ -19,7 +19,7 @@ class EducaFab extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: context.palette.limeDeep.withValues(alpha: 0.35),
+            color: context.palette.accentDeep.withValues(alpha: 0.35),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

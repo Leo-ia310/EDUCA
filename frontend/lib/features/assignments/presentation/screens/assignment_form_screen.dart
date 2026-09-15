@@ -82,7 +82,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
     if (time == null) return;
     ref.read(assignmentFormControllerProvider.notifier).setDueAt(
           DateTime(picked.year, picked.month, picked.day, time.hour,
-              time.minute),
+              time.minute,),
         );
   }
 
@@ -97,6 +97,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: Text(state.assignmentId == null ? 'Nueva tarea' : 'Editar tarea'),
@@ -114,7 +115,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   decoration: const InputDecoration(labelText: 'Título'),
                   controller: TextEditingController(text: state.title)
                     ..selection = TextSelection.fromPosition(
-                        TextPosition(offset: state.title.length)),
+                        TextPosition(offset: state.title.length),),
                   onChanged: controller.setTitle,
                 ),
                 const SizedBox(height: 12),
@@ -125,7 +126,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   maxLines: 4,
                   controller: TextEditingController(text: state.description)
                     ..selection = TextSelection.fromPosition(
-                        TextPosition(offset: state.description.length)),
+                        TextPosition(offset: state.description.length),),
                   onChanged: controller.setDescription,
                 ),
                 const SizedBox(height: 12),
@@ -136,7 +137,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   maxLines: 6,
                   controller: TextEditingController(text: state.instructions)
                     ..selection = TextSelection.fromPosition(
-                        TextPosition(offset: state.instructions.length)),
+                        TextPosition(offset: state.instructions.length),),
                   onChanged: controller.setInstructions,
                 ),
               ],
@@ -153,7 +154,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        value: state.classId,
+                        initialValue: state.classId,
                         decoration:
                             const InputDecoration(labelText: 'Clase'),
                         items: [
@@ -164,7 +165,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                             DropdownMenuItem(
                               value: c.classId,
                               child: Text('${c.subjectName} · ${c.groupName}',
-                                  overflow: TextOverflow.ellipsis),
+                                  overflow: TextOverflow.ellipsis,),
                             ),
                         ],
                         onChanged: (v) {
@@ -179,7 +180,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<AssignmentKind>(
-                        value: state.kind,
+                        initialValue: state.kind,
                         decoration:
                             const InputDecoration(labelText: 'Tipo'),
                         items: [
@@ -198,7 +199,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                             const InputDecoration(labelText: 'Puntaje máximo'),
                         keyboardType: TextInputType.number,
                         controller: TextEditingController(
-                            text: state.maxScore.toStringAsFixed(0)),
+                            text: state.maxScore.toStringAsFixed(0),),
                         onChanged: (v) {
                           final n = double.tryParse(v);
                           if (n != null && n > 0) controller.setMaxScore(n);
@@ -211,7 +212,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(Icons.calendar_today_rounded,
-                      color: palette.limeDeep),
+                      color: palette.accentDeep,),
                   title: const Text('Fecha de entrega'),
                   subtitle: Text(fmt.format(state.dueAt)),
                   onTap: () => _pickDate(context, state.dueAt),
@@ -221,7 +222,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Permitir entrega tardía'),
                   value: state.allowLate,
-                  activeThumbColor: palette.limeDeep,
+                  activeThumbColor: palette.accentDeep,
                   onChanged: controller.setAllowLate,
                 ),
                 SwitchListTile.adaptive(
@@ -230,7 +231,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   subtitle:
                       const Text('Si lo apagas, queda como borrador.'),
                   value: state.published,
-                  activeThumbColor: palette.limeDeep,
+                  activeThumbColor: palette.accentDeep,
                   onChanged: controller.setPublished,
                 ),
               ],
@@ -312,7 +313,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                 ? 'Guardando…'
                 : (state.assignmentId == null
                     ? 'Crear tarea'
-                    : 'Guardar cambios')),
+                    : 'Guardar cambios'),),
           ),
         ],
       ),

@@ -95,7 +95,7 @@ class DemoPushService implements PushService {
       priority: sample.priority,
       read: false,
       deepLink: sample.deepLink,
-      data: {'demo': true},
+      data: const {'demo': true},
     );
     _incomingCtrl.add(n);
     return n;

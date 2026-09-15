@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -33,6 +34,7 @@ class _NewConversationScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Atrás',
           onPressed: () => context.pop(),
         ),
         title: const Text('Nuevo mensaje'),
@@ -50,14 +52,14 @@ class _NewConversationScreenState
                   hintText: 'Buscar por nombre o rol…',
                   prefixIcon: const Icon(Icons.search_rounded),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                 ),
               ),
             ),
             Expanded(
               child: contactsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const SkeletonList(),
                 error: (e, _) => Center(child: Text('$e')),
                 data: (contacts) {
                   if (contacts.isEmpty) {
@@ -79,11 +81,11 @@ class _NewConversationScreenState
                           leading: UserAvatar(name: c.name, size: 40),
                           title: Text(c.name,
                               style: context.textTheme.titleSmall
-                                  ?.copyWith(fontWeight: FontWeight.w800)),
+                                  ?.copyWith(fontWeight: FontWeight.w800),),
                           subtitle: Text(_roleLabel(c.role),
-                              style: context.textTheme.bodySmall),
+                              style: context.textTheme.bodySmall,),
                           trailing: Icon(Icons.chat_bubble_outline,
-                              color: palette.limeDeep),
+                              color: palette.accentDeep,),
                           onTap: () async {
                             final repo = ref.read(chatRepositoryProvider);
                             final conv = await repo.ensureIndividual(

@@ -30,7 +30,7 @@ final gradesCalculatorProvider =
 
 /// Escalas configuradas por el colegio.
 final scalesProvider = FutureProvider<List<GradingScale>>(
-    (ref) async => ref.watch(gradesRepositoryProvider).scales());
+    (ref) async => ref.watch(gradesRepositoryProvider).scales(),);
 
 final defaultScaleProvider = FutureProvider<GradingScale>(
   (ref) async => ref.watch(gradesRepositoryProvider).defaultScale(),
