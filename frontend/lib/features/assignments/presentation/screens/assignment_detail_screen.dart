@@ -10,6 +10,7 @@ import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/celebration.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -443,14 +444,14 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                               : () async {
                                   final result = await controller.submit();
                                   if (result != null && context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          result.isLate
-                                              ? 'Entregado tarde'
-                                              : '¡Entrega enviada!',
-                                        ),
-                                      ),
+                                    showCelebration(
+                                      context,
+                                      icon: result.isLate
+                                          ? Icons.schedule_rounded
+                                          : Icons.check_circle_rounded,
+                                      message: result.isLate
+                                          ? 'Entregado tarde'
+                                          : '¡Entrega enviada! 🎉',
                                     );
                                   }
                                 },
