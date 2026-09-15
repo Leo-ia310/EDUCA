@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
-import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/animated_count.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/open_card.dart';
@@ -18,12 +18,11 @@ import '../../../../core/widgets/user_avatar.dart';
 import '../../../attendance/presentation/widgets/sync_status_badge.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
-import '../../../profile/presentation/widgets/account_settings_menu.dart';
 import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
-import '../widgets/greeting_header.dart';
-import '../widgets/stat_strip.dart';
+import '../widgets/student_chrome.dart';
+import '../widgets/student_home_header.dart';
 import 'class_detail_screen.dart';
 
 // Panel neutro sensible al tema: superficie alterna + texto onSurface, para las
@@ -53,10 +52,10 @@ class _TeacherDashboardScreenState
     for (final s in data.quickAttendance) {
       _attendance.putIfAbsent(s.name, () => s.present);
     }
-    final now = DateTime.now();
 
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.zero,
+      topSafeArea: false,
       onRefresh: () async =>
           Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
@@ -89,51 +88,52 @@ class _TeacherDashboardScreenState
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Hero de bienvenida (full-bleed).
-          AppGreetingHeader(
-            greeting: DateUtilsX.greetingForHour(now),
+          // Barra superior azul full-bleed.
+          StudentHomeHeader(
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
                 : '?',
-            dateLabel: toBeginningOfSentenceCase(
-              DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
-            ),
-            chipIcon: Icons.event_note_rounded,
-            chipLabel:
-                '${data.pendingClasses} clases hoy · ${data.pendingGrading} por calificar',
+            avatarUrl: user.avatarUrl,
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
             onNotificationsTap: () => context.go(Routes.alerts),
-            settingsMenu: const AccountSettingsMenu(circular: true),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+          StudentPanel(
+            padding: const EdgeInsets.fromLTRB(16, 44, 16, 24),
             child: StaggeredEntrance(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // KPIs
-                DashboardStatStrip(
-                  tiles: [
-                    StatTile(
-                      icon: Icons.event_note_rounded,
-                      color: const Color(0xFF4C8DF5),
-                      value: data.pendingClasses.toDouble(),
-                      label: 'Clases hoy',
+                // KPIs con profundidad.
+                Row(
+                  children: [
+                    Expanded(
+                      child: _TeacherStat(
+                        icon: Icons.event_note_rounded,
+                        color: const Color(0xFF4C8DF5),
+                        value: data.pendingClasses.toDouble(),
+                        label: 'Clases hoy',
+                      ),
                     ),
-                    StatTile(
-                      icon: Icons.fact_check_rounded,
-                      color: const Color(0xFFF3993E),
-                      value: data.pendingGrading.toDouble(),
-                      label: 'Por calificar',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _TeacherStat(
+                        icon: Icons.fact_check_rounded,
+                        color: const Color(0xFFF3993E),
+                        value: data.pendingGrading.toDouble(),
+                        label: 'Por calificar',
+                      ),
                     ),
-                    StatTile(
-                      icon: Icons.groups_rounded,
-                      color: const Color(0xFF9A6BE0),
-                      value: data.myClasses.length.toDouble(),
-                      label: 'Grupos',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _TeacherStat(
+                        icon: Icons.groups_rounded,
+                        color: const Color(0xFF9A6BE0),
+                        value: data.myClasses.length.toDouble(),
+                        label: 'Grupos',
+                      ),
                     ),
                   ],
                 ),
@@ -338,7 +338,51 @@ class _TeacherDashboardScreenState
 }
 
 
-/// Tarjeta de clase (Mis Clases) en estilo pastel del panel.
+/// KPI del maestro con profundidad + cifra animada.
+class _TeacherStat extends StatelessWidget {
+  const _TeacherStat({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final Color color;
+  final double value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.pastel(color);
+    return DepthCard(
+      accent: s.vivid,
+      glow: true,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: s.vivid, size: 24),
+          const SizedBox(height: 8),
+          AnimatedCount(
+            value: value,
+            style: context.textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodySmall
+                ?.copyWith(color: context.palette.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tarjeta de clase (Mis Clases) en estilo pastel del panel, con profundidad.
 class _ClassCard extends StatelessWidget {
   const _ClassCard({required this.teacherClass, required this.onTap});
   final TeacherClass teacherClass;
@@ -347,44 +391,41 @@ class _ClassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(teacherClass.name));
-    return Material(
-      color: s.surface,
-      borderRadius: BorderRadius.circular(Radii.lg),
-      child: InkWell(
+    return SizedBox(
+      width: 200,
+      child: DepthCard(
+        color: s.surface,
+        accent: s.vivid,
+        glow: true,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.lg),
-        child: Container(
-          width: 200,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration:
-                    BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-                child: Icon(teacherClass.icon, color: Colors.white, size: 22),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+              child: Icon(teacherClass.icon, color: Colors.white, size: 22),
+            ),
+            const Spacer(),
+            Text(
+              teacherClass.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.titleMedium?.copyWith(
+                color: s.ink,
+                fontWeight: FontWeight.w800,
               ),
-              const Spacer(),
-              Text(
-                teacherClass.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.textTheme.titleMedium?.copyWith(
-                  color: s.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                teacherClass.room,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              teacherClass.room,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
+            ),
+          ],
         ),
       ),
     );
@@ -488,78 +529,68 @@ class _AssignmentRow extends StatelessWidget {
             : '${item.delivered}/${item.total}';
     final s = context.pastel(statusColor);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.md),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: s.surface,
-            borderRadius: BorderRadius.circular(Radii.md),
+    return DepthCard(
+      color: s.surface,
+      accent: s.vivid,
+      soft: true,
+      onTap: onTap,
+      borderRadius: Radii.md,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+            child: Icon(
+              item.completed
+                  ? Icons.check_circle_outline
+                  : Icons.assignment_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration:
-                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-                  child: Icon(
-                    item.completed
-                        ? Icons.check_circle_outline
-                        : Icons.assignment_rounded,
-                    color: Colors.white,
-                    size: 22,
+                Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    color: s.ink,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.titleSmall?.copyWith(
-                          color: s.ink,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style:
-                            context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: s.vivid.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(Radii.pill),
-                  ),
-                  child: Text(
-                    chipLabel,
-                    style: context.textTheme.labelSmall?.copyWith(
-                      color: statusColor,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                const SizedBox(height: 2),
+                Text(
+                  item.meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
                 ),
               ],
             ),
           ),
-        ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: s.vivid.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(Radii.pill),
+            ),
+            child: Text(
+              chipLabel,
+              style: context.textTheme.labelSmall?.copyWith(
+                color: statusColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
