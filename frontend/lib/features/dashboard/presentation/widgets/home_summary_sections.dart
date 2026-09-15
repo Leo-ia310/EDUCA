@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/animated_count.dart';
+import '../../../../core/widgets/charts.dart';
 import '../../../../core/widgets/depth_card.dart';
 import '../../domain/dashboard_models.dart';
 
@@ -212,6 +213,11 @@ class GradesSummary extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          MiniTrendChart(
+            values: [7.8, 8.1, 8.0, 8.6, average],
+            color: const Color(0xFF9A6BE0),
           ),
           if (items.isNotEmpty) ...[
             const SizedBox(height: 12),

@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/animated_count.dart';
+import '../../../../core/widgets/charts.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/student_chrome.dart';
@@ -44,52 +45,51 @@ class _AttendanceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
-        ),
-        borderRadius: BorderRadius.circular(Radii.xl),
-      ),
+    final palette = context.palette;
+    return DepthCard(
+      borderRadius: Radii.xl,
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.20),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.event_available_rounded,
-              color: Colors.white,
-              size: 30,
-            ),
-          ),
+          AttendanceRing(percent: percent, size: 128),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Asistencia total',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontWeight: FontWeight.w700,
-                  ),
+                  'Tu asistencia',
+                  style: context.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w800),
                 ),
-                const SizedBox(height: 2),
-                AnimatedCount(
-                  value: percent.toDouble(),
-                  suffix: '%',
-                  style: context.textTheme.displaySmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                const SizedBox(height: 4),
+                Text(
+                  'Vas muy bien este mes 🎯',
+                  style: context.textTheme.bodySmall
+                      ?.copyWith(color: palette.textMuted),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: palette.success.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(Radii.pill),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_fire_department_rounded,
+                          color: palette.success, size: 18,),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Racha de 12 días',
+                        style: context.textTheme.labelMedium?.copyWith(
+                          color: palette.success,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

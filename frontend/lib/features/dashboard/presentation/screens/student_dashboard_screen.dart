@@ -8,6 +8,7 @@ import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/animated_count.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/charts.dart';
 import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -226,6 +227,62 @@ class StudentDashboardScreen extends ConsumerWidget {
             average: data.averageScore,
             grades: data.grades,
             onTap: () => context.push(Routes.grades),
+          ),
+          const SizedBox(height: 24),
+
+          // Estadísticas — comparación con la clase (gancho de engagement).
+          const SectionHeader(title: 'Estadísticas'),
+          const SizedBox(height: 12),
+          DepthCard(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: palette.accentSoft,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.leaderboard_rounded,
+                          color: palette.accentDeep, size: 22,),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Estás en el top 15% de tu clase',
+                        style: context.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ComparisonBars(
+                  metrics: [
+                    ComparisonMetric(
+                      label: 'Promedio',
+                      you: data.averageScore * 10,
+                      classAvg: 78,
+                    ),
+                    ComparisonMetric(
+                      label: 'Asistencia',
+                      you: data.attendanceRate * 100,
+                      classAvg: 90,
+                    ),
+                    const ComparisonMetric(
+                      label: 'Puntualidad',
+                      you: 92,
+                      classAvg: 85,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
 
