@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/animated_count.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../data/mock_attendance_data.dart';
 import '../../domain/entities.dart';
 import '../controllers/attendance_take_controller.dart';
@@ -43,12 +45,20 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
     final brief = state.classBrief;
 
     if (state.loading && brief == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const StudentDetailScaffold(
+        title: 'Tomar Asistencia',
+        scrollable: false,
+        bottomNav: false,
+        bodyPadding: EdgeInsets.zero,
+        child: SafeArea(bottom: false, child: SkeletonList()),
+      );
     }
     if (brief == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const EmptyState(
+      return const StudentDetailScaffold(
+        title: 'Tomar Asistencia',
+        bottomNav: false,
+        child: EmptyState(
+          icon: Icons.event_busy_rounded,
           title: 'Sin clase seleccionada',
           subtitle: 'Vuelve atrás y elige una clase.',
         ),
@@ -65,26 +75,11 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
       );
     }
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: brief.subjectName,
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: Text(brief.subjectName),
-        actions: [
-          IconButton(
-            tooltip: 'Marcar todos presentes',
-            icon: const Icon(Icons.done_all_rounded),
-            onPressed: controller.markAllPresent,
-          ),
-        ],
-      ),
-      bottomNav: null,
-      fab: null,
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -95,7 +90,7 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
               absent: state.absent,
               late: state.late,
               total: state.total,
-              pendingSync: state.pendingSync,
+              onMarkAll: controller.markAllPresent,
             ),
             Expanded(
               child: ListView.separated(
@@ -126,7 +121,7 @@ class _HeaderSummary extends StatelessWidget {
     required this.absent,
     required this.late,
     required this.total,
-    required this.pendingSync,
+    required this.onMarkAll,
   });
 
   final ClassSessionBrief brief;
@@ -134,18 +129,19 @@ class _HeaderSummary extends StatelessWidget {
   final int absent;
   final int late;
   final int total;
-  final int pendingSync;
+  final VoidCallback onMarkAll;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-      child: Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: DepthCard(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: palette.accent,
-          borderRadius: BorderRadius.circular(Radii.lg),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [palette.accent, palette.accentDeep],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +155,7 @@ class _HeaderSummary extends StatelessWidget {
                       Text(
                         '${brief.groupName} · ${brief.classroom ?? ''}',
                         style: context.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF34401C),
+                          color: Colors.white.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -203,26 +199,46 @@ class _HeaderSummary extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Consumer(
-              builder: (context, ref, _) {
-                final controller =
-                    ref.read(attendanceTakeControllerProvider.notifier);
-                final loading = ref
-                    .watch(attendanceTakeControllerProvider)
-                    .loading;
-                return SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: loading ? null : controller.finishPass,
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: Text(
-                      loading
-                          ? 'Procesando…'
-                          : 'Finalizar Pase ($total estudiantes)',
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onMarkAll,
+                    icon: const Icon(Icons.done_all_rounded, size: 18),
+                    label: const Text('Todos presentes'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                      minimumSize: const Size(0, 44),
                     ),
                   ),
-                );
-              },
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final controller =
+                          ref.read(attendanceTakeControllerProvider.notifier);
+                      final loading = ref
+                          .watch(attendanceTakeControllerProvider)
+                          .loading;
+                      return FilledButton.icon(
+                        onPressed: loading ? null : controller.finishPass,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: palette.accentDeep,
+                          minimumSize: const Size(0, 44),
+                        ),
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: Text(loading ? 'Procesando…' : 'Finalizar pase'),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -249,7 +265,7 @@ class _Pill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.7),
+          color: Colors.white.withValues(alpha: 0.16),
           borderRadius: BorderRadius.circular(Radii.sm),
         ),
         child: Column(
@@ -257,7 +273,7 @@ class _Pill extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 14, color: color),
+                Icon(icon, size: 14, color: Colors.white),
                 const SizedBox(width: 4),
                 Text(
                   value,
@@ -272,7 +288,7 @@ class _Pill extends StatelessWidget {
             Text(
               label,
               style: context.textTheme.labelSmall?.copyWith(
-                color: const Color(0xFF34401C),
+                color: Colors.white.withValues(alpha: 0.85),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -292,7 +308,8 @@ class _StudentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final color = _statusColor(row.status, palette);
-    return EduCard(
+    return DepthCard(
+      soft: true,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: Row(
         children: [
@@ -418,17 +435,24 @@ class _FinishedSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              Container(
-                width: 96,
-                height: 96,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: palette.success.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.check_circle_rounded,
-                    color: palette.success, size: 56,),
-              ).center,
+              Center(
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: palette.success.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.check_circle_rounded,
+                      color: palette.success, size: 56,),
+                ).animate().scale(
+                      duration: 420.ms,
+                      curve: Curves.easeOutBack,
+                      begin: const Offset(0.6, 0.6),
+                      end: const Offset(1, 1),
+                    ),
+              ),
               const SizedBox(height: 16),
               Text(
                 'Pase finalizado',
@@ -444,18 +468,27 @@ class _FinishedSheet extends StatelessWidget {
                 style: context.textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
-              const SyncStatusBadge().center,
+              const Center(child: SyncStatusBadge()),
               const SizedBox(height: 24),
-              EduCard(
+              DepthCard(
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    _SummaryStat(label: 'Presentes', value: '$present', color: palette.success),
+                    _SummaryStat(
+                        label: 'Presentes',
+                        value: present,
+                        color: palette.success,),
                     const SizedBox(width: 8),
-                    _SummaryStat(label: 'Ausentes', value: '$absent', color: palette.danger),
+                    _SummaryStat(
+                        label: 'Ausentes',
+                        value: absent,
+                        color: palette.danger,),
                     const SizedBox(width: 8),
-                    _SummaryStat(label: 'Tarde', value: '$late', color: palette.warning),
+                    _SummaryStat(
+                        label: 'Tarde', value: late, color: palette.warning,),
                     const SizedBox(width: 8),
-                    _SummaryStat(label: 'Total', value: '$total', color: palette.info),
+                    _SummaryStat(
+                        label: 'Total', value: total, color: palette.info,),
                   ],
                 ),
               ),
@@ -476,7 +509,7 @@ class _SummaryStat extends StatelessWidget {
   const _SummaryStat(
       {required this.label, required this.value, required this.color,});
   final String label;
-  final String value;
+  final int value;
   final Color color;
 
   @override
@@ -484,8 +517,8 @@ class _SummaryStat extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(
-            value,
+          AnimatedCount(
+            value: value.toDouble(),
             style: context.textTheme.headlineSmall?.copyWith(
               color: color,
               fontWeight: FontWeight.w800,
@@ -496,8 +529,4 @@ class _SummaryStat extends StatelessWidget {
       ),
     );
   }
-}
-
-extension on Widget {
-  Widget get center => Center(child: this);
 }
