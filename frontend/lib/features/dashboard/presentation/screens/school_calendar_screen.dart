@@ -2,24 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/subject_palette.dart';
+import '../../data/school_calendar_data.dart';
+import '../widgets/calendar_agenda_row.dart';
 import '../widgets/student_chrome.dart';
-
-/// Tipo de entrada del calendario escolar.
-enum CalKind { event, task }
-
-class _CalItem {
-  const _CalItem({
-    required this.date,
-    required this.title,
-    required this.subtitle,
-    required this.kind,
-  });
-  final DateTime date;
-  final String title;
-  final String subtitle;
-  final CalKind kind;
-}
 
 /// Calendario escolar del alumno (destino del botón "Calendario" del navbar):
 /// calendario del mes con marcadores + lista de eventos escolares y tareas
@@ -30,20 +15,7 @@ class SchoolCalendarScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    // Mock: eventos escolares + tareas próximas (relativos a hoy).
-    DateTime d(int addDays) => today.add(Duration(days: addDays));
-    final items = <_CalItem>[
-      _CalItem(date: d(1), title: 'Entrega: Ensayo de Ética', subtitle: 'Ética', kind: CalKind.task),
-      _CalItem(date: d(2), title: 'Feria de Ciencias', subtitle: 'Evento escolar · Patio central', kind: CalKind.event),
-      _CalItem(date: d(4), title: 'Entrega: Práctica de Ecuaciones', subtitle: 'Matemáticas Avanzadas', kind: CalKind.task),
-      _CalItem(date: d(6), title: 'Reunión de padres', subtitle: 'Evento escolar · Auditorio', kind: CalKind.event),
-      _CalItem(date: d(9), title: 'Examen Parcial II', subtitle: 'Matemáticas Avanzadas', kind: CalKind.task),
-      _CalItem(date: d(12), title: 'Salida pedagógica', subtitle: 'Evento escolar · Museo', kind: CalKind.event),
-      _CalItem(date: d(15), title: 'Entrega: Revolución Industrial', subtitle: 'Historia Universal', kind: CalKind.task),
-      _CalItem(date: d(20), title: 'Día del estudiante', subtitle: 'Evento escolar', kind: CalKind.event),
-    ]..sort((a, b) => a.date.compareTo(b.date));
+    final items = schoolCalendarItems(now);
 
     // Días del mes actual con eventos / tareas (para marcadores).
     final taskDays = <int>{};
@@ -69,7 +41,7 @@ class SchoolCalendarScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           for (final it in items) ...[
-            _AgendaRow(item: it),
+            CalendarAgendaRow(item: it),
             const SizedBox(height: 8),
           ],
         ],
@@ -112,6 +84,7 @@ class _MonthGrid extends StatelessWidget {
         color: palette.cardElevated,
         borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(color: Theme.of(context).dividerColor),
+        boxShadow: AppShadows.soft(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,62 +196,4 @@ class _DayDot extends StatelessWidget {
         height: 5,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       );
-}
-
-class _AgendaRow extends StatelessWidget {
-  const _AgendaRow({required this.item});
-  final _CalItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final isTask = item.kind == CalKind.task;
-    final color = isTask ? const Color(0xFFF3993E) : context.palette.accent;
-    final s = context.pastel(color);
-    final dateLabel = toBeginningOfSentenceCase(
-      DateFormat("EEE d 'de' MMM", 'es').format(item.date),
-    );
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: s.surface,
-        borderRadius: BorderRadius.circular(Radii.md),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-            child: Icon(
-              isTask ? Icons.assignment_rounded : Icons.event_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.titleSmall
-                      ?.copyWith(color: s.ink, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$dateLabel · ${item.subtitle}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/floating_card.dart';
 
 /// Tarjeta **cuadrada** de acceso rápido del home del estudiante. Superficie
 /// blanca (elevada) con sombra para resaltar del fondo; ícono grande sin fondo
@@ -55,22 +56,27 @@ class HomeTileCard extends StatelessWidget {
       ),
     );
 
-    return Opacity(
-      opacity: enabled ? 1 : 0.55,
+    // Superficie con un leve resplandor del color de la categoría arriba, para
+    // dar vida sin abandonar la tarjeta neutra.
+    final top = Color.alphaBlend(
+      s.vivid.withValues(alpha: 0.12),
+      palette.cardElevated,
+    );
+
+    final card = Opacity(
+      opacity: enabled ? 1 : 0.6,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: palette.cardElevated,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [top, palette.cardElevated],
+          ),
           borderRadius: BorderRadius.circular(Radii.lg),
           border: Border.all(
-            color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+            color: s.vivid.withValues(alpha: 0.28),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          boxShadow: AppShadows.lifted(context),
         ),
         child: Material(
           color: Colors.transparent,
@@ -83,5 +89,8 @@ class HomeTileCard extends StatelessWidget {
         ),
       ),
     );
+
+    // Tilt 3D en perspectiva (se desactiva con "reducir movimiento").
+    return FloatingCard(borderRadius: Radii.lg, angle: 9, child: card);
   }
 }

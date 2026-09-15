@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/animated_count.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/student_chrome.dart';
@@ -83,8 +84,9 @@ class _AttendanceHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  '$percent%',
+                AnimatedCount(
+                  value: percent.toDouble(),
+                  suffix: '%',
                   style: context.textTheme.displaySmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -133,6 +135,7 @@ class _MonthCalendar extends StatelessWidget {
         color: palette.cardElevated,
         borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(color: Theme.of(context).dividerColor),
+        boxShadow: AppShadows.soft(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

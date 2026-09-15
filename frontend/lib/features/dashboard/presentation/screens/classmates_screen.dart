@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../domain/dashboard_models.dart';
 import '../widgets/student_chrome.dart';
@@ -91,41 +92,38 @@ class _ClassmateRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(classmate.name));
-    return Material(
+    return DepthCard(
       color: s.surface,
-      borderRadius: BorderRadius.circular(Radii.md),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              _Avatar(name: classmate.name, size: 44),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      classmate.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    Text(
-                      classmate.grade,
-                      style: context.textTheme.bodySmall
-                          ?.copyWith(color: s.inkMuted),
-                    ),
-                  ],
+      accent: s.vivid,
+      soft: true,
+      onTap: onTap,
+      borderRadius: Radii.md,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          _Avatar(name: classmate.name, size: 44),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  classmate.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: s.inkMuted),
-            ],
+                Text(
+                  classmate.grade,
+                  style: context.textTheme.bodySmall
+                      ?.copyWith(color: s.inkMuted),
+                ),
+              ],
+            ),
           ),
-        ),
+          Icon(Icons.chevron_right_rounded, color: s.inkMuted),
+        ],
       ),
     );
   }

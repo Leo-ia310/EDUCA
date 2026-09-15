@@ -6,15 +6,20 @@ import 'package:intl/intl.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/animated_count.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
 import '../../data/dashboard_data.dart';
+import '../../data/school_calendar_data.dart';
 import '../../providers.dart';
+import '../widgets/calendar_agenda_row.dart';
 import '../widgets/classmates_strip.dart';
+import '../widgets/home_summary_sections.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/schedule_item.dart';
 import '../widgets/student_home_header.dart';
@@ -172,13 +177,102 @@ class StudentDashboardScreen extends ConsumerWidget {
           ],
           const SizedBox(height: 24),
 
-          // Compañeros
-          const SectionHeader(title: 'Compañeros'),
+          // Tareas (resumen)
+          Row(
+            children: [
+              const Expanded(child: SectionHeader(title: 'Tareas')),
+              TextButton(
+                onPressed: () => context.push(Routes.assignments),
+                child: const Text('Ver todo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          TasksSummary(
+            tasks: data.tasks,
+            onTap: () => context.push(Routes.assignments),
+          ),
+          const SizedBox(height: 24),
+
+          // Materias (resumen)
+          Row(
+            children: [
+              const Expanded(child: SectionHeader(title: 'Materias')),
+              TextButton(
+                onPressed: () => context.push(Routes.subjects),
+                child: const Text('Ver todo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          SubjectsSummaryStrip(
+            subjects: data.subjects,
+            onTap: () => context.push(Routes.subjects),
+          ),
+          const SizedBox(height: 24),
+
+          // Notas (resumen)
+          Row(
+            children: [
+              const Expanded(child: SectionHeader(title: 'Notas')),
+              TextButton(
+                onPressed: () => context.push(Routes.grades),
+                child: const Text('Ver todo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          GradesSummary(
+            average: data.averageScore,
+            grades: data.grades,
+            onTap: () => context.push(Routes.grades),
+          ),
+          const SizedBox(height: 24),
+
+          // Asistencia (resumen)
+          const SectionHeader(title: 'Asistencia'),
           const SizedBox(height: 12),
-                ClassmatesStrip(
-                  names: data.classmates,
-                  extraCount: data.classmatesExtra,
-                ),
+          _AttendanceSummaryCard(
+            percent: (data.attendanceRate * 100).round(),
+            onTap: () => context.push(Routes.myAttendance),
+          ),
+          const SizedBox(height: 24),
+
+          // Próximos (calendario escolar)
+          Row(
+            children: [
+              const Expanded(child: SectionHeader(title: 'Próximos')),
+              TextButton(
+                onPressed: () => context.push(Routes.calendar),
+                child: const Text('Ver todo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final it in schoolCalendarItems(now).take(3)) ...[
+            CalendarAgendaRow(
+              item: it,
+              onTap: () => context.push(Routes.calendar),
+            ),
+            const SizedBox(height: 8),
+          ],
+          const SizedBox(height: 16),
+
+          // Compañeros (resumen)
+          Row(
+            children: [
+              const Expanded(child: SectionHeader(title: 'Compañeros')),
+              TextButton(
+                onPressed: () => context.push(Routes.classmates),
+                child: const Text('Ver todo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClassmatesStrip(
+            names: data.classmates,
+            extraCount: data.classmatesExtra,
+          ),
               ],
             ),
           ),
@@ -235,6 +329,71 @@ class _HomeTilesGrid extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Tarjeta-resumen de asistencia: gradiente verde con el porcentaje total.
+/// Tocarla abre el detalle de asistencia.
+class _AttendanceSummaryCard extends StatelessWidget {
+  const _AttendanceSummaryCard({required this.percent, required this.onTap});
+  final int percent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return DepthCard(
+      tilt: true,
+      onTap: onTap,
+      borderRadius: Radii.xl,
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.20),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.event_available_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Asistencia total',
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                AnimatedCount(
+                  value: percent.toDouble(),
+                  suffix: '%',
+                  style: context.textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: Colors.white),
+        ],
+      ),
     );
   }
 }
