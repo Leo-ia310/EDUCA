@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../domain/entities.dart';
 import 'money_text.dart';
 
@@ -20,15 +21,13 @@ class ChargeCard extends StatelessWidget {
     final showLateFee = charge.lateFee > 0 &&
         charge.status != ChargeStatus.paid;
 
-    return Material(
+    return DepthCard(
       color: s.surface,
-      borderRadius: BorderRadius.circular(Radii.lg),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.lg),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
+      accent: s.vivid,
+      soft: true,
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -121,8 +120,6 @@ class ChargeCard extends StatelessWidget {
             ),
           ],
         ],
-          ),
-        ),
       ),
     );
   }

@@ -5,11 +5,12 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../widgets/money_text.dart';
@@ -23,18 +24,11 @@ class ChargeDetailScreen extends ConsumerWidget {
     final chargeAsync = ref.watch(chargeByIdProvider(chargeId));
     final palette = context.palette;
 
-    return AppScaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Detalle del cargo'),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+    return StudentDetailScaffold(
+      title: 'Detalle del cargo',
+      bottomNav: false,
       child: chargeAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(),
         error: (e, _) => ErrorStateView(message: '$e'),
         data: (charge) {
           if (charge == null) {
@@ -52,7 +46,9 @@ class ChargeDetailScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               const SectionHeader(title: 'Desglose'),
               const SizedBox(height: 8),
-              EduCard(
+              DepthCard(
+                soft: true,
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     _KV(
@@ -127,17 +123,24 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final fmt = DateFormat("EEE d MMM y", 'es');
-    return EduCard(
-      color: charge.status == ChargeStatus.paid ? palette.accent : palette.cardContrast,
+    final paid = charge.status == ChargeStatus.paid;
+    final colors = paid
+        ? [palette.success, Color.lerp(palette.success, Colors.black, 0.22)!]
+        : [palette.accent, palette.accentDeep];
+    return DepthCard(
+      padding: const EdgeInsets.all(16),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: colors,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             charge.conceptName,
             style: context.textTheme.titleLarge?.copyWith(
-              color: charge.status == ChargeStatus.paid
-                  ? Colors.white
-                  : Colors.white,
+              color: Colors.white,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -145,44 +148,30 @@ class _Header extends StatelessWidget {
           Text(
             charge.description,
             style: context.textTheme.bodySmall?.copyWith(
-              color: charge.status == ChargeStatus.paid
-                  ? const Color(0xFF34401C)
-                  : Colors.white.withValues(alpha: 0.75),
+              color: Colors.white.withValues(alpha: 0.85),
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 14),
           Row(
             children: [
-              Icon(Icons.person_outline,
-                  size: 16,
-                  color: charge.status == ChargeStatus.paid
-                      ? const Color(0xFF34401C)
-                      : Colors.white,),
+              const Icon(Icons.person_outline, size: 16, color: Colors.white),
               const SizedBox(width: 4),
               Text(
                 charge.studentName,
-                style: TextStyle(
-                  color: charge.status == ChargeStatus.paid
-                      ? Colors.white
-                      : Colors.white,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
               ),
               const Spacer(),
-              Icon(Icons.event,
-                  size: 16,
-                  color: charge.status == ChargeStatus.paid
-                      ? const Color(0xFF34401C)
-                      : Colors.white,),
+              const Icon(Icons.event, size: 16, color: Colors.white),
               const SizedBox(width: 4),
               Text(
                 fmt.format(charge.dueDate),
-                style: TextStyle(
-                  color: charge.status == ChargeStatus.paid
-                      ? Colors.white
-                      : Colors.white,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),

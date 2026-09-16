@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../domain/entities.dart';
 import 'money_text.dart';
 
@@ -23,10 +23,16 @@ class BalanceSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final isOk = balance.inGoodStanding && balance.totalPending == 0;
-    final bg = isOk ? palette.accent : palette.cardContrast;
-    final onBg = isOk ? Colors.white : Colors.white;
-    return EduCard(
-      color: bg,
+    const onBg = Colors.white;
+    return DepthCard(
+      padding: const EdgeInsets.all(16),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isOk
+            ? [palette.accent, palette.accentDeep]
+            : [palette.cardContrast, Color.lerp(palette.cardContrast, Colors.black, 0.25)!],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -100,8 +106,8 @@ class BalanceSummary extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: onSeeHistory,
-                    icon: Icon(Icons.history_rounded, color: onBg),
-                    label: Text('Historial',
+                    icon: const Icon(Icons.history_rounded, color: onBg),
+                    label: const Text('Historial',
                         style: TextStyle(color: onBg),),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: onBg.withValues(alpha: 0.3)),
