@@ -80,6 +80,11 @@ class _TeacherDashboardScreenState
               route: Routes.gradebook,
             ),
             QuickActionEntry(
+              icon: Icons.groups_2_rounded,
+              label: 'Equipos de trabajo',
+              route: Routes.workTeams,
+            ),
+            QuickActionEntry(
               icon: Icons.calendar_today_rounded,
               label: 'Ver horario',
               route: Routes.schedule,
@@ -133,6 +138,7 @@ class _TeacherDashboardScreenState
                         color: const Color(0xFF9A6BE0),
                         value: data.myClasses.length.toDouble(),
                         label: 'Grupos',
+                        onTap: () => context.push(Routes.workTeams),
                       ),
                     ),
                   ],
@@ -345,12 +351,14 @@ class _TeacherStat extends StatelessWidget {
     required this.color,
     required this.value,
     required this.label,
+    this.onTap,
   });
 
   final IconData icon;
   final Color color;
   final double value;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -358,6 +366,7 @@ class _TeacherStat extends StatelessWidget {
     return DepthCard(
       accent: s.vivid,
       glow: true,
+      onTap: onTap,
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

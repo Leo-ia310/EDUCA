@@ -41,6 +41,7 @@ class Routes {
   static const attendance = '/attendance';
   static const attendanceTake = '/attendance/take';
   static const attendanceHistory = '/attendance/history';
+  static const workTeams = '/work-teams';
   static const chat = '/chat';
   static const chatNew = '/chat/new';
   static const payments = '/payments';

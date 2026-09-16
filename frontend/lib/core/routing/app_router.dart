@@ -10,6 +10,8 @@ import '../../features/assignments/presentation/screens/teacher_assignments_scre
 import '../../features/attendance/presentation/screens/attendance_classes_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_history_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_take_screen.dart';
+import '../../features/teams/presentation/screens/work_teams_screen.dart';
+import '../../features/teams/presentation/screens/work_team_detail_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/chat/presentation/screens/conversations_screen.dart';
 import '../../features/chat/presentation/screens/new_conversation_screen.dart';
@@ -155,6 +157,36 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           allowed: {AppRole.teacher, AppRole.admin, AppRole.coordinator, AppRole.director},
           child: AttendanceHistoryScreen(),
         ),
+      ),
+
+      // ----- Equipos de trabajo -----
+      GoRoute(
+        path: Routes.workTeams,
+        builder: (_, __) => const RoleGuard(
+          allowed: {
+            AppRole.teacher,
+            AppRole.admin,
+            AppRole.coordinator,
+            AppRole.director,
+          },
+          child: WorkTeamsScreen(),
+        ),
+        routes: [
+          GoRoute(
+            path: ':id',
+            builder: (context, state) => RoleGuard(
+              allowed: const {
+                AppRole.teacher,
+                AppRole.admin,
+                AppRole.coordinator,
+                AppRole.director,
+              },
+              child: WorkTeamDetailScreen(
+                teamId: state.pathParameters['id']!,
+              ),
+            ),
+          ),
+        ],
       ),
 
       // ----- Tareas (assignments) -----
