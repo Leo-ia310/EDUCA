@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/depth_card.dart';
+import '../../../../core/widgets/glass.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../dashboard/data/mock_dashboard_data.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 
 /// Gestión de docentes: ver claustro y asignar clases. Alimenta los accesos
 /// "Asignar Maestros" y "Gestionar" del panel admin.
@@ -32,22 +33,17 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
   ];
 
   Future<void> _assign(AdminTeacher teacher) async {
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
-      ),
+    final selected = await showGlassSheet<String>(
+      context,
       builder: (ctx) {
-        return SafeArea(
-          top: false,
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
                 child: Text(
                   'Asignar clase a ${teacher.name}',
                   style: context.textTheme.titleMedium
@@ -82,19 +78,12 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('Gestionar docentes'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-      ),
+    return StudentDetailScaffold(
+      title: 'Gestionar docentes',
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
           Text(
             '${AdminMockData.teachers.length} docentes activos',
             style: context.textTheme.bodyMedium
@@ -106,12 +95,11 @@ class _ManageTeachersScreenState extends ConsumerState<ManageTeachersScreen> {
               final s = context.pastel(subjectColor(t.subject));
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Container(
+                child: DepthCard(
+                  color: s.surface,
+                  accent: s.vivid,
+                  soft: true,
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: s.surface,
-                    borderRadius: BorderRadius.circular(Radii.lg),
-                  ),
                   child: Row(
                     children: [
                       UserAvatar(name: t.name, size: 44),

@@ -4,12 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../providers.dart';
 import '../widgets/money_text.dart';
 
@@ -22,17 +25,11 @@ class AdminDunningScreen extends ConsumerWidget {
     final balancesAsync = ref.watch(allBalancesProvider);
     final palette = context.palette;
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Recaudación y morosidad',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Recaudación y morosidad'),
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: RefreshIndicator(
@@ -42,13 +39,10 @@ class AdminDunningScreen extends ConsumerWidget {
             ref.invalidate(allBalancesProvider);
           },
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
             children: [
               metricsAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+                loading: () => const SkeletonList(items: 2),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (m) => _MetricsBlock(metrics: m),
               ),
@@ -56,10 +50,7 @@ class AdminDunningScreen extends ConsumerWidget {
               const SectionHeader(title: 'Estudiantes en mora'),
               const SizedBox(height: 8),
               balancesAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+                loading: () => const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (list) {
                   final overdue = list
@@ -79,17 +70,15 @@ class AdminDunningScreen extends ConsumerWidget {
                           padding: const EdgeInsets.only(bottom: 10),
                           child: Builder(builder: (context) {
                             final s = context.pastel(palette.danger);
-                            return Material(
+                            return DepthCard(
                               color: s.surface,
-                              borderRadius: BorderRadius.circular(Radii.lg),
-                              child: InkWell(
-                                onTap: () => context.push(
-                                  '${Routes.payments}?studentId=${b.studentId}',
-                                ),
-                                borderRadius: BorderRadius.circular(Radii.lg),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(14),
-                                  child: Row(
+                              accent: s.vivid,
+                              soft: true,
+                              onTap: () => context.push(
+                                '${Routes.payments}?studentId=${b.studentId}',
+                              ),
+                              padding: const EdgeInsets.all(14),
+                              child: Row(
                                     children: [
                                       UserAvatar(name: b.studentName, size: 40),
                                       const SizedBox(width: 12),
@@ -134,8 +123,6 @@ class AdminDunningScreen extends ConsumerWidget {
                                         ],
                                       ),
                                     ],
-                                  ),
-                                ),
                               ),
                             );
                           },),
@@ -162,11 +149,15 @@ class _MetricsBlock extends StatelessWidget {
     final pct = (metrics.collectionRate as double).clamp(0.0, 1.0);
     return Column(
       children: [
-        Container(
+        DepthCard(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: palette.cardContrast,
-            borderRadius: BorderRadius.circular(Radii.lg),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              palette.cardContrast,
+              Color.lerp(palette.cardContrast, Colors.black, 0.25)!,
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,12 +194,16 @@ class _MetricsBlock extends StatelessWidget {
               const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(Radii.xs),
-                child: LinearProgressIndicator(
-                  value: pct,
-                  minHeight: 8,
-                  backgroundColor: Colors.white.withValues(alpha: 0.15),
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(palette.accent),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: pct),
+                  duration: context.motion(AppMotion.slow),
+                  curve: AppMotion.standard,
+                  builder: (context, value, _) => LinearProgressIndicator(
+                    value: value,
+                    minHeight: 8,
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    valueColor: AlwaysStoppedAnimation<Color>(palette.accent),
+                  ),
                 ),
               ),
               const SizedBox(height: 6),
@@ -285,12 +280,11 @@ class _PastelMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(color);
-    return Container(
+    return DepthCard(
+      color: s.surface,
+      accent: s.vivid,
+      soft: true,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: s.surface,
-        borderRadius: BorderRadius.circular(Radii.lg),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
