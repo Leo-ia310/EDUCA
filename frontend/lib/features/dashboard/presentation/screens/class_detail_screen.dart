@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/floating_card.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../data/mock_dashboard_data.dart';
+import '../widgets/student_chrome.dart';
 
 /// Detalle de una clase del maestro. Destino del container-transform desde la
 /// tarjeta de clase del dashboard.
@@ -21,16 +21,9 @@ class ClassDetailScreen extends StatelessWidget {
     final accent = subjectColor(teacherClass.name);
     final ink = subjectInk(teacherClass.name);
 
-    return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: Text(teacherClass.name),
-      ),
+    return StudentDetailScaffold(
+      title: teacherClass.name,
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -122,8 +115,11 @@ class _Action extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EduCard(
+    return DepthCard(
+      soft: true,
+      accent: accent,
       onTap: onTap,
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           Container(

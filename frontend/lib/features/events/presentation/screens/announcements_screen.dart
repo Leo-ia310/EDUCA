@@ -6,10 +6,11 @@ import 'package:intl/intl.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../../shared/models/app_role.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../data/events_store.dart';
 import '../../providers.dart';
 
@@ -31,15 +32,9 @@ class AnnouncementsScreen extends ConsumerWidget {
         role == AppRole.coordinator ||
         role == AppRole.director;
 
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('Anuncios'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-      ),
+    return StudentDetailScaffold(
+      title: 'Anuncios',
+      showBack: false,
       fab: isAdmin
           ? FloatingActionButton.extended(
               onPressed: () => context.push(Routes.eventNew),
@@ -50,7 +45,6 @@ class AnnouncementsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
           if (events.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 60),
@@ -80,12 +74,11 @@ class _EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(event.title));
-    return Container(
+    return DepthCard(
+      color: s.surface,
+      accent: s.vivid,
+      soft: true,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: s.surface,
-        borderRadius: BorderRadius.circular(Radii.lg),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

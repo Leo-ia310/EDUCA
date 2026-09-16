@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 
 /// Cambio de contraseña desde el perfil. En modo demo valida y confirma;
 /// con Supabase real llamaría a `auth.updateUser(password: ...)`.
@@ -47,25 +48,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cambiar contraseña'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SingleChildScrollView(
-            child: Form(
+    return StudentDetailScaffold(
+      title: 'Cambiar contraseña',
+      bottomNav: false,
+      child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 12),
                   TextFormField(
                     controller: _currentCtrl,
                     obscureText: _obscureCurrent,
@@ -151,9 +141,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 ],
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }

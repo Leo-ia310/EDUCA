@@ -3,9 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/floating_card.dart';
 import '../../data/mock_dashboard_data.dart';
+import '../widgets/student_chrome.dart';
 
 /// Detalle de un anuncio. Destino del container-transform desde la tarjeta de
 /// anuncio del dashboard del admin.
@@ -17,16 +17,9 @@ class AnnouncementDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
 
-    return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Anuncio'),
-      ),
+    return StudentDetailScaffold(
+      title: 'Anuncio',
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

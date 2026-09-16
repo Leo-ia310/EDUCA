@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../data/events_store.dart';
 
 /// Formulario para crear un evento/anuncio institucional. Al guardar lo
@@ -72,25 +73,14 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Crear evento'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: SingleChildScrollView(
-            child: Form(
+    return StudentDetailScaffold(
+      title: 'Crear evento',
+      bottomNav: false,
+      child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 12),
                   TextFormField(
                     controller: _titleCtrl,
                     validator: (v) =>
@@ -163,9 +153,6 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                 ],
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/skeleton.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../providers.dart';
 
 class NewConversationScreen extends ConsumerStatefulWidget {
@@ -28,23 +28,17 @@ class _NewConversationScreenState
     final palette = context.palette;
     final contactsAsync = ref.watch(discoverableContactsProvider(_query));
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Nuevo mensaje',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Nuevo mensaje'),
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: TextField(
                 onChanged: (v) => setState(() => _query = v),
                 autofocus: true,
@@ -75,7 +69,8 @@ class _NewConversationScreenState
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (_, i) {
                       final c = contacts[i];
-                      return EduCard(
+                      return DepthCard(
+                        soft: true,
                         padding: EdgeInsets.zero,
                         child: ListTile(
                           leading: UserAvatar(name: c.name, size: 40),
