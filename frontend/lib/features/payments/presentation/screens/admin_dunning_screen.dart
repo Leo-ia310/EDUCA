@@ -263,7 +263,7 @@ class _MetricsBlock extends StatelessWidget {
 }
 
 /// Mini-KPI pastel (superficie tintada + ícono en círculo vívido) para las
-/// métricas de morosidad, en el mismo lenguaje que DashboardStatStrip.
+/// métricas de morosidad, en el mismo lenguaje que los KPIs del panel.
 class _PastelMetric extends StatelessWidget {
   const _PastelMetric({
     required this.color,

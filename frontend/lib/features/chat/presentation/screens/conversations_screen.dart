@@ -4,13 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../providers.dart';
 import '../widgets/conversation_tile.dart';
 
@@ -37,14 +36,11 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     final conversations = ref.watch(conversationsStreamProvider);
     final me = ref.watch(authControllerProvider).user;
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Mensajes',
+      showBack: false,
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('Mensajes'),
-      ),
-      bottomNav: const EducaBottomNav(),
+      bodyPadding: EdgeInsets.zero,
       fab: EducaFab(
         icon: Icons.chat_bubble_outline,
         onPressed: () => context.push(Routes.chatNew),
@@ -54,7 +50,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
               child: TextField(
                 controller: _searchCtrl,
                 onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),

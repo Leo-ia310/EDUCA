@@ -5,11 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/date_utils.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/glass.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../data/schedule_mock.dart';
 
 /// Horario semanal. Alimenta la pestaña "Horario" del bottom nav y los
@@ -30,16 +29,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     final slots = ScheduleMock.byDay[_selectedDay] ?? const [];
     final relation = _relationFor(_selectedDay);
 
-    return AppScaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text('Horario'),
-      ),
-      bottomNav: const EducaBottomNav(),
+    return StudentDetailScaffold(
+      title: 'Horario',
+      showBack: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
           // Selector de día
           SizedBox(
             height: 76,
