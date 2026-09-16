@@ -7,9 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../../attendance/domain/entities.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
@@ -93,22 +93,17 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
     final palette = context.palette;
     final fmt = DateFormat("d MMM y, HH:mm", 'es');
 
-    return AppScaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: Text(state.assignmentId == null ? 'Nueva tarea' : 'Editar tarea'),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+    return StudentDetailScaffold(
+      title: state.assignmentId == null ? 'Nueva tarea' : 'Editar tarea',
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SectionHeader(title: 'Información'),
           const SizedBox(height: 8),
-          EduCard(
+          DepthCard(
+            soft: true,
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 TextField(
@@ -147,7 +142,9 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
 
           const SectionHeader(title: 'Configuración'),
           const SizedBox(height: 8),
-          EduCard(
+          DepthCard(
+            soft: true,
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 Row(
@@ -241,7 +238,9 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
 
           const SectionHeader(title: 'Archivos'),
           const SizedBox(height: 8),
-          EduCard(
+          DepthCard(
+            soft: true,
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

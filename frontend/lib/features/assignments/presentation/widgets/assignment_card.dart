@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../domain/entities.dart';
 import 'assignment_status_chip.dart';
 
@@ -161,9 +162,12 @@ class AssignmentCard extends StatelessWidget {
 
   Widget _buildClassic(BuildContext context) {
     final palette = context.palette;
+    final s = context.pastel(subjectColor(assignment.subjectName));
     final status = assignment.statusForNow(DateTime.now());
     final fmt = DateFormat("d MMM, HH:mm", 'es');
-    return EduCard(
+    return DepthCard(
+      soft: true,
+      padding: const EdgeInsets.all(16),
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,37 +175,50 @@ class AssignmentCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: palette.accentSoft,
-                  borderRadius: BorderRadius.circular(Radii.pill),
+                  color: s.vivid,
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
-                child: Text(
-                  assignment.kind.label,
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: palette.accentDeep,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: Icon(
+                  _kindIcon(assignment.kind),
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      assignment.kind.label,
+                      style: context.textTheme.labelSmall?.copyWith(
+                        color: palette.textMuted,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      assignment.title,
+                      style: context.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
-              AssignmentStatusChip(status: status),
-              const Spacer(),
-              if (studentStatus != null) ...[
-                SubmissionStatusChip(status: studentStatus!),
-              ],
+              if (studentStatus != null)
+                SubmissionStatusChip(status: studentStatus!)
+              else
+                AssignmentStatusChip(status: status),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            assignment.title,
-            style: context.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 8),
           Text(
             '${assignment.subjectName} · ${assignment.groupName}',
             style: context.textTheme.bodySmall,
@@ -327,11 +344,16 @@ class _ProgressBar extends StatelessWidget {
         const SizedBox(height: 4),
         ClipRRect(
           borderRadius: BorderRadius.circular(Radii.xs),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: color.withValues(alpha: 0.15),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: progress),
+            duration: context.motion(AppMotion.slow),
+            curve: AppMotion.standard,
+            builder: (context, value, _) => LinearProgressIndicator(
+              value: value,
+              minHeight: 6,
+              backgroundColor: color.withValues(alpha: 0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
           ),
         ),
       ],

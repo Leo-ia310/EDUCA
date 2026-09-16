@@ -11,7 +11,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/celebration.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -77,7 +77,9 @@ class AssignmentDetailScreen extends ConsumerWidget {
               if (a.description != null && a.description!.isNotEmpty) ...[
                 const SectionHeader(title: 'Descripción'),
                 const SizedBox(height: 8),
-                EduCard(
+                DepthCard(
+                  soft: true,
+                  padding: const EdgeInsets.all(16),
                   child: Text(a.description!,
                       style: context.textTheme.bodyMedium,),
                 ),
@@ -86,7 +88,9 @@ class AssignmentDetailScreen extends ConsumerWidget {
               if (a.instructions != null && a.instructions!.isNotEmpty) ...[
                 const SectionHeader(title: 'Instrucciones'),
                 const SizedBox(height: 8),
-                EduCard(
+                DepthCard(
+                  soft: true,
+                  padding: const EdgeInsets.all(16),
                   child: Text(a.instructions!,
                       style: context.textTheme.bodyMedium,),
                 ),
@@ -226,7 +230,9 @@ class _TeacherActions extends StatelessWidget {
       children: [
         const SectionHeader(title: 'Entregas'),
         const SizedBox(height: 8),
-        EduCard(
+        DepthCard(
+          soft: true,
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Row(
@@ -337,18 +343,24 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
         const SectionHeader(title: 'Mi entrega'),
         const SizedBox(height: 8),
         mine.when(
-          loading: () => const EduCard(
-              child: Padding(
+          loading: () => const DepthCard(
+            soft: true,
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
-          ),),
-          error: (e, _) => EduCard(child: Text('$e')),
+          ),
+          error: (e, _) => DepthCard(
+            soft: true,
+            padding: const EdgeInsets.all(16),
+            child: Text('$e'),
+          ),
           data: (existing) {
             if (existing?.status == SubmissionStatus.graded) {
               return _GradedView(submission: existing!, assignment: widget.assignment);
             }
             if (isParent) {
-              return EduCard(
+              return DepthCard(
+                soft: true,
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -374,7 +386,9 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                 ),
               );
             }
-            return EduCard(
+            return DepthCard(
+              soft: true,
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
