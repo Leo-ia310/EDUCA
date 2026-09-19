@@ -23,6 +23,7 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:soporte@educa360.app";
+const INTERNAL_API_SECRET = Deno.env.get("INTERNAL_API_SECRET") ?? "";
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
@@ -33,6 +34,18 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
+  }
+  if (!INTERNAL_API_SECRET) {
+    return new Response(
+      JSON.stringify({ error: "INTERNAL_API_SECRET no configurado" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  if (!isInternalRequest(req)) {
+    return new Response(JSON.stringify({ error: "No autorizado" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     return new Response(
@@ -51,8 +64,8 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const notificationId = body.notificationId;
-  if (!notificationId) {
+  const notificationId = Number(body.notificationId);
+  if (!Number.isInteger(notificationId) || notificationId <= 0) {
     return new Response(JSON.stringify({ error: "Falta notificationId" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
@@ -118,3 +131,20 @@ Deno.serve(async (req: Request) => {
     headers: { "Content-Type": "application/json" },
   });
 });
+
+function isInternalRequest(req: Request) {
+  const headerSecret = req.headers.get("x-internal-api-secret") ?? "";
+  const auth = req.headers.get("authorization") ?? "";
+  const bearer = auth.replace(/^Bearer\s+/i, "").trim();
+  return safeEqual(headerSecret, INTERNAL_API_SECRET) ||
+    safeEqual(bearer, INTERNAL_API_SECRET);
+}
+
+function safeEqual(a: string, b: string) {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}

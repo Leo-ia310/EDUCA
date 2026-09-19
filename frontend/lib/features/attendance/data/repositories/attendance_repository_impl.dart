@@ -33,7 +33,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
 
   @override
   Future<List<ClassSessionBrief>> todaysClasses({required int teacherId}) async {
-    // En demo, devolvemos clases mock. En producción, leeríamos de schedules.
+    if (remote != null && institutionId > 0) {
+      return remote!.todaysClasses(teacherId: teacherId);
+    }
     await Future<void>.delayed(const Duration(milliseconds: 250));
     return AttendanceMock.todaysClasses;
   }
@@ -44,7 +46,12 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required DateTime date,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
-    final students = AttendanceMock.studentsOf(classId);
+    final students = remote != null && institutionId > 0
+        ? await remote!.classRoster(
+            classId: classId,
+            institutionId: institutionId,
+          )
+        : AttendanceMock.studentsOf(classId);
     return students.map((s) {
       final existing = local.recordFor(
         classId: classId,

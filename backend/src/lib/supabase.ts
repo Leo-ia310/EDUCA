@@ -25,9 +25,15 @@ function createUserClient(accessToken: string) {
 
 const fallbackClient = createClient(
   env.supabaseUrl,
-  env.supabaseServiceRoleKey || env.supabaseAnonKey,
+  env.supabaseAnonKey,
   { auth: authOptions },
 );
+
+export const supabaseServiceRole = env.supabaseServiceRoleKey
+  ? createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
+    auth: authOptions,
+  })
+  : null;
 
 export function withRequestSupabase<T>(
   accessToken: string,

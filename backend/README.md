@@ -55,17 +55,26 @@ No subas `.env` al repo.
 | --- | --- |
 | `PORT` | Puerto del backend Node. Default: `3000`. |
 | `CORS_ORIGIN` | Origen permitido, `*` en desarrollo. |
+| `TRUST_PROXY` | Activa `trust proxy` cuando corre detras de proxy/load balancer. |
+| `JSON_BODY_LIMIT` | Limite del body JSON. Default actual: `512kb`. |
+| `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX` | Ventana y maximo global de solicitudes por IP. |
+| `AUTH_RATE_LIMIT_MAX` | Maximo para rutas autenticadas/API de negocio. |
 | `BACKEND_API_BASE_URL` | Base publica que recibe Flutter, por ejemplo `http://localhost:3000/api`. |
 | `SUPABASE_URL` | URL del proyecto Supabase. |
 | `SUPABASE_ANON_KEY` | Clave publica para Flutter y smoke tests. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta opcional para tareas server-side/admin. Nunca va al frontend. |
 | `SUPABASE_DB_*` | Conexion directa para `backend/scripts`. |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Web Push; la privada solo va en Supabase secrets. |
+| `INTERNAL_API_SECRET` | Secreto servidor a servidor para funciones sensibles como `send-push`. |
 
 La API Node centraliza Supabase en `src/lib/supabase.ts`. Cada request usa un
 cliente Supabase con el JWT del usuario, por lo que RLS sigue aplicando. La
 `service_role` queda opcional para tareas administrativas server-side; nunca se
 expone al navegador.
+
+En produccion no uses `CORS_ORIGIN=*`. Define la lista exacta de origenes del
+frontend separada por comas y configura `INTERNAL_API_SECRET` tambien en
+Supabase secrets para que `send-push` no quede invocable publicamente.
 
 ## Ejecutar
 

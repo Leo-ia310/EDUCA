@@ -8,7 +8,8 @@ por `WebPushService` (cliente Flutter Web). Educa360 no usa Firebase/FCM.
 **Desplegada** (2026-08-18) en el proyecto `qwfkmijewogksfizdski`, con los
 secrets `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` configurados
 (par VAPID regenerado en esa fecha; `frontend/.env` actualizado con la nueva
-`VAPID_PUBLIC_KEY` para que coincida).
+`VAPID_PUBLIC_KEY` para que coincida). La función usa `SERVICE_ROLE_KEY`, por
+eso también requiere `INTERNAL_API_SECRET` para aceptar invocaciones.
 
 ## Para redesplegar tras cambios de código
 
@@ -24,7 +25,7 @@ Si cambian las claves VAPID (regenerar con `npx web-push generate-vapid-keys`),
 actualiza también `VAPID_PUBLIC_KEY` en `frontend/.env`:
 
 ```bash
-supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:tu-correo@dominio.com
+supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:tu-correo@dominio.com INTERNAL_API_SECRET=...
 ```
 
 `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los inyecta Supabase
@@ -34,6 +35,9 @@ automáticamente en toda Edge Function — no hace falta configurarlos.
 
 ```
 POST /functions/v1/send-push
+Authorization: Bearer <INTERNAL_API_SECRET>
+Content-Type: application/json
+
 { "notificationId": 123 }
 ```
 
@@ -46,7 +50,8 @@ Hoy nada invoca esta función automáticamente. La forma recomendada:
 
 **Database Webhook** (Supabase Studio → Database → Webhooks): trigger en
 `INSERT` sobre `public.notifications` que haga `POST` a esta función con
-`{ "notificationId": "{{ record.id }}" }`. Así, cualquier código que inserte
+`{ "notificationId": "{{ record.id }}" }` y el header
+`x-internal-api-secret: <INTERNAL_API_SECRET>`. Así, cualquier código que inserte
 una notificación (hoy nada lo hace desde Supabase — `HiveNotificationsRepository`
 es local; haría falta un repo de notificaciones real contra la tabla
 `notifications`, que no forma parte de esta pasada) dispara el push
