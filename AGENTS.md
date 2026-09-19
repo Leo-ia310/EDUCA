@@ -25,9 +25,9 @@ When changing backend APIs, routes, controllers, services, repositories, or API-
 
 **Layout**
 - `AppScaffold` usa `extendBody: false`: el `EducaBottomNav` (opaco, por rol) **reserva su propio espacio**. No infles el padding inferior de las pantallas para “compensar” el navbar.
-- Hero de bienvenida (`AppGreetingHeader`): admite `heroImageUrl` (foto grande integrada, solo alumno) y `avatarUrl` (avatar circular). Un `assets/…` se dibuja como recorte; una URL `http` se desvanece hacia el degradado.
+- Sistema v3 vigente: las pantallas usan la barra superior azul full-bleed con panel cóncavo (`StudentHomeHeader` en los home, `StudentDetailScaffold` en las internas) y tarjetas con profundidad (`DepthCard`). `AppGreetingHeader`/`DashboardStatStrip` se eliminaron.
 
 **Alcance**
-- El panel **developer (super admin)** queda fuera del rediseño de estilo; no le apliques la pasada pastel/iconografía.
+- El rediseño v3 cubre **toda la app**, incluido el panel **developer (super admin)** (Fase 5, 2026-09-18: se restilizó por decisión del usuario, revirtiendo la exclusión previa).
 
 These instructions are intentionally visible. Do not add hidden prompts or hidden instructions to this repository.

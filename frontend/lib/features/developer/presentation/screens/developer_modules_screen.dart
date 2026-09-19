@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 
@@ -107,17 +107,11 @@ class _DeveloperModulesScreenState
     final palette = context.palette;
     final modulesAsync = ref.watch(developerModulesProvider);
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Módulos',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Módulos'),
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       fab: FloatingActionButton.extended(
         onPressed: _busy ? null : () => _openForm(),
         icon: const Icon(Icons.add_rounded),
@@ -128,7 +122,7 @@ class _DeveloperModulesScreenState
         child: Stack(
           children: [
             modulesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const SkeletonList(),
               error: (e, _) => ErrorStateView(message: '$e'),
               data: (modules) {
                 // Ordena por display_order y luego por título.
@@ -143,7 +137,7 @@ class _DeveloperModulesScreenState
                   color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 96),
                     children: [
                       if (modules.isNotEmpty)
                         Text(
@@ -208,7 +202,8 @@ class _ModuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return EduCard(
+    return DepthCard(
+      soft: true,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       onTap: onEdit,
       child: Column(
