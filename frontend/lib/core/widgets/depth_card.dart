@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/motion.dart';
 import 'floating_card.dart';
 
 /// Tarjeta con **profundidad** del sistema Educa v3: superficie elevada con
@@ -9,7 +10,7 @@ import 'floating_card.dart';
 ///
 /// Unifica el "relieve" de todas las tarjetas del producto. Usa [tilt] solo en
 /// tarjetas prominentes (no en filas de lista, para no saturar de movimiento).
-class DepthCard extends StatelessWidget {
+class DepthCard extends StatefulWidget {
   const DepthCard({
     super.key,
     required this.child,
@@ -49,10 +50,23 @@ class DepthCard extends StatelessWidget {
   final Gradient? gradient;
 
   @override
+  State<DepthCard> createState() => _DepthCardState();
+}
+
+class _DepthCardState extends State<DepthCard> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final base = color ?? palette.cardElevated;
-    final useGlow = glow && accent != null && gradient == null;
+    final base = widget.color ?? palette.cardElevated;
+    final accent = widget.accent;
+    final gradient = widget.gradient;
+    final borderRadius = widget.borderRadius;
+    final onTap = widget.onTap;
+    final padding = widget.padding;
+    final child = widget.child;
+    final useGlow = widget.glow && accent != null && gradient == null;
 
     final decoration = BoxDecoration(
       color: gradient == null && !useGlow ? base : null,
@@ -62,7 +76,7 @@ class DepthCard extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color.alphaBlend(accent!.withValues(alpha: 0.12), base),
+                    Color.alphaBlend(accent.withValues(alpha: 0.12), base),
                     base,
                   ],
                 )
@@ -70,11 +84,18 @@ class DepthCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
         color: accent != null
-            ? accent!.withValues(alpha: 0.28)
+            ? accent.withValues(alpha: 0.28)
             : Theme.of(context).dividerColor,
       ),
-      boxShadow: soft ? AppShadows.soft(context) : AppShadows.lifted(context),
+      boxShadow: widget.soft
+          ? AppShadows.soft(context)
+          : AppShadows.lifted(context),
     );
+
+    void setPressed(bool v) {
+      if (onTap == null) return;
+      if (_pressed != v) setState(() => _pressed = v);
+    }
 
     Widget inner = Material(
       color: Colors.transparent,
@@ -82,14 +103,28 @@ class DepthCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: padding != null ? Padding(padding: padding!, child: child) : child,
+        onTapDown: onTap == null ? null : (_) => setPressed(true),
+        onTapUp: onTap == null ? null : (_) => setPressed(false),
+        onTapCancel: onTap == null ? null : () => setPressed(false),
+        child:
+            padding != null ? Padding(padding: padding, child: child) : child,
       ),
     );
 
     Widget card = DecoratedBox(decoration: decoration, child: inner);
 
-    if (tilt) {
+    if (widget.tilt) {
       card = FloatingCard(borderRadius: borderRadius, angle: 9, child: card);
+    }
+
+    // Micro-interacción táctil: la tarjeta "se hunde" levemente al presionar.
+    if (onTap != null) {
+      card = AnimatedScale(
+        scale: _pressed ? 0.97 : 1,
+        duration: context.motion(AppMotion.xfast),
+        curve: AppMotion.standard,
+        child: card,
+      );
     }
     return card;
   }

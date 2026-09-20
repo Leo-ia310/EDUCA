@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/skeleton.dart';
@@ -33,7 +34,9 @@ class StudentAssignmentsScreen extends ConsumerWidget {
       bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
-        child: list.when(
+        child: crossfadeState(
+          context,
+          list.when(
           loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (items) {
@@ -67,30 +70,39 @@ class StudentAssignmentsScreen extends ConsumerWidget {
                   if (pending.isNotEmpty) ...[
                     const SectionHeader(title: 'Por entregar'),
                     const SizedBox(height: 8),
-                    for (final a in pending)
-                      _StudentTile(
-                        assignment: a,
-                        studentId: studentId,
-                        onTap: () =>
-                            context.push('${Routes.assignments}/${a.id}'),
+                    for (final (i, a) in pending.indexed)
+                      entranceItem(
+                        context,
+                        i,
+                        _StudentTile(
+                          assignment: a,
+                          studentId: studentId,
+                          onTap: () =>
+                              context.push('${Routes.assignments}/${a.id}'),
+                        ),
                       ),
                   ],
                   if (past.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     const SectionHeader(title: 'Pasadas'),
                     const SizedBox(height: 8),
-                    for (final a in past)
-                      _StudentTile(
-                        assignment: a,
-                        studentId: studentId,
-                        onTap: () =>
-                            context.push('${Routes.assignments}/${a.id}'),
+                    for (final (i, a) in past.indexed)
+                      entranceItem(
+                        context,
+                        pending.length + i,
+                        _StudentTile(
+                          assignment: a,
+                          studentId: studentId,
+                          onTap: () =>
+                              context.push('${Routes.assignments}/${a.id}'),
+                        ),
                       ),
                   ],
                 ],
               ),
             );
           },
+          ),
         ),
       ),
     );

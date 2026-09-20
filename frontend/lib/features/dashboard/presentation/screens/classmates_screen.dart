@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/depth_card.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../domain/dashboard_models.dart';
@@ -65,9 +66,13 @@ class _ClassmatesScreenState extends State<ClassmatesScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, i) => _ClassmateRow(
-                      classmate: filtered[i],
-                      onTap: () => _openProfile(context, filtered[i]),
+                    itemBuilder: (context, i) => entranceItem(
+                      context,
+                      i,
+                      _ClassmateRow(
+                        classmate: filtered[i],
+                        onTap: () => _openProfile(context, filtered[i]),
+                      ),
                     ),
                   ),
           ),

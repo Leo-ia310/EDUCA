@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/animated_count.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/charts.dart';
 import '../../../../core/widgets/depth_card.dart';
@@ -93,7 +92,7 @@ class StudentDashboardScreen extends ConsumerWidget {
               child: StaggeredEntrance(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SectionHeader(title: 'Panel Principal'),
+                  const SectionHeader(title: 'Inicio'),
                   const SizedBox(height: 12),
                   // Grilla de accesos rápidos (tarjetas cuadradas).
                   _HomeTilesGrid(
@@ -382,7 +381,10 @@ class _HomeTilesGrid extends StatelessWidget {
     const gap = 12.0;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final tileSize = (constraints.maxWidth - gap * (cols - 1)) / cols;
+        // `floorToDouble` evita que, por redondeo, la 3ª tarjeta salte de fila;
+        // con 3 columnas exactas todas quedan del mismo tamaño cuadrado.
+        final tileSize =
+            ((constraints.maxWidth - gap * (cols - 1)) / cols).floorToDouble();
         return Wrap(
           spacing: gap,
           runSpacing: gap,
@@ -414,56 +416,39 @@ class _AttendanceSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return DepthCard(
-      tilt: true,
+      soft: true,
       onTap: onTap,
+      accent: palette.success,
       borderRadius: Radii.xl,
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
-      ),
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.20),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.event_available_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 14),
+          // Anillo de progreso que muestra el % de asistencia (dato "vivo").
+          AttendanceRing(percent: percent, size: 84, label: 'del periodo'),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Asistencia total',
-                  style: context.textTheme.labelMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontWeight: FontWeight.w700,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                AnimatedCount(
-                  value: percent.toDouble(),
-                  suffix: '%',
-                  style: context.textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                const SizedBox(height: 2),
+                Text(
+                  'Tu porcentaje de este periodo',
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: palette.textMuted,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: Colors.white),
+          Icon(Icons.chevron_right_rounded, color: palette.textMuted),
         ],
       ),
     );

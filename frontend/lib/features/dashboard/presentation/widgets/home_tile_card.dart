@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/floating_card.dart';
 
 /// Tarjeta **cuadrada** de acceso rápido del home del estudiante. Superficie
 /// blanca (elevada) con sombra para resaltar del fondo; ícono grande sin fondo
@@ -63,9 +62,12 @@ class HomeTileCard extends StatelessWidget {
       palette.cardElevated,
     );
 
-    final card = Opacity(
+    // La tarjeta llena por completo la celda cuadrada (mismo tamaño para todas).
+    return Opacity(
       opacity: enabled ? 1 : 0.6,
-      child: DecoratedBox(
+      child: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -84,13 +86,10 @@ class HomeTileCard extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            child: content,
+            child: Center(child: content),
           ),
         ),
       ),
     );
-
-    // Tilt 3D en perspectiva (se desactiva con "reducir movimiento").
-    return FloatingCard(borderRadius: Radii.lg, angle: 9, child: card);
   }
 }
