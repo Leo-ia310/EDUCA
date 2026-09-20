@@ -92,7 +92,13 @@ class StudentTopBar extends ConsumerWidget {
     return Container(
       // Borde inferior recto: el panel se monta encima y aporta la curva.
       padding: EdgeInsets.fromLTRB(showBack ? 4 : 16, topInset + 10, 12, 30),
-      color: barColor,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [barColor, Color(0xFF3B74D6)],
+        ),
+      ),
       child: Row(
         children: [
           if (showBack) ...[
