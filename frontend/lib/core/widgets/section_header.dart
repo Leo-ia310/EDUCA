@@ -20,6 +20,16 @@ class SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
+          // Marca de acento a la izquierda: da ritmo y jerarquía a las secciones.
+          Container(
+            width: 4,
+            height: 18,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              color: context.palette.accentDeep,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
           Expanded(
             child: Text(
               title,
