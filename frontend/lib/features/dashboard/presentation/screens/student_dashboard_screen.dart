@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/theme/app_gradients.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
@@ -13,6 +14,7 @@ import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
 import '../../data/dashboard_data.dart';
+import '../../domain/dashboard_models.dart';
 import '../../providers.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/schedule_item.dart';
@@ -85,7 +87,56 @@ class StudentDashboardScreen extends ConsumerWidget {
               child: StaggeredEntrance(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SectionHeader(title: 'Inicio'),
+                  _StudentHero(
+                    name: user.displayFirstName,
+                    gradeGroup: data.gradeGroup,
+                    gender: data.gender,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Horario de hoy
+                  Row(
+                    children: [
+                      const Expanded(
+                          child: SectionHeader(title: 'Horario de Hoy'),),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4,),
+                        decoration: BoxDecoration(
+                          color: palette.accentSoft,
+                          borderRadius: BorderRadius.circular(Radii.pill),
+                        ),
+                        child: Text(
+                          weekday,
+                          style: context.textTheme.labelSmall?.copyWith(
+                            color: palette.accentDeep,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  for (var i = 0; i < data.todaySchedule.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 10),
+                    ScheduleItemRow(
+                      slot: data.todaySchedule[i],
+                      highlighted: i == currentIdx,
+                      badge: i == currentIdx
+                          ? 'Ahora'
+                          : i == nextIdx
+                              ? _inLabel(
+                                  DateUtilsX.hhmmToMinutes(
+                                        data.todaySchedule[i].startTime,
+                                      ) -
+                                      nowMin,
+                                )
+                              : null,
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+
+                  const SectionHeader(title: 'Acceso Rápido'),
                   const SizedBox(height: 12),
                   // Accesos rápidos: tarjetas horizontales apiladas.
                   for (final t in [
@@ -146,47 +197,6 @@ class StudentDashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                   ],
-          const SizedBox(height: 12),
-
-          // Horario de hoy
-          Row(
-            children: [
-              const Expanded(child: SectionHeader(title: 'Horario de Hoy')),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: palette.accentSoft,
-                  borderRadius: BorderRadius.circular(Radii.pill),
-                ),
-                child: Text(
-                  weekday,
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: palette.accentDeep,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          for (var i = 0; i < data.todaySchedule.length; i++) ...[
-            if (i > 0) const SizedBox(height: 10),
-            ScheduleItemRow(
-              slot: data.todaySchedule[i],
-              highlighted: i == currentIdx,
-              badge: i == currentIdx
-                  ? 'Ahora'
-                  : i == nextIdx
-                      ? _inLabel(
-                          DateUtilsX.hhmmToMinutes(
-                                data.todaySchedule[i].startTime,
-                              ) -
-                              nowMin,
-                        )
-                      : null,
-            ),
-          ],
               ],
             ),
           ),
@@ -210,6 +220,77 @@ class _TileData {
   final String title;
   final Color color;
   final VoidCallback? onTap;
+}
+
+/// Hero de bienvenida del home: saludo + nombre + grado/grupo alineados a la
+/// izquierda, ilustración del estudiante (según género) alineada a la derecha.
+class _StudentHero extends StatelessWidget {
+  const _StudentHero({
+    required this.name,
+    required this.gradeGroup,
+    required this.gender,
+  });
+
+  final String name;
+  final String gradeGroup;
+  final StudentGender gender;
+
+  @override
+  Widget build(BuildContext context) {
+    final greeting = DateUtilsX.greetingForHour(DateTime.now());
+    final asset = gender == StudentGender.female
+        ? 'assets/images/student_avatar_girl.png'
+        : 'assets/images/student_avatar_boy.png';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(Radii.xl),
+      child: Container(
+        decoration: const BoxDecoration(gradient: AppGradients.hero),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 22, 8, 22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      greeting,
+                      style: context.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      gradeGroup,
+                      style: context.textTheme.labelMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Image.asset(asset, height: 148, fit: BoxFit.contain),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Radio de la curva con que el panel se monta sobre la barra azul (cóncava).

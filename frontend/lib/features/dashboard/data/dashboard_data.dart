@@ -14,6 +14,8 @@ class StudentDashboardData {
     required this.classmates,
     required this.classmatesExtra,
     this.attendanceRate = 0,
+    this.gradeGroup = '',
+    this.gender = StudentGender.male,
   });
 
   final int pendingTasks;
@@ -28,6 +30,12 @@ class StudentDashboardData {
   /// Porcentaje de asistencia (0..1). En backend real lo llenará el datasource.
   final double attendanceRate;
 
+  /// Grado y grupo del estudiante, p. ej. "4° Grado A".
+  final String gradeGroup;
+
+  /// Género del estudiante (elige la ilustración del hero del home).
+  final StudentGender gender;
+
   /// Datos de demo (mock), para cuando no hay backend.
   factory StudentDashboardData.mock() => const StudentDashboardData(
         pendingTasks: StudentMockData.pendingTasks,
@@ -39,6 +47,8 @@ class StudentDashboardData {
         classmates: StudentMockData.classmates,
         classmatesExtra: StudentMockData.classmatesExtra,
         attendanceRate: StudentMockData.attendanceRate,
+        gradeGroup: StudentMockData.grade,
+        gender: StudentGender.male,
       );
 
   /// Estudiante conectado pero sin datos aún (evita pantalla vacía rota).
