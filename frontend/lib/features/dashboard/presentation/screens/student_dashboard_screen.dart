@@ -146,6 +146,12 @@ class StudentDashboardScreen extends ConsumerWidget {
                       subtitle: 'Pendientes y entregadas',
                       color: const Color(0xFFF3993E),
                       onTap: () => context.push(Routes.assignments),
+                      art: const ArtCluster([
+                        ArtItem.icon(Icons.edit_rounded,
+                            size: 30, top: 0, right: 30, angle: 0.35,),
+                        ArtItem.icon(Icons.edit_rounded,
+                            size: 22, top: 28, right: 4, angle: -0.5,),
+                      ]),
                     ),
                     _TileData(
                       icon: Icons.school_rounded,
@@ -153,6 +159,10 @@ class StudentDashboardScreen extends ConsumerWidget {
                       subtitle: 'Exámenes y quizzes',
                       color: const Color(0xFFD65D6B),
                       onTap: () => context.push(Routes.exams),
+                      art: const ArtCluster([
+                        ArtItem.icon(Icons.description_rounded,
+                            size: 36, top: 6, right: 14, angle: 0.12,),
+                      ]),
                     ),
                     _TileData(
                       icon: Icons.menu_book_rounded,
@@ -160,6 +170,16 @@ class StudentDashboardScreen extends ConsumerWidget {
                       subtitle: 'Tus materias y profesores',
                       color: const Color(0xFF4C8DF5),
                       onTap: () => context.push(Routes.subjects),
+                      art: const ArtCluster([
+                        ArtItem.icon(Icons.add_rounded,
+                            size: 18, top: 0, right: 44,),
+                        ArtItem.icon(Icons.straighten_rounded,
+                            size: 22, top: 2, right: 8, angle: 0.6,),
+                        ArtItem.icon(Icons.edit_rounded,
+                            size: 18, top: 30, right: 36, angle: -0.4,),
+                        ArtItem.icon(Icons.polymer_rounded,
+                            size: 20, top: 26, right: 2,),
+                      ]),
                     ),
                     _TileData(
                       icon: Icons.grade_rounded,
@@ -167,6 +187,9 @@ class StudentDashboardScreen extends ConsumerWidget {
                       subtitle: 'Calificaciones y promedio',
                       color: const Color(0xFF9A6BE0),
                       onTap: () => context.push(Routes.grades),
+                      art: const ArtCluster([
+                        ArtItem.text('A+', size: 30, top: 8, right: 6),
+                      ]),
                     ),
                     _TileData(
                       icon: Icons.event_available_rounded,
@@ -174,6 +197,10 @@ class StudentDashboardScreen extends ConsumerWidget {
                       subtitle: 'Tu porcentaje del periodo',
                       color: const Color(0xFF34C77A),
                       onTap: () => context.push(Routes.myAttendance),
+                      art: const ArtCluster([
+                        ArtItem.icon(Icons.check_rounded,
+                            size: 38, top: 6, right: 10,),
+                      ]),
                     ),
                     _TileData(
                       icon: Icons.calendar_month_rounded,
@@ -181,6 +208,10 @@ class StudentDashboardScreen extends ConsumerWidget {
                       subtitle: 'Tu horario de clases',
                       color: const Color(0xFF33B7A0),
                       onTap: () => context.push(Routes.schedule),
+                      art: const ArtCluster([
+                        ArtItem.icon(Icons.calendar_month_rounded,
+                            size: 34, top: 6, right: 12,),
+                      ]),
                     ),
                     _TileData(
                       icon: Icons.groups_rounded,
@@ -188,6 +219,10 @@ class StudentDashboardScreen extends ConsumerWidget {
                       subtitle: 'Tus compañeros de grupo',
                       color: const Color(0xFFEC6A9C),
                       onTap: () => context.push(Routes.classmates),
+                      art: const ArtCluster([
+                        ArtItem.icon(Icons.person_rounded,
+                            size: 38, top: 4, right: 12,),
+                      ]),
                     ),
                     _TileData(
                       icon: Icons.co_present_rounded,
@@ -195,6 +230,10 @@ class StudentDashboardScreen extends ConsumerWidget {
                       subtitle: 'Tus maestros y contacto',
                       color: const Color(0xFF7C6AE0),
                       onTap: () => context.push(Routes.teachers),
+                      art: const ArtCluster([
+                        ArtItem.text('🍎', size: 32, top: 4, right: 10,
+                            opacity: 0.75,),
+                      ]),
                     ),
                   ]) ...[
                     HomeOptionCard(
@@ -202,6 +241,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       title: t.title,
                       subtitle: t.subtitle,
                       color: t.color,
+                      art: t.art,
                       onTap: t.onTap,
                     ),
                     const SizedBox(height: 12),
@@ -223,6 +263,7 @@ class _TileData {
     required this.title,
     required this.color,
     this.subtitle,
+    this.art,
     this.onTap,
   });
 
@@ -230,6 +271,7 @@ class _TileData {
   final String title;
   final String? subtitle;
   final Color color;
+  final Widget? art;
   final VoidCallback? onTap;
 }
 
@@ -260,6 +302,11 @@ class _StudentHero extends StatelessWidget {
         decoration: const BoxDecoration(gradient: AppGradients.hero),
         child: Stack(
           children: [
+            Positioned(
+              top: -50,
+              left: -50,
+              child: _TimeOfDayGlow(hour: now.hour),
+            ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -302,11 +349,6 @@ class _StudentHero extends StatelessWidget {
                 Image.asset(asset, height: 210, fit: BoxFit.contain),
               ],
             ),
-            Positioned(
-              top: 14,
-              left: 14,
-              child: _TimeOfDayBadge(hour: now.hour),
-            ),
           ],
         ),
       ),
@@ -314,27 +356,33 @@ class _StudentHero extends StatelessWidget {
   }
 }
 
-/// Sol (mañana/tarde) o luna (noche) según la hora, en la esquina del hero.
-class _TimeOfDayBadge extends StatelessWidget {
-  const _TimeOfDayBadge({required this.hour});
+/// Resplandor de sol (mañana/tarde) o luna (noche) que forma parte del fondo
+/// del hero — no un ícono, sino un brillo radial que cubre la esquina.
+class _TimeOfDayGlow extends StatelessWidget {
+  const _TimeOfDayGlow({required this.hour});
   final int hour;
 
   @override
   Widget build(BuildContext context) {
-    final (icon, color) = switch (hour) {
-      < 12 => (Icons.wb_sunny_rounded, const Color(0xFFFFD54F)),
-      < 19 => (Icons.wb_sunny_rounded, const Color(0xFFFF9F43)),
-      _ => (Icons.nightlight_round, const Color(0xFFE3E9FC)),
+    final color = switch (hour) {
+      < 12 => const Color(0xFFFFE9A8),
+      < 19 => const Color(0xFFFFA65C),
+      _ => const Color(0xFFCFE0FF),
     };
-    return Container(
-      width: 34,
-      height: 34,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        shape: BoxShape.circle,
+    return IgnorePointer(
+      child: Container(
+        width: 190,
+        height: 190,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              color.withValues(alpha: 0.65),
+              color.withValues(alpha: 0.0),
+            ],
+          ),
+        ),
       ),
-      child: Icon(icon, color: color, size: 20),
     );
   }
 }
