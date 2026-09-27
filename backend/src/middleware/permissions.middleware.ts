@@ -27,3 +27,19 @@ export function requireAdmin(req: AppRequest, _res: Response, next: NextFunction
     next(error);
   }
 }
+
+export function requirePlatformAdmin(req: AppRequest, _res: Response, next: NextFunction) {
+  try {
+    const ctx = requireAppContext(req);
+    if (!permissionsService.isPlatformAdmin(ctx)) {
+      throw new HttpError(
+        403,
+        "Solo admin o super admin puede realizar esta acción.",
+        "forbidden",
+      );
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+}

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "docs:apis": "tsx scripts/generate-api-docs.ts",
+    "docs:apis": "tsx scripts/generate-api-docs.ts && tsx scripts/generate-openapi.ts",
     "prebuild": "npm run docs:apis",
     "build": "tsc -p tsconfig.json",
     "pretest": "npm run docs:apis",

@@ -12,6 +12,14 @@ export class PermissionsService {
     );
   }
 
+  isPlatformAdmin(ctx: AppContext) {
+    return ctx.roles.has("admin") || ctx.roles.has("super_admin");
+  }
+
+  isSuperAdmin(ctx: AppContext) {
+    return ctx.roles.has("super_admin");
+  }
+
   hasAnyRole(ctx: AppContext, roles: string[]) {
     return roles.some((role) => ctx.roles.has(role)) || this.isAdmin(ctx);
   }
