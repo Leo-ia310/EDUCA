@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-/// Género del estudiante, usado solo para elegir la ilustración del hero del
-/// home (niño/niña). No tiene otro efecto en la app.
-enum StudentGender { male, female }
-
 class ScheduleSlot extends Equatable {
   const ScheduleSlot({
     required this.startTime,

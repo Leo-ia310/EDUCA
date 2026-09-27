@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
-import '../../../../core/theme/app_gradients.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
@@ -14,7 +13,6 @@ import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
 import '../../data/dashboard_data.dart';
-import '../../domain/dashboard_models.dart';
 import '../../providers.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/schedule_item.dart';
@@ -83,14 +81,13 @@ class StudentDashboardScreen extends ConsumerWidget {
                   top: Radius.circular(_panelRadius),
                 ),
               ),
-              padding: const EdgeInsets.fromLTRB(16, 44, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               child: StaggeredEntrance(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _StudentHero(
                     name: user.displayFirstName,
                     gradeGroup: data.gradeGroup,
-                    gender: data.gender,
                   ),
                   const SizedBox(height: 24),
 
@@ -148,9 +145,9 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.assignments),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.edit_rounded,
-                            size: 30, top: 0, right: 30, angle: 0.35,),
+                            size: 46, top: 2, right: 24, angle: 0.35,),
                         ArtItem.icon(Icons.edit_rounded,
-                            size: 22, top: 28, right: 4, angle: -0.5,),
+                            size: 34, top: 46, right: -8, angle: -0.5,),
                       ]),
                     ),
                     _TileData(
@@ -161,7 +158,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.exams),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.description_rounded,
-                            size: 36, top: 6, right: 14, angle: 0.12,),
+                            size: 58, top: 18, right: -4, angle: 0.12,),
                       ]),
                     ),
                     _TileData(
@@ -172,13 +169,13 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.subjects),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.add_rounded,
-                            size: 18, top: 0, right: 44,),
+                            size: 26, top: 4, right: 60,),
                         ArtItem.icon(Icons.straighten_rounded,
-                            size: 22, top: 2, right: 8, angle: 0.6,),
+                            size: 34, top: 6, right: 12, angle: 0.6,),
                         ArtItem.icon(Icons.edit_rounded,
-                            size: 18, top: 30, right: 36, angle: -0.4,),
+                            size: 26, top: 48, right: 46, angle: -0.4,),
                         ArtItem.icon(Icons.polymer_rounded,
-                            size: 20, top: 26, right: 2,),
+                            size: 30, top: 44, right: -6,),
                       ]),
                     ),
                     _TileData(
@@ -188,7 +185,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       color: const Color(0xFF9A6BE0),
                       onTap: () => context.push(Routes.grades),
                       art: const ArtCluster([
-                        ArtItem.text('A+', size: 30, top: 8, right: 6),
+                        ArtItem.text('A+', size: 46, top: 24, right: -2),
                       ]),
                     ),
                     _TileData(
@@ -199,7 +196,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.myAttendance),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.check_rounded,
-                            size: 38, top: 6, right: 10,),
+                            size: 60, top: 18, right: -2,),
                       ]),
                     ),
                     _TileData(
@@ -210,7 +207,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.schedule),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.calendar_month_rounded,
-                            size: 34, top: 6, right: 12,),
+                            size: 56, top: 18, right: -2,),
                       ]),
                     ),
                     _TileData(
@@ -221,7 +218,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.classmates),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.person_rounded,
-                            size: 38, top: 4, right: 12,),
+                            size: 60, top: 16, right: -2,),
                       ]),
                     ),
                     _TileData(
@@ -231,8 +228,8 @@ class StudentDashboardScreen extends ConsumerWidget {
                       color: const Color(0xFF7C6AE0),
                       onTap: () => context.push(Routes.teachers),
                       art: const ArtCluster([
-                        ArtItem.text('🍎', size: 32, top: 4, right: 10,
-                            opacity: 0.75,),
+                        ArtItem.icon(Icons.apple,
+                            size: 56, top: 18, right: -2,),
                       ]),
                     ),
                   ]) ...[
@@ -276,111 +273,89 @@ class _TileData {
 }
 
 /// Hero de bienvenida del home: saludo + nombre + grado/grupo alineados a la
-/// izquierda, ilustración del estudiante (según género) alineada a la derecha.
+/// izquierda, sobre una ilustración de fondo (mañana/tarde/noche) según la
+/// hora del día.
 class _StudentHero extends StatelessWidget {
   const _StudentHero({
     required this.name,
     required this.gradeGroup,
-    required this.gender,
   });
 
   final String name;
   final String gradeGroup;
-  final StudentGender gender;
+
+  static String _backgroundFor(int hour) {
+    if (hour < 12) return 'assets/images/hero_sky_morning.png';
+    if (hour < 19) return 'assets/images/hero_sky_afternoon.png';
+    return 'assets/images/hero_sky_night.png';
+  }
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final greeting = DateUtilsX.greetingForHour(now);
-    final asset = gender == StudentGender.female
-        ? 'assets/images/student_avatar_girl_half.png'
-        : 'assets/images/student_avatar_boy_half.png';
+    final textShadows = [
+      Shadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 8),
+    ];
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(Radii.xl),
-      child: Container(
-        decoration: const BoxDecoration(gradient: AppGradients.hero),
+      child: SizedBox(
+        height: 300,
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            Positioned(
-              top: -50,
-              left: -50,
-              child: _TimeOfDayGlow(hour: now.hour),
+            Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
+            // Velo oscuro a la izquierda para que el texto sea legible sobre
+            // la ilustración.
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Colors.black38, Colors.transparent],
+                  stops: [0, 0.75],
+                ),
+              ),
             ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 44, 8, 28),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          greeting,
-                          style: context.textTheme.titleMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.88),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.textTheme.headlineMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          gradeGroup,
-                          style: context.textTheme.titleSmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.88),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 26, 20, 26),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    greeting,
+                    style: context.textTheme.titleMedium?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontWeight: FontWeight.w600,
+                      shadows: textShadows,
                     ),
                   ),
-                ),
-                Image.asset(asset, height: 210, fit: BoxFit.contain),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.headlineMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      shadows: textShadows,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    gradeGroup,
+                    style: context.textTheme.titleSmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontWeight: FontWeight.w700,
+                      shadows: textShadows,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Resplandor de sol (mañana/tarde) o luna (noche) que forma parte del fondo
-/// del hero — no un ícono, sino un brillo radial que cubre la esquina.
-class _TimeOfDayGlow extends StatelessWidget {
-  const _TimeOfDayGlow({required this.hour});
-  final int hour;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = switch (hour) {
-      < 12 => const Color(0xFFFFE9A8),
-      < 19 => const Color(0xFFFFA65C),
-      _ => const Color(0xFFCFE0FF),
-    };
-    return IgnorePointer(
-      child: Container(
-        width: 190,
-        height: 190,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.65),
-              color.withValues(alpha: 0.0),
-            ],
-          ),
         ),
       ),
     );

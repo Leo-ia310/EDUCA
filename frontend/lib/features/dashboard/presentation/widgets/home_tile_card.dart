@@ -64,56 +64,69 @@ class HomeOptionCard extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: Row(
-                children: [
-                  Container(
-                    width: 54,
-                    height: 54,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: color, size: 26),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Ilustración temática, grande y pegada al borde derecho;
+                // puede quedar parcialmente detrás de la flecha.
+                if (art != null)
+                  Positioned(
+                    top: 0,
+                    bottom: 0,
+                    right: -8,
+                    width: 132,
+                    child: art!,
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
                         ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.82),
+                        child: Icon(icon, color: color, size: 26),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
-                          ),
-                        ],
-                      ],
-                    ),
+                            if (subtitle != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    context.textTheme.bodySmall?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.82),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const _BoldArrow(),
+                    ],
                   ),
-                  if (art != null) ...[
-                    SizedBox(width: 64, height: 56, child: art),
-                    const SizedBox(width: 4),
-                  ],
-                  const _BoldArrow(),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
