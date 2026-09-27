@@ -72,7 +72,7 @@ class MyTeachersScreen extends ConsumerWidget {
         children: [
           for (var i = 0; i < teachers.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
-            _TeacherCard(teacher: teachers[i]),
+            TeacherCard(teacher: teachers[i]),
           ],
         ],
       ),
@@ -80,8 +80,11 @@ class MyTeachersScreen extends ConsumerWidget {
   }
 }
 
-class _TeacherCard extends StatelessWidget {
-  const _TeacherCard({required this.teacher});
+/// Tarjeta horizontal de un maestro: avatar con iniciales, nombre + materias
+/// que imparte, acceso directo a chat. Usada en "Mis maestros" y en el
+/// resumen "Maestros" del home.
+class TeacherCard extends StatelessWidget {
+  const TeacherCard({super.key, required this.teacher});
   final Teacher teacher;
 
   @override

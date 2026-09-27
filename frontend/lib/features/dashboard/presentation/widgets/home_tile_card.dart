@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 
-/// Tarjeta **cuadrada** de acceso rápido del home del estudiante. Superficie
-/// blanca (elevada) con sombra para resaltar del fondo; ícono grande sin fondo
-/// circular arriba-centro, y el título centrado debajo.
+/// Tarjeta **horizontal** de acceso rápido del home del estudiante: título
+/// alineado a la izquierda, ícono a la derecha. Se apilan una encima de otra
+/// (ver `_HomeOptionsList` en el dashboard).
 ///
 /// Si [onTap] es null la tarjeta se muestra igual pero no navega (sección aún
 /// sin conectar); se atenúa levemente para diferenciarla de las activas.
-class HomeTileCard extends StatelessWidget {
-  const HomeTileCard({
+class HomeOptionCard extends StatelessWidget {
+  const HomeOptionCard({
     super.key,
     required this.icon,
     required this.title,
@@ -33,51 +33,13 @@ class HomeTileCard extends StatelessWidget {
     final palette = context.palette;
     final enabled = onTap != null;
 
-    final content = Padding(
-      padding: const EdgeInsets.fromLTRB(8, 16, 8, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, color: s.vivid, size: 38),
-          const SizedBox(height: 8),
-          Flexible(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: context.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    // Superficie con un leve resplandor del color de la categoría arriba, para
-    // dar vida sin abandonar la tarjeta neutra.
-    final top = Color.alphaBlend(
-      s.vivid.withValues(alpha: 0.12),
-      palette.cardElevated,
-    );
-
-    // La tarjeta llena por completo la celda cuadrada (mismo tamaño para todas).
     return Opacity(
       opacity: enabled ? 1 : 0.6,
       child: Container(
-        width: double.infinity,
-        height: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [top, palette.cardElevated],
-          ),
+          color: palette.cardElevated,
           borderRadius: BorderRadius.circular(Radii.lg),
-          border: Border.all(
-            color: s.vivid.withValues(alpha: 0.28),
-          ),
+          border: Border.all(color: s.vivid.withValues(alpha: 0.22)),
           boxShadow: AppShadows.lifted(context),
         ),
         child: Material(
@@ -86,7 +48,32 @@ class HomeTileCard extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            child: Center(child: content),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: s.vivid,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

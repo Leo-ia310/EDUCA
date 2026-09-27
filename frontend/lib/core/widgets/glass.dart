@@ -56,6 +56,9 @@ Future<T?> showGlassSheet<T>(
   return showModalBottomSheet<T>(
     context: context,
     backgroundColor: Colors.transparent,
+    // Sin scrim propio: el único oscurecimiento visible es el desenfoque del
+    // `BackdropFilter` de `GlassSurface`, para que la hoja no se vea opaca.
+    barrierColor: Colors.transparent,
     builder: (ctx) => GlassSurface(
       borderRadius:
           const BorderRadius.vertical(top: Radius.circular(Radii.xl)),

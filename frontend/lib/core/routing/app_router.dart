@@ -6,6 +6,7 @@ import '../../features/assignments/presentation/screens/assignment_detail_screen
 import '../../features/assignments/presentation/screens/assignment_form_screen.dart';
 import '../../features/assignments/presentation/screens/grading_screen.dart';
 import '../../features/assignments/presentation/screens/student_assignments_screen.dart';
+import '../../features/assignments/presentation/screens/student_exams_screen.dart';
 import '../../features/assignments/presentation/screens/teacher_assignments_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_classes_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_history_screen.dart';
@@ -187,6 +188,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
+      ),
+
+      // ----- Pruebas (exámenes/quizzes) -----
+      GoRoute(
+        path: Routes.exams,
+        builder: (context, state) => const _ExamsRoleSplit(),
       ),
 
       // ----- Tareas (assignments) -----
@@ -612,17 +619,49 @@ class _AssignmentsRoleSplit extends ConsumerWidget {
   }
 }
 
+/// Dispatcher de `/exams`: solo tiene sentido para estudiante/padre (el
+/// docente ya ve exámenes dentro de su lista de tareas).
+class _ExamsRoleSplit extends ConsumerWidget {
+  const _ExamsRoleSplit();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authControllerProvider).user;
+    final role = user?.activeRole ?? AppRole.student;
+    switch (role) {
+      case AppRole.parent:
+        return _StudentAssignmentsResolved(
+          idProvider: parentChildStudentIdProvider,
+          builder: StudentExamsScreen.new,
+        );
+      case AppRole.student:
+      case AppRole.teacher:
+      case AppRole.admin:
+      case AppRole.coordinator:
+      case AppRole.director:
+        return _StudentAssignmentsResolved(
+          idProvider: currentStudentIdProvider,
+          builder: StudentExamsScreen.new,
+        );
+    }
+  }
+}
+
 /// Resuelve el `studentId` real (vía RPC del backend) antes de mostrar el feed
 /// de tareas del estudiante/padre. Evita el `studentId: 1001` hardcodeado.
 class _StudentAssignmentsResolved extends ConsumerWidget {
-  const _StudentAssignmentsResolved({required this.idProvider});
+  const _StudentAssignmentsResolved({
+    required this.idProvider,
+    this.builder = StudentAssignmentsScreen.new,
+  });
 
   final FutureProvider<int> idProvider;
+  final Widget Function({Key? key, required int studentId}) builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(idProvider).when(
-          data: (id) => StudentAssignmentsScreen(studentId: id),
+          data: (id) => builder(studentId: id),
           loading: () =>
               const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (e, _) =>

@@ -31,7 +31,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     return StudentDetailScaffold(
       title: 'Horario',
-      showBack: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

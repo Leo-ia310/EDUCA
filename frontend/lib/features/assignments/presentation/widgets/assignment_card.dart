@@ -54,7 +54,6 @@ class AssignmentCard extends StatelessWidget {
     final vivid = s.vivid;
     final cardBg = s.surface;
     final inkMuted = s.inkMuted;
-    final status = assignment.statusForNow(DateTime.now());
     final fmt = DateFormat("d MMM, HH:mm", 'es');
 
     return Material(
@@ -67,40 +66,29 @@ class AssignmentCard extends StatelessWidget {
             color: cardBg,
             borderRadius: BorderRadius.circular(Radii.lg),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(Radii.lg),
+            child: Stack(
               children: [
-                // Ícono en círculo vívido según el tipo de tarea.
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: vivid,
-                    shape: BoxShape.circle,
-                  ),
+                // Ícono grande de fondo (marca de agua) según el tipo.
+                Positioned(
+                  right: -14,
+                  bottom: -14,
                   child: Icon(
                     _kindIcon(assignment.kind),
-                    color: Colors.white,
-                    size: 24,
+                    size: 96,
+                    color: vivid.withValues(alpha: 0.16),
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
+                Padding(
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          AssignmentStatusChip(status: status, onPastel: true),
-                          const Spacer(),
-                          if (studentStatus != null)
-                            SubmissionStatusChip(
-                                status: studentStatus!, onPastel: true,),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
+                      if (studentStatus != null)
+                        SubmissionStatusChip(
+                            status: studentStatus!, onPastel: true,),
+                      SizedBox(height: studentStatus != null ? 10 : 0),
                       Text(
                         assignment.title,
                         maxLines: 2,

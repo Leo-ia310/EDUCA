@@ -36,6 +36,7 @@ class Routes {
 
   static const assignments = '/assignments';
   static const assignmentNew = '/assignments/new';
+  static const exams = '/exams';
   static const grades = '/grades';
   static const gradebook = '/grades/gradebook';
   static const attendance = '/attendance';

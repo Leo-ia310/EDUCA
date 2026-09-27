@@ -124,21 +124,22 @@ class _Header extends StatelessWidget {
   const _Header({required this.assignment});
   final Assignment assignment;
 
+  static IconData _kindIcon(AssignmentKind kind) => switch (kind) {
+        AssignmentKind.homework => Icons.assignment_rounded,
+        AssignmentKind.exam => Icons.school_rounded,
+        AssignmentKind.project => Icons.workspaces_rounded,
+        AssignmentKind.quiz => Icons.quiz_rounded,
+        AssignmentKind.presentation => Icons.slideshow_rounded,
+      };
+
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(assignment.subjectName));
     final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final fmt = DateFormat("EEE d MMM, HH:mm", 'es');
-    final statusLabel = switch (assignment.statusForNow(DateTime.now())) {
-      AssignmentStatus.draft => 'Borrador',
-      AssignmentStatus.open => 'Abierta',
-      AssignmentStatus.dueSoon => 'Vence pronto',
-      AssignmentStatus.overdue => 'Vencida',
-      AssignmentStatus.closed => 'Cerrada',
-    };
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -147,47 +148,57 @@ class _Header extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(Radii.xl),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              _HeroChip(label: assignment.kind.label),
-              const SizedBox(width: 8),
-              _HeroChip(label: statusLabel),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            assignment.title,
-            style: context.textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
+          // Ícono grande de fondo (marca de agua) según el tipo de tarea.
+          Positioned(
+            right: -18,
+            bottom: -18,
+            child: Icon(
+              _kindIcon(assignment.kind),
+              size: 120,
+              color: Colors.white.withValues(alpha: 0.14),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${assignment.subjectName} · ${assignment.groupName}',
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Icon(Icons.event, size: 16, color: Colors.white),
-              const SizedBox(width: 6),
-              Text(
-                'Entrega ${fmt.format(assignment.dueAt)}',
-                style: context.textTheme.labelMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  assignment.title,
+                  style: context.textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              _HeroChip(label: '${assignment.maxScore.toStringAsFixed(0)} pts'),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  '${assignment.subjectName} · ${assignment.groupName}',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(Icons.event, size: 16, color: Colors.white),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Entrega ${fmt.format(assignment.dueAt)}',
+                      style: context.textTheme.labelMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    _HeroChip(
+                        label: '${assignment.maxScore.toStringAsFixed(0)} pts',),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

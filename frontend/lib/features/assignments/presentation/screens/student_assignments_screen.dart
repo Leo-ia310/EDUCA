@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/collapsible_section.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/error_state.dart';
-import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
@@ -39,7 +39,13 @@ class StudentAssignmentsScreen extends ConsumerWidget {
           list.when(
           loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
-          data: (items) {
+          data: (allItems) {
+            // Solo tareas: los exámenes/quizzes viven en "Mis pruebas".
+            final items = allItems
+                .where((a) =>
+                    a.kind != AssignmentKind.exam &&
+                    a.kind != AssignmentKind.quiz,)
+                .toList();
             if (items.isEmpty) {
               return EmptyState(
                 icon: Icons.task_alt_rounded,
@@ -51,15 +57,17 @@ class StudentAssignmentsScreen extends ConsumerWidget {
             }
             final now = DateTime.now();
             final pending = items
-                .where((a) =>
-                    a.statusForNow(now) == AssignmentStatus.open ||
-                    a.statusForNow(now) == AssignmentStatus.dueSoon,)
+                .where((a) => a.statusForNow(now) == AssignmentStatus.open)
+                .toList();
+            final dueSoon = items
+                .where((a) => a.statusForNow(now) == AssignmentStatus.dueSoon)
                 .toList();
             final past = items
                 .where((a) =>
                     a.statusForNow(now) == AssignmentStatus.overdue ||
                     a.statusForNow(now) == AssignmentStatus.closed,)
                 .toList();
+            var entranceIndex = 0;
             return RefreshIndicator(
               color: palette.accentDeep,
               onRefresh: () async =>
@@ -68,35 +76,64 @@ class StudentAssignmentsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
                 children: [
                   if (pending.isNotEmpty) ...[
-                    const SectionHeader(title: 'Por entregar'),
-                    const SizedBox(height: 8),
-                    for (final (i, a) in pending.indexed)
-                      entranceItem(
-                        context,
-                        i,
-                        _StudentTile(
-                          assignment: a,
-                          studentId: studentId,
-                          onTap: () =>
-                              context.push('${Routes.assignments}/${a.id}'),
-                        ),
-                      ),
+                    CollapsibleSection(
+                      title: 'Por entregar',
+                      trailingCount: pending.length,
+                      children: [
+                        for (final a in pending)
+                          entranceItem(
+                            context,
+                            entranceIndex++,
+                            _StudentTile(
+                              assignment: a,
+                              studentId: studentId,
+                              onTap: () => context
+                                  .push('${Routes.assignments}/${a.id}'),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (dueSoon.isNotEmpty) ...[
+                    CollapsibleSection(
+                      title: 'Vencen pronto',
+                      trailingCount: dueSoon.length,
+                      children: [
+                        for (final a in dueSoon)
+                          entranceItem(
+                            context,
+                            entranceIndex++,
+                            _StudentTile(
+                              assignment: a,
+                              studentId: studentId,
+                              onTap: () => context
+                                  .push('${Routes.assignments}/${a.id}'),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                   ],
                   if (past.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    const SectionHeader(title: 'Pasadas'),
-                    const SizedBox(height: 8),
-                    for (final (i, a) in past.indexed)
-                      entranceItem(
-                        context,
-                        pending.length + i,
-                        _StudentTile(
-                          assignment: a,
-                          studentId: studentId,
-                          onTap: () =>
-                              context.push('${Routes.assignments}/${a.id}'),
-                        ),
-                      ),
+                    CollapsibleSection(
+                      title: 'Pasadas',
+                      trailingCount: past.length,
+                      initiallyExpanded: false,
+                      children: [
+                        for (final a in past)
+                          entranceItem(
+                            context,
+                            entranceIndex++,
+                            _StudentTile(
+                              assignment: a,
+                              studentId: studentId,
+                              onTap: () => context
+                                  .push('${Routes.assignments}/${a.id}'),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ],
               ),
