@@ -52,6 +52,7 @@ class GlassSurface extends StatelessWidget {
 Future<T?> showGlassSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
+  double blur = 18,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -60,6 +61,7 @@ Future<T?> showGlassSheet<T>(
     // `BackdropFilter` de `GlassSurface`, para que la hoja no se vea opaca.
     barrierColor: Colors.transparent,
     builder: (ctx) => GlassSurface(
+      blur: blur,
       borderRadius:
           const BorderRadius.vertical(top: Radius.circular(Radii.xl)),
       child: SafeArea(

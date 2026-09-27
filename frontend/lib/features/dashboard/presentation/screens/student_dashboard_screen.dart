@@ -17,7 +17,6 @@ import '../../providers.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/schedule_item.dart';
 import '../widgets/student_home_header.dart';
-import 'my_teachers_screen.dart';
 
 class StudentDashboardScreen extends ConsumerWidget {
   const StudentDashboardScreen({super.key});
@@ -132,6 +131,12 @@ class StudentDashboardScreen extends ConsumerWidget {
                       color: const Color(0xFFEC6A9C),
                       onTap: () => context.push(Routes.classmates),
                     ),
+                    _TileData(
+                      icon: Icons.co_present_rounded,
+                      title: 'Maestros',
+                      color: const Color(0xFF7C6AE0),
+                      onTap: () => context.push(Routes.teachers),
+                    ),
                   ]) ...[
                     HomeOptionCard(
                       icon: t.icon,
@@ -181,23 +186,6 @@ class StudentDashboardScreen extends ConsumerWidget {
                         )
                       : null,
             ),
-          ],
-          const SizedBox(height: 12),
-
-          // Maestros: tarjetas horizontales, una por profesor.
-          Row(
-            children: [
-              const Expanded(child: SectionHeader(title: 'Maestros')),
-              TextButton(
-                onPressed: () => context.push(Routes.teachers),
-                child: const Text('Ver todo'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          for (final t in teachersFrom(data)) ...[
-            TeacherCard(teacher: t),
-            const SizedBox(height: 12),
           ],
               ],
             ),

@@ -355,6 +355,7 @@ class _SlotCard extends StatelessWidget {
   void _showDetails(BuildContext context) {
     showGlassSheet<void>(
       context,
+      blur: 0,
       builder: (context) => Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           child: Column(
