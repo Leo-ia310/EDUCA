@@ -143,48 +143,56 @@ class StudentDashboardScreen extends ConsumerWidget {
                     _TileData(
                       icon: Icons.note_alt_rounded,
                       title: 'Tareas',
+                      subtitle: 'Pendientes y entregadas',
                       color: const Color(0xFFF3993E),
                       onTap: () => context.push(Routes.assignments),
                     ),
                     _TileData(
                       icon: Icons.school_rounded,
                       title: 'Pruebas',
+                      subtitle: 'Exámenes y quizzes',
                       color: const Color(0xFFD65D6B),
                       onTap: () => context.push(Routes.exams),
                     ),
                     _TileData(
                       icon: Icons.menu_book_rounded,
                       title: 'Materias',
+                      subtitle: 'Tus materias y profesores',
                       color: const Color(0xFF4C8DF5),
                       onTap: () => context.push(Routes.subjects),
                     ),
                     _TileData(
                       icon: Icons.grade_rounded,
                       title: 'Notas',
+                      subtitle: 'Calificaciones y promedio',
                       color: const Color(0xFF9A6BE0),
                       onTap: () => context.push(Routes.grades),
                     ),
                     _TileData(
                       icon: Icons.event_available_rounded,
                       title: 'Asistencia',
+                      subtitle: 'Tu porcentaje del periodo',
                       color: const Color(0xFF34C77A),
                       onTap: () => context.push(Routes.myAttendance),
                     ),
                     _TileData(
                       icon: Icons.calendar_month_rounded,
                       title: 'Horario',
+                      subtitle: 'Tu horario de clases',
                       color: const Color(0xFF33B7A0),
                       onTap: () => context.push(Routes.schedule),
                     ),
                     _TileData(
                       icon: Icons.groups_rounded,
                       title: 'Compañeros',
+                      subtitle: 'Tus compañeros de grupo',
                       color: const Color(0xFFEC6A9C),
                       onTap: () => context.push(Routes.classmates),
                     ),
                     _TileData(
                       icon: Icons.co_present_rounded,
                       title: 'Maestros',
+                      subtitle: 'Tus maestros y contacto',
                       color: const Color(0xFF7C6AE0),
                       onTap: () => context.push(Routes.teachers),
                     ),
@@ -192,6 +200,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                     HomeOptionCard(
                       icon: t.icon,
                       title: t.title,
+                      subtitle: t.subtitle,
                       color: t.color,
                       onTap: t.onTap,
                     ),
@@ -213,11 +222,13 @@ class _TileData {
     required this.icon,
     required this.title,
     required this.color,
+    this.subtitle,
     this.onTap,
   });
 
   final IconData icon;
   final String title;
+  final String? subtitle;
   final Color color;
   final VoidCallback? onTap;
 }
@@ -237,58 +248,93 @@ class _StudentHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final greeting = DateUtilsX.greetingForHour(DateTime.now());
+    final now = DateTime.now();
+    final greeting = DateUtilsX.greetingForHour(now);
     final asset = gender == StudentGender.female
-        ? 'assets/images/student_avatar_girl.png'
-        : 'assets/images/student_avatar_boy.png';
+        ? 'assets/images/student_avatar_girl_half.png'
+        : 'assets/images/student_avatar_boy_half.png';
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(Radii.xl),
       child: Container(
         decoration: const BoxDecoration(gradient: AppGradients.hero),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        child: Stack(
           children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 22, 8, 22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      greeting,
-                      style: context.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontWeight: FontWeight.w600,
-                      ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 44, 8, 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          greeting,
+                          style: context.textTheme.titleMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.88),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textTheme.headlineMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          gradeGroup,
+                          style: context.textTheme.titleSmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.88),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      gradeGroup,
-                      style: context.textTheme.labelMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                Image.asset(asset, height: 210, fit: BoxFit.contain),
+              ],
             ),
-            Image.asset(asset, height: 148, fit: BoxFit.contain),
+            Positioned(
+              top: 14,
+              left: 14,
+              child: _TimeOfDayBadge(hour: now.hour),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Sol (mañana/tarde) o luna (noche) según la hora, en la esquina del hero.
+class _TimeOfDayBadge extends StatelessWidget {
+  const _TimeOfDayBadge({required this.hour});
+  final int hour;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, color) = switch (hour) {
+      < 12 => (Icons.wb_sunny_rounded, const Color(0xFFFFD54F)),
+      < 19 => (Icons.wb_sunny_rounded, const Color(0xFFFF9F43)),
+      _ => (Icons.nightlight_round, const Color(0xFFE3E9FC)),
+    };
+    return Container(
+      width: 34,
+      height: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color, size: 20),
     );
   }
 }

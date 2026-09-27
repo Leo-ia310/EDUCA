@@ -1,14 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 
-/// Tarjeta **horizontal** de acceso rápido del home del estudiante: degradado
-/// vívido por categoría, título en blanco alineado a la izquierda, y un
-/// ícono grande "marca de agua" que sangra por la esquina inferior derecha,
-/// con un par de destellos decorativos. Se apilan una encima de otra (ver
-/// `_HomeOptionsList` en el dashboard).
+/// Tarjeta **horizontal** de acceso rápido del home del estudiante: ícono en
+/// círculo blanco a la izquierda, título + subtítulo, y una flecha en círculo
+/// a la derecha, sobre un degradado vívido con una burbuja decorativa
+/// translúcida. Se apilan una encima de otra (ver `_HomeOptionsList` en el
+/// dashboard).
 ///
 /// Si [onTap] es null la tarjeta se muestra igual pero no navega (sección aún
 /// sin conectar); se atenúa levemente para diferenciarla de las activas.
@@ -18,11 +16,13 @@ class HomeOptionCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.color,
+    this.subtitle,
     this.onTap,
   });
 
   final IconData icon;
   final String title;
+  final String? subtitle;
 
   /// Color de acento por categoría (define el degradado de la tarjeta).
   final Color color;
@@ -33,7 +33,7 @@ class HomeOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
-    final light = Color.lerp(color, Colors.white, 0.24)!;
+    final light = Color.lerp(color, Colors.white, 0.16)!;
     final deep = Color.lerp(color, Colors.black, 0.22)!;
 
     return Opacity(
@@ -59,69 +59,88 @@ class HomeOptionCard extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            child: SizedBox(
-              height: 94,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Ícono grande de fondo, sangrando por la esquina.
-                  Positioned(
-                    right: -16,
-                    bottom: -16,
-                    child: Transform.rotate(
-                      angle: -math.pi / 14,
-                      child: Icon(
-                        icon,
-                        size: 92,
-                        color: Colors.white.withValues(alpha: 0.24),
-                      ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Burbuja decorativa translúcida, sangrando por la esquina.
+                Positioned(
+                  right: -36,
+                  top: -34,
+                  child: Container(
+                    width: 130,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.10),
                     ),
                   ),
-                  // Destellos decorativos.
-                  const Positioned(
-                    right: 78,
-                    top: 20,
-                    child: _Sparkle(size: 12),
-                  ),
-                  const Positioned(
-                    right: 58,
-                    top: 42,
-                    child: _Sparkle(size: 7),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        title,
-                        style: context.textTheme.titleLarge?.copyWith(
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
                           color: Colors.white,
-                          fontWeight: FontWeight.w800,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: color, size: 26),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (subtitle != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.textTheme.bodySmall?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.82),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 38,
+                        height: 38,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.24),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Destello decorativo (estrella de 4 puntas) sobre el degradado.
-class _Sparkle extends StatelessWidget {
-  const _Sparkle({required this.size});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      Icons.auto_awesome_rounded,
-      size: size,
-      color: Colors.white.withValues(alpha: 0.55),
     );
   }
 }
