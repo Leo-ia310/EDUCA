@@ -69,9 +69,15 @@ class StudentDashboardScreen extends ConsumerWidget {
                 ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
             onNotificationsTap: () => context.go(Routes.alerts),
           ),
-          // Panel del contenido: se monta sobre la barra azul con esquinas
+          // Hero full-bleed: pegado a la barra superior y a los laterales
+          // (sin margen), la curva del panel lo solapa por debajo.
+          _StudentHero(
+            name: user.displayFirstName,
+            gradeGroup: data.gradeGroup,
+          ),
+          // Panel del contenido: se monta sobre el hero con esquinas
           // superiores redondeadas (solape = radio), de modo que la curva
-          // parezca del panel (cóncava) y no de la barra.
+          // parezca del panel (cóncava) y no del hero.
           Transform.translate(
             offset: const Offset(0, -_panelRadius),
             child: Container(
@@ -81,16 +87,10 @@ class StudentDashboardScreen extends ConsumerWidget {
                   top: Radius.circular(_panelRadius),
                 ),
               ),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
               child: StaggeredEntrance(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _StudentHero(
-                    name: user.displayFirstName,
-                    gradeGroup: data.gradeGroup,
-                  ),
-                  const SizedBox(height: 24),
-
                   // Horario de hoy
                   Row(
                     children: [
@@ -145,9 +145,9 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.assignments),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.edit_rounded,
-                            size: 46, top: 2, right: 24, angle: 0.35,),
+                            size: 64, top: 4, right: 40, angle: 0.35,),
                         ArtItem.icon(Icons.edit_rounded,
-                            size: 34, top: 46, right: -8, angle: -0.5,),
+                            size: 48, top: 50, right: 0, angle: -0.5,),
                       ]),
                     ),
                     _TileData(
@@ -158,7 +158,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.exams),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.description_rounded,
-                            size: 58, top: 18, right: -4, angle: 0.12,),
+                            size: 96, top: 3, right: 6, angle: 0.12,),
                       ]),
                     ),
                     _TileData(
@@ -169,13 +169,13 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.subjects),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.add_rounded,
-                            size: 26, top: 4, right: 60,),
+                            size: 28, top: 2, right: 70,),
                         ArtItem.icon(Icons.straighten_rounded,
-                            size: 34, top: 6, right: 12, angle: 0.6,),
+                            size: 34, top: 4, right: 30, angle: 0.6,),
                         ArtItem.icon(Icons.edit_rounded,
-                            size: 26, top: 48, right: 46, angle: -0.4,),
+                            size: 26, top: 54, right: 64, angle: -0.4,),
                         ArtItem.icon(Icons.polymer_rounded,
-                            size: 30, top: 44, right: -6,),
+                            size: 30, top: 50, right: 14,),
                       ]),
                     ),
                     _TileData(
@@ -185,7 +185,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       color: const Color(0xFF9A6BE0),
                       onTap: () => context.push(Routes.grades),
                       art: const ArtCluster([
-                        ArtItem.text('A+', size: 46, top: 24, right: -2),
+                        ArtItem.text('A+', size: 68, top: 17, right: 4),
                       ]),
                     ),
                     _TileData(
@@ -196,7 +196,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.myAttendance),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.check_rounded,
-                            size: 60, top: 18, right: -2,),
+                            size: 96, top: 3, right: 8,),
                       ]),
                     ),
                     _TileData(
@@ -207,7 +207,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.schedule),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.calendar_month_rounded,
-                            size: 56, top: 18, right: -2,),
+                            size: 92, top: 5, right: 8,),
                       ]),
                     ),
                     _TileData(
@@ -218,7 +218,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.classmates),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.person_rounded,
-                            size: 60, top: 16, right: -2,),
+                            size: 96, top: 3, right: 8,),
                       ]),
                     ),
                     _TileData(
@@ -229,7 +229,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       onTap: () => context.push(Routes.teachers),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.apple,
-                            size: 56, top: 18, right: -2,),
+                            size: 92, top: 5, right: 8,),
                       ]),
                     ),
                   ]) ...[
@@ -298,65 +298,63 @@ class _StudentHero extends StatelessWidget {
       Shadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 8),
     ];
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(Radii.xl),
-      child: SizedBox(
-        height: 300,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
-            // Velo oscuro a la izquierda para que el texto sea legible sobre
-            // la ilustración.
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [Colors.black38, Colors.transparent],
-                  stops: [0, 0.75],
+    return SizedBox(
+      width: double.infinity,
+      height: 380,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
+          // Velo oscuro a la izquierda para que el texto sea legible sobre
+          // la ilustración.
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Colors.black45, Colors.transparent],
+                stops: [0, 0.75],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 26, 20, 48),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  greeting,
+                  style: context.textTheme.headlineSmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w600,
+                    shadows: textShadows,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.displaySmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    shadows: textShadows,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  gradeGroup,
+                  style: context.textTheme.titleLarge?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w700,
+                    shadows: textShadows,
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 26, 20, 26),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    greeting,
-                    style: context.textTheme.titleMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      fontWeight: FontWeight.w600,
-                      shadows: textShadows,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      shadows: textShadows,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    gradeGroup,
-                    style: context.textTheme.titleSmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      fontWeight: FontWeight.w700,
-                      shadows: textShadows,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
