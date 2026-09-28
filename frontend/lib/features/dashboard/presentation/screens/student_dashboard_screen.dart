@@ -298,63 +298,67 @@ class _StudentHero extends StatelessWidget {
       Shadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 8),
     ];
 
-    return SizedBox(
-      width: double.infinity,
-      height: 380,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
-          // Velo oscuro a la izquierda para que el texto sea legible sobre
-          // la ilustración.
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [Colors.black45, Colors.transparent],
-                stops: [0, 0.75],
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: SizedBox(
+        width: double.infinity,
+        height: 380,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
+            // Velo oscuro a la izquierda para que el texto sea legible sobre
+            // la ilustración.
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Colors.black45, Colors.transparent],
+                  stops: [0, 0.75],
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 26, 20, 48),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  greeting,
-                  style: context.textTheme.headlineSmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontWeight: FontWeight.w600,
-                    shadows: textShadows,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 26, 20, 48),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    greeting,
+                    style: context.textTheme.titleMedium?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 2.2,
+                      shadows: textShadows,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.displaySmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    shadows: textShadows,
+                  const SizedBox(height: 10),
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.displayMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      shadows: textShadows,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  gradeGroup,
-                  style: context.textTheme.titleLarge?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontWeight: FontWeight.w700,
-                    shadows: textShadows,
+                  const SizedBox(height: 8),
+                  Text(
+                    gradeGroup,
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontWeight: FontWeight.w700,
+                      shadows: textShadows,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
