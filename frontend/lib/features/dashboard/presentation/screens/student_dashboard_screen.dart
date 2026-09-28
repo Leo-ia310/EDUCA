@@ -298,13 +298,23 @@ class _StudentHero extends StatelessWidget {
       Shadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 8),
     ];
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: SizedBox(
-        width: double.infinity,
-        height: 380,
-        child: Stack(
-          fit: StackFit.expand,
+    return DecoratedBox(
+      // Rellena de azul (mismo tono que la barra superior) las esquinas que
+      // el radio del hero deja al descubierto, para que no se vea blanco.
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [EducaBottomNav.barColor, Color(0xFF3B74D6)],
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: SizedBox(
+          width: double.infinity,
+          height: 380,
+          child: Stack(
+            fit: StackFit.expand,
           children: [
             Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
             // Velo oscuro a la izquierda para que el texto sea legible sobre
@@ -358,6 +368,7 @@ class _StudentHero extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
