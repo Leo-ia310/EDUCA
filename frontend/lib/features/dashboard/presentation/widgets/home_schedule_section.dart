@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -23,7 +22,7 @@ class HomeScheduleSection extends StatefulWidget {
 }
 
 class _HomeScheduleSectionState extends State<HomeScheduleSection> {
-  static const _cardHeight = 250.0;
+  static const _cardHeight = 290.0;
 
   late final int _todayIdx = ScheduleMock.todayIndex();
   late int _selected = _todayIdx;
@@ -83,7 +82,7 @@ class _HomeScheduleSectionState extends State<HomeScheduleSection> {
         const SizedBox(height: 6),
         // Altura fija: la píldora seleccionada sube sin mover el resto.
         SizedBox(
-          height: 82,
+          height: 100,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -103,57 +102,136 @@ class _HomeScheduleSectionState extends State<HomeScheduleSection> {
           ),
         ),
         const SizedBox(height: 12),
-        // Se extiende al ancho completo para que se asomen las vecinas.
+        // Movimiento solo con las flechas laterales (sin deslizar).
         SizedBox(
           height: _cardHeight,
-          child: LayoutBuilder(
-            builder: (context, c) => OverflowBox(
-              maxWidth: c.maxWidth + 32,
-              minWidth: c.maxWidth + 32,
-              maxHeight: _cardHeight,
-              child: SizedBox(
-                height: _cardHeight,
-                width: c.maxWidth + 32,
-              child: ScrollConfiguration(
-                behavior: ScrollConfiguration.of(context).copyWith(
-                  dragDevices: {
-                    PointerDeviceKind.touch,
-                    PointerDeviceKind.mouse,
-                  },
-                ),
-                child: PageView.builder(
-                key: ValueKey(_selected),
-                controller: _controller,
-                clipBehavior: Clip.none,
-                itemCount: slots.length,
-                itemBuilder: (context, i) {
-                  final slot = slots[i];
-                  return _CarouselItem(
-                    controller: _controller,
-                    index: i,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: slot.isBreak
-                          ? _BreakCard(slot: slot)
-                          : _ClassCard(
-                              slot: slot,
-                              current: _selected == _todayIdx &&
-                                  !_weekend &&
-                                  nowMin >=
-                                      DateUtilsX.hhmmToMinutes(slot.start) &&
-                                  nowMin <
-                                      DateUtilsX.hhmmToMinutes(slot.end),
-                            ),
+          child: Stack(
+            children: [
+              LayoutBuilder(
+                builder: (context, c) => OverflowBox(
+                  maxWidth: c.maxWidth + 32,
+                  minWidth: c.maxWidth + 32,
+                  maxHeight: _cardHeight,
+                  child: SizedBox(
+                    height: _cardHeight,
+                    width: c.maxWidth + 32,
+                    child: PageView.builder(
+                      key: ValueKey(_selected),
+                      controller: _controller,
+                      physics: const NeverScrollableScrollPhysics(),
+                      clipBehavior: Clip.none,
+                      itemCount: slots.length,
+                      itemBuilder: (context, i) {
+                        final slot = slots[i];
+                        return _CarouselItem(
+                          controller: _controller,
+                          index: i,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: slot.isBreak
+                                ? _BreakCard(slot: slot)
+                                : _ClassCard(
+                                    slot: slot,
+                                    current: _selected == _todayIdx &&
+                                        !_weekend &&
+                                        nowMin >=
+                                            DateUtilsX.hhmmToMinutes(
+                                                slot.start,) &&
+                                        nowMin <
+                                            DateUtilsX.hhmmToMinutes(slot.end),
+                                  ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-              ),
-              ),
-            ),
+              _CarouselArrows(controller: _controller, count: slots.length),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Flechas laterales del carrusel (única forma de moverlo). Se atenúan en los
+/// extremos.
+class _CarouselArrows extends StatelessWidget {
+  const _CarouselArrows({required this.controller, required this.count});
+
+  final PageController controller;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final page = controller.hasClients &&
+                controller.position.haveDimensions
+            ? (controller.page ?? controller.initialPage.toDouble())
+            : controller.initialPage.toDouble();
+        final i = page.round();
+        void go(int to) => controller.animateToPage(
+              to,
+              duration: context.motion(AppMotion.base),
+              curve: AppMotion.standard,
+            );
+        return Row(
+          children: [
+            _ArrowButton(
+              icon: Icons.chevron_left_rounded,
+              enabled: i > 0,
+              onTap: () => go(i - 1),
+            ),
+            const Spacer(),
+            _ArrowButton(
+              icon: Icons.chevron_right_rounded,
+              enabled: i < count - 1,
+              onTap: () => go(i + 1),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ArrowButton extends StatelessWidget {
+  const _ArrowButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Center(
+      child: AnimatedOpacity(
+        duration: context.motion(AppMotion.fast),
+        opacity: enabled ? 1 : 0.25,
+        child: Material(
+          color: palette.cardElevated,
+          shape: const CircleBorder(),
+          elevation: 3,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: enabled ? onTap : null,
+            child: SizedBox(
+              width: 38,
+              height: 38,
+              child: Icon(icon, color: palette.accentDeep, size: 26),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -216,10 +294,10 @@ class _DayPill extends StatelessWidget {
           duration: context.motion(AppMotion.base),
           curve: AppMotion.standard,
           // Seleccionada: sube un poco por encima de las demás.
-          margin: EdgeInsets.only(bottom: selected ? 12 : 0),
+          margin: EdgeInsets.only(bottom: selected ? 14 : 0),
           padding: const EdgeInsets.symmetric(vertical: 8),
           width: double.infinity,
-          height: 68,
+          height: 84,
           decoration: BoxDecoration(
             color: selected ? palette.accentDeep : palette.cardElevated,
             borderRadius: BorderRadius.circular(Radii.pill),
@@ -248,7 +326,7 @@ class _DayPill extends StatelessWidget {
               ),
               Text(
                 '${date.day}',
-                style: context.textTheme.titleMedium?.copyWith(
+                style: context.textTheme.headlineSmall?.copyWith(
                   color: selected ? Colors.white : null,
                   fontWeight: FontWeight.w800,
                   height: 1.1,
@@ -300,11 +378,11 @@ class _ClassCard extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned(
-                  right: -18,
-                  bottom: 24,
+                  right: -30,
+                  bottom: 40,
                   child: Icon(
                     slot.icon,
-                    size: 120,
+                    size: 200,
                     color: s.vivid.withValues(alpha: 0.14),
                   ),
                 ),
@@ -321,22 +399,11 @@ class _ClassCard extends StatelessWidget {
                               slot.subject,
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
-                              style: context.textTheme.titleLarge?.copyWith(
+                              style: context.textTheme.headlineSmall?.copyWith(
                                 color: s.ink,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: s.vivid,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.chevron_right_rounded,
-                                color: Colors.white, size: 24,),
                           ),
                         ],
                       ),
@@ -344,11 +411,11 @@ class _ClassCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.schedule_rounded,
-                              size: 15, color: s.inkMuted,),
-                          const SizedBox(width: 5),
+                              size: 19, color: s.inkMuted,),
+                          const SizedBox(width: 6),
                           Text(
-                            slot.start,
-                            style: context.textTheme.bodySmall?.copyWith(
+                            '${slot.start} – ${slot.end}',
+                            style: context.textTheme.titleSmall?.copyWith(
                               color: s.inkMuted,
                               fontWeight: FontWeight.w600,
                             ),
@@ -358,7 +425,7 @@ class _ClassCard extends StatelessWidget {
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6,),
+                            horizontal: 12, vertical: 9,),
                         decoration: BoxDecoration(
                           color: s.vivid.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(Radii.pill),
@@ -367,15 +434,15 @@ class _ClassCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.account_circle_rounded,
-                                size: 20, color: s.vivid,),
-                            const SizedBox(width: 6),
+                                size: 28, color: s.vivid,),
+                            const SizedBox(width: 8),
                             Flexible(
                               child: Text(
                                 slot.teacher,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style:
-                                    context.textTheme.labelMedium?.copyWith(
+                                    context.textTheme.titleSmall?.copyWith(
                                   color: s.ink,
                                   fontWeight: FontWeight.w700,
                                 ),
