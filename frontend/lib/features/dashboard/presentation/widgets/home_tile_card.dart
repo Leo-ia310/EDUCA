@@ -64,69 +64,95 @@ class HomeOptionCard extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Ilustración temática, grande y pegada al borde derecho;
-                // puede quedar parcialmente detrás de la flecha.
-                if (art != null)
+            child: SizedBox(
+              height: 196,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Ilustración temática en la parte inferior izquierda.
+                  if (art != null)
+                    Positioned(
+                      left: 0,
+                      top: 76,
+                      bottom: 0,
+                      width: 132,
+                      child: art!,
+                    ),
+                  // Ícono en la esquina superior izquierda.
                   Positioned(
+                    left: 18,
+                    top: 18,
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: color, size: 26),
+                    ),
+                  ),
+                  // Título pequeño y resaltado + descripción grande, al
+                  // centro a la derecha.
+                  Positioned(
+                    left: 140,
+                    right: 20,
                     top: 0,
-                    bottom: 0,
-                    right: -8,
-                    width: 132,
-                    child: art!,
-                  ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        alignment: Alignment.center,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(icon, color: color, size: 26),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
+                    bottom: 30,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 3,),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.26),
+                            borderRadius: BorderRadius.circular(Radii.pill),
+                          ),
+                          child: Text(
+                            title,
+                            style: context.textTheme.labelMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
                             ),
-                            if (subtitle != null) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                subtitle!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style:
-                                    context.textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.82),
-                                ),
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
-                      ),
-                      const _BoldArrow(),
-                    ],
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            subtitle!,
+                            maxLines: 3,
+                            textAlign: TextAlign.end,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.headlineSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              height: 1.15,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  // Flecha negra en círculo blanco, esquina inferior derecha.
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const _BoldArrow(),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -140,14 +166,14 @@ class HomeOptionCard extends StatelessWidget {
 class _BoldArrow extends StatelessWidget {
   const _BoldArrow();
 
-  static const double _size = 28;
+  static const double _size = 24;
 
   @override
   Widget build(BuildContext context) {
     Widget arrow(Offset offset) => Transform.translate(
           offset: offset,
           child: const Icon(Icons.arrow_forward_rounded,
-              size: _size, color: Colors.white,),
+              size: _size, color: Colors.black,),
         );
     return SizedBox(
       width: _size + 2,

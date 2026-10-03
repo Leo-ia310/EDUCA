@@ -72,7 +72,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                   const HomeScheduleSection(),
                   const SizedBox(height: 24),
 
-                  const SectionHeader(title: 'Acceso Rápido'),
+                  const SectionHeader(title: 'Acceso Rápido', accent: false),
                   const SizedBox(height: 12),
                   // Accesos rápidos: tarjetas horizontales apiladas.
                   for (final t in [
