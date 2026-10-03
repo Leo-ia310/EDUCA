@@ -138,11 +138,7 @@ class SubjectDetailScreen extends ConsumerWidget {
             ],
           const SizedBox(height: 12),
 
-          SectionHeader(
-            title: 'Calificaciones',
-            action: 'Ver todas',
-            onActionTap: () => context.push(Routes.grades),
-          ),
+          const SectionHeader(title: 'Calificaciones'),
           const SizedBox(height: 8),
           DepthCard(
             color: s.surface,

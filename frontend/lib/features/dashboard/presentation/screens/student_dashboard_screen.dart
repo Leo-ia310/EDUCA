@@ -118,16 +118,6 @@ class StudentDashboardScreen extends ConsumerWidget {
                       ]),
                     ),
                     _TileData(
-                      icon: Icons.grade_rounded,
-                      title: 'Notas',
-                      subtitle: 'Calificaciones y promedio',
-                      color: const Color(0xFF9A6BE0),
-                      onTap: () => context.push(Routes.grades),
-                      art: const ArtCluster([
-                        ArtItem.text('A+', size: 68, top: 17, right: 4),
-                      ]),
-                    ),
-                    _TileData(
                       icon: Icons.event_available_rounded,
                       title: 'Asistencia',
                       subtitle: 'Tu porcentaje del periodo',
@@ -147,17 +137,6 @@ class StudentDashboardScreen extends ConsumerWidget {
                       art: const ArtCluster([
                         ArtItem.icon(Icons.calendar_month_rounded,
                             size: 92, top: 5, right: 8,),
-                      ]),
-                    ),
-                    _TileData(
-                      icon: Icons.groups_rounded,
-                      title: 'Compañeros',
-                      subtitle: 'Tus compañeros de grupo',
-                      color: const Color(0xFFEC6A9C),
-                      onTap: () => context.push(Routes.classmates),
-                      art: const ArtCluster([
-                        ArtItem.icon(Icons.person_rounded,
-                            size: 96, top: 3, right: 8,),
                       ]),
                     ),
                     _TileData(

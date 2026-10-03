@@ -22,8 +22,6 @@ import '../../features/payments/presentation/screens/charge_detail_screen.dart';
 import '../../features/payments/presentation/screens/checkout_screen.dart';
 import '../../features/payments/presentation/screens/parent_charges_screen.dart';
 import '../../features/payments/presentation/screens/payment_history_screen.dart';
-import '../../features/grades/presentation/screens/student_grades_screen.dart';
-import '../../features/grades/presentation/screens/subject_grades_screen.dart';
 import '../../features/grades/presentation/screens/teacher_gradebook_screen.dart';
 import '../../features/reports/presentation/report_card_screen.dart';
 import '../../features/auth/presentation/auth_controller.dart';
@@ -49,7 +47,6 @@ import '../../features/schedule/presentation/screens/schedule_screen.dart';
 import '../../features/support/presentation/screens/help_screen.dart';
 import '../../features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/all_subjects_screen.dart';
-import '../../features/dashboard/presentation/screens/classmates_screen.dart';
 import '../../features/dashboard/presentation/screens/my_teachers_screen.dart';
 import '../../features/dashboard/presentation/screens/parent_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/school_calendar_screen.dart';
@@ -269,20 +266,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               child: TeacherGradebookScreen(),
             ),
           ),
-          GoRoute(
-            path: 'subject/:classId',
-            builder: (context, state) {
-              final classId =
-                  int.tryParse(state.pathParameters['classId'] ?? '') ?? 0;
-              final studentId = int.tryParse(
-                      state.uri.queryParameters['studentId'] ?? '',) ??
-                  1001;
-              return SubjectGradesScreen(
-                studentId: studentId,
-                classId: classId,
-              );
-            },
-          ),
         ],
       ),
       GoRoute(
@@ -400,14 +383,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const SchoolCalendarScreen(),
       ),
 
-      // ----- Compañeros / Asistencia del alumno -----
-      GoRoute(
-        path: Routes.classmates,
-        builder: (_, __) => const RoleGuard(
-          allowed: {AppRole.student},
-          child: ClassmatesScreen(),
-        ),
-      ),
+      // ----- Asistencia del alumno -----
       GoRoute(
         path: Routes.myAttendance,
         builder: (_, __) => const RoleGuard(
@@ -585,7 +561,10 @@ class _GradesRoleSplit extends ConsumerWidget {
         return const TeacherGradebookScreen();
       case AppRole.student:
       case AppRole.parent:
-        return const StudentGradesScreen(studentId: 1001);
+        return const RoleGuard(
+          allowed: {AppRole.teacher},
+          child: TeacherGradebookScreen(),
+        );
     }
   }
 }
