@@ -102,7 +102,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           else
             for (final slot in slots)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: slot.isBreak
                     ? _BreakRow(slot: slot)
                     : _SlotCard(slot: slot),
