@@ -26,7 +26,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final slots = ScheduleMock.byDay[_selectedDay] ?? const [];
+    final slots = (ScheduleMock.byDay[_selectedDay] ?? const <ClassSlot>[])
+        .where((s) => !s.isBreak)
+        .toList();
     final relation = _relationFor(_selectedDay);
 
     return StudentDetailScaffold(

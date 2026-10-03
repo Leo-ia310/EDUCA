@@ -18,6 +18,7 @@ class StudentHomeHeader extends StatelessWidget {
     required this.onNotificationsTap,
     this.avatarUrl,
     this.notificationsBadge = 0,
+    this.transparent = false,
   });
 
   final String name;
@@ -25,6 +26,9 @@ class StudentHomeHeader extends StatelessWidget {
   final VoidCallback onNotificationsTap;
   final String? avatarUrl;
   final int notificationsBadge;
+
+  /// Sin fondo propio: la barra se mezcla con lo que haya detrás (hero).
+  final bool transparent;
 
   @override
   Widget build(BuildContext context) {
@@ -36,13 +40,15 @@ class StudentHomeHeader extends StatelessWidget {
       // Borde inferior recto y con holgura extra abajo: el panel se monta
       // encima (solape = radio) y aporta la curva sin tapar el contenido.
       padding: EdgeInsets.fromLTRB(16, topInset + 12, 12, 30),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [barColor, Color(0xFF3B74D6)],
-        ),
-      ),
+      decoration: transparent
+          ? null
+          : const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [barColor, Color(0xFF3B74D6)],
+              ),
+            ),
       child: Row(
         children: [
           _Avatar(initials: initials, avatarUrl: avatarUrl, barColor: barColor),

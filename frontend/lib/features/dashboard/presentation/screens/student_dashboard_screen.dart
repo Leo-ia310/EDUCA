@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
@@ -15,7 +14,7 @@ import '../../../notifications/providers.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/home_tile_card.dart';
-import '../widgets/schedule_item.dart';
+import '../widgets/home_schedule_section.dart';
 import '../widgets/student_home_header.dart';
 
 class StudentDashboardScreen extends ConsumerWidget {
@@ -24,29 +23,9 @@ class StudentDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user!;
-    final palette = context.palette;
     // Datos reales del backend (fallback a demo mientras carga o sin backend).
     final data = ref.watch(studentDashboardProvider).valueOrNull ??
         StudentDashboardData.mock();
-
-    // Estado del horario respecto a la hora actual: clase en curso y siguiente.
-    final now = DateTime.now();
-    final nowMin = now.hour * 60 + now.minute;
-    int? currentIdx;
-    int? nextIdx;
-    for (var i = 0; i < data.todaySchedule.length; i++) {
-      final start = DateUtilsX.hhmmToMinutes(data.todaySchedule[i].startTime);
-      final end = DateUtilsX.hhmmToMinutes(data.todaySchedule[i].endTime);
-      if (nowMin >= start && nowMin < end) {
-        currentIdx = i;
-      } else if (start > nowMin && nextIdx == null) {
-        nextIdx = i;
-      }
-    }
-    // Etiqueta de fecha real (día de la semana capitalizado).
-    final weekday = toBeginningOfSentenceCase(
-      DateFormat('EEEE', 'es').format(now),
-    );
 
     return AppScaffold(
       padding: EdgeInsets.zero,
@@ -57,23 +36,32 @@ class StudentDashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Barra superior full-bleed (avatar + nombre a la izquierda,
-          // acciones a la derecha), con fondo azul hasta el borde superior.
-          StudentHomeHeader(
-            name: user.displayFirstName,
-            initials: user.displayFirstName.isNotEmpty
-                ? user.displayFirstName.substring(0, 1).toUpperCase()
-                : '?',
-            avatarUrl: user.avatarUrl,
-            notificationsBadge:
-                ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
-            onNotificationsTap: () => context.go(Routes.alerts),
-          ),
-          // Hero full-bleed: pegado a la barra superior y a los laterales
-          // (sin margen), la curva del panel lo solapa por debajo.
-          _StudentHero(
-            name: user.displayFirstName,
-            gradeGroup: data.gradeGroup,
+          // Hero full-bleed hasta el borde superior; la barra superior
+          // (transparente) se mezcla con la imagen de fondo.
+          Stack(
+            children: [
+              _StudentHero(
+                name: user.displayFirstName,
+                gradeGroup: data.gradeGroup,
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: StudentHomeHeader(
+                  transparent: true,
+                  name: user.displayFirstName,
+                  initials: user.displayFirstName.isNotEmpty
+                      ? user.displayFirstName.substring(0, 1).toUpperCase()
+                      : '?',
+                  avatarUrl: user.avatarUrl,
+                  notificationsBadge:
+                      ref.watch(notificationsUnreadProvider).asData?.value ??
+                          0,
+                  onNotificationsTap: () => context.go(Routes.alerts),
+                ),
+              ),
+            ],
           ),
           // Panel del contenido: se monta sobre el hero con esquinas
           // superiores redondeadas (solape = radio), de modo que la curva
@@ -91,46 +79,7 @@ class StudentDashboardScreen extends ConsumerWidget {
               child: StaggeredEntrance(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Horario de hoy
-                  Row(
-                    children: [
-                      const Expanded(
-                          child: SectionHeader(title: 'Horario de Hoy'),),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4,),
-                        decoration: BoxDecoration(
-                          color: palette.accentSoft,
-                          borderRadius: BorderRadius.circular(Radii.pill),
-                        ),
-                        child: Text(
-                          weekday,
-                          style: context.textTheme.labelSmall?.copyWith(
-                            color: palette.accentDeep,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  for (var i = 0; i < data.todaySchedule.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 10),
-                    ScheduleItemRow(
-                      slot: data.todaySchedule[i],
-                      highlighted: i == currentIdx,
-                      badge: i == currentIdx
-                          ? 'Ahora'
-                          : i == nextIdx
-                              ? _inLabel(
-                                  DateUtilsX.hhmmToMinutes(
-                                        data.todaySchedule[i].startTime,
-                                      ) -
-                                      nowMin,
-                                )
-                              : null,
-                    ),
-                  ],
+                  const HomeScheduleSection(),
                   const SizedBox(height: 24),
 
                   const SectionHeader(title: 'Acceso Rápido'),
@@ -298,78 +247,74 @@ class _StudentHero extends StatelessWidget {
       Shadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 8),
     ];
 
-    return DecoratedBox(
-      // Rellena de azul (mismo tono que la barra superior) las esquinas que
-      // el radio del hero deja al descubierto, para que no se vea blanco.
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [EducaBottomNav.barColor, Color(0xFF3B74D6)],
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: SizedBox(
-          width: double.infinity,
-          height: 380,
-          child: Stack(
-            fit: StackFit.expand,
-          children: [
-            Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
-            // Velo oscuro a la izquierda para que el texto sea legible sobre
-            // la ilustración.
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [Colors.black45, Colors.transparent],
-                  stops: [0, 0.75],
-                ),
+    return SizedBox(
+      width: double.infinity,
+      height: 430,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
+          // Velo oscuro: arriba (para la barra superior) y a la izquierda
+          // (para el texto), sobre la ilustración.
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black38, Colors.transparent],
+                stops: [0, 0.3],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 26, 20, 48),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    greeting,
-                    style: context.textTheme.titleMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 2.2,
-                      shadows: textShadows,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.displayMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      shadows: textShadows,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    gradeGroup,
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      fontWeight: FontWeight.w700,
-                      shadows: textShadows,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
           ),
-        ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Colors.black38, Colors.transparent],
+                stops: [0, 0.75],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 96, 20, 48),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  greeting,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w300,
+                    letterSpacing: 2.2,
+                    shadows: textShadows,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.displayMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    shadows: textShadows,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  gradeGroup,
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w700,
+                    shadows: textShadows,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -377,12 +322,3 @@ class _StudentHero extends StatelessWidget {
 
 /// Radio de la curva con que el panel se monta sobre la barra azul (cóncava).
 const double _panelRadius = 24;
-
-/// Etiqueta "En X min" / "En Yh Zm" para la próxima clase.
-String _inLabel(int minutes) {
-  if (minutes <= 0) return 'Ahora';
-  if (minutes < 60) return 'En $minutes min';
-  final h = minutes ~/ 60;
-  final m = minutes % 60;
-  return m == 0 ? 'En $h h' : 'En ${h}h ${m}m';
-}

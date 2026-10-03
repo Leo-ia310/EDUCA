@@ -8,11 +8,15 @@ class SectionHeader extends StatelessWidget {
     required this.title,
     this.action,
     this.onActionTap,
+    this.accent = true,
   });
 
   final String title;
   final String? action;
   final VoidCallback? onActionTap;
+
+  /// Barra vertical de acento a la izquierda del título.
+  final bool accent;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +25,8 @@ class SectionHeader extends StatelessWidget {
       child: Row(
         children: [
           // Marca de acento a la izquierda: da ritmo y jerarquía a las secciones.
-          Container(
+          if (accent)
+            Container(
             width: 4,
             height: 18,
             margin: const EdgeInsets.only(right: 10),
