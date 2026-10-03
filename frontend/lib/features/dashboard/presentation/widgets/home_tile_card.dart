@@ -69,12 +69,12 @@ class HomeOptionCard extends StatelessWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Ilustración temática en la parte inferior izquierda.
+                  // Ilustración temática a la derecha (centrada en vertical).
                   if (art != null)
                     Positioned(
-                      left: 0,
-                      top: 76,
-                      bottom: 0,
+                      right: -8,
+                      top: 47,
+                      height: 102,
                       width: 132,
                       child: art!,
                     ),
@@ -93,16 +93,15 @@ class HomeOptionCard extends StatelessWidget {
                       child: Icon(icon, color: color, size: 26),
                     ),
                   ),
-                  // Título pequeño y resaltado + descripción grande, al
-                  // centro a la derecha.
+                  // Título pequeño y resaltado + descripción grande, abajo del
+                  // ícono, a la izquierda.
                   Positioned(
-                    left: 140,
-                    right: 20,
-                    top: 0,
-                    bottom: 30,
+                    left: 20,
+                    right: 150,
+                    bottom: 18,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -124,10 +123,9 @@ class HomeOptionCard extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             subtitle!,
-                            maxLines: 3,
-                            textAlign: TextAlign.end,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.headlineSmall?.copyWith(
+                            style: context.textTheme.titleLarge?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
                               height: 1.15,
