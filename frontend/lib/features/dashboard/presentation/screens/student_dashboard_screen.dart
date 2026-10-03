@@ -63,19 +63,9 @@ class StudentDashboardScreen extends ConsumerWidget {
               ),
             ],
           ),
-          // Panel del contenido: se monta sobre el hero con esquinas
-          // superiores redondeadas (solape = radio), de modo que la curva
-          // parezca del panel (cóncava) y no del hero.
-          Transform.translate(
-            offset: const Offset(0, -_panelRadius),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(_panelRadius),
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+          // Contenido bajo el hero (sin solape: el radio inferior es del hero).
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
               child: StaggeredEntrance(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -195,7 +185,6 @@ class StudentDashboardScreen extends ConsumerWidget {
               ],
             ),
           ),
-        ),
         ],
       ),
     );
@@ -247,7 +236,12 @@ class _StudentHero extends StatelessWidget {
       Shadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 8),
     ];
 
-    return SizedBox(
+    // Altura de la zona de la barra superior (ancho completo); debajo, el hero
+    // se estrecha con margen lateral y esquinas inferiores convexas.
+    final barH = MediaQuery.paddingOf(context).top + 84;
+    return ClipPath(
+      clipper: _HeroClipper(barHeight: barH),
+      child: SizedBox(
       width: double.infinity,
       height: 430,
       child: Stack(
@@ -277,7 +271,7 @@ class _StudentHero extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 96, 20, 48),
+            padding: const EdgeInsets.fromLTRB(40, 96, 36, 28),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -316,9 +310,42 @@ class _StudentHero extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
 
-/// Radio de la curva con que el panel se monta sobre la barra azul (cóncava).
-const double _panelRadius = 24;
+/// Silueta del hero: ancho completo en la zona de la barra superior y, debajo,
+/// estrechado con margen lateral y esquinas inferiores redondeadas (convexas).
+class _HeroClipper extends CustomClipper<Path> {
+  const _HeroClipper({required this.barHeight});
+
+  final double barHeight;
+
+  static const double _margin = 16;
+  static const double _radius = 28;
+
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    const m = _margin;
+    const r = _radius;
+    return Path()
+      ..moveTo(0, 0)
+      ..lineTo(w, 0)
+      ..lineTo(w, barHeight)
+      // Transición cóncava del ancho completo al ancho con margen.
+      ..quadraticBezierTo(w, barHeight + m, w - m, barHeight + m)
+      ..lineTo(w - m, h - r)
+      ..quadraticBezierTo(w - m, h, w - m - r, h)
+      ..lineTo(m + r, h)
+      ..quadraticBezierTo(m, h, m, h - r)
+      ..lineTo(m, barHeight + m)
+      ..quadraticBezierTo(0, barHeight + m, 0, barHeight)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(_HeroClipper old) => old.barHeight != barHeight;
+}

@@ -69,10 +69,11 @@ class StudentHomeHeader extends StatelessWidget {
             icon: Icons.notifications_rounded,
             tooltip: 'Notificaciones',
             badge: notificationsBadge,
+            bare: transparent,
             onTap: onNotificationsTap,
           ),
           const SizedBox(width: 10),
-          const AccountSettingsMenu(circular: true),
+          AccountSettingsMenu(circular: true, bare: transparent),
         ],
       ),
     );
@@ -86,6 +87,7 @@ class _CircleAction extends StatelessWidget {
     required this.onTap,
     this.badge = 0,
     this.tooltip,
+    this.bare = false,
   });
 
   final IconData icon;
@@ -93,13 +95,16 @@ class _CircleAction extends StatelessWidget {
   final int badge;
   final String? tooltip;
 
+  /// Sin círculo de fondo y con ícono más grande.
+  final bool bare;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Material(
-          color: Colors.white.withValues(alpha: 0.18),
+          color: bare ? Colors.transparent : Colors.white.withValues(alpha: 0.18),
           shape: const CircleBorder(),
           child: Tooltip(
             message: tooltip ?? '',
@@ -109,7 +114,7 @@ class _CircleAction extends StatelessWidget {
               child: SizedBox(
                 width: 46,
                 height: 46,
-                child: Icon(icon, size: 22, color: Colors.white),
+                child: Icon(icon, size: bare ? 30 : 22, color: Colors.white),
               ),
             ),
           ),
