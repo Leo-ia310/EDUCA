@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -46,14 +47,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   onTap: () => setState(() => _selectedDay = i),
                   child: Container(
                     width: 58,
-                    decoration: BoxDecoration(
-                      color: selected ? palette.accentDeep : palette.cardElevated,
-                      borderRadius: BorderRadius.circular(Radii.lg),
-                      border: Border.all(
-                        color: selected
-                            ? palette.accentDeep
-                            : Theme.of(context).dividerColor,
-                      ),
+                    margin: const EdgeInsets.only(right: 3, bottom: 3),
+                    decoration: Brutal.decoration(
+                      context,
+                      color:
+                          selected ? palette.accentDeep : palette.cardElevated,
+                      radius: Radii.md,
+                      offset: 3,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -177,19 +177,10 @@ class _SlotCard extends StatelessWidget {
           _Timeline(start: slot.start, end: slot.end, color: slot.color),
           const SizedBox(width: 10),
           Expanded(
-            child: Container(
+            child: BrutalBox(
+              color: cardFill,
+              radius: Radii.lg,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              decoration: BoxDecoration(
-                color: cardFill,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
               child: Row(
                 children: [
                   SizedBox(
@@ -204,6 +195,10 @@ class _SlotCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: _diamondBg,
                             borderRadius: BorderRadius.circular(Radii.sm),
+                            border: Border.all(
+                              color: Brutal.ink(context),
+                              width: Brutal.border,
+                            ),
                           ),
                           child: Transform.rotate(
                             angle: -math.pi / 4,

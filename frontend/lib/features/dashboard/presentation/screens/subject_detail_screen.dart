@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/depth_card.dart';
@@ -26,7 +27,6 @@ class SubjectDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = context.pastel(subject.color ?? subjectColor(subject.name));
-    final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
 
     final assignmentsAsync = ref.watch(studentAssignmentsProvider);
     final tasks = assignmentsAsync.valueOrNull
@@ -56,14 +56,11 @@ class SubjectDetailScreen extends ConsumerWidget {
           Container(
             width: double.infinity,
             clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [s.vivid, deep],
-              ),
-              borderRadius: BorderRadius.circular(Radii.xl),
-              boxShadow: AppShadows.lifted(context),
+            margin: const EdgeInsets.only(right: 4, bottom: 4),
+            decoration: Brutal.decoration(
+              context,
+              color: s.vivid,
+              radius: Radii.lg,
             ),
             child: Stack(
               children: [
@@ -85,7 +82,7 @@ class SubjectDetailScreen extends ConsumerWidget {
                         subject.name,
                         style: context.textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -140,7 +137,7 @@ class SubjectDetailScreen extends ConsumerWidget {
 
           const SectionHeader(title: 'Calificaciones'),
           const SizedBox(height: 8),
-          DepthCard(
+          DepthCard(brutal: true, 
             color: s.surface,
             accent: s.vivid,
             soft: true,
@@ -194,7 +191,7 @@ class _PastelRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DepthCard(
+    return DepthCard(brutal: true, 
       color: surface.surface,
       accent: surface.vivid,
       soft: true,
@@ -239,7 +236,7 @@ class _GradeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DepthCard(
+    return DepthCard(brutal: true, 
       color: surface.surface,
       soft: true,
       borderRadius: Radii.md,

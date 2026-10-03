@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/depth_card.dart';
 import '../../domain/entities.dart';
 import 'assignment_status_chip.dart';
@@ -56,83 +57,82 @@ class AssignmentCard extends StatelessWidget {
     final inkMuted = s.inkMuted;
     final fmt = DateFormat("d MMM, HH:mm", 'es');
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.lg),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(Radii.lg),
+    return BrutalBox(
+      onTap: onTap,
+      color: cardBg,
+      radius: Radii.lg,
+      clip: true,
+      child: Stack(
+        children: [
+          // Ícono grande de fondo (marca de agua) según el tipo.
+          Positioned(
+            right: -14,
+            bottom: -14,
+            child: Icon(
+              _kindIcon(assignment.kind),
+              size: 96,
+              color: vivid.withValues(alpha: 0.16),
+            ),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(Radii.lg),
-            child: Stack(
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Ícono grande de fondo (marca de agua) según el tipo.
-                Positioned(
-                  right: -14,
-                  bottom: -14,
-                  child: Icon(
-                    _kindIcon(assignment.kind),
-                    size: 96,
-                    color: vivid.withValues(alpha: 0.16),
+                Text(
+                  assignment.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: s.ink,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        assignment.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.titleMedium?.copyWith(
-                          color: s.ink,
-                          fontWeight: FontWeight.w800,
+                const SizedBox(height: 3),
+                Text(
+                  '${assignment.subjectName} · ${assignment.groupName}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.bodySmall?.copyWith(color: inkMuted),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 14,
+                      color: inkMuted,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Entrega ${fmt.format(assignment.dueAt)}',
+                      style: context.textTheme.labelSmall
+                          ?.copyWith(color: inkMuted),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(Radii.sm),
+                        border: Border.all(
+                          color: Brutal.ink(context),
+                          width: Brutal.border,
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '${assignment.subjectName} · ${assignment.groupName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.bodySmall
-                            ?.copyWith(color: inkMuted),
+                      child: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.black,
+                        size: 22,
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Icon(Icons.calendar_today_rounded,
-                              size: 14, color: inkMuted,),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Entrega ${fmt.format(assignment.dueAt)}',
-                            style: context.textTheme.labelSmall
-                                ?.copyWith(color: inkMuted),
-                          ),
-                          const Spacer(),
-                          Container(
-                            width: 30,
-                            height: 30,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.chevron_right_rounded,
-                                color: Colors.black, size: 22,),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -203,8 +203,11 @@ class AssignmentCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Icon(Icons.calendar_today_rounded,
-                  size: 14, color: palette.textMuted,),
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 14,
+                color: palette.textMuted,
+              ),
               const SizedBox(width: 4),
               Text(
                 'Entrega ${fmt.format(assignment.dueAt)}',
@@ -236,8 +239,11 @@ class AssignmentCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                Icon(Icons.attach_file_rounded,
-                    size: 14, color: palette.textMuted,),
+                Icon(
+                  Icons.attach_file_rounded,
+                  size: 14,
+                  color: palette.textMuted,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   '${assignment.attachments.length} archivo${assignment.attachments.length == 1 ? '' : 's'}',
@@ -279,8 +285,7 @@ class _ProgressBlock extends StatelessWidget {
               child: _ProgressBar(
                 progress: assignment.gradingProgress,
                 label: 'Calificadas',
-                count:
-                    '${assignment.gradedCount}/${assignment.submittedCount}',
+                count: '${assignment.gradedCount}/${assignment.submittedCount}',
                 color: palette.success,
               ),
             ),
@@ -313,9 +318,11 @@ class _ProgressBar extends StatelessWidget {
             Expanded(
               child: Text(label, style: context.textTheme.labelSmall),
             ),
-            Text(count,
-                style: context.textTheme.labelSmall
-                    ?.copyWith(fontWeight: FontWeight.w800, color: color),),
+            Text(
+              count,
+              style: context.textTheme.labelSmall
+                  ?.copyWith(fontWeight: FontWeight.w800, color: color),
+            ),
           ],
         ),
         const SizedBox(height: 4),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brutal.dart';
 
 /// Tarjeta **horizontal** de acceso rápido del home del estudiante: ícono en
 /// círculo blanco a la izquierda, título + subtítulo, una ilustración
@@ -38,120 +39,106 @@ class HomeOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
-    final light = Color.lerp(color, Colors.white, 0.16)!;
-    final deep = Color.lerp(color, Colors.black, 0.22)!;
+    final ink = Brutal.ink(context);
 
     return Opacity(
       opacity: enabled ? 1 : 0.6,
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [light, color, deep],
-          ),
-          borderRadius: BorderRadius.circular(Radii.xl),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.38),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            child: SizedBox(
-              height: 196,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Ilustración temática a la derecha (centrada en vertical).
-                  if (art != null)
-                    Positioned(
-                      right: -8,
-                      top: 47,
-                      height: 102,
-                      width: 132,
-                      child: art!,
-                    ),
-                  // Ícono en la esquina superior izquierda.
-                  Positioned(
-                    left: 18,
-                    top: 18,
-                    child: Container(
-                      width: 54,
-                      height: 54,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(icon, color: color, size: 26),
-                    ),
+      child: BrutalBox(
+        onTap: onTap,
+        color: color,
+        radius: Radii.lg,
+        clip: true,
+        child: SizedBox(
+          height: 196,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Ilustración temática a la derecha (centrada en vertical).
+              if (art != null)
+                Positioned(
+                  right: -8,
+                  top: 47,
+                  height: 102,
+                  width: 132,
+                  child: art!,
+                ),
+              // Ícono en la esquina superior izquierda.
+              Positioned(
+                left: 18,
+                top: 18,
+                child: Container(
+                  width: 54,
+                  height: 54,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    border: Border.all(color: ink, width: Brutal.border),
                   ),
-                  // Título pequeño y resaltado + descripción grande, abajo del
-                  // ícono, a la izquierda.
-                  Positioned(
-                    left: 20,
-                    right: 150,
-                    bottom: 18,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 3,),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.26),
-                            borderRadius: BorderRadius.circular(Radii.pill),
-                          ),
-                          child: Text(
-                            title,
-                            style: context.textTheme.labelMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            subtitle!,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              height: 1.15,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  // Flecha negra en círculo blanco, esquina inferior derecha.
-                  Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const _BoldArrow(),
-                    ),
-                  ),
-                ],
+                  child: Icon(icon, color: Colors.black, size: 28),
+                ),
               ),
-            ),
+              // Título pequeño y resaltado + descripción grande, abajo del
+              // ícono, a la izquierda.
+              Positioned(
+                left: 20,
+                right: 150,
+                bottom: 18,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(Radii.pill),
+                        border: Border.all(color: ink, width: Brutal.border),
+                      ),
+                      child: Text(
+                        title,
+                        style: context.textTheme.labelMedium?.copyWith(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        subtitle!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Flecha negra en círculo blanco, esquina inferior derecha.
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    border: Border.all(color: ink, width: Brutal.border),
+                  ),
+                  child: const _BoldArrow(),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -170,8 +157,11 @@ class _BoldArrow extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget arrow(Offset offset) => Transform.translate(
           offset: offset,
-          child: const Icon(Icons.arrow_forward_rounded,
-              size: _size, color: Colors.black,),
+          child: const Icon(
+            Icons.arrow_forward_rounded,
+            size: _size,
+            color: Colors.black,
+          ),
         );
     return SizedBox(
       width: _size + 2,

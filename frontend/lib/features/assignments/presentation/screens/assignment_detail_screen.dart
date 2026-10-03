@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
@@ -77,7 +78,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
               if (a.description != null && a.description!.isNotEmpty) ...[
                 const SectionHeader(title: 'Descripción'),
                 const SizedBox(height: 8),
-                DepthCard(
+                DepthCard(brutal: true, 
                   soft: true,
                   padding: const EdgeInsets.all(16),
                   child: Text(a.description!,
@@ -88,7 +89,7 @@ class AssignmentDetailScreen extends ConsumerWidget {
               if (a.instructions != null && a.instructions!.isNotEmpty) ...[
                 const SectionHeader(title: 'Instrucciones'),
                 const SizedBox(height: 8),
-                DepthCard(
+                DepthCard(brutal: true, 
                   soft: true,
                   padding: const EdgeInsets.all(16),
                   child: Text(a.instructions!,
@@ -135,18 +136,15 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(assignment.subjectName));
-    final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final fmt = DateFormat("EEE d MMM, HH:mm", 'es');
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [s.vivid, deep],
-        ),
-        borderRadius: BorderRadius.circular(Radii.xl),
+      margin: const EdgeInsets.only(right: 4, bottom: 4),
+      decoration: Brutal.decoration(
+        context,
+        color: s.vivid,
+        radius: Radii.lg,
       ),
       child: Stack(
         children: [
@@ -169,7 +167,7 @@ class _Header extends StatelessWidget {
                   assignment.title,
                   style: context.textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -241,7 +239,7 @@ class _TeacherActions extends StatelessWidget {
       children: [
         const SectionHeader(title: 'Entregas'),
         const SizedBox(height: 8),
-        DepthCard(
+        DepthCard(brutal: true, 
           soft: true,
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -354,12 +352,12 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
         const SectionHeader(title: 'Mi entrega'),
         const SizedBox(height: 8),
         mine.when(
-          loading: () => const DepthCard(
+          loading: () => const DepthCard(brutal: true, 
             soft: true,
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (e, _) => DepthCard(
+          error: (e, _) => DepthCard(brutal: true, 
             soft: true,
             padding: const EdgeInsets.all(16),
             child: Text('$e'),
@@ -369,7 +367,7 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
               return _GradedView(submission: existing!, assignment: widget.assignment);
             }
             if (isParent) {
-              return DepthCard(
+              return DepthCard(brutal: true, 
                 soft: true,
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -398,7 +396,7 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                 ),
               );
             }
-            return DepthCard(
+            return DepthCard(brutal: true, 
               soft: true,
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -545,7 +543,7 @@ class _GradedView extends StatelessWidget {
                 '${submission.score!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
                 style: context.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],

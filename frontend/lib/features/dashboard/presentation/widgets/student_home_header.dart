@@ -19,6 +19,7 @@ class StudentHomeHeader extends StatelessWidget {
     this.avatarUrl,
     this.notificationsBadge = 0,
     this.transparent = false,
+    this.brutal = false,
   });
 
   final String name;
@@ -29,6 +30,9 @@ class StudentHomeHeader extends StatelessWidget {
 
   /// Sin fondo propio: la barra se mezcla con lo que haya detrás (hero).
   final bool transparent;
+
+  /// Estilo neo-brutalista (avatar y acciones en cuadros con borde y sombra).
+  final bool brutal;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +55,12 @@ class StudentHomeHeader extends StatelessWidget {
             ),
       child: Row(
         children: [
-          _Avatar(initials: initials, avatarUrl: avatarUrl, barColor: barColor),
+          _Avatar(
+            initials: initials,
+            avatarUrl: avatarUrl,
+            barColor: barColor,
+            brutal: brutal,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -69,11 +78,11 @@ class StudentHomeHeader extends StatelessWidget {
             icon: Icons.notifications_rounded,
             tooltip: 'Notificaciones',
             badge: notificationsBadge,
-            bare: transparent,
+            bare: transparent || brutal,
             onTap: onNotificationsTap,
           ),
           const SizedBox(width: 10),
-          AccountSettingsMenu(circular: true, bare: transparent),
+          AccountSettingsMenu(circular: true, bare: transparent || brutal),
         ],
       ),
     );
@@ -103,22 +112,44 @@ class _CircleAction extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Material(
-          color: bare ? Colors.transparent : Colors.white.withValues(alpha: 0.18),
-          shape: const CircleBorder(),
-          child: Tooltip(
+        if (bare)
+          Tooltip(
             message: tooltip ?? '',
-            child: InkWell(
-              customBorder: const CircleBorder(),
+            child: GestureDetector(
               onTap: onTap,
-              child: SizedBox(
+              child: Container(
                 width: 46,
                 height: 46,
-                child: Icon(icon, size: bare ? 30 : 22, color: Colors.white),
+                margin: const EdgeInsets.only(right: 3, bottom: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(Radii.md),
+                  border: Border.all(color: Colors.black, width: 2),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black, offset: Offset(3, 3)),
+                  ],
+                ),
+                child: Icon(icon, size: 26, color: Colors.black),
+              ),
+            ),
+          )
+        else
+          Material(
+            color: Colors.white.withValues(alpha: 0.18),
+            shape: const CircleBorder(),
+            child: Tooltip(
+              message: tooltip ?? '',
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onTap,
+                child: SizedBox(
+                  width: 46,
+                  height: 46,
+                  child: Icon(icon, size: 22, color: Colors.white),
+                ),
               ),
             ),
           ),
-        ),
         if (badge > 0)
           Positioned(
             right: 2,
@@ -154,18 +185,20 @@ class _Avatar extends StatelessWidget {
     required this.initials,
     required this.barColor,
     this.avatarUrl,
+    this.brutal = false,
   });
 
   final String initials;
   final Color barColor;
   final String? avatarUrl;
+  final bool brutal;
 
   @override
   Widget build(BuildContext context) {
     final label = Text(
       initials,
       style: context.textTheme.titleMedium?.copyWith(
-        color: barColor,
+        color: brutal ? Colors.black : barColor,
         fontWeight: FontWeight.w800,
       ),
     );
@@ -173,14 +206,22 @@ class _Avatar extends StatelessWidget {
       width: 46,
       height: 46,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-      ),
+      margin: brutal ? const EdgeInsets.only(right: 3, bottom: 3) : null,
+      decoration: brutal
+          ? BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(Radii.md),
+              border: Border.all(color: Colors.black, width: 2),
+              boxShadow: const [
+                BoxShadow(color: Colors.black, offset: Offset(3, 3)),
+              ],
+            )
+          : const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
       child: (avatarUrl != null &&
               avatarUrl!.isNotEmpty &&
               avatarUrl!.startsWith('http'))
-          ? ClipOval(
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(brutal ? Radii.sm : 23),
               child: Image.network(
                 avatarUrl!,
                 width: 46,

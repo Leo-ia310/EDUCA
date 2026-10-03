@@ -36,34 +36,25 @@ class StudentDashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Hero full-bleed hasta el borde superior; la barra superior
-          // (transparente) se mezcla con la imagen de fondo.
-          Stack(
-            children: [
-              _StudentHero(
-                name: user.displayFirstName,
-                gradeGroup: data.gradeGroup,
-              ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: StudentHomeHeader(
-                  transparent: true,
-                  name: user.displayFirstName,
-                  initials: user.displayFirstName.isNotEmpty
-                      ? user.displayFirstName.substring(0, 1).toUpperCase()
-                      : '?',
-                  avatarUrl: user.avatarUrl,
-                  notificationsBadge:
-                      ref.watch(notificationsUnreadProvider).asData?.value ??
-                          0,
-                  onNotificationsTap: () => context.go(Routes.alerts),
-                ),
-              ),
-            ],
+          // Barra superior azul, separada del hero.
+          StudentHomeHeader(
+            brutal: true,
+            name: user.displayFirstName,
+            initials: user.displayFirstName.isNotEmpty
+                ? user.displayFirstName.substring(0, 1).toUpperCase()
+                : '?',
+            avatarUrl: user.avatarUrl,
+            notificationsBadge:
+                ref.watch(notificationsUnreadProvider).asData?.value ?? 0,
+            onNotificationsTap: () => context.go(Routes.alerts),
           ),
-          // Contenido bajo el hero (sin solape: el radio inferior es del hero).
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _StudentHero(
+              name: user.displayFirstName,
+              gradeGroup: data.gradeGroup,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
               child: StaggeredEntrance(
@@ -217,12 +208,11 @@ class _StudentHero extends StatelessWidget {
 
     // Altura de la zona de la barra superior (ancho completo); debajo, el hero
     // se estrecha con margen lateral y esquinas inferiores convexas.
-    final barH = MediaQuery.paddingOf(context).top + 84;
-    return ClipPath(
-      clipper: _HeroClipper(barHeight: barH),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
       child: SizedBox(
       width: double.infinity,
-      height: 430,
+      height: 340,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -250,7 +240,7 @@ class _StudentHero extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(40, 96, 36, 28),
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -271,7 +261,7 @@ class _StudentHero extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.displayMedium?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w400,
                     shadows: textShadows,
                   ),
                 ),
@@ -292,40 +282,4 @@ class _StudentHero extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Silueta del hero: ancho completo en la zona de la barra superior y, debajo,
-/// estrechado con margen lateral y esquinas inferiores redondeadas (convexas).
-class _HeroClipper extends CustomClipper<Path> {
-  const _HeroClipper({required this.barHeight});
-
-  final double barHeight;
-
-  static const double _margin = 16;
-  static const double _radius = 28;
-
-  @override
-  Path getClip(Size size) {
-    final w = size.width;
-    final h = size.height;
-    const m = _margin;
-    const r = _radius;
-    return Path()
-      ..moveTo(0, 0)
-      ..lineTo(w, 0)
-      ..lineTo(w, barHeight)
-      // Radio inferior de la barra invertido (curva hacia dentro): une el
-      // ancho completo con el ancho con margen.
-      ..quadraticBezierTo(w - m, barHeight, w - m, barHeight + m)
-      ..lineTo(w - m, h - r)
-      ..quadraticBezierTo(w - m, h, w - m - r, h)
-      ..lineTo(m + r, h)
-      ..quadraticBezierTo(m, h, m, h - r)
-      ..lineTo(m, barHeight + m)
-      ..quadraticBezierTo(m, barHeight, 0, barHeight)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(_HeroClipper old) => old.barHeight != barHeight;
 }

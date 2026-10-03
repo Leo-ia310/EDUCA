@@ -34,7 +34,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return DepthCard(
+    return DepthCard(brutal: true, 
       soft: true,
       padding: EdgeInsets.zero,
       child: Column(

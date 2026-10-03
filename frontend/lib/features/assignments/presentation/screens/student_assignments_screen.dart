@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/entrance.dart';
@@ -20,10 +21,12 @@ import '../controllers/assignment_detail_controller.dart';
 import '../controllers/assignments_list_controller.dart';
 import '../widgets/assignment_card.dart';
 
-/// Solo tareas: los exámenes/quizzes viven en "Mis pruebas".
-List<Assignment> _tasksOnly(List<Assignment> all) => all
+/// Tareas o pruebas: los exámenes/quizzes viven en "Mis pruebas".
+List<Assignment> _tasksOnly(List<Assignment> all, {bool exams = false}) => all
     .where(
-      (a) => a.kind != AssignmentKind.exam && a.kind != AssignmentKind.quiz,
+      (a) =>
+          (a.kind == AssignmentKind.exam || a.kind == AssignmentKind.quiz) ==
+          exams,
     )
     .toList();
 
@@ -90,8 +93,15 @@ List<Widget> _sections(
 /// las tareas por fecha de entrega). El `studentId` es el del estudiante
 /// observado.
 class StudentAssignmentsScreen extends ConsumerStatefulWidget {
-  const StudentAssignmentsScreen({super.key, required this.studentId});
+  const StudentAssignmentsScreen({
+    super.key,
+    required this.studentId,
+    this.exams = false,
+  });
   final int studentId;
+
+  /// true → panel "Mis pruebas" (exámenes y quizzes).
+  final bool exams;
 
   @override
   ConsumerState<StudentAssignmentsScreen> createState() =>
@@ -108,7 +118,7 @@ class _StudentAssignmentsScreenState
     final palette = context.palette;
 
     return StudentDetailScaffold(
-      title: 'Mis tareas',
+      title: widget.exams ? 'Mis pruebas' : 'Mis tareas',
       scrollable: false,
       bodyPadding: EdgeInsets.zero,
       child: SafeArea(
@@ -116,7 +126,7 @@ class _StudentAssignmentsScreenState
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
               child: Row(
                 children: [
                   Expanded(
@@ -138,36 +148,46 @@ class _StudentAssignmentsScreenState
               ),
             ),
             Expanded(
-              child: crossfadeState(
-                context,
-                list.when(
-                  loading: () => const SkeletonList(),
-                  error: (e, _) => ErrorStateView(message: '$e'),
-                  data: (allItems) {
-                    final items = _tasksOnly(allItems);
-                    if (items.isEmpty) {
-                      return EmptyState(
-                        icon: Icons.task_alt_rounded,
-                        title: 'Todo al día',
-                        subtitle:
-                            'No tienes tareas asignadas en este momento.',
-                        actionLabel: 'Ver horario',
-                        onAction: () => context.go(Routes.schedule),
+              child: ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (r) => LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: const [Colors.transparent, Colors.black],
+                  stops: [0, (28 / r.height).clamp(0.0, 1.0)],
+                ).createShader(r),
+                child: crossfadeState(
+                  context,
+                  list.when(
+                    loading: () => const SkeletonList(),
+                    error: (e, _) => ErrorStateView(message: '$e'),
+                    data: (allItems) {
+                      final items = _tasksOnly(allItems, exams: widget.exams);
+                      if (items.isEmpty) {
+                        return EmptyState(
+                          icon: Icons.task_alt_rounded,
+                          title: widget.exams ? 'Sin pruebas' : 'Todo al día',
+                          subtitle: widget.exams
+                              ? 'No tienes exámenes o quizzes asignados.'
+                              : 'No tienes tareas asignadas en este momento.',
+                          actionLabel: 'Ver horario',
+                          onAction: () => context.go(Routes.schedule),
+                        );
+                      }
+                      return RefreshIndicator(
+                        color: palette.accentDeep,
+                        onRefresh: () async =>
+                            ref.invalidate(studentAssignmentsProvider),
+                        child: ListView(
+                          key: ValueKey(_bySubject),
+                          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                          children: _bySubject
+                              ? _subjectCards(context, items)
+                              : _generalList(context, items),
+                        ),
                       );
-                    }
-                    return RefreshIndicator(
-                      color: palette.accentDeep,
-                      onRefresh: () async =>
-                          ref.invalidate(studentAssignmentsProvider),
-                      child: ListView(
-                        key: ValueKey(_bySubject),
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-                        children: _bySubject
-                            ? _subjectCards(context, items)
-                            : _generalList(context, items),
-                      ),
-                    );
-                  },
+                    },
+                  ),
                 ),
               ),
             ),
@@ -200,7 +220,7 @@ class _StudentAssignmentsScreenState
                 .toList(),
             studentId: widget.studentId,
             onTap: () => context.push(
-              '${Routes.assignments}/subject/${Uri.encodeComponent(s.name)}',
+              '${widget.exams ? Routes.exams : Routes.assignments}/subject/${Uri.encodeComponent(s.name)}',
             ),
           ),
         ),
@@ -229,13 +249,12 @@ class _ModePill extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 12),
         alignment: Alignment.center,
-        decoration: BoxDecoration(
+        margin: const EdgeInsets.only(right: 3, bottom: 3),
+        decoration: Brutal.decoration(
+          context,
           color: selected ? palette.accentDeep : palette.cardElevated,
-          borderRadius: BorderRadius.circular(Radii.pill),
-          border: Border.all(
-            color:
-                selected ? palette.accentDeep : Theme.of(context).dividerColor,
-          ),
+          radius: Radii.md,
+          offset: 3,
         ),
         child: Text(
           label,
@@ -275,70 +294,72 @@ class _SubjectCard extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(Radii.lg),
-          child: Ink(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: s.surface,
-              borderRadius: BorderRadius.circular(Radii.lg),
+      child: BrutalBox(
+        onTap: onTap,
+        color: s.surface,
+        radius: Radii.lg,
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: s.vivid,
+                borderRadius: BorderRadius.circular(Radii.sm),
+                border: Border.all(
+                  color: Brutal.ink(context),
+                  width: Brutal.border,
+                ),
+              ),
+              child: Icon(
+                subject.icon ?? Icons.menu_book_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration:
-                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-                  child: Icon(
-                    subject.icon ?? Icons.menu_book_rounded,
-                    color: Colors.white,
-                    size: 24,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subject.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textTheme.titleMedium?.copyWith(
+                      color: s.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        subject.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.titleMedium?.copyWith(
-                          color: s.ink,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        summary,
-                        style: context.textTheme.bodySmall
-                            ?.copyWith(color: s.inkMuted),
-                      ),
-                    ],
+                  const SizedBox(height: 3),
+                  Text(
+                    summary,
+                    style: context.textTheme.bodySmall
+                        ?.copyWith(color: s.inkMuted),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Colors.black,
-                    size: 24,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(Radii.sm),
+                border: Border.all(
+                  color: Brutal.ink(context),
+                  width: Brutal.border,
+                ),
+              ),
+              child: const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.black,
+                size: 24,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -351,10 +372,12 @@ class SubjectAssignmentsScreen extends ConsumerWidget {
     super.key,
     required this.studentId,
     required this.subject,
+    this.exams = false,
   });
 
   final int studentId;
   final String subject;
+  final bool exams;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -371,14 +394,16 @@ class SubjectAssignmentsScreen extends ConsumerWidget {
             loading: () => const SkeletonList(),
             error: (e, _) => ErrorStateView(message: '$e'),
             data: (all) {
-              final items = _tasksOnly(all)
+              final items = _tasksOnly(all, exams: exams)
                   .where((a) => _sameSubject(a.subjectName, subject))
                   .toList();
               if (items.isEmpty) {
-                return const EmptyState(
+                return EmptyState(
                   icon: Icons.task_alt_rounded,
-                  title: 'Sin tareas',
-                  subtitle: 'No hay tareas asignadas en esta materia.',
+                  title: exams ? 'Sin pruebas' : 'Sin tareas',
+                  subtitle: exams
+                      ? 'No hay pruebas en esta materia.'
+                      : 'No hay tareas asignadas en esta materia.',
                 );
               }
               return ListView(
@@ -406,8 +431,11 @@ class _StudentTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mine = ref.watch(mySubmissionProvider(
-        (assignmentId: assignment.id, studentId: studentId),),);
+    final mine = ref.watch(
+      mySubmissionProvider(
+        (assignmentId: assignment.id, studentId: studentId),
+      ),
+    );
     final status = mine.asData?.value?.status;
     final score = mine.asData?.value?.score;
     final done = ref.watch(tasksDoneProvider).contains(assignment.id);

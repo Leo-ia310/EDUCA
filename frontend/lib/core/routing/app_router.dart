@@ -6,7 +6,6 @@ import '../../features/assignments/presentation/screens/assignment_detail_screen
 import '../../features/assignments/presentation/screens/assignment_form_screen.dart';
 import '../../features/assignments/presentation/screens/grading_screen.dart';
 import '../../features/assignments/presentation/screens/student_assignments_screen.dart';
-import '../../features/assignments/presentation/screens/student_exams_screen.dart';
 import '../../features/assignments/presentation/screens/teacher_assignments_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_classes_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_history_screen.dart';
@@ -77,13 +76,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // El splash siempre reenvía: al dashboard si hay sesión, o al login si no.
       // (La pantalla splash no navega por sí misma.)
       if (loc == Routes.splash) {
-        return loggedIn
-            ? auth.user!.activeRole.dashboardRoute
-            : Routes.login;
+        return loggedIn ? auth.user!.activeRole.dashboardRoute : Routes.login;
       }
 
-      final goingToAuth =
-          loc == Routes.login || loc == Routes.forgotPassword;
+      final goingToAuth = loc == Routes.login || loc == Routes.forgotPassword;
 
       if (!loggedIn && !goingToAuth) return Routes.login;
       if (loggedIn && goingToAuth) return auth.user!.activeRole.dashboardRoute;
@@ -129,7 +125,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.attendance,
         builder: (_, __) => const RoleGuard(
-          allowed: {AppRole.teacher, AppRole.admin, AppRole.coordinator, AppRole.director},
+          allowed: {
+            AppRole.teacher,
+            AppRole.admin,
+            AppRole.coordinator,
+            AppRole.director,
+          },
           child: AttendanceClassesScreen(),
         ),
       ),
@@ -152,7 +153,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.attendanceHistory,
         builder: (_, __) => const RoleGuard(
-          allowed: {AppRole.teacher, AppRole.admin, AppRole.coordinator, AppRole.director},
+          allowed: {
+            AppRole.teacher,
+            AppRole.admin,
+            AppRole.coordinator,
+            AppRole.director,
+          },
           child: AttendanceHistoryScreen(),
         ),
       ),
@@ -191,6 +197,32 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.exams,
         builder: (context, state) => const _ExamsRoleSplit(),
+        routes: [
+          GoRoute(
+            path: 'subject/:name',
+            builder: (context, state) {
+              final name = state.pathParameters['name'] ?? '';
+              return Consumer(
+                builder: (context, ref, _) {
+                  final role =
+                      ref.watch(authControllerProvider).user?.activeRole;
+                  return _StudentAssignmentsResolved(
+                    idProvider: role == AppRole.parent
+                        ? parentChildStudentIdProvider
+                        : currentStudentIdProvider,
+                    builder: ({Key? key, required int studentId}) =>
+                        SubjectAssignmentsScreen(
+                      key: key,
+                      studentId: studentId,
+                      subject: name,
+                      exams: true,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
 
       // ----- Tareas (assignments) -----
@@ -634,7 +666,12 @@ class _ExamsRoleSplit extends ConsumerWidget {
       case AppRole.parent:
         return _StudentAssignmentsResolved(
           idProvider: parentChildStudentIdProvider,
-          builder: StudentExamsScreen.new,
+          builder: ({Key? key, required int studentId}) =>
+              StudentAssignmentsScreen(
+            key: key,
+            studentId: studentId,
+            exams: true,
+          ),
         );
       case AppRole.student:
       case AppRole.teacher:
@@ -643,7 +680,12 @@ class _ExamsRoleSplit extends ConsumerWidget {
       case AppRole.director:
         return _StudentAssignmentsResolved(
           idProvider: currentStudentIdProvider,
-          builder: StudentExamsScreen.new,
+          builder: ({Key? key, required int studentId}) =>
+              StudentAssignmentsScreen(
+            key: key,
+            studentId: studentId,
+            exams: true,
+          ),
         );
     }
   }
@@ -666,8 +708,7 @@ class _StudentAssignmentsResolved extends ConsumerWidget {
           data: (id) => builder(studentId: id),
           loading: () =>
               const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (e, _) =>
-              Scaffold(body: Center(child: Text('Error: $e'))),
+          error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
         );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/motion.dart';
+import 'brutal.dart';
 import 'floating_card.dart';
 
 /// Tarjeta con **profundidad** del sistema Educa v3: superficie elevada con
@@ -23,6 +24,7 @@ class DepthCard extends StatefulWidget {
     this.padding,
     this.color,
     this.gradient,
+    this.brutal = false,
   });
 
   final Widget child;
@@ -49,6 +51,9 @@ class DepthCard extends StatefulWidget {
   /// Degradado propio (tiene prioridad sobre color/glow).
   final Gradient? gradient;
 
+  /// Estilo neo-brutalista del panel de estudiante (borde grueso + sombra dura).
+  final bool brutal;
+
   @override
   State<DepthCard> createState() => _DepthCardState();
 }
@@ -58,6 +63,16 @@ class _DepthCardState extends State<DepthCard> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.brutal) {
+      return BrutalBox(
+        onTap: widget.onTap,
+        color: widget.color,
+        gradient: widget.gradient,
+        radius: widget.borderRadius,
+        padding: widget.padding,
+        child: widget.child,
+      );
+    }
     final palette = context.palette;
     final base = widget.color ?? palette.cardElevated;
     final accent = widget.accent;

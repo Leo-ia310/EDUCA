@@ -92,7 +92,7 @@ class TeacherCard extends StatelessWidget {
     final s = context.pastel(teacher.color);
     final initials = teacher.initials;
 
-    return DepthCard(
+    return DepthCard(brutal: true, 
       color: s.surface,
       accent: s.vivid,
       soft: true,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
@@ -80,7 +81,7 @@ class _HomeScheduleSectionState extends State<HomeScheduleSection> {
         const SizedBox(height: 6),
         // Altura fija: la píldora seleccionada sube sin mover el resto.
         SizedBox(
-          height: 100,
+          height: 86,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -134,7 +135,8 @@ class _HomeScheduleSectionState extends State<HomeScheduleSection> {
                                         !_weekend &&
                                         nowMin >=
                                             DateUtilsX.hhmmToMinutes(
-                                                slot.start,) &&
+                                              slot.start,
+                                            ) &&
                                         nowMin <
                                             DateUtilsX.hhmmToMinutes(slot.end),
                                   ),
@@ -167,8 +169,7 @@ class _CarouselArrows extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
-        final page = controller.hasClients &&
-                controller.position.haveDimensions
+        final page = controller.hasClients && controller.position.haveDimensions
             ? (controller.page ?? controller.initialPage.toDouble())
             : controller.initialPage.toDouble();
         final i = page.round();
@@ -251,8 +252,7 @@ class _CarouselItem extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
-        final page = controller.hasClients &&
-                controller.position.haveDimensions
+        final page = controller.hasClients && controller.position.haveDimensions
             ? (controller.page ?? controller.initialPage.toDouble())
             : controller.initialPage.toDouble();
         final delta = (page - index).abs().clamp(0.0, 1.0);
@@ -289,62 +289,49 @@ class _DayPill extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           AnimatedContainer(
-          duration: context.motion(AppMotion.base),
-          curve: AppMotion.standard,
-          // Seleccionada: sube un poco por encima de las demás.
-          margin: EdgeInsets.only(bottom: selected ? 14 : 0),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          width: double.infinity,
-          height: 84,
-          decoration: BoxDecoration(
-            color: selected ? palette.accentDeep : palette.cardElevated,
-            borderRadius: BorderRadius.circular(Radii.pill),
-            border: Border.all(
-              color: selected
-                  ? palette.accentDeep
-                  : Theme.of(context).dividerColor,
+            duration: context.motion(AppMotion.base),
+            curve: AppMotion.standard,
+            // Seleccionada: sube un poco por encima de las demás.
+            margin: EdgeInsets.only(bottom: selected ? 10 : 0),
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            width: double.infinity,
+            height: 70,
+            decoration: Brutal.decoration(
+              context,
+              color: selected ? palette.accentDeep : palette.cardElevated,
+              radius: Radii.md,
+              offset: 3,
             ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: palette.accentDeep.withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: context.textTheme.labelSmall
-                    ?.copyWith(color: fg, fontWeight: FontWeight.w700),
-              ),
-              Text(
-                '${date.day}',
-                style: context.textTheme.headlineSmall?.copyWith(
-                  color: selected ? Colors.white : null,
-                  fontWeight: FontWeight.w800,
-                  height: 1.1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: context.textTheme.labelSmall
+                      ?.copyWith(color: fg, fontWeight: FontWeight.w700),
                 ),
-              ),
-              SizedBox(
-                height: 13,
-                child: isToday
-                    ? Text(
-                        'Hoy',
-                        style: context.textTheme.labelSmall?.copyWith(
-                          color:
-                              selected ? Colors.white : palette.accentDeep,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      )
-                    : null,
-              ),
-            ],
-          ),
+                Text(
+                  '${date.day}',
+                  style: context.textTheme.titleLarge?.copyWith(
+                    color: selected ? Colors.white : null,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+                SizedBox(
+                  height: 13,
+                  child: isToday
+                      ? Text(
+                          'Hoy',
+                          style: context.textTheme.labelSmall?.copyWith(
+                            color: selected ? Colors.white : palette.accentDeep,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        )
+                      : null,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -360,101 +347,103 @@ class _ClassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(slot.color);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => context.push(Routes.schedule),
-        borderRadius: BorderRadius.circular(Radii.xl),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: s.surface,
-            borderRadius: BorderRadius.circular(Radii.xl),
-            border: current ? Border.all(color: s.vivid, width: 1.8) : null,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(Radii.xl),
-            child: Stack(
-              children: [
-                Positioned(
-                  right: -30,
-                  bottom: 40,
-                  child: Icon(
-                    slot.icon,
-                    size: 200,
-                    color: s.vivid.withValues(alpha: 0.14),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
+    return BrutalBox(
+      onTap: () => context.push(Routes.schedule),
+      color: s.surface,
+      radius: Radii.lg,
+      clip: true,
+      child: SizedBox.expand(
+        child: Stack(
+          children: [
+            Positioned(
+              right: -30,
+              bottom: 40,
+              child: Icon(
+                slot.icon,
+                size: 200,
+                color: s.vivid.withValues(alpha: 0.14),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              slot.subject,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: context.textTheme.headlineSmall?.copyWith(
-                                color: s.ink,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                      Expanded(
+                        child: Text(
+                          slot.subject,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textTheme.headlineSmall?.copyWith(
+                            color: s.ink,
+                            fontWeight: FontWeight.w400,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.schedule_rounded,
-                              size: 19, color: s.inkMuted,),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${slot.start} – ${slot.end}',
-                            style: context.textTheme.titleSmall?.copyWith(
-                              color: s.inkMuted,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 9,),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(Radii.pill),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.account_circle_rounded,
-                                size: 28, color: s.vivid,),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                slot.teacher,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style:
-                                    context.textTheme.titleSmall?.copyWith(
-                                  color: const Color(0xFF16202E),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 19,
+                        color: s.inkMuted,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${slot.start} – ${slot.end}',
+                        style: context.textTheme.titleSmall?.copyWith(
+                          color: s.inkMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(Radii.pill),
+                      border: Border.all(
+                        color: Brutal.ink(context),
+                        width: Brutal.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.account_circle_rounded,
+                          size: 28,
+                          color: s.vivid,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            slot.teacher,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.titleSmall?.copyWith(
+                              color: const Color(0xFF16202E),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -468,12 +457,9 @@ class _BreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return Container(
-      decoration: BoxDecoration(
-        color: palette.cardElevated,
-        borderRadius: BorderRadius.circular(Radii.xl),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
+    return BrutalBox(
+      color: palette.cardElevated,
+      radius: Radii.lg,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

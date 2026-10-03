@@ -7,6 +7,8 @@ import '../../features/chat/providers.dart';
 import '../../shared/models/app_role.dart';
 import '../routing/route_paths.dart';
 import '../theme/app_theme.dart';
+import '../theme/motion.dart';
+import 'brutal.dart';
 
 /// Una pestaña del bottom nav: ícono, etiqueta y ruta destino.
 class EducaTab {
@@ -149,6 +151,14 @@ class EducaBottomNav extends ConsumerWidget {
         activeIndex = i;
         break;
       }
+    }
+
+    if (role == AppRole.student) {
+      return _BrutalNav(
+        tabs: tabs,
+        activeIndex: activeIndex,
+        unread: unread,
+      );
     }
 
     // Fondo opaco del color de la página: cubre el contenido del panel en toda
@@ -375,4 +385,134 @@ class _NavBarPainter extends CustomPainter {
       old.barTop != barTop ||
       old.circleCenterY != circleCenterY ||
       old.guestRadius != guestRadius;
+}
+
+/// Variante neo-brutalista (panel de estudiante): barra azul con borde grueso
+/// y sombra dura; el ítem activo crece ligeramente y se rodea de un cuadrado
+/// redondeado con borde grueso.
+class _BrutalNav extends StatelessWidget {
+  const _BrutalNav({
+    required this.tabs,
+    required this.activeIndex,
+    required this.unread,
+  });
+
+  final List<EducaTab> tabs;
+  final int activeIndex;
+  final int unread;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+          child: BrutalBox(
+            color: EducaBottomNav.barColor,
+            radius: Radii.lg,
+            child: SizedBox(
+              height: 66,
+              child: Row(
+                children: [
+                  for (var i = 0; i < tabs.length; i++)
+                    Expanded(
+                      child: _BrutalSlot(
+                        icon: tabs[i].icon,
+                        active: i == activeIndex,
+                        badge: tabs[i].route == Routes.chat ? unread : 0,
+                        onTap: () {
+                          if (i != activeIndex) context.go(tabs[i].route);
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrutalSlot extends StatelessWidget {
+  const _BrutalSlot({
+    required this.icon,
+    required this.active,
+    required this.onTap,
+    this.badge = 0,
+  });
+
+  final IconData icon;
+  final bool active;
+  final int badge;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = Brutal.ink(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedContainer(
+              duration: context.motion(AppMotion.base),
+              curve: AppMotion.standard,
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: active ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(
+                  color: active ? ink : Colors.transparent,
+                  width: 2.5,
+                ),
+              ),
+              child: AnimatedScale(
+                scale: active ? 1.15 : 1,
+                duration: context.motion(AppMotion.base),
+                curve: AppMotion.standard,
+                child: Icon(
+                  icon,
+                  size: 24,
+                  color: active ? Colors.black : Colors.white,
+                ),
+              ),
+            ),
+            if (badge > 0)
+              Positioned(
+                right: -6,
+                top: -6,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: context.palette.danger,
+                    borderRadius: BorderRadius.circular(Radii.sm),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  constraints: const BoxConstraints(minWidth: 16),
+                  child: Text(
+                    badge > 99 ? '99+' : '$badge',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

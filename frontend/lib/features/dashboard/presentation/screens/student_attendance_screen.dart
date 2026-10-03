@@ -46,7 +46,7 @@ class _AttendanceHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return DepthCard(
+    return DepthCard(brutal: true, 
       borderRadius: Radii.xl,
       padding: const EdgeInsets.all(16),
       child: Row(

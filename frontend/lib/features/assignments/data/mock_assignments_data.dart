@@ -7,8 +7,7 @@ const _uuid = Uuid();
 DateTime _now() => DateTime.now();
 DateTime _daysFromNow(int days) =>
     DateTime.now().add(Duration(days: days)).copyWith(hour: 23, minute: 59);
-DateTime _daysAgo(int days) =>
-    DateTime.now().subtract(Duration(days: days));
+DateTime _daysAgo(int days) => DateTime.now().subtract(Duration(days: days));
 
 /// Dataset inicial para el modo demo. Se mutará en memoria por el repository.
 /// Las ids son strings estables para que las pantallas puedan navegar entre
@@ -23,7 +22,8 @@ class AssignmentsMockSeed {
           subjectName: 'Matemáticas Avanzadas',
           groupName: '4° Grado A',
           title: 'Examen Parcial II',
-          description: 'Examen escrito sobre ecuaciones diferenciales lineales.',
+          description:
+              'Examen escrito sobre ecuaciones diferenciales lineales.',
           instructions:
               '60 minutos. Permitido un formulario de 1 página. Calculadora científica permitida.',
           assignedAt: _daysAgo(5),
@@ -72,8 +72,7 @@ class AssignmentsMockSeed {
           title: 'Ensayo: Revolución Industrial',
           description:
               'Ensayo de 800 palabras sobre los efectos económicos de la Revolución Industrial.',
-          instructions:
-              'Formato APA. Mínimo 3 referencias. Subir en PDF.',
+          instructions: 'Formato APA. Mínimo 3 referencias. Subir en PDF.',
           assignedAt: _daysAgo(2),
           dueAt: _daysFromNow(5),
           kind: AssignmentKind.homework,
@@ -144,7 +143,8 @@ class AssignmentsMockSeed {
           subjectName: 'Literatura',
           groupName: '4° Grado A',
           title: 'Reseña de "Cien años de soledad"',
-          description: 'Reseña crítica de 2 páginas sobre los capítulos 1 al 5.',
+          description:
+              'Reseña crítica de 2 páginas sobre los capítulos 1 al 5.',
           assignedAt: _daysAgo(1),
           dueAt: _daysFromNow(3),
           kind: AssignmentKind.homework,
@@ -162,7 +162,8 @@ class AssignmentsMockSeed {
           subjectName: 'Biología Celular',
           groupName: '4° Grado A',
           title: 'Informe de laboratorio: Mitosis',
-          description: 'Informe con observaciones al microscopio y conclusiones.',
+          description:
+              'Informe con observaciones al microscopio y conclusiones.',
           assignedAt: _daysAgo(2),
           dueAt: _daysFromNow(5),
           kind: AssignmentKind.homework,
@@ -175,7 +176,7 @@ class AssignmentsMockSeed {
           gradedCount: 0,
         ),
         Assignment(
-          id: 'a-fis-001',
+          id: 'a-fis-002',
           classId: 701,
           subjectName: 'Física Cuántica',
           groupName: '4° Grado A',
@@ -186,6 +187,57 @@ class AssignmentsMockSeed {
           kind: AssignmentKind.homework,
           maxScore: 40,
           allowLate: true,
+          attachments: const [],
+          teacherName: 'Dra. Elena Ruiz',
+          totalStudents: 24,
+          submittedCount: 0,
+          gradedCount: 0,
+        ),
+        Assignment(
+          id: 'a-lit-002',
+          classId: 702,
+          subjectName: 'Literatura',
+          groupName: '4° Grado A',
+          title: 'Examen: Realismo mágico',
+          assignedAt: _daysAgo(2),
+          dueAt: _daysFromNow(4),
+          kind: AssignmentKind.exam,
+          maxScore: 100,
+          allowLate: false,
+          attachments: const [],
+          teacherName: 'Prof. Marta Vega',
+          totalStudents: 24,
+          submittedCount: 0,
+          gradedCount: 0,
+        ),
+        Assignment(
+          id: 'a-his-002',
+          classId: 703,
+          subjectName: 'Historia',
+          groupName: '4° Grado A',
+          title: 'Quiz: Revolución Industrial',
+          assignedAt: _daysAgo(2),
+          dueAt: _daysFromNow(2),
+          kind: AssignmentKind.quiz,
+          maxScore: 10,
+          allowLate: false,
+          attachments: const [],
+          teacherName: 'Prof. Andrés Paz',
+          totalStudents: 24,
+          submittedCount: 0,
+          gradedCount: 0,
+        ),
+        Assignment(
+          id: 'a-fis-003',
+          classId: 701,
+          subjectName: 'Física Cuántica',
+          groupName: '4° Grado A',
+          title: 'Examen: Ondas y partículas',
+          assignedAt: _daysAgo(2),
+          dueAt: _daysFromNow(9),
+          kind: AssignmentKind.exam,
+          maxScore: 100,
+          allowLate: false,
           attachments: const [],
           teacherName: 'Dra. Elena Ruiz',
           totalStudents: 24,
@@ -245,16 +297,13 @@ class AssignmentsMockSeed {
       studentId: studentId,
       studentName: name,
       status: status,
-      submittedAt: isSubmitted
-          ? a.dueAt.subtract(Duration(hours: index + 1))
-          : null,
+      submittedAt:
+          isSubmitted ? a.dueAt.subtract(Duration(hours: index + 1)) : null,
       attachments: isSubmitted
           ? [
               AssignmentAttachment(
                 id: _uuid.v4(),
-                name: 'entrega_$name.pdf'
-                    .replaceAll(' ', '_')
-                    .toLowerCase(),
+                name: 'entrega_$name.pdf'.replaceAll(' ', '_').toLowerCase(),
                 url: 'demo://files/entrega_$studentId.pdf',
                 sizeBytes: 100_000 + index * 5000,
                 mimeType: 'application/pdf',
