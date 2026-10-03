@@ -376,7 +376,8 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      existing == null
+                      (existing == null ||
+                              existing.status == SubmissionStatus.pending)
                           ? 'Aún no entregada'
                           : 'Entregada — esperando calificación',
                       style: context.textTheme.titleSmall
@@ -403,9 +404,9 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (existing != null) ...[
+                  if (existing?.submittedAt != null) ...[
                     Text(
-                      'Ya entregaste el ${DateFormat("d MMM HH:mm", 'es').format(existing.submittedAt!)}',
+                      'Ya entregaste el ${DateFormat("d MMM HH:mm", 'es').format(existing!.submittedAt!)}',
                       style: context.textTheme.bodySmall
                           ?.copyWith(color: palette.success),
                     ),
@@ -484,7 +485,7 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                           label: Text(
                             state.saving
                                 ? 'Enviando…'
-                                : (existing == null
+                                : (existing?.submittedAt == null
                                     ? 'Enviar entrega'
                                     : 'Reemplazar entrega'),
                           ),
