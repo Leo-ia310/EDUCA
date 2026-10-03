@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/collapsible_section.dart';
+import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -55,19 +55,43 @@ class StudentAssignmentsScreen extends ConsumerWidget {
                 onAction: () => context.go(Routes.schedule),
               );
             }
-            final now = DateTime.now();
-            final pending = items
-                .where((a) => a.statusForNow(now) == AssignmentStatus.open)
-                .toList();
-            final dueSoon = items
-                .where((a) => a.statusForNow(now) == AssignmentStatus.dueSoon)
-                .toList();
-            final past = items
-                .where((a) =>
-                    a.statusForNow(now) == AssignmentStatus.overdue ||
-                    a.statusForNow(now) == AssignmentStatus.closed,)
-                .toList();
+            // Pendientes: sin entrega; Entregadas: con entrega registrada.
+            bool delivered(Assignment a) {
+              final st = ref
+                  .watch(
+                    mySubmissionProvider(
+                      (assignmentId: a.id, studentId: studentId),
+                    ),
+                  )
+                  .asData
+                  ?.value
+                  ?.status;
+              return st != null && st != SubmissionStatus.pending;
+            }
+
+            final pending = items.where((a) => !delivered(a)).toList();
+            final done = items.where(delivered).toList();
             var entranceIndex = 0;
+
+            Widget section(String title, List<Assignment> list) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SectionHeader(title: title, accent: false),
+                    const SizedBox(height: 8),
+                    for (final a in list)
+                      entranceItem(
+                        context,
+                        entranceIndex++,
+                        _StudentTile(
+                          assignment: a,
+                          studentId: studentId,
+                          onTap: () =>
+                              context.push('${Routes.assignments}/${a.id}'),
+                        ),
+                      ),
+                  ],
+                );
+
             return RefreshIndicator(
               color: palette.accentDeep,
               onRefresh: () async =>
@@ -76,65 +100,10 @@ class StudentAssignmentsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
                 children: [
                   if (pending.isNotEmpty) ...[
-                    CollapsibleSection(
-                      title: 'Por entregar',
-                      trailingCount: pending.length,
-                      children: [
-                        for (final a in pending)
-                          entranceItem(
-                            context,
-                            entranceIndex++,
-                            _StudentTile(
-                              assignment: a,
-                              studentId: studentId,
-                              onTap: () => context
-                                  .push('${Routes.assignments}/${a.id}'),
-                            ),
-                          ),
-                      ],
-                    ),
+                    section('Pendientes', pending),
                     const SizedBox(height: 16),
                   ],
-                  if (dueSoon.isNotEmpty) ...[
-                    CollapsibleSection(
-                      title: 'Vencen pronto',
-                      trailingCount: dueSoon.length,
-                      children: [
-                        for (final a in dueSoon)
-                          entranceItem(
-                            context,
-                            entranceIndex++,
-                            _StudentTile(
-                              assignment: a,
-                              studentId: studentId,
-                              onTap: () => context
-                                  .push('${Routes.assignments}/${a.id}'),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  if (past.isNotEmpty) ...[
-                    CollapsibleSection(
-                      title: 'Pasadas',
-                      trailingCount: past.length,
-                      initiallyExpanded: false,
-                      children: [
-                        for (final a in past)
-                          entranceItem(
-                            context,
-                            entranceIndex++,
-                            _StudentTile(
-                              assignment: a,
-                              studentId: studentId,
-                              onTap: () => context
-                                  .push('${Routes.assignments}/${a.id}'),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
+                  if (done.isNotEmpty) section('Entregadas', done),
                 ],
               ),
             );
