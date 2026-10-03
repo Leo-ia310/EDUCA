@@ -117,12 +117,12 @@ class AssignmentCard extends StatelessWidget {
                           Container(
                             width: 30,
                             height: 30,
-                            decoration: BoxDecoration(
-                              color: vivid,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.chevron_right_rounded,
-                                color: Colors.white, size: 22,),
+                                color: Colors.black, size: 22,),
                           ),
                         ],
                       ),

@@ -213,6 +213,29 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
+            path: 'subject/:name',
+            builder: (context, state) {
+              final name = state.pathParameters['name'] ?? '';
+              return Consumer(
+                builder: (context, ref, _) {
+                  final role =
+                      ref.watch(authControllerProvider).user?.activeRole;
+                  return _StudentAssignmentsResolved(
+                    idProvider: role == AppRole.parent
+                        ? parentChildStudentIdProvider
+                        : currentStudentIdProvider,
+                    builder: ({Key? key, required int studentId}) =>
+                        SubjectAssignmentsScreen(
+                      key: key,
+                      studentId: studentId,
+                      subject: name,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          GoRoute(
             path: ':id',
             builder: (context, state) {
               final id = state.pathParameters['id']!;
