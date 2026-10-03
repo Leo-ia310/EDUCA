@@ -335,14 +335,15 @@ class _HeroClipper extends CustomClipper<Path> {
       ..moveTo(0, 0)
       ..lineTo(w, 0)
       ..lineTo(w, barHeight)
-      // Transición cóncava del ancho completo al ancho con margen.
-      ..quadraticBezierTo(w, barHeight + m, w - m, barHeight + m)
+      // Radio inferior de la barra invertido (curva hacia dentro): une el
+      // ancho completo con el ancho con margen.
+      ..quadraticBezierTo(w - m, barHeight, w - m, barHeight + m)
       ..lineTo(w - m, h - r)
       ..quadraticBezierTo(w - m, h, w - m - r, h)
       ..lineTo(m + r, h)
       ..quadraticBezierTo(m, h, m, h - r)
       ..lineTo(m, barHeight + m)
-      ..quadraticBezierTo(0, barHeight + m, 0, barHeight)
+      ..quadraticBezierTo(m, barHeight, 0, barHeight)
       ..close();
   }
 
