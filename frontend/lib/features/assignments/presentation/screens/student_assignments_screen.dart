@@ -180,18 +180,7 @@ class _StudentAssignmentsScreenState
   /// Vista general: todas las tareas, por fecha de entrega.
   List<Widget> _generalList(BuildContext context, List<Assignment> items) {
     final sorted = [...items]..sort((a, b) => a.dueAt.compareTo(b.dueAt));
-    return [
-      for (final (i, a) in sorted.indexed)
-        entranceItem(
-          context,
-          i,
-          _StudentTile(
-            assignment: a,
-            studentId: widget.studentId,
-            onTap: () => context.push('${Routes.assignments}/${a.id}'),
-          ),
-        ),
-    ];
+    return _sections(context, ref, sorted, widget.studentId);
   }
 
   /// Por materia: una tarjeta por cada materia del estudiante.
