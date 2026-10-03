@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -225,9 +223,9 @@ class _ArrowButton extends StatelessWidget {
             customBorder: const CircleBorder(),
             onTap: enabled ? onTap : null,
             child: SizedBox(
-              width: 38,
-              height: 38,
-              child: Icon(icon, color: palette.accentDeep, size: 26),
+              width: 54,
+              height: 54,
+              child: Icon(icon, color: palette.accentDeep, size: 38),
             ),
           ),
         ),
@@ -424,14 +422,14 @@ class _ClassCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 9,),
                         decoration: BoxDecoration(
-                          color: s.vivid.withValues(alpha: 0.18),
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(Radii.pill),
                         ),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.account_circle_rounded,
                                 size: 28, color: s.vivid,),
@@ -443,7 +441,7 @@ class _ClassCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style:
                                     context.textTheme.titleSmall?.copyWith(
-                                  color: s.ink,
+                                  color: const Color(0xFF16202E),
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -479,8 +477,16 @@ class _BreakCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const _AnimatedCup(),
-          const SizedBox(height: 10),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Image.asset(
+                'assets/images/break_relax.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
             slot.subject,
             style: context.textTheme.titleLarge
@@ -492,88 +498,8 @@ class _BreakCard extends StatelessWidget {
             style: context.textTheme.bodyMedium
                 ?.copyWith(color: palette.textMuted),
           ),
+          const SizedBox(height: 14),
         ],
-      ),
-    );
-  }
-}
-
-/// Taza de café animada: vapor que sube y se desvanece, y un leve vaivén.
-class _AnimatedCup extends StatefulWidget {
-  const _AnimatedCup();
-
-  @override
-  State<_AnimatedCup> createState() => _AnimatedCupState();
-}
-
-class _AnimatedCupState extends State<_AnimatedCup>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2400),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (context.reduceMotion) {
-      _c.stop();
-    } else if (!_c.isAnimating) {
-      _c.repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = context.palette.textMuted;
-    return SizedBox(
-      width: 90,
-      height: 90,
-      child: AnimatedBuilder(
-        animation: _c,
-        builder: (context, _) {
-          Widget steam(double phase, double dx) {
-            final t = (_c.value + phase) % 1.0;
-            return Positioned(
-              left: 30 + dx,
-              top: 26 - 22 * t,
-              child: Opacity(
-                opacity: math.sin(math.pi * t).clamp(0.0, 1.0) * 0.7,
-                child: Transform.translate(
-                  offset: Offset(math.sin(t * math.pi * 2) * 3, 0),
-                  child: Container(
-                    width: 4,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }
-
-          return Stack(
-            children: [
-              steam(0, 0),
-              steam(0.33, 12),
-              steam(0.66, 24),
-              Positioned(
-                left: 13,
-                top: 30 + math.sin(_c.value * math.pi * 2) * 1.5,
-                child: Icon(Icons.free_breakfast_rounded,
-                    size: 64, color: color,),
-              ),
-            ],
-          );
-        },
       ),
     );
   }
