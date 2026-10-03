@@ -85,10 +85,6 @@ class AssignmentCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (studentStatus != null)
-                        SubmissionStatusChip(
-                            status: studentStatus!, onPastel: true,),
-                      SizedBox(height: studentStatus != null ? 10 : 0),
                       Text(
                         assignment.title,
                         maxLines: 2,
@@ -118,23 +114,16 @@ class AssignmentCard extends StatelessWidget {
                                 ?.copyWith(color: inkMuted),
                           ),
                           const Spacer(),
-                          if (studentScore != null)
-                            Text(
-                              '${studentScore!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
-                              style: context.textTheme.titleSmall?.copyWith(
-                                color:
-                                    Theme.of(context).brightness == Brightness.dark
-                                        ? const Color(0xFF6FD99A)
-                                        : const Color(0xFF2E7D46),
-                                fontWeight: FontWeight.w800,
-                              ),
-                            )
-                          else
-                            Text(
-                              '${assignment.maxScore.toStringAsFixed(0)} pts',
-                              style: context.textTheme.labelSmall
-                                  ?.copyWith(color: inkMuted),
+                          Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: vivid,
+                              shape: BoxShape.circle,
                             ),
+                            child: const Icon(Icons.chevron_right_rounded,
+                                color: Colors.white, size: 22,),
+                          ),
                         ],
                       ),
                     ],
