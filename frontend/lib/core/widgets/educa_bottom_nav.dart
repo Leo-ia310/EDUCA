@@ -153,7 +153,7 @@ class EducaBottomNav extends ConsumerWidget {
       }
     }
 
-    if (role == AppRole.student) {
+    if (role == AppRole.student || role == AppRole.teacher) {
       return _BrutalNav(
         tabs: tabs,
         activeIndex: activeIndex,

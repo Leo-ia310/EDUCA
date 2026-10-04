@@ -47,6 +47,7 @@ import '../../features/support/presentation/screens/help_screen.dart';
 import '../../features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/all_subjects_screen.dart';
 import '../../features/dashboard/presentation/screens/my_teachers_screen.dart';
+import '../../features/dashboard/presentation/screens/teacher_classes_screen.dart';
 import '../../features/dashboard/presentation/screens/parent_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/school_calendar_screen.dart';
 import '../../features/dashboard/presentation/screens/student_attendance_screen.dart';
@@ -163,6 +164,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // ----- Mis clases (docente) -----
+      GoRoute(
+        path: Routes.myClasses,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.teacher},
+          child: TeacherClassesScreen(),
+        ),
+      ),
+
       // ----- Equipos de trabajo -----
       GoRoute(
         path: Routes.workTeams,
@@ -252,6 +262,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, ref, _) {
                   final role =
                       ref.watch(authControllerProvider).user?.activeRole;
+                  if (role == AppRole.teacher) {
+                    return TeacherSubjectAssignmentsScreen(subject: name);
+                  }
                   return _StudentAssignmentsResolved(
                     idProvider: role == AppRole.parent
                         ? parentChildStudentIdProvider

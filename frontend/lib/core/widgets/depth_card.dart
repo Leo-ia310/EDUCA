@@ -63,7 +63,7 @@ class _DepthCardState extends State<DepthCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.brutal) {
+    if (widget.brutal || Brutal.active(context)) {
       return BrutalBox(
         onTap: widget.onTap,
         color: widget.color,

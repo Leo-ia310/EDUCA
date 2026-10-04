@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -13,6 +11,7 @@ import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
+import '../widgets/home_hero.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/home_schedule_section.dart';
 import '../widgets/student_home_header.dart';
@@ -50,9 +49,9 @@ class StudentDashboardScreen extends ConsumerWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: _StudentHero(
+            child: HomeHero(
               name: user.displayFirstName,
-              gradeGroup: data.gradeGroup,
+              subtitle: data.gradeGroup,
             ),
           ),
           Padding(
@@ -178,108 +177,4 @@ class _TileData {
   final Color color;
   final Widget? art;
   final VoidCallback? onTap;
-}
-
-/// Hero de bienvenida del home: saludo + nombre + grado/grupo alineados a la
-/// izquierda, sobre una ilustración de fondo (mañana/tarde/noche) según la
-/// hora del día.
-class _StudentHero extends StatelessWidget {
-  const _StudentHero({
-    required this.name,
-    required this.gradeGroup,
-  });
-
-  final String name;
-  final String gradeGroup;
-
-  static String _backgroundFor(int hour) {
-    if (hour < 12) return 'assets/images/hero_sky_morning.png';
-    if (hour < 19) return 'assets/images/hero_sky_afternoon.png';
-    return 'assets/images/hero_sky_night.png';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final greeting = DateUtilsX.greetingForHour(now);
-    final textShadows = [
-      Shadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 8),
-    ];
-
-    // Altura de la zona de la barra superior (ancho completo); debajo, el hero
-    // se estrecha con margen lateral y esquinas inferiores convexas.
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: SizedBox(
-      width: double.infinity,
-      height: 340,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(_backgroundFor(now.hour), fit: BoxFit.cover),
-          // Velo oscuro: arriba (para la barra superior) y a la izquierda
-          // (para el texto), sobre la ilustración.
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.black38, Colors.transparent],
-                stops: [0, 0.3],
-              ),
-            ),
-          ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [Colors.black38, Colors.transparent],
-                stops: [0, 0.75],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  greeting,
-                  style: context.textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 2.2,
-                    shadows: textShadows,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.displayMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w400,
-                    shadows: textShadows,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  gradeGroup,
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontWeight: FontWeight.w700,
-                    shadows: textShadows,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      ),
-    );
-  }
 }

@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../features/auth/presentation/auth_controller.dart';
+import '../../shared/models/app_role.dart';
 
 import '../theme/app_theme.dart';
 
 /// Estilo "neo-brutalista" del panel de estudiante: borde grueso de tinta,
 /// sombra dura desplazada y colores planos.
 abstract final class Brutal {
+  /// El estilo aplica a los paneles de estudiante y docente.
+  static bool active(BuildContext context) {
+    final role = ProviderScope.containerOf(context, listen: false)
+        .read(authControllerProvider)
+        .user
+        ?.activeRole;
+    return role == AppRole.student || role == AppRole.teacher;
+  }
+
   static const double border = 2;
   static const double shadowOffset = 4;
 
@@ -107,6 +120,68 @@ class _BrutalBoxState extends State<BrutalBox> {
               behavior: HitTestBehavior.opaque,
               child: box,
             ),
+    );
+  }
+}
+
+/// Botón con el estilo [Brutal]: relleno plano, borde grueso y sombra dura.
+class BrutalButton extends StatelessWidget {
+  const BrutalButton({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.icon,
+    this.color,
+    this.foreground,
+    this.expand = false,
+    this.height = 44,
+  });
+
+  final String label;
+  final IconData? icon;
+  final VoidCallback onTap;
+
+  /// Relleno (por defecto el acento de marca).
+  final Color? color;
+  final Color? foreground;
+  final bool expand;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = foreground ?? Colors.white;
+    final child = Row(
+      mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 20, color: fg),
+          const SizedBox(width: 8),
+        ],
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.labelLarge?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+    return BrutalBox(
+      onTap: onTap,
+      color: color ?? context.palette.accentDeep,
+      radius: Radii.md,
+      offset: 3,
+      child: Container(
+        height: height,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.center,
+        child: child,
+      ),
     );
   }
 }
