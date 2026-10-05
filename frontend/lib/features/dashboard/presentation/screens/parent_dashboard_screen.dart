@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-
-import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/animated_count.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/open_card.dart';
@@ -17,12 +17,11 @@ import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
-import '../../../profile/presentation/widgets/account_settings_menu.dart';
 import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
-import '../widgets/greeting_header.dart';
-import '../widgets/stat_strip.dart';
+import '../widgets/student_chrome.dart';
+import '../widgets/student_home_header.dart';
 import 'activity_detail_screen.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
@@ -42,10 +41,10 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
     final palette = context.palette;
     final data = ref.watch(parentDashboardProvider).valueOrNull ??
         ParentDashboardData.mock();
-    final now = DateTime.now();
 
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.zero,
+      topSafeArea: false,
       onRefresh: () async =>
           Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
@@ -78,29 +77,22 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Hero de bienvenida (full-bleed).
-          AppGreetingHeader(
-            greeting: DateUtilsX.greetingForHour(now),
+          // Barra superior azul full-bleed.
+          StudentHomeHeader(
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
                 : '?',
-            dateLabel: toBeginningOfSentenceCase(
-              DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
-            ),
-            chipIcon: Icons.notifications_active_rounded,
-            chipLabel:
-                '${data.newNotices} avisos · ${data.monthEvents} eventos este mes',
+            avatarUrl: user.avatarUrl,
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ??
                     data.newNotices,
             onNotificationsTap: () => context.go(Routes.alerts),
-            settingsMenu: const AccountSettingsMenu(circular: true),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+          StudentPanel(
+            padding: const EdgeInsets.fromLTRB(16, 44, 16, 24),
             child: StaggeredEntrance(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -174,26 +166,34 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                 const SizedBox(height: 20),
 
                 // KPIs (asistencia · eventos · avisos)
-                DashboardStatStrip(
-                  tiles: [
-                    StatTile(
-                      icon: Icons.event_available_rounded,
-                      color: const Color(0xFF34C77A),
-                      value: data.attendancePercent,
-                      suffix: '%',
-                      label: 'Asistencia',
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ParentStat(
+                        icon: Icons.event_available_rounded,
+                        color: const Color(0xFF34C77A),
+                        value: data.attendancePercent,
+                        suffix: '%',
+                        label: 'Asistencia',
+                      ),
                     ),
-                    StatTile(
-                      icon: Icons.calendar_month_rounded,
-                      color: const Color(0xFF4C8DF5),
-                      value: data.monthEvents.toDouble(),
-                      label: 'Eventos',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ParentStat(
+                        icon: Icons.calendar_month_rounded,
+                        color: const Color(0xFF4C8DF5),
+                        value: data.monthEvents.toDouble(),
+                        label: 'Eventos',
+                      ),
                     ),
-                    StatTile(
-                      icon: Icons.mark_email_unread_rounded,
-                      color: const Color(0xFFF3993E),
-                      value: data.newNotices.toDouble(),
-                      label: 'Avisos',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ParentStat(
+                        icon: Icons.mark_email_unread_rounded,
+                        color: const Color(0xFFF3993E),
+                        value: data.newNotices.toDouble(),
+                        label: 'Avisos',
+                      ),
                     ),
                   ],
                 ),
@@ -293,6 +293,53 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
 }
 
 
+/// KPI del padre con profundidad + cifra animada.
+class _ParentStat extends StatelessWidget {
+  const _ParentStat({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.label,
+    this.suffix = '',
+  });
+
+  final IconData icon;
+  final Color color;
+  final double value;
+  final String label;
+  final String suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.pastel(color);
+    return DepthCard(
+      accent: s.vivid,
+      glow: true,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: s.vivid, size: 24),
+          const SizedBox(height: 8),
+          AnimatedCount(
+            value: value,
+            suffix: suffix,
+            style: context.textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodySmall
+                ?.copyWith(color: context.palette.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Fila de materia + profesor, estilo pastel del panel.
 class _SubjectTeacherRow extends StatelessWidget {
   const _SubjectTeacherRow({required this.item});
@@ -301,12 +348,12 @@ class _SubjectTeacherRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(item.name));
-    return Container(
+    return DepthCard(
+      color: s.surface,
+      accent: s.vivid,
+      soft: true,
+      borderRadius: Radii.md,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: s.surface,
-        borderRadius: BorderRadius.circular(Radii.md),
-      ),
       child: Row(
         children: [
           Container(
@@ -374,12 +421,12 @@ class _ActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(item.tag.isEmpty ? item.title : item.tag));
-    return Container(
+    return DepthCard(
+      color: s.surface,
+      accent: s.vivid,
+      soft: true,
+      borderRadius: Radii.md,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: s.surface,
-        borderRadius: BorderRadius.circular(Radii.md),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -427,11 +474,16 @@ class _ActivityCard extends StatelessWidget {
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(Radii.xs),
-            child: LinearProgressIndicator(
-              value: item.progress,
-              minHeight: 6,
-              backgroundColor: s.ink.withValues(alpha: 0.10),
-              valueColor: AlwaysStoppedAnimation<Color>(s.vivid),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: item.progress),
+              duration: context.motion(AppMotion.slow),
+              curve: AppMotion.standard,
+              builder: (context, value, _) => LinearProgressIndicator(
+                value: value,
+                minHeight: 6,
+                backgroundColor: s.ink.withValues(alpha: 0.10),
+                valueColor: AlwaysStoppedAnimation<Color>(s.vivid),
+              ),
             ),
           ),
         ],

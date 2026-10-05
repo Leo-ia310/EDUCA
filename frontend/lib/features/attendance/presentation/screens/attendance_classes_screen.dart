@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/skeleton.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../controllers/attendance_take_controller.dart' show todaysClassesProvider;
 import '../widgets/sync_status_badge.dart';
@@ -22,33 +22,17 @@ class AttendanceClassesScreen extends ConsumerWidget {
     final classes = ref.watch(todaysClassesProvider);
     final palette = context.palette;
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Tomar Asistencia',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Tomar Asistencia'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            child: IconButton(
-              icon: const Icon(Icons.history_rounded),
-              tooltip: 'Historial',
-              onPressed: () => context.push(Routes.attendanceHistory),
-            ),
-          ),
-        ],
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
               child: Row(
                 children: [
                   Expanded(
@@ -60,6 +44,16 @@ class AttendanceClassesScreen extends ConsumerWidget {
                     ),
                   ),
                   const SyncStatusBadge(compact: true),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () => context.push(Routes.attendanceHistory),
+                    icon: const Icon(Icons.history_rounded, size: 18),
+                    label: const Text('Historial'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: palette.accentDeep,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -98,7 +92,9 @@ class _ClassCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
-    return EduCard(
+    return DepthCard(
+      soft: true,
+      padding: const EdgeInsets.all(16),
       onTap: () => context.push(
         '${Routes.attendanceTake}?classId=${brief.classId}',
       ),
@@ -147,7 +143,7 @@ class _ClassCard extends ConsumerWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded),
+          Icon(Icons.chevron_right_rounded, color: palette.textMuted),
         ],
       ),
     );

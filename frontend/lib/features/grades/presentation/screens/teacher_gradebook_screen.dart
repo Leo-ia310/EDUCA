@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/animated_count.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/glass.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../attendance/data/mock_attendance_data.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../domain/grades_repository.dart';
 import '../../providers.dart';
@@ -36,17 +38,11 @@ class _TeacherGradebookScreenState
     final scaleAsync = ref.watch(defaultScaleProvider);
     final periodsAsync = ref.watch(periodsProvider);
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Libro de notas',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Libro de notas'),
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -60,8 +56,7 @@ class _TeacherGradebookScreenState
             ),
             Expanded(
               child: data.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (matrix) {
                   if (matrix.evaluations.isEmpty) {
@@ -73,8 +68,7 @@ class _TeacherGradebookScreenState
                     );
                   }
                   return scaleAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                    loading: () => const SkeletonList(),
                     error: (e, _) => ErrorStateView(message: '$e'),
                     data: (scale) => _Matrix(
                       matrix: matrix,
@@ -111,8 +105,9 @@ class _Filters extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: EduCard(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      child: DepthCard(
+        soft: true,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Row(
           children: [
@@ -177,16 +172,43 @@ class _Matrix extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Promedio de clase (normalizado a la escala) y avance de captura.
+    var sum = 0.0;
+    var graded = 0;
+    final total = matrix.students.length * matrix.evaluations.length;
+    for (final s in matrix.students) {
+      for (final e in matrix.evaluations) {
+        final raw = matrix.grades[s.studentId]?[e.id];
+        if (raw != null) {
+          sum += scale.normalize(raw, rawMax: e.maxScore);
+          graded++;
+        }
+      }
+    }
+    final average = graded == 0 ? 0.0 : sum / graded;
+    final completion = total == 0 ? 0.0 : graded / total;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
       child: Column(
         children: [
+          _ClassSummary(
+            average: average,
+            completion: completion,
+            graded: graded,
+            total: total,
+            scale: scale,
+          ),
+          const SizedBox(height: 12),
           for (final s in matrix.students)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: EduCard(
+              child: DepthCard(
+                soft: true,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 12,),
+                  horizontal: 12,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -246,10 +268,10 @@ class _Matrix extends ConsumerWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
-      ),
-      builder: (ctx) => Padding(
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GlassSurface(
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(Radii.xl)),
         padding: EdgeInsets.fromLTRB(
           20,
           16,
@@ -303,6 +325,85 @@ class _Matrix extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ClassSummary extends StatelessWidget {
+  const _ClassSummary({
+    required this.average,
+    required this.completion,
+    required this.graded,
+    required this.total,
+    required this.scale,
+  });
+
+  final double average;
+  final double completion;
+  final int graded;
+  final int total;
+  final GradingScale scale;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final pct = (completion * 100).round();
+    return DepthCard(
+      accent: palette.accent,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Promedio de clase',
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: palette.textMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                AnimatedCount(
+                  value: average,
+                  decimals: 1,
+                  suffix: ' / ${scale.maxValue.toStringAsFixed(0)}',
+                  style: context.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: palette.accentDeep,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Captura',
+                style: context.textTheme.labelMedium?.copyWith(
+                  color: palette.textMuted,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$pct%',
+                style: context.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                '$graded / $total notas',
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: palette.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

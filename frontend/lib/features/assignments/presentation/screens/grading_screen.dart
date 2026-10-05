@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/glass.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../controllers/assignment_detail_controller.dart';
 import '../controllers/grading_controller.dart';
@@ -24,24 +25,18 @@ class GradingScreen extends ConsumerWidget {
     final submissionsAsync =
         ref.watch(submissionsForAssignmentProvider(assignmentId));
 
-    return AppScaffold(
-      scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: assignmentAsync.maybeWhen(
-          data: (a) => Text(a?.title ?? 'Tarea'),
-          orElse: () => const Text('Tarea'),
-        ),
+    return StudentDetailScaffold(
+      title: assignmentAsync.maybeWhen(
+        data: (a) => a?.title ?? 'Calificar',
+        orElse: () => 'Calificar',
       ),
+      scrollable: false,
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: assignmentAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => Center(child: Text('$e')),
           data: (a) {
             if (a == null) {
@@ -49,7 +44,7 @@ class GradingScreen extends ConsumerWidget {
                   icon: Icons.error_outline, title: 'No encontrada',);
             }
             return submissionsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const SkeletonList(),
               error: (e, _) => Center(child: Text('$e')),
               data: (subs) => _SubmissionsList(assignment: a, submissions: subs),
             );
@@ -71,9 +66,14 @@ class _SubmissionsList extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: EduCard(
-            color: palette.accent,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: DepthCard(
+            padding: const EdgeInsets.all(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [palette.accent, palette.accentDeep],
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -83,11 +83,11 @@ class _SubmissionsList extends StatelessWidget {
                       Text(
                         '${assignment.subjectName} · ${assignment.groupName}',
                         style: context.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF34401C),
+                          color: Colors.white.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       AssignmentStatusChip(
                           status: assignment.statusForNow(DateTime.now()),),
                     ],
@@ -134,7 +134,7 @@ class _CounterPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Column(
@@ -144,7 +144,7 @@ class _CounterPill extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w800, color: Colors.white),),
           Text(label,
               style: context.textTheme.labelSmall
-                  ?.copyWith(color: const Color(0xFF34401C)),),
+                  ?.copyWith(color: Colors.white.withValues(alpha: 0.85)),),
         ],
       ),
     );
@@ -160,7 +160,9 @@ class _SubmissionRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     final fmt = DateFormat("d MMM, HH:mm", 'es');
-    return EduCard(
+    return DepthCard(
+      soft: true,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -270,11 +272,10 @@ class _SubmissionRow extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
-      ),
-      builder: (ctx) => Padding(
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GlassSurface(
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(Radii.xl)),
         padding: EdgeInsets.fromLTRB(
           20,
           16,

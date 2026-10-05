@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_scaffold.dart';
-import '../../../core/widgets/edu_card.dart';
+import '../../../core/widgets/depth_card.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/section_header.dart';
+import '../../../core/widgets/skeleton.dart';
+import '../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../grades/domain/entities.dart';
 import '../../grades/presentation/controllers/grades_controller.dart';
 import '../../grades/presentation/widgets/grade_pill.dart';
@@ -35,42 +35,17 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
       StudentGradesArgs(studentId: widget.studentId, periodId: _periodId),
     ),);
 
-    return AppScaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Boletín'),
-        actions: [
-          card.maybeWhen(
-            data: (data) => IconButton(
-              icon: const Icon(Icons.picture_as_pdf_rounded),
-              tooltip: 'Ver PDF',
-              onPressed: () => _openPdf(data),
-            ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-          card.maybeWhen(
-            data: (data) => IconButton(
-              icon: const Icon(Icons.ios_share_rounded),
-              tooltip: 'Compartir',
-              onPressed: () => _sharePdf(data),
-            ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+    return StudentDetailScaffold(
+      title: 'Boletín',
+      bottomNav: false,
       child: card.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(),
         error: (e, _) => ErrorStateView(message: '$e'),
         data: (data) => scaleAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (scale) => periodsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const SkeletonList(),
             error: (e, _) => ErrorStateView(message: '$e'),
             data: (periods) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,7 +60,8 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
                 const SizedBox(height: 16),
                 const SectionHeader(title: 'Materias'),
                 const SizedBox(height: 8),
-                EduCard(
+                DepthCard(
+                  soft: true,
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
@@ -106,6 +82,12 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
                   onPressed: () => _openPdf(data),
                   icon: const Icon(Icons.picture_as_pdf_rounded),
                   label: const Text('Ver / Descargar boletín en PDF'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => _sharePdf(data),
+                  icon: const Icon(Icons.ios_share_rounded),
+                  label: const Text('Compartir boletín'),
                 ),
                 const SizedBox(height: 12),
                 Center(
@@ -189,8 +171,16 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final fmt = DateFormat("d MMM y", 'es');
-    return EduCard(
-      color: palette.cardContrast,
+    return DepthCard(
+      padding: const EdgeInsets.all(16),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          palette.cardContrast,
+          Color.lerp(palette.cardContrast, Colors.black, 0.25)!,
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

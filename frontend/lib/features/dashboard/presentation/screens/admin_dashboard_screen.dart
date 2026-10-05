@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-
-import '../../../../core/utils/date_utils.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/animated_count.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/open_card.dart';
@@ -17,12 +16,11 @@ import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
-import '../../../profile/presentation/widgets/account_settings_menu.dart';
 import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
-import '../widgets/greeting_header.dart';
-import '../widgets/stat_strip.dart';
+import '../widgets/student_chrome.dart';
+import '../widgets/student_home_header.dart';
 import 'announcement_detail_screen.dart';
 
 // Panel neutro sensible al tema: superficie alterna + texto onSurface, para las
@@ -39,10 +37,10 @@ class AdminDashboardScreen extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user!;
     final data = ref.watch(adminDashboardProvider).valueOrNull ??
         AdminDashboardData.mock();
-    final now = DateTime.now();
 
     return AppScaffold(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.zero,
+      topSafeArea: false,
       onRefresh: () async =>
           Future<void>.delayed(const Duration(milliseconds: 600)),
       bottomNav: const EducaBottomNav(),
@@ -75,79 +73,88 @@ class AdminDashboardScreen extends ConsumerWidget {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Hero de bienvenida (full-bleed).
-          AppGreetingHeader(
-            greeting: DateUtilsX.greetingForHour(now),
+          // Barra superior azul full-bleed.
+          StudentHomeHeader(
             name: user.displayFirstName,
             initials: user.displayFirstName.isNotEmpty
                 ? user.displayFirstName.substring(0, 1).toUpperCase()
                 : '?',
-            dateLabel: toBeginningOfSentenceCase(
-              DateFormat("EEEE, d 'de' MMMM", 'es').format(now),
-            ),
-            chipIcon: Icons.insights_rounded,
-            chipLabel:
-                '${data.attendancePct.toStringAsFixed(0)}% asistencia hoy',
+            avatarUrl: user.avatarUrl,
             notificationsBadge:
                 ref.watch(notificationsUnreadProvider).asData?.value ??
                     data.systemAlerts,
             onNotificationsTap: () => context.go(Routes.alerts),
-            settingsMenu: const AccountSettingsMenu(circular: true),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+          StudentPanel(
+            padding: const EdgeInsets.fromLTRB(16, 44, 16, 24),
             child: StaggeredEntrance(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Resumen institucional (2 franjas de KPIs).
                 const SectionHeader(title: 'Resumen Institucional'),
                 const SizedBox(height: 10),
-                DashboardStatStrip(
-                  tiles: [
-                    StatTile(
-                      icon: Icons.event_available_rounded,
-                      color: const Color(0xFF34C77A),
-                      value: data.attendancePct,
-                      suffix: '%',
-                      label: 'Asistencia',
+                Row(
+                  children: [
+                    Expanded(
+                      child: _AdminStat(
+                        icon: Icons.event_available_rounded,
+                        color: const Color(0xFF34C77A),
+                        value: data.attendancePct,
+                        suffix: '%',
+                        label: 'Asistencia',
+                      ),
                     ),
-                    StatTile(
-                      icon: Icons.star_rounded,
-                      color: const Color(0xFF4C8DF5),
-                      value: data.institutionalAvg,
-                      decimals: 1,
-                      label: 'Promedio',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _AdminStat(
+                        icon: Icons.star_rounded,
+                        color: const Color(0xFF4C8DF5),
+                        value: data.institutionalAvg,
+                        decimals: 1,
+                        label: 'Promedio',
+                      ),
                     ),
-                    StatTile(
-                      icon: Icons.people_alt_rounded,
-                      color: const Color(0xFF9A6BE0),
-                      value: data.totalStudents.toDouble(),
-                      label: 'Estudiantes',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _AdminStat(
+                        icon: Icons.people_alt_rounded,
+                        color: const Color(0xFF9A6BE0),
+                        value: data.totalStudents.toDouble(),
+                        label: 'Estudiantes',
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                DashboardStatStrip(
-                  tiles: [
-                    StatTile(
-                      icon: Icons.badge_rounded,
-                      color: const Color(0xFF33B7A0),
-                      value: data.activeTeachers.toDouble(),
-                      label: 'Docentes',
+                Row(
+                  children: [
+                    Expanded(
+                      child: _AdminStat(
+                        icon: Icons.badge_rounded,
+                        color: const Color(0xFF33B7A0),
+                        value: data.activeTeachers.toDouble(),
+                        label: 'Docentes',
+                      ),
                     ),
-                    StatTile(
-                      icon: Icons.event_rounded,
-                      color: const Color(0xFFF3993E),
-                      value: data.upcomingEvents.toDouble(),
-                      label: 'Eventos',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _AdminStat(
+                        icon: Icons.event_rounded,
+                        color: const Color(0xFFF3993E),
+                        value: data.upcomingEvents.toDouble(),
+                        label: 'Eventos',
+                      ),
                     ),
-                    StatTile(
-                      icon: Icons.warning_amber_rounded,
-                      color: const Color(0xFFE5484D),
-                      value: data.systemAlerts.toDouble(),
-                      label: 'Alertas',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _AdminStat(
+                        icon: Icons.warning_amber_rounded,
+                        color: const Color(0xFFE5484D),
+                        value: data.systemAlerts.toDouble(),
+                        label: 'Alertas',
+                      ),
                     ),
                   ],
                 ),
@@ -280,6 +287,56 @@ class AdminDashboardScreen extends ConsumerWidget {
 }
 
 
+/// KPI institucional con profundidad + cifra animada.
+class _AdminStat extends StatelessWidget {
+  const _AdminStat({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.label,
+    this.suffix = '',
+    this.decimals = 0,
+  });
+
+  final IconData icon;
+  final Color color;
+  final double value;
+  final String label;
+  final String suffix;
+  final int decimals;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.pastel(color);
+    return DepthCard(
+      accent: s.vivid,
+      glow: true,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: s.vivid, size: 24),
+          const SizedBox(height: 8),
+          AnimatedCount(
+            value: value,
+            suffix: suffix,
+            decimals: decimals,
+            style: context.textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodySmall
+                ?.copyWith(color: context.palette.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AdminAction {
   const _AdminAction(this.icon, this.label, this.accent, this.onTap);
   final IconData icon;
@@ -328,42 +385,32 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(action.accent);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: action.onTap,
-        borderRadius: BorderRadius.circular(Radii.lg),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: s.surface,
-            borderRadius: BorderRadius.circular(Radii.lg),
+    return DepthCard(
+      color: s.surface,
+      accent: s.vivid,
+      glow: true,
+      onTap: action.onTap,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+            child: Icon(action.icon, color: Colors.white, size: 20),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration:
-                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-                  child: Icon(action.icon, color: Colors.white, size: 20),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  action.label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.titleSmall?.copyWith(
-                    color: s.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 10),
+          Text(
+            action.label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.titleSmall?.copyWith(
+              color: s.ink,
+              fontWeight: FontWeight.w700,
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -377,12 +424,12 @@ class _AnnouncementRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(item.title));
-    return Container(
+    return DepthCard(
+      color: s.surface,
+      accent: s.vivid,
+      soft: true,
+      borderRadius: Radii.md,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: s.surface,
-        borderRadius: BorderRadius.circular(Radii.md),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

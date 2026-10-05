@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/checkout_controller.dart';
@@ -21,16 +22,9 @@ class CheckoutScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final chargeAsync = ref.watch(chargeByIdProvider(chargeId));
 
-    return AppScaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Pagar cargo'),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+    return StudentDetailScaffold(
+      title: 'Pagar cargo',
+      bottomNav: false,
       child: chargeAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorStateView(message: '$e'),
@@ -60,8 +54,11 @@ class _CheckoutBody extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        EduCard(
+        DepthCard(
           color: palette.accentSoft,
+          accent: palette.accentDeep,
+          soft: true,
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Expanded(
@@ -239,7 +236,12 @@ class _SuccessView extends ConsumerWidget {
               ),
               child: Icon(Icons.check_circle_rounded,
                   color: palette.success, size: 54,),
-            ),
+            ).animate().scale(
+                  duration: 420.ms,
+                  curve: Curves.easeOutBack,
+                  begin: const Offset(0.6, 0.6),
+                  end: const Offset(1, 1),
+                ),
           ),
           const SizedBox(height: 16),
           Center(
@@ -255,7 +257,9 @@ class _SuccessView extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          EduCard(
+          DepthCard(
+            soft: true,
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 _Kv(label: 'Concepto', value: payment.chargeConcept),

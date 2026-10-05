@@ -19,12 +19,16 @@ class AccountSettingsMenu extends ConsumerWidget {
     super.key,
     this.boxed = false,
     this.circular = false,
+    this.bare = false,
   });
 
   final bool boxed;
 
   /// Botón circular (para el header de bienvenida estilo fondo).
   final bool circular;
+
+  /// Solo el ícono (sin círculo de fondo), más grande; sobre el hero.
+  final bool bare;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,7 +37,26 @@ class AccountSettingsMenu extends ConsumerWidget {
       tooltip: 'Opciones',
       padding: (boxed || circular) ? EdgeInsets.zero : const EdgeInsets.all(8),
       icon: (boxed || circular) ? null : const Icon(Icons.settings_rounded),
-      child: circular
+      child: bare
+          ? Container(
+              width: 46,
+              height: 46,
+              margin: const EdgeInsets.only(right: 3, bottom: 3),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(color: Colors.black, width: 2),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black, offset: Offset(3, 3)),
+                ],
+              ),
+              child: const Icon(
+                Icons.settings_rounded,
+                color: Colors.black,
+                size: 26,
+              ),
+            )
+          : circular
           ? Container(
               width: 46,
               height: 46,

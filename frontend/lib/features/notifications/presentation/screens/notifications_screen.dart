@@ -4,11 +4,10 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/skeleton.dart';
-import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../domain/notifications_bootstrap.dart';
 import '../../providers.dart';
@@ -31,66 +30,67 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final feed = ref.watch(notificationsFeedProvider);
     final unread = ref.watch(notificationsUnreadProvider).asData?.value ?? 0;
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: unread > 0 ? 'Alertas ($unread)' : 'Alertas',
+      showBack: false,
       scrollable: false,
-      padding: EdgeInsets.zero,
-      bottomNav: const EducaBottomNav(),
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(unread > 0 ? 'Alertas ($unread)' : 'Alertas'),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded),
-            onSelected: (v) async {
-              final repo = ref.read(notificationsRepositoryProvider);
-              switch (v) {
-                case 'read_all':
-                  await repo.markAllRead();
-                  break;
-                case 'clear':
-                  await repo.clearAll();
-                  break;
-                case 'simulate':
-                  await simulateDemoNotification(ref, channel: _filter);
-                  break;
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 'read_all',
-                child: Row(children: [
-                  Icon(Icons.mark_email_read_rounded, size: 18),
-                  SizedBox(width: 8),
-                  Text('Marcar todas leídas'),
-                ],),
-              ),
-              PopupMenuItem(
-                value: 'clear',
-                child: Row(children: [
-                  Icon(Icons.delete_sweep_rounded, size: 18),
-                  SizedBox(width: 8),
-                  Text('Vaciar bandeja'),
-                ],),
-              ),
-              PopupMenuItem(
-                value: 'simulate',
-                child: Row(children: [
-                  Icon(Icons.notifications_active_rounded, size: 18),
-                  SizedBox(width: 8),
-                  Text('Simular una (demo)'),
-                ],),
-              ),
-            ],
-          ),
-        ],
-      ),
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            _FilterBar(
-              selected: _filter,
-              onSelect: (v) => setState(() => _filter = v),
+            Row(
+              children: [
+                Expanded(
+                  child: _FilterBar(
+                    selected: _filter,
+                    onSelect: (v) => setState(() => _filter = v),
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert_rounded),
+                  onSelected: (v) async {
+                    final repo = ref.read(notificationsRepositoryProvider);
+                    switch (v) {
+                      case 'read_all':
+                        await repo.markAllRead();
+                        break;
+                      case 'clear':
+                        await repo.clearAll();
+                        break;
+                      case 'simulate':
+                        await simulateDemoNotification(ref, channel: _filter);
+                        break;
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: 'read_all',
+                      child: Row(children: [
+                        Icon(Icons.mark_email_read_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text('Marcar todas leídas'),
+                      ],),
+                    ),
+                    PopupMenuItem(
+                      value: 'clear',
+                      child: Row(children: [
+                        Icon(Icons.delete_sweep_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text('Vaciar bandeja'),
+                      ],),
+                    ),
+                    PopupMenuItem(
+                      value: 'simulate',
+                      child: Row(children: [
+                        Icon(Icons.notifications_active_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text('Simular una (demo)'),
+                      ],),
+                    ),
+                  ],
+                ),
+              ],
             ),
             Expanded(
               child: feed.when(

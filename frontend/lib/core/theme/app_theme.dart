@@ -103,6 +103,46 @@ class Radii {
   static const double xs = 8; // elementos menudos
 }
 
+/// Tokens de profundidad (Educa v3 "Depth & Data"): cada nivel combina una
+/// sombra **ambiente** difusa y amplia con una sombra de **contacto** tensa y
+/// cercana (dos fuentes de luz), para que los elementos "floten" con relieve
+/// realista. Sensible al tema: en oscuro las sombras son más profundas.
+class AppShadows {
+  AppShadows._();
+
+  /// Relieve medio: tarjetas destacadas, tiles, hojas.
+  static List<BoxShadow> lifted(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: dark ? 0.50 : 0.12),
+        blurRadius: 24,
+        spreadRadius: -6,
+        offset: const Offset(0, 14),
+      ),
+      BoxShadow(
+        color: Colors.black.withValues(alpha: dark ? 0.34 : 0.07),
+        blurRadius: 6,
+        spreadRadius: -2,
+        offset: const Offset(0, 3),
+      ),
+    ];
+  }
+
+  /// Relieve suave: superficies secundarias, filas.
+  static List<BoxShadow> soft(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: dark ? 0.40 : 0.08),
+        blurRadius: 14,
+        spreadRadius: -4,
+        offset: const Offset(0, 8),
+      ),
+    ];
+  }
+}
+
 class AppTheme {
   AppTheme._();
 

@@ -10,6 +10,8 @@ import '../../features/assignments/presentation/screens/teacher_assignments_scre
 import '../../features/attendance/presentation/screens/attendance_classes_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_history_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_take_screen.dart';
+import '../../features/teams/presentation/screens/work_teams_screen.dart';
+import '../../features/teams/presentation/screens/work_team_detail_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/chat/presentation/screens/conversations_screen.dart';
 import '../../features/chat/presentation/screens/new_conversation_screen.dart';
@@ -19,8 +21,6 @@ import '../../features/payments/presentation/screens/charge_detail_screen.dart';
 import '../../features/payments/presentation/screens/checkout_screen.dart';
 import '../../features/payments/presentation/screens/parent_charges_screen.dart';
 import '../../features/payments/presentation/screens/payment_history_screen.dart';
-import '../../features/grades/presentation/screens/student_grades_screen.dart';
-import '../../features/grades/presentation/screens/subject_grades_screen.dart';
 import '../../features/grades/presentation/screens/teacher_gradebook_screen.dart';
 import '../../features/reports/presentation/report_card_screen.dart';
 import '../../features/auth/presentation/auth_controller.dart';
@@ -46,7 +46,10 @@ import '../../features/schedule/presentation/screens/schedule_screen.dart';
 import '../../features/support/presentation/screens/help_screen.dart';
 import '../../features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/all_subjects_screen.dart';
+import '../../features/dashboard/presentation/screens/my_teachers_screen.dart';
 import '../../features/dashboard/presentation/screens/parent_dashboard_screen.dart';
+import '../../features/dashboard/presentation/screens/school_calendar_screen.dart';
+import '../../features/dashboard/presentation/screens/student_attendance_screen.dart';
 import '../../features/dashboard/presentation/screens/student_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -73,13 +76,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // El splash siempre reenvía: al dashboard si hay sesión, o al login si no.
       // (La pantalla splash no navega por sí misma.)
       if (loc == Routes.splash) {
-        return loggedIn
-            ? auth.user!.activeRole.dashboardRoute
-            : Routes.login;
+        return loggedIn ? auth.user!.activeRole.dashboardRoute : Routes.login;
       }
 
-      final goingToAuth =
-          loc == Routes.login || loc == Routes.forgotPassword;
+      final goingToAuth = loc == Routes.login || loc == Routes.forgotPassword;
 
       if (!loggedIn && !goingToAuth) return Routes.login;
       if (loggedIn && goingToAuth) return auth.user!.activeRole.dashboardRoute;
@@ -125,7 +125,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.attendance,
         builder: (_, __) => const RoleGuard(
-          allowed: {AppRole.teacher, AppRole.admin, AppRole.coordinator, AppRole.director},
+          allowed: {
+            AppRole.teacher,
+            AppRole.admin,
+            AppRole.coordinator,
+            AppRole.director,
+          },
           child: AttendanceClassesScreen(),
         ),
       ),
@@ -148,9 +153,76 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.attendanceHistory,
         builder: (_, __) => const RoleGuard(
-          allowed: {AppRole.teacher, AppRole.admin, AppRole.coordinator, AppRole.director},
+          allowed: {
+            AppRole.teacher,
+            AppRole.admin,
+            AppRole.coordinator,
+            AppRole.director,
+          },
           child: AttendanceHistoryScreen(),
         ),
+      ),
+
+      // ----- Equipos de trabajo -----
+      GoRoute(
+        path: Routes.workTeams,
+        builder: (_, __) => const RoleGuard(
+          allowed: {
+            AppRole.teacher,
+            AppRole.admin,
+            AppRole.coordinator,
+            AppRole.director,
+          },
+          child: WorkTeamsScreen(),
+        ),
+        routes: [
+          GoRoute(
+            path: ':id',
+            builder: (context, state) => RoleGuard(
+              allowed: const {
+                AppRole.teacher,
+                AppRole.admin,
+                AppRole.coordinator,
+                AppRole.director,
+              },
+              child: WorkTeamDetailScreen(
+                teamId: state.pathParameters['id']!,
+              ),
+            ),
+          ),
+        ],
+      ),
+
+      // ----- Pruebas (exámenes/quizzes) -----
+      GoRoute(
+        path: Routes.exams,
+        builder: (context, state) => const _ExamsRoleSplit(),
+        routes: [
+          GoRoute(
+            path: 'subject/:name',
+            builder: (context, state) {
+              final name = state.pathParameters['name'] ?? '';
+              return Consumer(
+                builder: (context, ref, _) {
+                  final role =
+                      ref.watch(authControllerProvider).user?.activeRole;
+                  return _StudentAssignmentsResolved(
+                    idProvider: role == AppRole.parent
+                        ? parentChildStudentIdProvider
+                        : currentStudentIdProvider,
+                    builder: ({Key? key, required int studentId}) =>
+                        SubjectAssignmentsScreen(
+                      key: key,
+                      studentId: studentId,
+                      subject: name,
+                      exams: true,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
 
       // ----- Tareas (assignments) -----
@@ -169,6 +241,29 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               return RoleGuard(
                 allowed: const {AppRole.teacher},
                 child: AssignmentFormScreen(classId: classId),
+              );
+            },
+          ),
+          GoRoute(
+            path: 'subject/:name',
+            builder: (context, state) {
+              final name = state.pathParameters['name'] ?? '';
+              return Consumer(
+                builder: (context, ref, _) {
+                  final role =
+                      ref.watch(authControllerProvider).user?.activeRole;
+                  return _StudentAssignmentsResolved(
+                    idProvider: role == AppRole.parent
+                        ? parentChildStudentIdProvider
+                        : currentStudentIdProvider,
+                    builder: ({Key? key, required int studentId}) =>
+                        SubjectAssignmentsScreen(
+                      key: key,
+                      studentId: studentId,
+                      subject: name,
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -225,20 +320,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               },
               child: TeacherGradebookScreen(),
             ),
-          ),
-          GoRoute(
-            path: 'subject/:classId',
-            builder: (context, state) {
-              final classId =
-                  int.tryParse(state.pathParameters['classId'] ?? '') ?? 0;
-              final studentId = int.tryParse(
-                      state.uri.queryParameters['studentId'] ?? '',) ??
-                  1001;
-              return SubjectGradesScreen(
-                studentId: studentId,
-                classId: classId,
-              );
-            },
           ),
         ],
       ),
@@ -349,6 +430,28 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.schedule,
         builder: (_, __) => const ScheduleScreen(),
+      ),
+
+      // ----- Calendario escolar (tab del navbar del alumno) -----
+      GoRoute(
+        path: Routes.calendar,
+        builder: (_, __) => const SchoolCalendarScreen(),
+      ),
+
+      // ----- Asistencia del alumno -----
+      GoRoute(
+        path: Routes.myAttendance,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.student},
+          child: StudentAttendanceScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.teachers,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.student},
+          child: MyTeachersScreen(),
+        ),
       ),
 
       // ----- Anuncios / Eventos -----
@@ -513,7 +616,10 @@ class _GradesRoleSplit extends ConsumerWidget {
         return const TeacherGradebookScreen();
       case AppRole.student:
       case AppRole.parent:
-        return const StudentGradesScreen(studentId: 1001);
+        return const RoleGuard(
+          allowed: {AppRole.teacher},
+          child: TeacherGradebookScreen(),
+        );
     }
   }
 }
@@ -547,21 +653,62 @@ class _AssignmentsRoleSplit extends ConsumerWidget {
   }
 }
 
+/// Dispatcher de `/exams`: solo tiene sentido para estudiante/padre (el
+/// docente ya ve exámenes dentro de su lista de tareas).
+class _ExamsRoleSplit extends ConsumerWidget {
+  const _ExamsRoleSplit();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authControllerProvider).user;
+    final role = user?.activeRole ?? AppRole.student;
+    switch (role) {
+      case AppRole.parent:
+        return _StudentAssignmentsResolved(
+          idProvider: parentChildStudentIdProvider,
+          builder: ({Key? key, required int studentId}) =>
+              StudentAssignmentsScreen(
+            key: key,
+            studentId: studentId,
+            exams: true,
+          ),
+        );
+      case AppRole.student:
+      case AppRole.teacher:
+      case AppRole.admin:
+      case AppRole.coordinator:
+      case AppRole.director:
+        return _StudentAssignmentsResolved(
+          idProvider: currentStudentIdProvider,
+          builder: ({Key? key, required int studentId}) =>
+              StudentAssignmentsScreen(
+            key: key,
+            studentId: studentId,
+            exams: true,
+          ),
+        );
+    }
+  }
+}
+
 /// Resuelve el `studentId` real (vía RPC del backend) antes de mostrar el feed
 /// de tareas del estudiante/padre. Evita el `studentId: 1001` hardcodeado.
 class _StudentAssignmentsResolved extends ConsumerWidget {
-  const _StudentAssignmentsResolved({required this.idProvider});
+  const _StudentAssignmentsResolved({
+    required this.idProvider,
+    this.builder = StudentAssignmentsScreen.new,
+  });
 
   final FutureProvider<int> idProvider;
+  final Widget Function({Key? key, required int studentId}) builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(idProvider).when(
-          data: (id) => StudentAssignmentsScreen(studentId: id),
+          data: (id) => builder(studentId: id),
           loading: () =>
               const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (e, _) =>
-              Scaffold(body: Center(child: Text('Error: $e'))),
+          error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
         );
   }
 }

@@ -5,13 +5,13 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/stat_card.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 
@@ -25,17 +25,11 @@ class DeveloperDashboardScreen extends ConsumerWidget {
     final palette = context.palette;
     final summary = ref.watch(developerSummaryProvider);
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Panel de desarrollador',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Panel de desarrollador'),
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: summary.when(
@@ -45,7 +39,7 @@ class DeveloperDashboardScreen extends ConsumerWidget {
             color: palette.accentDeep,
             onRefresh: () async => ref.invalidate(developerSummaryProvider),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
               children: [
                 _Hero(counts: data.counts),
                 const SizedBox(height: 16),
@@ -70,7 +64,9 @@ class DeveloperDashboardScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 if (data.pendingTasks.isEmpty)
-                  const EduCard(
+                  const DepthCard(
+                    soft: true,
+                    padding: EdgeInsets.all(16),
                     child: Text('Sin tareas técnicas pendientes.'),
                   )
                 else
@@ -89,7 +85,9 @@ class DeveloperDashboardScreen extends ConsumerWidget {
                     subtitle: 'Los cambios del panel aparecerán aquí.',
                   )
                 else
-                  EduCard(
+                  DepthCard(
+                    soft: true,
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
                         for (var i = 0;
@@ -122,8 +120,16 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return EduCard(
-      color: palette.cardContrast,
+    return DepthCard(
+      padding: const EdgeInsets.all(16),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          palette.cardContrast,
+          Color.lerp(palette.cardContrast, Colors.black, 0.25)!,
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -332,7 +338,9 @@ class _AreaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final built = area.route != null;
-    return EduCard(
+    return DepthCard(
+      soft: true,
+      accent: built ? palette.accentDeep : null,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       onTap: () => built
           ? context.push(area.route!)
@@ -368,7 +376,8 @@ class _TaskTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final (statusColor, statusLabel) = _taskStatus(task.status, palette);
-    return EduCard(
+    return DepthCard(
+      soft: true,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

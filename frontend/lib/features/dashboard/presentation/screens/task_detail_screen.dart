@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/floating_card.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../domain/dashboard_models.dart';
+import '../widgets/student_chrome.dart';
 
 /// Detalle de una tarea. Destino del container-transform desde la tarjeta de
 /// tarea del dashboard del alumno.
@@ -35,16 +35,9 @@ class TaskDetailScreen extends StatelessWidget {
     };
     final subjectAccent = subjectInk(task.subject);
 
-    return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Tarea'),
-      ),
+    return StudentDetailScaffold(
+      title: 'Tarea',
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

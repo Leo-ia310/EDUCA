@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../controllers/assignments_list_controller.dart';
 import '../widgets/assignment_card.dart';
 
@@ -21,20 +21,13 @@ class TeacherAssignmentsScreen extends ConsumerWidget {
     final filter = ref.watch(assignmentsFilterProvider);
     final palette = context.palette;
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Tareas y exámenes',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Tareas y exámenes'),
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       fab: EducaFab(
-        onPressed: () =>
-            context.push('${Routes.assignments}/new'),
+        onPressed: () => context.push('${Routes.assignments}/new'),
       ),
       child: SafeArea(
         bottom: false,
@@ -97,7 +90,7 @@ class _FilterBar extends ConsumerWidget {
     final palette = context.palette;
     final notifier = ref.read(assignmentsFilterProvider.notifier);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
       child: Row(
         children: [
           Expanded(

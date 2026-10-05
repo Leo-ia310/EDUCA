@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 
@@ -21,21 +21,15 @@ class DeveloperAuditScreen extends ConsumerWidget {
     final palette = context.palette;
     final async = ref.watch(developerAuditEventsProvider);
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Auditoría',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Auditoría'),
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonList(),
           error: (e, _) => ErrorStateView(message: '$e'),
           data: (events) => RefreshIndicator(
             color: palette.accentDeep,
@@ -43,7 +37,7 @@ class DeveloperAuditScreen extends ConsumerWidget {
                 ref.invalidate(developerAuditEventsProvider),
             child: events.isEmpty
                 ? ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                     children: const [
                       EmptyState(
                         icon: Icons.history_toggle_off_outlined,
@@ -53,7 +47,7 @@ class DeveloperAuditScreen extends ConsumerWidget {
                     ],
                   )
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                     itemCount: events.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (_, i) => _AuditCard(event: events[i]),
@@ -73,7 +67,8 @@ class _AuditCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final (icon, color) = _visual(event.action, palette);
-    return EduCard(
+    return DepthCard(
+      soft: true,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [

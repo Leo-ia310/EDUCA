@@ -5,7 +5,7 @@ import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/floating_card.dart';
 import '../../data/mock_dashboard_data.dart';
 
@@ -125,7 +125,9 @@ class ActivityDetailScreen extends StatelessWidget {
             label: const Text('Ver tareas del hijo'),
           ),
           const SizedBox(height: 10),
-          EduCard(
+          DepthCard(
+            soft: true,
+            padding: const EdgeInsets.all(16),
             onTap: () => context.push(Routes.chat),
             child: Row(
               children: [

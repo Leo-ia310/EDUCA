@@ -100,12 +100,9 @@ class StudentProfileScreen extends ConsumerWidget {
                 // Notas
                 const SectionHeader(title: 'Mis Notas'),
                 const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () => context.push(Routes.grades),
-                  child: GradesBlock(
-                    grades: data.grades,
-                    average: data.averageScore,
-                  ),
+                GradesBlock(
+                  grades: data.grades,
+                  average: data.averageScore,
                 ),
                 const SizedBox(height: 24),
               ],

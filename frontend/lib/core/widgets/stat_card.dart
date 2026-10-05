@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/motion.dart';
-import 'edu_card.dart';
+import 'depth_card.dart';
 
 /// Tarjeta de indicador canónica de la app: pastilla de ícono en acento pastel,
 /// cifra grande, etiqueta y (opcional) un delta de tendencia.
@@ -42,9 +42,11 @@ class StatCard extends StatelessWidget {
     final accentColor = accent ?? palette.accentDeep;
     final deltaColor = deltaPositive ? palette.success : palette.danger;
 
-    return EduCard(
+    return DepthCard(
       padding: padding,
       onTap: onTap,
+      accent: accentColor,
+      glow: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

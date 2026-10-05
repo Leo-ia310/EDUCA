@@ -7,10 +7,12 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/celebration.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -76,7 +78,9 @@ class AssignmentDetailScreen extends ConsumerWidget {
               if (a.description != null && a.description!.isNotEmpty) ...[
                 const SectionHeader(title: 'Descripción'),
                 const SizedBox(height: 8),
-                EduCard(
+                DepthCard(brutal: true, 
+                  soft: true,
+                  padding: const EdgeInsets.all(16),
                   child: Text(a.description!,
                       style: context.textTheme.bodyMedium,),
                 ),
@@ -85,7 +89,9 @@ class AssignmentDetailScreen extends ConsumerWidget {
               if (a.instructions != null && a.instructions!.isNotEmpty) ...[
                 const SectionHeader(title: 'Instrucciones'),
                 const SizedBox(height: 8),
-                EduCard(
+                DepthCard(brutal: true, 
+                  soft: true,
+                  padding: const EdgeInsets.all(16),
                   child: Text(a.instructions!,
                       style: context.textTheme.bodyMedium,),
                 ),
@@ -119,70 +125,78 @@ class _Header extends StatelessWidget {
   const _Header({required this.assignment});
   final Assignment assignment;
 
+  static IconData _kindIcon(AssignmentKind kind) => switch (kind) {
+        AssignmentKind.homework => Icons.assignment_rounded,
+        AssignmentKind.exam => Icons.school_rounded,
+        AssignmentKind.project => Icons.workspaces_rounded,
+        AssignmentKind.quiz => Icons.quiz_rounded,
+        AssignmentKind.presentation => Icons.slideshow_rounded,
+      };
+
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(subjectColor(assignment.subjectName));
-    final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
     final fmt = DateFormat("EEE d MMM, HH:mm", 'es');
-    final statusLabel = switch (assignment.statusForNow(DateTime.now())) {
-      AssignmentStatus.draft => 'Borrador',
-      AssignmentStatus.open => 'Abierta',
-      AssignmentStatus.dueSoon => 'Vence pronto',
-      AssignmentStatus.overdue => 'Vencida',
-      AssignmentStatus.closed => 'Cerrada',
-    };
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [s.vivid, deep],
-        ),
-        borderRadius: BorderRadius.circular(Radii.xl),
+      clipBehavior: Clip.antiAlias,
+      margin: const EdgeInsets.only(right: 4, bottom: 4),
+      decoration: Brutal.decoration(
+        context,
+        color: s.vivid,
+        radius: Radii.lg,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              _HeroChip(label: assignment.kind.label),
-              const SizedBox(width: 8),
-              _HeroChip(label: statusLabel),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            assignment.title,
-            style: context.textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
+          // Ícono grande de fondo (marca de agua) según el tipo de tarea.
+          Positioned(
+            right: -18,
+            bottom: -18,
+            child: Icon(
+              _kindIcon(assignment.kind),
+              size: 120,
+              color: Colors.white.withValues(alpha: 0.14),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${assignment.subjectName} · ${assignment.groupName}',
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Icon(Icons.event, size: 16, color: Colors.white),
-              const SizedBox(width: 6),
-              Text(
-                'Entrega ${fmt.format(assignment.dueAt)}',
-                style: context.textTheme.labelMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  assignment.title,
+                  style: context.textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              _HeroChip(label: '${assignment.maxScore.toStringAsFixed(0)} pts'),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  '${assignment.subjectName} · ${assignment.groupName}',
+                  style: context.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(Icons.event, size: 16, color: Colors.white),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Entrega ${fmt.format(assignment.dueAt)}',
+                      style: context.textTheme.labelMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    _HeroChip(
+                        label: '${assignment.maxScore.toStringAsFixed(0)} pts',),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -225,7 +239,9 @@ class _TeacherActions extends StatelessWidget {
       children: [
         const SectionHeader(title: 'Entregas'),
         const SizedBox(height: 8),
-        EduCard(
+        DepthCard(brutal: true, 
+          soft: true,
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Row(
@@ -336,23 +352,30 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
         const SectionHeader(title: 'Mi entrega'),
         const SizedBox(height: 8),
         mine.when(
-          loading: () => const EduCard(
-              child: Padding(
+          loading: () => const DepthCard(brutal: true, 
+            soft: true,
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
-          ),),
-          error: (e, _) => EduCard(child: Text('$e')),
+          ),
+          error: (e, _) => DepthCard(brutal: true, 
+            soft: true,
+            padding: const EdgeInsets.all(16),
+            child: Text('$e'),
+          ),
           data: (existing) {
             if (existing?.status == SubmissionStatus.graded) {
               return _GradedView(submission: existing!, assignment: widget.assignment);
             }
             if (isParent) {
-              return EduCard(
+              return DepthCard(brutal: true, 
+                soft: true,
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      existing == null
+                      (existing == null ||
+                              existing.status == SubmissionStatus.pending)
                           ? 'Aún no entregada'
                           : 'Entregada — esperando calificación',
                       style: context.textTheme.titleSmall
@@ -373,13 +396,15 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                 ),
               );
             }
-            return EduCard(
+            return DepthCard(brutal: true, 
+              soft: true,
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (existing != null) ...[
+                  if (existing?.submittedAt != null) ...[
                     Text(
-                      'Ya entregaste el ${DateFormat("d MMM HH:mm", 'es').format(existing.submittedAt!)}',
+                      'Ya entregaste el ${DateFormat("d MMM HH:mm", 'es').format(existing!.submittedAt!)}',
                       style: context.textTheme.bodySmall
                           ?.copyWith(color: palette.success),
                     ),
@@ -408,53 +433,63 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                       ],
                     ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: state.uploading ? null : _pickFiles,
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(0, 44),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      spacing: 10,
+                      runSpacing: 10,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: state.uploading ? null : _pickFiles,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 44),
+                          ),
+                          icon: state.uploading
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.upload_file_rounded),
+                          label: Text(
+                            state.uploading ? 'Subiendo…' : 'Adjuntar',
+                          ),
                         ),
-                        icon: state.uploading
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2,),)
-                            : const Icon(Icons.upload_file_rounded),
-                        label: Text(
-                            state.uploading ? 'Subiendo…' : 'Adjuntar',),
-                      ),
-                      const Spacer(),
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(0, 44),
+                        FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 44),
+                          ),
+                          onPressed: state.saving
+                              ? null
+                              : () async {
+                                  final result = await controller.submit();
+                                  if (result != null && context.mounted) {
+                                    showCelebration(
+                                      context,
+                                      icon: result.isLate
+                                          ? Icons.schedule_rounded
+                                          : Icons.check_circle_rounded,
+                                      message: result.isLate
+                                          ? 'Entregado tarde'
+                                          : '¡Entrega enviada! 🎉',
+                                    );
+                                  }
+                                },
+                          icon: const Icon(Icons.send_rounded),
+                          label: Text(
+                            state.saving
+                                ? 'Enviando…'
+                                : (existing?.submittedAt == null
+                                    ? 'Enviar entrega'
+                                    : 'Reemplazar entrega'),
+                          ),
                         ),
-                        onPressed: state.saving
-                            ? null
-                            : () async {
-                                final result =
-                                    await controller.submit();
-                                if (result != null && context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        result.isLate
-                                            ? 'Entregado tarde'
-                                            : '¡Entrega enviada!',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                        icon: const Icon(Icons.send_rounded),
-                        label: Text(state.saving
-                            ? 'Enviando…'
-                            : (existing == null
-                                ? 'Enviar entrega'
-                                : 'Reemplazar entrega'),),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   if (state.error != null) ...[
                     const SizedBox(height: 8),
@@ -508,7 +543,7 @@ class _GradedView extends StatelessWidget {
                 '${submission.score!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
                 style: context.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],

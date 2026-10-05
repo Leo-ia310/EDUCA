@@ -5,12 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/routing/route_paths.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_controller.dart';
-import '../../../core/widgets/app_scaffold.dart';
-import '../../../core/widgets/edu_card.dart';
-import '../../../core/widgets/educa_bottom_nav.dart';
+import '../../../core/widgets/depth_card.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../dashboard/presentation/widgets/student_chrome.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -22,12 +21,12 @@ class ProfileScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeControllerProvider);
     final palette = context.palette;
 
-    return AppScaffold(
-      bottomNav: const EducaBottomNav(),
+    return StudentDetailScaffold(
+      title: 'Perfil',
+      showBack: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
           Center(
             child: Column(
               children: [
@@ -75,7 +74,8 @@ class ProfileScreen extends ConsumerWidget {
 
           const SectionHeader(title: 'Apariencia'),
           const SizedBox(height: 8),
-          EduCard(
+          DepthCard(
+            soft: true,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: RadioGroup<ThemeMode>(
               groupValue: themeMode,
@@ -109,7 +109,8 @@ class ProfileScreen extends ConsumerWidget {
 
           const SectionHeader(title: 'Cuenta'),
           const SizedBox(height: 8),
-          EduCard(
+          DepthCard(
+            soft: true,
             padding: EdgeInsets.zero,
             child: Column(
               children: [

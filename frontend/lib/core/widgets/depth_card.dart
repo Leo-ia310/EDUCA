@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+
+import '../theme/app_theme.dart';
+import '../theme/motion.dart';
+import 'brutal.dart';
+import 'floating_card.dart';
+
+/// Tarjeta con **profundidad** del sistema Educa v3: superficie elevada con
+/// doble sombra (ambiente + contacto), borde/glow opcional del color de acento
+/// y, si se pide, **tilt 3D** en perspectiva al pasar el cursor / arrastrar.
+///
+/// Unifica el "relieve" de todas las tarjetas del producto. Usa [tilt] solo en
+/// tarjetas prominentes (no en filas de lista, para no saturar de movimiento).
+class DepthCard extends StatefulWidget {
+  const DepthCard({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.tilt = false,
+    this.accent,
+    this.glow = false,
+    this.soft = false,
+    this.borderRadius = Radii.lg,
+    this.padding,
+    this.color,
+    this.gradient,
+    this.brutal = false,
+  });
+
+  final Widget child;
+  final VoidCallback? onTap;
+
+  /// Activa el tilt 3D en perspectiva. Reservar para tarjetas destacadas.
+  final bool tilt;
+
+  /// Color de acento para el borde y el glow superior.
+  final Color? accent;
+
+  /// Dibuja un leve resplandor del [accent] en la parte superior.
+  final bool glow;
+
+  /// Usa la sombra suave (filas/superficies secundarias) en vez de la elevada.
+  final bool soft;
+
+  final double borderRadius;
+  final EdgeInsetsGeometry? padding;
+
+  /// Color base de la superficie (por defecto `cardElevated`).
+  final Color? color;
+
+  /// Degradado propio (tiene prioridad sobre color/glow).
+  final Gradient? gradient;
+
+  /// Estilo neo-brutalista del panel de estudiante (borde grueso + sombra dura).
+  final bool brutal;
+
+  @override
+  State<DepthCard> createState() => _DepthCardState();
+}
+
+class _DepthCardState extends State<DepthCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.brutal) {
+      return BrutalBox(
+        onTap: widget.onTap,
+        color: widget.color,
+        gradient: widget.gradient,
+        radius: widget.borderRadius,
+        padding: widget.padding,
+        child: widget.child,
+      );
+    }
+    final palette = context.palette;
+    final base = widget.color ?? palette.cardElevated;
+    final accent = widget.accent;
+    final gradient = widget.gradient;
+    final borderRadius = widget.borderRadius;
+    final onTap = widget.onTap;
+    final padding = widget.padding;
+    final child = widget.child;
+    final useGlow = widget.glow && accent != null && gradient == null;
+
+    final decoration = BoxDecoration(
+      color: gradient == null && !useGlow ? base : null,
+      gradient: gradient ??
+          (useGlow
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color.alphaBlend(accent.withValues(alpha: 0.12), base),
+                    base,
+                  ],
+                )
+              : null),
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(
+        color: accent != null
+            ? accent.withValues(alpha: 0.28)
+            : Theme.of(context).dividerColor,
+      ),
+      boxShadow: widget.soft
+          ? AppShadows.soft(context)
+          : AppShadows.lifted(context),
+    );
+
+    void setPressed(bool v) {
+      if (onTap == null) return;
+      if (_pressed != v) setState(() => _pressed = v);
+    }
+
+    Widget inner = Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(borderRadius),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        onTapDown: onTap == null ? null : (_) => setPressed(true),
+        onTapUp: onTap == null ? null : (_) => setPressed(false),
+        onTapCancel: onTap == null ? null : () => setPressed(false),
+        child:
+            padding != null ? Padding(padding: padding, child: child) : child,
+      ),
+    );
+
+    Widget card = DecoratedBox(decoration: decoration, child: inner);
+
+    if (widget.tilt) {
+      card = FloatingCard(borderRadius: borderRadius, angle: 9, child: card);
+    }
+
+    // Micro-interacción táctil: la tarjeta "se hunde" levemente al presionar.
+    if (onTap != null) {
+      card = AnimatedScale(
+        scale: _pressed ? 0.97 : 1,
+        duration: context.motion(AppMotion.xfast),
+        curve: AppMotion.standard,
+        child: card,
+      );
+    }
+    return card;
+  }
+}

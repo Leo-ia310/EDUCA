@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 
@@ -129,17 +129,11 @@ class _DeveloperTasksScreenState extends ConsumerState<DeveloperTasksScreen> {
     final palette = context.palette;
     final tasksAsync = ref.watch(developerTasksProvider);
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Tareas técnicas',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Tareas técnicas'),
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       fab: FloatingActionButton.extended(
         onPressed: _busy ? null : () => _openForm(),
         icon: const Icon(Icons.add_rounded),
@@ -150,7 +144,7 @@ class _DeveloperTasksScreenState extends ConsumerState<DeveloperTasksScreen> {
         child: Stack(
           children: [
             tasksAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const SkeletonList(),
               error: (e, _) => ErrorStateView(message: '$e'),
               data: (tasks) {
                 final filtered = _statusFilter == null
@@ -160,7 +154,7 @@ class _DeveloperTasksScreenState extends ConsumerState<DeveloperTasksScreen> {
                   color: palette.accentDeep,
                   onRefresh: () async => _refresh(),
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 96),
                     children: [
                       _StatusFilters(
                         tasks: tasks,
@@ -257,7 +251,8 @@ class _TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final (statusColor, label) = statusVisual(task.status, palette);
-    return EduCard(
+    return DepthCard(
+      soft: true,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       onTap: onEdit,
       child: Column(

@@ -12,6 +12,9 @@ class Routes {
 
   static const subjects = '/subjects';
   static const schedule = '/schedule';
+  static const calendar = '/calendar';
+  static const myAttendance = '/my-attendance';
+  static const teachers = '/teachers';
   static const alerts = '/alerts';
   static const profile = '/profile';
   static const changePassword = '/change-password';
@@ -32,11 +35,13 @@ class Routes {
 
   static const assignments = '/assignments';
   static const assignmentNew = '/assignments/new';
+  static const exams = '/exams';
   static const grades = '/grades';
   static const gradebook = '/grades/gradebook';
   static const attendance = '/attendance';
   static const attendanceTake = '/attendance/take';
   static const attendanceHistory = '/attendance/history';
+  static const workTeams = '/work-teams';
   static const chat = '/chat';
   static const chatNew = '/chat/new';
   static const payments = '/payments';

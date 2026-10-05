@@ -1,17 +1,66 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+/// Paleta **curada y armónica** de acentos por materia (Educa v3). Tonos
+/// vibrantes pero de saturación/brillo emparentados, para que convivan sin
+/// chocar. Cada materia conocida recibe un color con sentido; las demás caen de
+/// forma estable en la misma paleta (mismo nombre → mismo color).
+class SubjectPalette {
+  SubjectPalette._();
 
-/// Acentos pastel estables por materia: el mismo nombre recibe siempre el mismo
-/// color, de modo que cada asignatura tenga identidad visual propia sin tener
-/// que configurarla en los datos. Parte de la dirección "Sereno".
-const List<Color> _subjectPastels = <Color>[
-  AppColors.pastelSky,
-  AppColors.pastelLavender,
-  AppColors.pastelPeach,
-  AppColors.pastelRose,
-  AppColors.pastelMint,
-];
+  static const indigo = Color(0xFF6366F1);
+  static const violet = Color(0xFF8B5CF6);
+  static const sky = Color(0xFF0EA5E9);
+  static const cyan = Color(0xFF06B6D4);
+  static const teal = Color(0xFF14B8A6);
+  static const emerald = Color(0xFF22C55E);
+  static const amber = Color(0xFFF59E0B);
+  static const orange = Color(0xFFF97316);
+  static const rose = Color(0xFFF43F5E);
+  static const pink = Color(0xFFEC4899);
+  static const fuchsia = Color(0xFFD946EF);
+
+  /// Rueda de fallback (orden pensado para máxima separación de matiz entre
+  /// vecinos consecutivos).
+  static const wheel = <Color>[
+    indigo, amber, teal, rose, sky, orange, violet, emerald, cyan, pink,
+  ];
+}
+
+/// Mapeo por palabra clave del nombre de la materia a un color con sentido.
+const Map<String, Color> _subjectKeywords = <String, Color>{
+  'matem': SubjectPalette.indigo,
+  'calcul': SubjectPalette.indigo,
+  'algebra': SubjectPalette.indigo,
+  'álgebra': SubjectPalette.indigo,
+  'físic': SubjectPalette.cyan,
+  'fisic': SubjectPalette.cyan,
+  'quím': SubjectPalette.emerald,
+  'quim': SubjectPalette.emerald,
+  'biolog': SubjectPalette.teal,
+  'natural': SubjectPalette.teal,
+  'histor': SubjectPalette.amber,
+  'geograf': SubjectPalette.sky,
+  'social': SubjectPalette.sky,
+  'liter': SubjectPalette.rose,
+  'lengua': SubjectPalette.rose,
+  'español': SubjectPalette.rose,
+  'espanol': SubjectPalette.rose,
+  'ingl': SubjectPalette.violet,
+  'idioma': SubjectPalette.violet,
+  'ética': SubjectPalette.pink,
+  'etica': SubjectPalette.pink,
+  'filosof': SubjectPalette.pink,
+  'físic. educ': SubjectPalette.orange,
+  'educación f': SubjectPalette.orange,
+  'educacion f': SubjectPalette.orange,
+  'deport': SubjectPalette.orange,
+  'arte': SubjectPalette.fuchsia,
+  'música': SubjectPalette.fuchsia,
+  'musica': SubjectPalette.fuchsia,
+  'informát': SubjectPalette.indigo,
+  'informat': SubjectPalette.indigo,
+  'comput': SubjectPalette.indigo,
+};
 
 int _hash(String name) => name
     .toLowerCase()
@@ -19,10 +68,15 @@ int _hash(String name) => name
     .codeUnits
     .fold<int>(0, (acc, c) => (acc * 31 + c) & 0x7fffffff);
 
-/// Color pastel de la materia (para barras de progreso, puntos, rellenos).
+/// Color (vibrante y curado) de la materia. Primero busca por palabra clave;
+/// si no encaja, cae de forma estable en la rueda curada.
 Color subjectColor(String name) {
-  if (name.trim().isEmpty) return AppColors.pastelSky;
-  return _subjectPastels[_hash(name) % _subjectPastels.length];
+  final n = name.toLowerCase().trim();
+  if (n.isEmpty) return SubjectPalette.indigo;
+  for (final entry in _subjectKeywords.entries) {
+    if (n.contains(entry.key)) return entry.value;
+  }
+  return SubjectPalette.wheel[_hash(name) % SubjectPalette.wheel.length];
 }
 
 /// Versión profunda del pastel, legible como ícono/texto sobre un tinte suave.

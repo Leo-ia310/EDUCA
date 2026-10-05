@@ -124,6 +124,9 @@ class StudentMockData {
     'Mario Díaz',
   ];
   static const classmatesExtra = 14;
+
+  /// Grado y grupo del estudiante.
+  static const grade = '4° Grado A';
 }
 
 class AttendanceLine {

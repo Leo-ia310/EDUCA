@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/skeleton.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/attendance_sync_service.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
-import '../widgets/sync_status_badge.dart';
 
-final _historyProvider = FutureProvider.autoDispose<List<AttendanceSessionSummary>>(
+final _historyProvider =
+    FutureProvider.autoDispose<List<AttendanceSessionSummary>>(
   (ref) => ref.watch(attendanceRepositoryProvider).sessionsHistory(),
 );
 
@@ -25,35 +24,22 @@ class AttendanceHistoryScreen extends ConsumerWidget {
     final history = ref.watch(_historyProvider);
     final palette = context.palette;
 
-    return AppScaffold(
+    return StudentDetailScaffold(
+      title: 'Historial de Asistencia',
       scrollable: false,
-      padding: EdgeInsets.zero,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Historial de Asistencia'),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Center(child: SyncStatusBadge(compact: true)),
-          ),
-        ],
-      ),
+      bottomNav: false,
+      bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
         child: Column(
           children: [
             const Padding(
-              padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: _SyncControls(),
             ),
             Expanded(
               child: history.when(
-                loading: () =>
-                    const SkeletonList(),
+                loading: () => const SkeletonList(),
                 error: (e, _) => Center(child: Text('$e')),
                 data: (list) {
                   if (list.isEmpty) {
@@ -93,7 +79,8 @@ class _SyncControls extends ConsumerWidget {
     final service = ref.read(attendanceSyncProvider.notifier);
     final palette = context.palette;
 
-    return EduCard(
+    return DepthCard(
+      soft: true,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
@@ -156,7 +143,9 @@ class _SessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final fmt = DateFormat("EEE d MMM, HH:mm", 'es');
-    return EduCard(
+    return DepthCard(
+      soft: true,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

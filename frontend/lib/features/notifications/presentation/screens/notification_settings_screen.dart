@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/edu_card.dart';
+import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 
 /// Preferencias de notificaciones por canal. En modo demo el estado vive en la
 /// pantalla; con backend real persistiría en `institution_settings`/perfil.
@@ -41,22 +40,16 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('Notificaciones'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-      ),
+    return StudentDetailScaffold(
+      title: 'Notificaciones',
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
           const SectionHeader(title: 'Canales de entrega'),
           const SizedBox(height: 8),
-          EduCard(
+          DepthCard(
+            soft: true,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Column(
               children: [
@@ -82,7 +75,8 @@ class _NotificationSettingsScreenState
           const SizedBox(height: 20),
           const SectionHeader(title: 'Tipos de aviso'),
           const SizedBox(height: 8),
-          EduCard(
+          DepthCard(
+            soft: true,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Column(
               children: [

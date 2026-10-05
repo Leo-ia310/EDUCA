@@ -1,118 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/depth_card.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../assignments/domain/entities.dart';
+import '../../../assignments/presentation/controllers/assignments_list_controller.dart';
+import '../../../assignments/presentation/widgets/assignment_card.dart';
 import '../../domain/dashboard_models.dart';
+import '../../providers.dart';
+import '../widgets/student_chrome.dart';
 
 /// Detalle de una materia. Destino del container-transform desde la tarjeta de
 /// materia del dashboard del alumno. Estilo panel: hero con degradado en el
-/// color de la materia + filas pastel con círculo vívido.
-class SubjectDetailScreen extends StatelessWidget {
+/// color de la materia (ícono de fondo) + secciones de Docente, Tareas y
+/// Calificaciones propias de la materia.
+class SubjectDetailScreen extends ConsumerWidget {
   const SubjectDetailScreen({super.key, required this.subject});
   final SubjectProgress subject;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final s = context.pastel(subject.color ?? subjectColor(subject.name));
-    final deep = Color.lerp(s.vivid, Colors.black, 0.18)!;
-    final pct = (subject.progress * 100).round();
 
-    return AppScaffold(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: Text(subject.name),
-      ),
+    final assignmentsAsync = ref.watch(studentAssignmentsProvider);
+    final tasks = assignmentsAsync.valueOrNull
+            ?.where((a) =>
+                a.subjectName == subject.name &&
+                a.kind != AssignmentKind.exam &&
+                a.kind != AssignmentKind.quiz,)
+            .toList() ??
+        const <Assignment>[];
+
+    final data = ref.watch(studentDashboardProvider).valueOrNull;
+    final subjectGrades =
+        data?.grades.where((g) => g.subject == subject.name).toList() ??
+            const <GradeBrief>[];
+    final avg = subjectGrades.isEmpty
+        ? null
+        : subjectGrades.map((g) => g.score).reduce((a, b) => a + b) /
+            subjectGrades.length;
+
+    return StudentDetailScaffold(
+      title: subject.name,
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Hero de la materia con degradado en su color.
+          // Hero de la materia: ícono grande de fondo + nombre/profesor arriba.
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [s.vivid, deep],
-              ),
-              borderRadius: BorderRadius.circular(Radii.xl),
+            clipBehavior: Clip.antiAlias,
+            margin: const EdgeInsets.only(right: 4, bottom: 4),
+            decoration: Brutal.decoration(
+              context,
+              color: s.vivid,
+              radius: Radii.lg,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
               children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    shape: BoxShape.circle,
-                  ),
+                Positioned(
+                  right: -20,
+                  bottom: -20,
                   child: Icon(
                     subject.icon ?? Icons.menu_book_rounded,
-                    color: Colors.white,
-                    size: 28,
+                    size: 128,
+                    color: Colors.white.withValues(alpha: 0.14),
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  subject.name,
-                  style: context.textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subject.teacher,
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Text(
-                      'Progreso del curso',
-                      style: context.textTheme.labelMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontWeight: FontWeight.w700,
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        subject.name,
+                        style: context.textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '$pct%',
-                      style: context.textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
+                      const SizedBox(height: 2),
+                      Text(
+                        subject.teacher,
+                        style: context.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(Radii.pill),
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(begin: 0, end: subject.progress),
-                    duration: context.motion(AppMotion.slow),
-                    curve: AppMotion.standard,
-                    builder: (context, value, _) => LinearProgressIndicator(
-                      value: value,
-                      minHeight: 8,
-                      backgroundColor: Colors.white.withValues(alpha: 0.28),
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
+                    ],
                   ),
                 ),
               ],
@@ -131,21 +111,63 @@ class SubjectDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          const SectionHeader(title: 'Accesos'),
+          SectionHeader(
+            title: 'Tareas',
+            action: 'Ver todas',
+            onActionTap: () => context.push(Routes.assignments),
+          ),
           const SizedBox(height: 8),
-          _PastelRow(
-            surface: s,
-            icon: Icons.assignment_rounded,
-            label: 'Tareas de la materia',
-            onTap: () => context.push(Routes.assignments),
+          if (tasks.isEmpty)
+            const EmptyState(
+              icon: Icons.task_alt_rounded,
+              title: 'Sin tareas',
+              subtitle: 'No hay tareas asignadas en esta materia por ahora.',
+            )
+          else
+            for (final a in tasks) ...[
+              AssignmentCard(
+                assignment: a,
+                pastel: true,
+                showProgress: false,
+                onTap: () => context.push('${Routes.assignments}/${a.id}'),
+              ),
+              const SizedBox(height: 10),
+            ],
+          const SizedBox(height: 12),
+
+          const SectionHeader(title: 'Calificaciones'),
+          const SizedBox(height: 8),
+          DepthCard(brutal: true, 
+            color: s.surface,
+            accent: s.vivid,
+            soft: true,
+            borderRadius: Radii.md,
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Text(
+                  avg == null ? '—' : avg.toStringAsFixed(1),
+                  style: context.textTheme.headlineSmall
+                      ?.copyWith(color: s.ink, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Promedio de la materia',
+                    style: context.textTheme.bodySmall
+                        ?.copyWith(color: s.inkMuted),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          _PastelRow(
-            surface: s,
-            icon: Icons.grade_rounded,
-            label: 'Calificaciones',
-            onTap: () => context.push(Routes.grades),
-          ),
+          if (subjectGrades.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            for (final g in subjectGrades) ...[
+              _GradeRow(surface: s, grade: g),
+              const SizedBox(height: 8),
+            ],
+          ],
         ],
       ),
     );
@@ -169,46 +191,75 @@ class _PastelRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.md),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: surface.surface,
-            borderRadius: BorderRadius.circular(Radii.md),
+    return DepthCard(brutal: true, 
+      color: surface.surface,
+      accent: surface.vivid,
+      soft: true,
+      onTap: onTap,
+      borderRadius: Radii.md,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: surface.vivid,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: surface.vivid,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.titleSmall?.copyWith(
-                      color: surface.ink,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Icon(trailing, color: surface.inkMuted, size: 20),
-              ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.titleSmall?.copyWith(
+                color: surface.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ),
+          Icon(trailing, color: surface.inkMuted, size: 20),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fila de una calificación anterior (tarea o prueba) de la materia.
+class _GradeRow extends StatelessWidget {
+  const _GradeRow({required this.surface, required this.grade});
+  final PastelSurface surface;
+  final GradeBrief grade;
+
+  @override
+  Widget build(BuildContext context) {
+    return DepthCard(brutal: true, 
+      color: surface.surface,
+      soft: true,
+      borderRadius: Radii.md,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              grade.activity,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.textTheme.bodyMedium
+                  ?.copyWith(color: surface.ink, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Text(
+            grade.score.toStringAsFixed(1),
+            style: context.textTheme.titleSmall?.copyWith(
+              color: surface.vivid,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }
