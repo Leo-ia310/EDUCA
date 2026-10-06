@@ -27,6 +27,12 @@ class Routes {
   static const announcements = '/announcements';
   static const eventNew = '/events/new';
   static const manageTeachers = '/admin/teachers';
+  static const adminStudents = '/admin/students';
+  static const adminParents = '/admin/parents';
+  static const adminGroups = '/admin/groups';
+  static const adminClasses = '/admin/classes';
+  static const adminRoles = '/admin/roles';
+  static const adminReportCards = '/admin/report-cards';
   static const developer = '/developer';
   static const developerApis = '/developer/apis';
   static const developerTasks = '/developer/tasks';

@@ -29,7 +29,11 @@ import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
-import '../../features/admin/presentation/screens/manage_teachers_screen.dart';
+import '../../features/admin/presentation/screens/admin_classes_screen.dart';
+import '../../features/admin/presentation/screens/admin_groups_screen.dart';
+import '../../features/admin/presentation/screens/admin_people_screen.dart';
+import '../../features/admin/presentation/screens/admin_report_cards_screen.dart';
+import '../../features/admin/presentation/screens/admin_roles_screen.dart';
 import '../../features/developer/presentation/screens/developer_dashboard_screen.dart';
 import '../../features/developer/presentation/screens/developer_apis_screen.dart';
 import '../../features/developer/presentation/screens/developer_tasks_screen.dart';
@@ -510,8 +514,65 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: Routes.manageTeachers,
         builder: (_, __) => const RoleGuard(
           allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
-          child: ManageTeachersScreen(),
+          child: AdminPeopleScreen(role: AppRole.teacher),
         ),
+      ),
+      GoRoute(
+        path: Routes.adminStudents,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminPeopleScreen(role: AppRole.student),
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminParents,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminPeopleScreen(role: AppRole.parent),
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminClasses,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminClassesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminRoles,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminRolesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminReportCards,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminReportCardsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminGroups,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminGroupsScreen(),
+        ),
+        routes: [
+          GoRoute(
+            path: ':id',
+            builder: (_, state) => RoleGuard(
+              allowed: const {
+                AppRole.admin,
+                AppRole.coordinator,
+                AppRole.director,
+              },
+              child: AdminGroupDetailScreen(
+                groupId: state.pathParameters['id'] ?? '',
+              ),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.developer,

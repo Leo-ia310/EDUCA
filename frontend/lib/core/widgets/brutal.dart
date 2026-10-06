@@ -17,7 +17,10 @@ abstract final class Brutal {
         ?.activeRole;
     return role == AppRole.student ||
         role == AppRole.teacher ||
-        role == AppRole.parent;
+        role == AppRole.parent ||
+        role == AppRole.admin ||
+        role == AppRole.coordinator ||
+        role == AppRole.director;
   }
 
   static const double border = 2;
