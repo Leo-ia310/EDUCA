@@ -9,13 +9,15 @@ import '../theme/app_theme.dart';
 /// Estilo "neo-brutalista" del panel de estudiante: borde grueso de tinta,
 /// sombra dura desplazada y colores planos.
 abstract final class Brutal {
-  /// El estilo aplica a los paneles de estudiante y docente.
+  /// El estilo aplica a los paneles de estudiante, docente y padre.
   static bool active(BuildContext context) {
     final role = ProviderScope.containerOf(context, listen: false)
         .read(authControllerProvider)
         .user
         ?.activeRole;
-    return role == AppRole.student || role == AppRole.teacher;
+    return role == AppRole.student ||
+        role == AppRole.teacher ||
+        role == AppRole.parent;
   }
 
   static const double border = 2;
@@ -181,6 +183,70 @@ class BrutalButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
         child: child,
+      ),
+    );
+  }
+}
+
+/// Píldora/chip seleccionable con el estilo [Brutal].
+class BrutalPill extends StatelessWidget {
+  const BrutalPill({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+    this.compact = false,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  /// Versión más pequeña (barras de filtros).
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final fg =
+        selected ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        margin: const EdgeInsets.only(right: 3, bottom: 3),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 10 : 14,
+          vertical: compact ? 4 : 8,
+        ),
+        decoration: Brutal.decoration(
+          context,
+          color: selected ? palette.accentDeep : palette.cardElevated,
+          radius: compact ? Radii.sm : Radii.md,
+          offset: compact ? 2 : 3,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: compact ? 14 : 16, color: fg),
+              SizedBox(width: compact ? 4 : 6),
+            ],
+            Text(
+              label,
+              style: (compact
+                      ? context.textTheme.labelSmall
+                      : context.textTheme.labelMedium)
+                  ?.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

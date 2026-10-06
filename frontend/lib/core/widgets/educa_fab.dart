@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'brutal.dart';
 
 class EducaFab extends StatelessWidget {
   const EducaFab({
@@ -14,6 +15,18 @@ class EducaFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (Brutal.active(context)) {
+      return BrutalBox(
+        onTap: onPressed,
+        color: context.palette.accentDeep,
+        radius: Radii.md,
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: Icon(icon, size: 28, color: Colors.white),
+        ),
+      );
+    }
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,

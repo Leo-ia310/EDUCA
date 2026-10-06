@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
-import '../../../notifications/providers.dart';
-import '../../../profile/presentation/widgets/account_settings_menu.dart';
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../../shared/models/app_role.dart';
 
 /// Radio de la curva con que el panel se monta sobre la barra azul (cóncava).
 const double kStudentPanelRadius = 24;
@@ -88,10 +87,9 @@ class StudentTopBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     const barColor = EducaBottomNav.barColor;
     final topInset = MediaQuery.paddingOf(context).top;
-    final badge = ref.watch(notificationsUnreadProvider).asData?.value ?? 0;
     return Container(
       // Borde inferior recto: el panel se monta encima y aporta la curva.
-      padding: EdgeInsets.fromLTRB(showBack ? 4 : 16, topInset + 10, 12, 30),
+      padding: EdgeInsets.fromLTRB(12, topInset + 10, 12, 30),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -101,14 +99,7 @@ class StudentTopBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          if (showBack) ...[
-            IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-              tooltip: 'Atrás',
-              onPressed: onBack ?? () => context.pop(),
-            ),
-            const SizedBox(width: 4),
-          ],
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               title,
@@ -120,15 +111,44 @@ class StudentTopBar extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          EducaCircleAction(
-            icon: Icons.notifications_rounded,
-            tooltip: 'Notificaciones',
-            badge: badge,
-            onTap: () => context.go(Routes.alerts),
-          ),
-          const SizedBox(width: 10),
-          const AccountSettingsMenu(circular: true),
+          // Flecha de regreso a la derecha.
+          if (showBack)
+            Tooltip(
+              message: 'Atrás',
+              child: GestureDetector(
+                onTap: onBack ??
+                    () {
+                      // Sin historial (entrada por el navbar o enlace
+                      // directo): vuelve al inicio del rol.
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        final role =
+                            ref.read(authControllerProvider).user?.activeRole ??
+                                AppRole.student;
+                        context.go(navTabsForRole(role).first.route);
+                      }
+                    },
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  margin: const EdgeInsets.only(right: 3, bottom: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    border: Border.all(color: Colors.black, width: 2),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black, offset: Offset(3, 3)),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.black,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

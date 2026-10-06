@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../domain/entities.dart';
 import 'conversation_avatar.dart';
 
@@ -25,19 +26,12 @@ class ConversationTile extends StatelessWidget {
     final unread = conversation.unreadCount;
     final isMine = last?.senderId == currentUserId;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.md),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: s.surface,
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: Row(
+    return BrutalBox(
+      onTap: onTap,
+      color: s.surface,
+      radius: Radii.md,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Row(
               children: [
                 ConversationAvatar(conversation: conversation),
                 const SizedBox(width: 12),
@@ -144,9 +138,6 @@ class ConversationTile extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ),
-      ),
     );
   }
 

@@ -227,15 +227,38 @@ class TeacherMockData {
 }
 
 class ChildBrief {
-  const ChildBrief(this.name, {this.selected = false});
+  const ChildBrief(
+    this.name, {
+    this.selected = false,
+    this.grade = '',
+    this.age,
+    this.average,
+    this.attendance,
+    this.subjects = const [],
+  });
   final String name;
   final bool selected;
+
+  /// Grado y grupo ("4° Grado A").
+  final String grade;
+  final int? age;
+
+  /// Promedio general (0–100) y asistencia (%), si se conocen.
+  final double? average;
+  final double? attendance;
+
+  /// Materias del hijo con su docente (si vacío se usan las generales).
+  final List<ParentSubject> subjects;
 }
 
 class ParentSubject {
-  const ParentSubject(this.name, this.teacher);
+  const ParentSubject(this.name, this.teacher, {this.teacherUserId});
   final String name;
   final String teacher;
+
+  /// Id del usuario docente (para abrir el chat directo). Si es null se
+  /// abre el selector de contactos.
+  final String? teacherUserId;
 }
 
 class ParentActivity {
@@ -257,8 +280,37 @@ class ParentMockData {
   ParentMockData._();
 
   static const children = <ChildBrief>[
-    ChildBrief('Mateo', selected: true),
-    ChildBrief('Sofía'),
+    ChildBrief(
+      'Mateo',
+      selected: true,
+      grade: '4° Grado A',
+      age: 10,
+      average: 92,
+      attendance: 98,
+      subjects: [
+        ParentSubject('Matemáticas Avanzadas', 'Prof. Ricardo Méndez',
+            teacherUserId: 'u-teacher-ricardo',),
+        ParentSubject('Biología Celular', 'Prof. Elena Santís',
+            teacherUserId: 'u-teacher-elena',),
+        ParentSubject('Historia Universal', 'Prof. Marta Vega',
+            teacherUserId: 'u-teacher-marta',),
+      ],
+    ),
+    ChildBrief(
+      'Sofía',
+      grade: '2° Grado B',
+      age: 8,
+      average: 95,
+      attendance: 96,
+      subjects: [
+        ParentSubject('Lengua y Literatura', 'Prof. Andrés Paz',
+            teacherUserId: 'u-teacher-andres',),
+        ParentSubject('Ciencias Naturales', 'Prof. Laura Díaz',
+            teacherUserId: 'u-teacher-laura',),
+        ParentSubject('Arte', 'Prof. Sara Núñez',
+            teacherUserId: 'u-teacher-sara',),
+      ],
+    ),
   ];
 
   static const attendancePercent = 98.0;

@@ -47,10 +47,12 @@ import '../../features/support/presentation/screens/help_screen.dart';
 import '../../features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/all_subjects_screen.dart';
 import '../../features/dashboard/presentation/screens/my_teachers_screen.dart';
+import '../../features/dashboard/presentation/screens/parent_children_screen.dart';
+import '../../features/dashboard/presentation/screens/parent_teachers_screen.dart';
+import '../../features/dashboard/presentation/screens/student_attendance_screen.dart';
 import '../../features/dashboard/presentation/screens/teacher_classes_screen.dart';
 import '../../features/dashboard/presentation/screens/parent_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/school_calendar_screen.dart';
-import '../../features/dashboard/presentation/screens/student_attendance_screen.dart';
 import '../../features/dashboard/presentation/screens/student_dashboard_screen.dart';
 import '../../features/dashboard/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -161,6 +163,31 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             AppRole.director,
           },
           child: AttendanceHistoryScreen(),
+        ),
+      ),
+
+      // ----- Mis hijos (padre) -----
+      GoRoute(
+        path: Routes.parentChildren,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.parent},
+          child: ParentChildrenScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.parentAttendance,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.parent},
+          child: ParentAttendanceScreen(),
+        ),
+      ),
+
+      // ----- Maestros por materia (padre) -----
+      GoRoute(
+        path: Routes.parentTeachers,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.parent},
+          child: ParentTeachersScreen(),
         ),
       ),
 

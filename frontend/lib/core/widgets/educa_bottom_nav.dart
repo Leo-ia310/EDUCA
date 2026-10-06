@@ -63,11 +63,6 @@ List<EducaTab> navTabsForRole(AppRole role) {
           route: Routes.parentDashboard,
         ),
         EducaTab(
-          icon: Icons.notifications_rounded,
-          label: 'Avisos',
-          route: Routes.alerts,
-        ),
-        EducaTab(
           icon: Icons.payments_rounded,
           label: 'Pagos',
           route: Routes.payments,
@@ -153,7 +148,9 @@ class EducaBottomNav extends ConsumerWidget {
       }
     }
 
-    if (role == AppRole.student || role == AppRole.teacher) {
+    if (role == AppRole.student ||
+        role == AppRole.teacher ||
+        role == AppRole.parent) {
       return _BrutalNav(
         tabs: tabs,
         activeIndex: activeIndex,

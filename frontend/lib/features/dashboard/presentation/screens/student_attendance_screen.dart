@@ -12,7 +12,20 @@ import '../widgets/student_chrome.dart';
 /// Asistencia del alumno: porcentaje total + calendario del mes con checks en
 /// los días asistidos.
 class StudentAttendanceScreen extends ConsumerWidget {
-  const StudentAttendanceScreen({super.key});
+  const StudentAttendanceScreen({
+    super.key,
+    this.title = 'Asistencia',
+    this.heading = 'Tu asistencia',
+    this.percentOverride,
+  });
+
+  /// Título de la barra superior y encabezado de la tarjeta (el panel del
+  /// padre los adapta al hijo seleccionado).
+  final String title;
+  final String heading;
+
+  /// Si se indica, reemplaza el porcentaje del alumno logueado.
+  final double? percentOverride;
 
   // Días del mes con ausencia (mock demo).
   static const _absentDays = {9};
@@ -21,14 +34,14 @@ class StudentAttendanceScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(studentDashboardProvider).valueOrNull ??
         StudentDashboardData.mock();
-    final pct = (data.attendanceRate * 100).round();
+    final pct = percentOverride?.round() ?? (data.attendanceRate * 100).round();
 
     return StudentDetailScaffold(
-      title: 'Asistencia',
+      title: title,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AttendanceHeader(percent: pct),
+          _AttendanceHeader(percent: pct, heading: heading),
           const SizedBox(height: 20),
           const _MonthCalendar(absentDays: _absentDays),
           const SizedBox(height: 16),
@@ -40,8 +53,9 @@ class StudentAttendanceScreen extends ConsumerWidget {
 }
 
 class _AttendanceHeader extends StatelessWidget {
-  const _AttendanceHeader({required this.percent});
+  const _AttendanceHeader({required this.percent, required this.heading});
   final int percent;
+  final String heading;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +72,7 @@ class _AttendanceHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tu asistencia',
+                  heading,
                   style: context.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w800),
                 ),

@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/skeleton.dart';
@@ -39,14 +40,25 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         bottom: false,
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: _FilterBar(
-                    selected: _filter,
-                    onSelect: (v) => setState(() => _filter = v),
+            _FilterBar(
+              selected: _filter,
+              onSelect: (v) => setState(() => _filter = v),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 20, right: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      unread > 0
+                          ? '$unread sin leer'
+                          : 'Todo al día',
+                      style: context.textTheme.labelMedium?.copyWith(
+                        color: palette.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert_rounded),
                   onSelected: (v) async {
@@ -90,7 +102,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     ),
                   ],
                 ),
-              ],
+                ],
+              ),
             ),
             Expanded(
               child: feed.when(
@@ -116,14 +129,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     onRefresh: () async =>
                         ref.invalidate(notificationsFeedProvider),
                     child: ListView.separated(
-                      padding: EdgeInsets.zero,
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => Divider(
-                        height: 1,
-                        color: Theme.of(context)
-                            .dividerColor
-                            .withValues(alpha: 0.5),
-                      ),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (_, i) {
                         final n = filtered[i];
                         return Slidable(
@@ -177,9 +185,23 @@ class _FilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 44,
-      child: ListView(
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (r) {
+          final f = (20 / r.width).clamp(0.0, 0.5);
+          return LinearGradient(
+            colors: const [
+              Colors.transparent,
+              Colors.black,
+              Colors.black,
+              Colors.transparent,
+            ],
+            stops: [0, f, 1 - f, 1],
+          ).createShader(r);
+        },
+        child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
         children: [
           _Chip(
             label: 'Todas',
@@ -195,6 +217,7 @@ class _FilterBar extends StatelessWidget {
               onTap: () => onSelect(ch),
             ),
         ],
+      ),
       ),
     );
   }
@@ -214,41 +237,12 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.pill),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? palette.accentDeep : palette.surfaceAlt,
-            borderRadius: BorderRadius.circular(Radii.pill),
-          ),
-          child: Row(
-            children: [
-              if (icon != null) ...[
-                Icon(icon,
-                    size: 16,
-                    color: selected
-                        ? Colors.white
-                        : palette.textMuted,),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                label,
-                style: context.textTheme.labelMedium?.copyWith(
-                  color: selected
-                      ? Colors.white
-                      : Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return BrutalPill(
+      compact: true,
+      label: label,
+      icon: icon,
+      selected: selected,
+      onTap: onTap,
     );
   }
 }

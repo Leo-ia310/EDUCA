@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/educa_fab.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -62,6 +63,17 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                   isDense: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(Radii.md),
+                    borderSide: BorderSide(
+                      color: Brutal.ink(context),
+                      width: Brutal.border,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    borderSide: BorderSide(
+                      color: Brutal.ink(context),
+                      width: Brutal.border,
+                    ),
                   ),
                 ),
               ),

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../domain/entities.dart';
 
 class NotificationTile extends StatelessWidget {
@@ -22,14 +23,12 @@ class NotificationTile extends StatelessWidget {
     final s = context.pastel(color);
     final unread = !notification.read;
 
-    return InkWell(
+    return BrutalBox(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: unread ? s.surface.withValues(alpha: 0.6) : null,
-        ),
-        child: Row(
+      color: unread ? s.surface : palette.cardElevated,
+      radius: Radii.md,
+      padding: const EdgeInsets.all(14),
+      child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
@@ -38,8 +37,14 @@ class NotificationTile extends StatelessWidget {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration:
-                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: s.vivid,
+                    borderRadius: BorderRadius.circular(Radii.sm),
+                    border: Border.all(
+                      color: Brutal.ink(context),
+                      width: Brutal.border,
+                    ),
+                  ),
                   child: Icon(notification.channel.icon,
                       color: Colors.white, size: 20,),
                 ),
@@ -121,7 +126,6 @@ class NotificationTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 

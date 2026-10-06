@@ -7,6 +7,17 @@ class StudentGradesArgs {
   const StudentGradesArgs({required this.studentId, this.periodId});
   final int studentId;
   final String? periodId;
+
+  // Igualdad por valor: sin esto, cada rebuild crea un provider nuevo en el
+  // `family` y la pantalla queda cargando para siempre.
+  @override
+  bool operator ==(Object other) =>
+      other is StudentGradesArgs &&
+      other.studentId == studentId &&
+      other.periodId == periodId;
+
+  @override
+  int get hashCode => Object.hash(studentId, periodId);
 }
 
 /// Rendimiento por materia para un estudiante.

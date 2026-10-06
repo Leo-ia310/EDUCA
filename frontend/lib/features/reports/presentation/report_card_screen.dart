@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/brutal.dart';
 import '../../../core/widgets/depth_card.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/section_header.dart';
@@ -58,7 +59,7 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
                 const SizedBox(height: 16),
                 _Header(card: data, scale: scale),
                 const SizedBox(height: 16),
-                const SectionHeader(title: 'Materias'),
+                const SectionHeader(title: 'Materias', accent: false),
                 const SizedBox(height: 8),
                 DepthCard(
                   soft: true,
@@ -78,16 +79,20 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: () => _openPdf(data),
-                  icon: const Icon(Icons.picture_as_pdf_rounded),
-                  label: const Text('Ver / Descargar boletín en PDF'),
+                BrutalButton(
+                  expand: true,
+                  onTap: () => _openPdf(data),
+                  icon: Icons.picture_as_pdf_rounded,
+                  label: 'Ver / Descargar boletín en PDF',
                 ),
                 const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: () => _sharePdf(data),
-                  icon: const Icon(Icons.ios_share_rounded),
-                  label: const Text('Compartir boletín'),
+                BrutalButton(
+                  expand: true,
+                  onTap: () => _sharePdf(data),
+                  icon: Icons.ios_share_rounded,
+                  label: 'Compartir boletín',
+                  color: context.palette.cardElevated,
+                  foreground: Theme.of(context).colorScheme.onSurface,
                 ),
                 const SizedBox(height: 12),
                 Center(
@@ -142,19 +147,19 @@ class _PeriodSelector extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          ChoiceChip(
-            label: const Text('Anual'),
+          BrutalPill(
+            label: 'Anual',
             selected: selected == null,
-            onSelected: (_) => onChanged(null),
+            onTap: () => onChanged(null),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           for (final p in periods) ...[
-            ChoiceChip(
-              label: Text(p.name),
+            BrutalPill(
+              label: p.name,
               selected: selected == p.id,
-              onSelected: (_) => onChanged(p.id),
+              onTap: () => onChanged(p.id),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
           ],
         ],
       ),
@@ -279,6 +284,10 @@ class _SubjectLine extends StatelessWidget {
             decoration: BoxDecoration(
               color: palette.accentSoft,
               borderRadius: BorderRadius.circular(Radii.sm),
+              border: Border.all(
+                color: Brutal.ink(context),
+                width: Brutal.border,
+              ),
             ),
             child: Icon(Icons.menu_book_rounded,
                 color: palette.accentDeep, size: 18,),
