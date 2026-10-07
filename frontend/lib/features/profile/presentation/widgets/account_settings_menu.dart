@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -193,41 +194,51 @@ class _SettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.pastel(color);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    final ink = Brutal.ink(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 0),
+      child: BrutalBox(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.md),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: s.surface,
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration:
-                      BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-                  child: Icon(icon, color: Colors.white, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: context.textTheme.titleSmall?.copyWith(
-                      color: s.ink,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded, color: s.inkMuted, size: 22),
-              ],
+        color: s.surface,
+        radius: Radii.md,
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: s.vivid,
+                borderRadius: BorderRadius.circular(Radii.sm),
+                border: Border.all(color: ink, width: Brutal.border),
+              ),
+              child: Icon(icon, color: Colors.white, size: 22),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: context.textTheme.titleSmall?.copyWith(
+                  color: s.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(Radii.sm),
+                border: Border.all(color: ink, width: Brutal.border),
+              ),
+              child: const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.black,
+                size: 22,
+              ),
+            ),
+          ],
         ),
       ),
     );

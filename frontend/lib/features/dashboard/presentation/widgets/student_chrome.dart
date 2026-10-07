@@ -27,6 +27,7 @@ class StudentDetailScaffold extends StatelessWidget {
     this.bodyPadding = const EdgeInsets.fromLTRB(16, 44, 16, 32),
     this.onBack,
     this.showBack = true,
+    this.topActions = const [],
   });
 
   final String title;
@@ -43,6 +44,9 @@ class StudentDetailScaffold extends StatelessWidget {
   /// Muestra la flecha de volver. Desactívalo en destinos raíz del navbar.
   final bool showBack;
 
+  /// Acciones extra de la barra superior (a la derecha de la flecha).
+  final List<Widget> topActions;
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -55,7 +59,12 @@ class StudentDetailScaffold extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          StudentTopBar(title: title, onBack: onBack, showBack: showBack),
+          StudentTopBar(
+            title: title,
+            onBack: onBack,
+            showBack: showBack,
+            actions: topActions,
+          ),
           // Con scroll: el panel crece con el contenido. Sin scroll (listas
           // internas): el panel llena el alto restante y la lista scrollea
           // dentro.
@@ -77,11 +86,13 @@ class StudentTopBar extends ConsumerWidget {
     required this.title,
     this.onBack,
     this.showBack = true,
+    this.actions = const [],
   });
 
   final String title;
   final VoidCallback? onBack;
   final bool showBack;
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -149,6 +160,7 @@ class StudentTopBar extends ConsumerWidget {
                 ),
               ),
             ),
+          for (final w in actions) ...[const SizedBox(width: 6), w],
         ],
       ),
     );

@@ -151,6 +151,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<int>(
+                        isExpanded: true,
                         initialValue: state.classId,
                         decoration:
                             const InputDecoration(labelText: 'Clase'),
@@ -177,6 +178,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<AssignmentKind>(
+                        isExpanded: true,
                         initialValue: state.kind,
                         decoration:
                             const InputDecoration(labelText: 'Tipo'),

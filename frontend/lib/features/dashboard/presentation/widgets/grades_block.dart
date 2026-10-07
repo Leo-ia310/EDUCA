@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../domain/dashboard_models.dart';
 
 /// Bloque "Mis Notas" del perfil, estilo panel: cada materia como fila pastel
@@ -49,18 +50,23 @@ class _GradeRow extends StatelessWidget {
       GradeStatus.pending => 'En curso',
       GradeStatus.lowPerformance => 'Bajo rend.',
     };
-    return Container(
+    return BrutalBox(
+      color: s.surface,
+      radius: Radii.md,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: s.surface,
-        borderRadius: BorderRadius.circular(Radii.md),
-      ),
       child: Row(
         children: [
           Container(
             width: 38,
             height: 38,
-            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: s.vivid,
+              borderRadius: BorderRadius.circular(Radii.sm),
+              border: Border.all(
+                color: Brutal.ink(context),
+                width: Brutal.border,
+              ),
+            ),
             child: const Icon(
               Icons.menu_book_rounded,
               color: Colors.white,
@@ -125,16 +131,10 @@ class _AverageHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return BrutalBox(
+      color: const Color(0xFF2FA869),
+      radius: Radii.md,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF2FA869), Color(0xFF35C97E), Color(0xFF2FB39A)],
-        ),
-        borderRadius: BorderRadius.circular(Radii.md),
-      ),
       child: Row(
         children: [
           Container(
@@ -142,10 +142,14 @@ class _AverageHero extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.20),
-              shape: BoxShape.circle,
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(Radii.sm),
+              border: Border.all(
+                color: Brutal.ink(context),
+                width: Brutal.border,
+              ),
             ),
-            child: const Icon(Icons.star_rounded, color: Colors.white, size: 24),
+            child: const Icon(Icons.star_rounded, color: Colors.black, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(

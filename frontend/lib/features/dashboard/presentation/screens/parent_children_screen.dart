@@ -326,7 +326,7 @@ class _ChildCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: context.textTheme.headlineSmall?.copyWith(
                           color: s.ink,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),

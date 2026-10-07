@@ -48,98 +48,109 @@ class HomeOptionCard extends StatelessWidget {
         color: color,
         radius: Radii.lg,
         clip: true,
-        child: SizedBox(
-          height: 196,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Ilustración temática a la derecha (centrada en vertical).
-              if (art != null)
-                Positioned(
-                  right: -8,
-                  top: 47,
-                  height: 102,
-                  width: 132,
-                  child: art!,
-                ),
-              // Ícono en la esquina superior izquierda.
-              Positioned(
-                left: 18,
-                top: 18,
-                child: Container(
-                  width: 54,
-                  height: 54,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(Radii.md),
-                    border: Border.all(color: ink, width: Brutal.border),
-                  ),
-                  child: Icon(icon, color: Colors.black, size: 28),
-                ),
-              ),
-              // Título pequeño y resaltado + descripción grande, abajo del
-              // ícono, a la izquierda.
-              Positioned(
-                left: 20,
-                right: 150,
-                bottom: 18,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(Radii.pill),
-                        border: Border.all(color: ink, width: Brutal.border),
-                      ),
-                      child: Text(
-                        title,
-                        style: context.textTheme.labelMedium?.copyWith(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
-                        ),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            // La ilustración ocupa la mitad derecha de la tarjeta, con margen
+            // para no tocar los bordes.
+            final half = c.maxWidth * 0.52;
+            return SizedBox(
+              height: 196,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Ilustración temática a la derecha (centrada en vertical).
+                  if (art != null)
+                    Positioned(
+                      right: 10,
+                      top: 10,
+                      bottom: 10,
+                      width: half - 10,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: SizedBox(width: 112, height: 108, child: art!),
                       ),
                     ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        subtitle!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          height: 1.15,
-                        ),
+                  // Ícono en la esquina superior izquierda.
+                  Positioned(
+                    left: 18,
+                    top: 18,
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(Radii.md),
+                        border: Border.all(color: ink, width: Brutal.border),
                       ),
-                    ],
-                  ],
-                ),
-              ),
-              // Flecha negra en círculo blanco, esquina inferior derecha.
-              Positioned(
-                right: 16,
-                bottom: 16,
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(Radii.md),
-                    border: Border.all(color: ink, width: Brutal.border),
+                      child: Icon(icon, color: Colors.black, size: 28),
+                    ),
                   ),
-                  child: const _BoldArrow(),
-                ),
+                  // Título pequeño y resaltado + descripción grande, abajo del
+                  // ícono, a la izquierda.
+                  Positioned(
+                    left: 20,
+                    right: half + 4,
+                    bottom: 18,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(Radii.pill),
+                            border:
+                                Border.all(color: ink, width: Brutal.border),
+                          ),
+                          child: Text(
+                            title,
+                            style: context.textTheme.labelMedium?.copyWith(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            subtitle!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              height: 1.15,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Flecha negra en círculo blanco, esquina inferior derecha.
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(Radii.md),
+                        border: Border.all(color: ink, width: Brutal.border),
+                      ),
+                      child: const _BoldArrow(),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

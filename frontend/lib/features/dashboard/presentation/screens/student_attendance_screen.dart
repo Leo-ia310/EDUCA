@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/charts.dart';
 import '../../../../core/widgets/depth_card.dart';
 import '../../data/dashboard_data.dart';
@@ -143,14 +144,9 @@ class _MonthCalendar extends StatelessWidget {
         ),
     ];
 
-    return Container(
+    return BrutalBox(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: palette.cardElevated,
-        borderRadius: BorderRadius.circular(Radii.lg),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: AppShadows.soft(context),
-      ),
+      radius: Radii.lg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -242,6 +238,11 @@ class _DayCell extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(Radii.sm),
+        // Los días con asistencia o falta llevan borde, como el resto de
+        // tarjetas; fines de semana y días futuros quedan planos.
+        border: bg == null
+            ? null
+            : Border.all(color: Brutal.ink(context), width: 1.5),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

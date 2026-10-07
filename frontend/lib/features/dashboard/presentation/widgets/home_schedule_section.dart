@@ -21,7 +21,7 @@ class HomeScheduleSection extends StatefulWidget {
 }
 
 class _HomeScheduleSectionState extends State<HomeScheduleSection> {
-  static const _cardHeight = 290.0;
+  static const _cardHeight = 226.0;
 
   late final int _todayIdx = ScheduleMock.todayIndex();
   late int _selected = _todayIdx;
@@ -49,7 +49,7 @@ class _HomeScheduleSectionState extends State<HomeScheduleSection> {
       );
       if (i >= 0) initial = i;
     }
-    return PageController(viewportFraction: 0.78, initialPage: initial);
+    return PageController(viewportFraction: 0.64, initialPage: initial);
   }
 
   void _select(int day) {
@@ -356,16 +356,16 @@ class _ClassCard extends StatelessWidget {
         child: Stack(
           children: [
             Positioned(
-              right: -30,
-              bottom: 40,
+              right: -22,
+              bottom: 34,
               child: Icon(
                 slot.icon,
-                size: 200,
+                size: 150,
                 color: s.vivid.withValues(alpha: 0.14),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -377,9 +377,9 @@ class _ClassCard extends StatelessWidget {
                           slot.subject,
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
-                          style: context.textTheme.headlineSmall?.copyWith(
+                          style: context.textTheme.titleLarge?.copyWith(
                             color: s.ink,
-                            fontWeight: FontWeight.w400,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),

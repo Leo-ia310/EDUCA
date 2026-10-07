@@ -85,7 +85,7 @@ class HomeHero extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.displayMedium?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w800,
                     shadows: textShadows,
                   ),
                 ),

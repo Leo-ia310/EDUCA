@@ -5,16 +5,21 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/depth_card.dart';
+import '../../../../core/constants/env.dart';
+import '../../../../core/widgets/brutal.dart';
+import '../../../chat/providers.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/student_chrome.dart';
 
 /// Un maestro del alumno (agregado desde sus materias).
 class Teacher {
-  Teacher(this.name, this.color);
+  Teacher(this.name, this.color, {this.icon = Icons.menu_book_rounded});
   final String name;
   final Color color;
+
+  /// Ícono de la clase que imparte (la primera).
+  final IconData icon;
   final List<String> subjects = [];
 
   /// Partes del nombre sin el título ("Prof."/"Profa."/"Profe.").
@@ -47,7 +52,11 @@ List<Teacher> teachersFrom(StudentDashboardData data) {
     if (s.teacher.trim().isEmpty) continue;
     final t = byName.putIfAbsent(
       s.teacher,
-      () => Teacher(s.teacher, s.color ?? subjectColor(s.name)),
+      () => Teacher(
+        s.teacher,
+        s.color ?? subjectColor(s.name),
+        icon: s.icon ?? Icons.menu_book_rounded,
+      ),
     );
     t.subjects.add(s.name);
   }
@@ -80,22 +89,41 @@ class MyTeachersScreen extends ConsumerWidget {
   }
 }
 
-/// Tarjeta horizontal de un maestro: avatar con iniciales, nombre + materias
-/// que imparte, acceso directo a chat. Usada en "Mis maestros" y en el
-/// resumen "Maestros" del home.
-class TeacherCard extends StatelessWidget {
+/// Tarjeta horizontal de un maestro: ícono de su clase, nombre + materias que
+/// imparte. Al tocarla abre directamente el chat con ese maestro.
+class TeacherCard extends ConsumerWidget {
   const TeacherCard({super.key, required this.teacher});
   final Teacher teacher;
 
-  @override
-  Widget build(BuildContext context) {
-    final s = context.pastel(teacher.color);
-    final initials = teacher.initials;
+  Future<void> _openChat(BuildContext context, WidgetRef ref) async {
+    // En demo se crea/abre la conversación con el maestro; sin backend de
+    // contactos aún no hay id de usuario del maestro, así que se abre el
+    // selector de contactos.
+    if (!Env.isDemoMode) {
+      context.push(Routes.chatNew);
+      return;
+    }
+    final slug = teacher.name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    final conv = await ref.read(chatRepositoryProvider).ensureIndividual(
+          otherUserId: 'u-teacher-$slug',
+          otherName: teacher.name,
+          otherRole: 'teacher',
+        );
+    if (!context.mounted) return;
+    context.push('${Routes.chat}/${conv.id}');
+  }
 
-    return DepthCard(brutal: true, 
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = context.pastel(teacher.color);
+    final ink = Brutal.ink(context);
+
+    return BrutalBox(
+      onTap: () => _openChat(context, ref),
       color: s.surface,
-      accent: s.vivid,
-      soft: true,
+      radius: Radii.lg,
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
@@ -103,14 +131,12 @@ class TeacherCard extends StatelessWidget {
             width: 52,
             height: 52,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-            child: Text(
-              initials,
-              style: context.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
+            decoration: BoxDecoration(
+              color: s.vivid,
+              borderRadius: BorderRadius.circular(Radii.sm),
+              border: Border.all(color: ink, width: Brutal.border),
             ),
+            child: Icon(teacher.icon, color: Colors.white, size: 26),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -129,18 +155,25 @@ class TeacherCard extends StatelessWidget {
                   teacher.subjects.join(' · '),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
+                  style:
+                      context.textTheme.bodySmall?.copyWith(color: s.inkMuted),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 10),
-          IconButton(
-            onPressed: () => context.go(Routes.chat),
-            tooltip: 'Chatear con ${teacher.name}',
-            icon: Icon(Icons.chat_bubble_rounded, color: s.vivid),
-            style: IconButton.styleFrom(
-              backgroundColor: s.vivid.withValues(alpha: 0.16),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(Radii.sm),
+              border: Border.all(color: ink, width: Brutal.border),
+            ),
+            child: const Icon(
+              Icons.chat_bubble_outline,
+              color: Colors.black,
+              size: 18,
             ),
           ),
         ],

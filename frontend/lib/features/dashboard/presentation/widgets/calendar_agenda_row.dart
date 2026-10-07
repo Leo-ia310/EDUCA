@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
+import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/depth_card.dart';
 import '../../data/school_calendar_data.dart';
 
@@ -34,7 +35,14 @@ class CalendarAgendaRow extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
-                decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: s.vivid,
+                  borderRadius: BorderRadius.circular(Radii.sm),
+                  border: Border.all(
+                    color: Brutal.ink(context),
+                    width: Brutal.border,
+                  ),
+                ),
                 child: Icon(
                   isTask ? Icons.assignment_rounded : Icons.event_rounded,
                   color: Colors.white,

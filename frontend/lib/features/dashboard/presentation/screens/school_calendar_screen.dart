@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brutal.dart';
+import '../../../../core/widgets/section_header.dart';
 import '../../data/school_calendar_data.dart';
 import '../widgets/calendar_agenda_row.dart';
 import '../widgets/student_chrome.dart';
@@ -34,15 +36,18 @@ class SchoolCalendarScreen extends StatelessWidget {
         children: [
           _MonthGrid(taskDays: taskDays, eventDays: eventDays),
           const SizedBox(height: 20),
-          Text(
-            'Próximos',
-            style: context.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
-          ),
+          const SectionHeader(title: 'Eventos próximos', accent: false),
           const SizedBox(height: 10),
-          for (final it in items) ...[
+          for (final it in items.where((i) => i.kind == CalKind.event)) ...[
             CalendarAgendaRow(item: it),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
+          ],
+          const SizedBox(height: 10),
+          const SectionHeader(title: 'Tareas pendientes', accent: false),
+          const SizedBox(height: 10),
+          for (final it in items.where((i) => i.kind == CalKind.task)) ...[
+            CalendarAgendaRow(item: it),
+            const SizedBox(height: 10),
           ],
         ],
       ),
@@ -78,14 +83,9 @@ class _MonthGrid extends StatelessWidget {
         ),
     ];
 
-    return Container(
+    return BrutalBox(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: palette.cardElevated,
-        borderRadius: BorderRadius.circular(Radii.lg),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: AppShadows.soft(context),
-      ),
+      radius: Radii.lg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -166,6 +166,9 @@ class _DayDot extends StatelessWidget {
       decoration: BoxDecoration(
         color: isToday ? palette.accentSoft : null,
         borderRadius: BorderRadius.circular(Radii.sm),
+        border: isToday
+            ? Border.all(color: Brutal.ink(context), width: Brutal.border)
+            : null,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

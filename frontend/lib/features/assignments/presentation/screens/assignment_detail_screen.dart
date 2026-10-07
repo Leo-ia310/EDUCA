@@ -167,7 +167,7 @@ class _Header extends StatelessWidget {
                   assignment.title,
                   style: context.textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -543,7 +543,7 @@ class _GradedView extends StatelessWidget {
                 '${submission.score!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
                 style: context.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],

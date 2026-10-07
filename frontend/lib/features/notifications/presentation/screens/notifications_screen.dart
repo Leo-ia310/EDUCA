@@ -33,8 +33,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     return StudentDetailScaffold(
       title: unread > 0 ? 'Alertas ($unread)' : 'Alertas',
-      showBack: false,
+      bottomNav: false,
       scrollable: false,
+      topActions: [
+        _MenuButton(
+          onSelected: (v) async {
+            final repo = ref.read(notificationsRepositoryProvider);
+            switch (v) {
+              case 'read_all':
+                await repo.markAllRead();
+              case 'clear':
+                await repo.clearAll();
+              case 'simulate':
+                await simulateDemoNotification(ref, channel: _filter);
+            }
+          },
+        ),
+      ],
       bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
@@ -44,71 +59,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               selected: _filter,
               onSelect: (v) => setState(() => _filter = v),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 20, right: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      unread > 0
-                          ? '$unread sin leer'
-                          : 'Todo al día',
-                      style: context.textTheme.labelMedium?.copyWith(
-                        color: palette.textMuted,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert_rounded),
-                  onSelected: (v) async {
-                    final repo = ref.read(notificationsRepositoryProvider);
-                    switch (v) {
-                      case 'read_all':
-                        await repo.markAllRead();
-                        break;
-                      case 'clear':
-                        await repo.clearAll();
-                        break;
-                      case 'simulate':
-                        await simulateDemoNotification(ref, channel: _filter);
-                        break;
-                    }
-                  },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(
-                      value: 'read_all',
-                      child: Row(children: [
-                        Icon(Icons.mark_email_read_rounded, size: 18),
-                        SizedBox(width: 8),
-                        Text('Marcar todas leídas'),
-                      ],),
-                    ),
-                    PopupMenuItem(
-                      value: 'clear',
-                      child: Row(children: [
-                        Icon(Icons.delete_sweep_rounded, size: 18),
-                        SizedBox(width: 8),
-                        Text('Vaciar bandeja'),
-                      ],),
-                    ),
-                    PopupMenuItem(
-                      value: 'simulate',
-                      child: Row(children: [
-                        Icon(Icons.notifications_active_rounded, size: 18),
-                        SizedBox(width: 8),
-                        Text('Simular una (demo)'),
-                      ],),
-                    ),
-                  ],
-                ),
-                ],
-              ),
-            ),
             Expanded(
               child: feed.when(
-                loading: () =>
-                    const SkeletonList(),
+                loading: () => const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (items) {
                   final filtered = _filter == null
@@ -176,10 +129,43 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 }
 
-class _FilterBar extends StatelessWidget {
+class _FilterBar extends StatefulWidget {
   const _FilterBar({required this.selected, required this.onSelect});
   final NotificationChannel? selected;
   final ValueChanged<NotificationChannel?> onSelect;
+
+  @override
+  State<_FilterBar> createState() => _FilterBarState();
+}
+
+class _FilterBarState extends State<_FilterBar> {
+  final _controller = ScrollController();
+  bool _fadeLeft = false;
+  bool _fadeRight = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    final p = _controller.position;
+    final left = p.pixels > 2;
+    final right = p.pixels < p.maxScrollExtent - 2;
+    if (left != _fadeLeft || right != _fadeRight) {
+      setState(() {
+        _fadeLeft = left;
+        _fadeRight = right;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,37 +173,108 @@ class _FilterBar extends StatelessWidget {
       height: 44,
       child: ShaderMask(
         blendMode: BlendMode.dstIn,
+        // Las píldoras se desvanecen suavemente: invisibles a 12 px del borde
+        // y totalmente visibles a ~64 px, solo del lado hacia donde hay más.
         shaderCallback: (r) {
-          final f = (20 / r.width).clamp(0.0, 0.5);
+          final a = (12 / r.width).clamp(0.0, 0.2);
+          final b = (64 / r.width).clamp(0.0, 0.45);
           return LinearGradient(
-            colors: const [
-              Colors.transparent,
+            colors: [
+              _fadeLeft ? Colors.transparent : Colors.black,
+              _fadeLeft ? Colors.transparent : Colors.black,
               Colors.black,
               Colors.black,
-              Colors.transparent,
+              _fadeRight ? Colors.transparent : Colors.black,
+              _fadeRight ? Colors.transparent : Colors.black,
             ],
-            stops: [0, f, 1 - f, 1],
+            stops: [0, a, b, 1 - b, 1 - a, 1],
           ).createShader(r);
         },
         child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-        children: [
-          _Chip(
-            label: 'Todas',
-            selected: selected == null,
-            onTap: () => onSelect(null),
-          ),
-          for (final ch in NotificationChannel.values.where(
-              (c) => c != NotificationChannel.system,))
+          controller: _controller,
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          children: [
             _Chip(
-              label: ch.title,
-              icon: ch.icon,
-              selected: selected == ch,
-              onTap: () => onSelect(ch),
+              label: 'Todas',
+              selected: widget.selected == null,
+              onTap: () => widget.onSelect(null),
             ),
-        ],
+            for (final ch in NotificationChannel.values
+                .where((c) => c != NotificationChannel.system))
+              _Chip(
+                label: ch.title,
+                icon: ch.icon,
+                selected: widget.selected == ch,
+                onTap: () => widget.onSelect(ch),
+              ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// Menú de tres puntos de la barra superior (estilo del resto de botones).
+class _MenuButton extends StatelessWidget {
+  const _MenuButton({required this.onSelected});
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      tooltip: 'Opciones',
+      padding: EdgeInsets.zero,
+      onSelected: onSelected,
+      itemBuilder: (_) => const [
+        PopupMenuItem(
+          value: 'read_all',
+          child: Row(
+            children: [
+              Icon(Icons.mark_email_read_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('Marcar todas leídas'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'clear',
+          child: Row(
+            children: [
+              Icon(Icons.delete_sweep_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('Vaciar bandeja'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'simulate',
+          child: Row(
+            children: [
+              Icon(Icons.notifications_active_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('Simular una (demo)'),
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        width: 42,
+        height: 42,
+        margin: const EdgeInsets.only(right: 3, bottom: 3),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(Radii.md),
+          border: Border.all(color: Colors.black, width: 2),
+          boxShadow: const [
+            BoxShadow(color: Colors.black, offset: Offset(3, 3)),
+          ],
+        ),
+        child: const Icon(
+          Icons.more_vert_rounded,
+          color: Colors.black,
+          size: 24,
+        ),
       ),
     );
   }

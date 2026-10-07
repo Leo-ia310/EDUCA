@@ -82,7 +82,7 @@ class SubjectDetailScreen extends ConsumerWidget {
                         subject.name,
                         style: context.textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 2),

@@ -62,9 +62,9 @@ class StudentDashboardScreen extends ConsumerWidget {
                   const HomeScheduleSection(),
                   const SizedBox(height: 24),
 
-                  const SectionHeader(title: 'Acceso Rápido', accent: false),
+                  const SectionHeader(title: 'Mi Espacio', accent: false),
                   const SizedBox(height: 12),
-                  // Accesos rápidos: tarjetas horizontales apiladas.
+                  // Mi Espacio: tarjetas horizontales apiladas.
                   for (final t in [
                     _TileData(
                       icon: Icons.note_alt_rounded,
@@ -132,7 +132,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                     _TileData(
                       icon: Icons.co_present_rounded,
                       title: 'Maestros',
-                      subtitle: 'Tus maestros y contacto',
+                      subtitle: 'Tus Maestros',
                       color: const Color(0xFF7C6AE0),
                       onTap: () => context.push(Routes.teachers),
                       art: const ArtCluster([
