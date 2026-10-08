@@ -65,11 +65,26 @@ export class PaymentsService {
     const parentId = ctx.roles.has("parent")
       ? await this.permissions.currentParentId(ctx)
       : null;
+    const paymentUuid = this.idempotencyKey(payload.idempotencyKey) ??
+      randomUUID();
+    const existing = await this.repository.findPaymentByUuid(
+      paymentUuid,
+      ctx.institutionId,
+    );
+    if (existing != null) {
+      return {
+        payment: await this.hydratePayment(Number(existing.id), {
+          payerName: optionalString(payload.payerName, 150),
+          gatewayName: optionalString(payload.gatewayName, 100),
+        }),
+      };
+    }
+
     const currencyId =
       (charge.payment_concepts as Record<string, unknown> | null)
         ?.currency_id ?? null;
     const inserted = await this.repository.insertPayment({
-      uuid: randomUUID(),
+      uuid: paymentUuid,
       institution_id: ctx.institutionId,
       charge_id: chargeId,
       student_id: studentId,
@@ -123,6 +138,22 @@ export class PaymentsService {
       throw new HttpError(400, "Método de pago inválido.", "validation_error");
     }
     return method;
+  }
+
+  private idempotencyKey(value: unknown) {
+    const key = optionalString(value, 80);
+    if (key == null) return null;
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        .test(key)
+    ) {
+      throw new HttpError(
+        400,
+        "La llave de idempotencia debe ser un UUID válido.",
+        "validation_error",
+      );
+    }
+    return key;
   }
 
   private async paidByCharge(chargeId: number) {

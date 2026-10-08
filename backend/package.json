@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "docs:apis": "tsx scripts/generate-api-docs.ts",
+    "docs:apis": "tsx scripts/generate-api-docs.ts && tsx scripts/generate-openapi.ts",
     "prebuild": "npm run docs:apis",
     "build": "tsc -p tsconfig.json",
     "pretest": "npm run docs:apis",
@@ -17,7 +17,9 @@
     "@supabase/supabase-js": "^2.45.4",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

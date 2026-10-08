@@ -20,35 +20,120 @@ class BackendApiClient {
   final SupabaseClient _supabase;
   final Dio _dio;
 
+  String get _base {
+    final value = Env.backendApiBaseUrl.trim();
+    return value.endsWith('/') ? value.substring(0, value.length - 1) : value;
+  }
+
+  /// Compatibilidad con la API antigua `/api/business-api` basada en acciones.
   Future<dynamic> call(
     String action, [
     Map<String, dynamic> payload = const {},
   ]) async {
-    final token = _supabase.auth.currentSession?.accessToken;
-    if (token == null || token.isEmpty) {
-      throw StateError('Sesión requerida para llamar al backend.');
-    }
+    return post(
+      '/business-api',
+      data: {
+        'action': action,
+        'payload': payload,
+      },
+    );
+  }
 
-    try {
-      final response = await _dio.post<dynamic>(
-        Env.businessApiUrl,
-        data: {
-          'action': action,
-          'payload': payload,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'apikey': Env.supabaseAnonKey,
-            'Content-Type': 'application/json',
-          },
-        ),
-      );
+  Future<dynamic> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) {
+    return _unwrap(
+      _dio.get<dynamic>(
+        _url(path),
+        queryParameters: _cleanQuery(queryParameters),
+        options: _options(authenticated: authenticated),
+      ),
+    );
+  }
 
-      final data = response.data;
-      if (data is Map && data['ok'] == true) {
-        return data['data'];
+  Future<dynamic> post(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) {
+    return _unwrap(
+      _dio.post<dynamic>(
+        _url(path),
+        data: data ?? const {},
+        queryParameters: _cleanQuery(queryParameters),
+        options: _options(authenticated: authenticated),
+      ),
+    );
+  }
+
+  Future<dynamic> patch(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) {
+    return _unwrap(
+      _dio.patch<dynamic>(
+        _url(path),
+        data: data ?? const {},
+        queryParameters: _cleanQuery(queryParameters),
+        options: _options(authenticated: authenticated),
+      ),
+    );
+  }
+
+  Future<dynamic> delete(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) {
+    return _unwrap(
+      _dio.delete<dynamic>(
+        _url(path),
+        data: data,
+        queryParameters: _cleanQuery(queryParameters),
+        options: _options(authenticated: authenticated),
+      ),
+    );
+  }
+
+  String _url(String path) {
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    return '$_base$normalizedPath';
+  }
+
+  Options _options({required bool authenticated}) {
+    final headers = <String, String>{
+      if (Env.supabaseAnonKey.isNotEmpty) 'apikey': Env.supabaseAnonKey,
+      'Content-Type': 'application/json',
+    };
+    if (authenticated) {
+      final token = _supabase.auth.currentSession?.accessToken;
+      if (token == null || token.isEmpty) {
+        throw StateError('Sesión requerida para llamar al backend.');
       }
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return Options(headers: headers);
+  }
+
+  Map<String, dynamic>? _cleanQuery(Map<String, dynamic>? query) {
+    if (query == null) return null;
+    return Map<String, dynamic>.fromEntries(
+      query.entries.where((entry) => entry.value != null),
+    );
+  }
+
+  /// Ejecuta la petición y desenvuelve `{ ok, data }`.
+  Future<dynamic> _unwrap(Future<Response<dynamic>> request) async {
+    try {
+      final response = await request;
+      final data = response.data;
+      if (data is Map && data['ok'] == true) return data['data'];
       throw StateError(_messageFrom(data) ?? 'Respuesta inválida del backend.');
     } on DioException catch (e) {
       final message = _messageFrom(e.response?.data) ?? e.message;

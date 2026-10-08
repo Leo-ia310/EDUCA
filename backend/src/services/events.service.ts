@@ -8,6 +8,7 @@ import {
   permissionsService,
   PermissionsService,
 } from "./permissions.service";
+import { notificationsService } from "./notifications.service";
 
 export class EventsService {
   constructor(
@@ -34,6 +35,13 @@ export class EventsService {
       type: "event",
       created_by: ctx.userId,
     });
+    await notificationsService.notifyAudience(
+      ctx,
+      audience,
+      title,
+      description,
+      { module: "events", eventId: row.id, date: date.toISOString() },
+    );
     return {
       event: {
         id: String(row.id),

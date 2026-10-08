@@ -26,6 +26,16 @@ export class PaymentsRepository {
     );
   }
 
+  async findPaymentByUuid(uuid: string, institutionId: number) {
+    const { data } = await db
+      .from("payments")
+      .select("id")
+      .eq("uuid", uuid)
+      .eq("institution_id", institutionId)
+      .maybeSingle();
+    return data == null ? null : data as Record<string, unknown>;
+  }
+
   async findChargeForPayment(chargeId: number, institutionId: number) {
     return expectSingle<Record<string, unknown>>(
       db

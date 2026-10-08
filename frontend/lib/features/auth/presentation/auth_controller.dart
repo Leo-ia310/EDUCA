@@ -2,12 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/env.dart';
 import '../../../core/errors/failures.dart';
+import '../../../core/network/backend_api_client.dart';
 import '../../../core/network/supabase_client.dart';
 import '../../../shared/models/app_role.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/models/institution.dart';
+import '../data/backend_auth_repository.dart';
 import '../data/mock_auth_repository.dart';
-import '../data/supabase_auth_repository.dart';
 import '../domain/auth_repository.dart';
 
 /// Estado de sesión global de la app.
@@ -46,8 +47,9 @@ class AuthState {
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   if (Env.isDemoMode) return MockAuthRepository();
   final client = ref.watch(supabaseClientProvider);
-  if (client == null) return MockAuthRepository();
-  return SupabaseAuthRepository(client);
+  final api = ref.watch(backendApiClientProvider);
+  if (client == null || api == null) return MockAuthRepository();
+  return BackendAuthRepository(api: api, supabase: client);
 });
 
 class AuthController extends StateNotifier<AuthState> {
@@ -65,7 +67,9 @@ class AuthController extends StateNotifier<AuthState> {
       return false;
     } catch (_) {
       state = state.copyWith(
-          loading: false, error: 'No se pudo validar el código.',);
+        loading: false,
+        error: 'No se pudo validar el código.',
+      );
       return false;
     }
   }
@@ -84,14 +88,19 @@ class AuthController extends StateNotifier<AuthState> {
         password: password,
       );
       state = state.copyWith(
-          user: user, institution: institution, loading: false,);
+        user: user,
+        institution: institution,
+        loading: false,
+      );
       return user.activeRole;
     } on Failure catch (e) {
       state = state.copyWith(loading: false, error: e.message);
       return null;
     } catch (_) {
       state = state.copyWith(
-          loading: false, error: 'No se pudo iniciar sesión.',);
+        loading: false,
+        error: 'No se pudo iniciar sesión.',
+      );
       return null;
     }
   }

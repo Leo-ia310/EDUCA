@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/network/backend_api_client.dart';
 import '../domain/entities.dart';
@@ -26,6 +27,8 @@ class SupabasePaymentsRepository implements PaymentsRepository {
   final SupabaseClient _c;
   final BackendApiClient _api;
   final int institutionId;
+
+  static const _uuid = Uuid();
 
   static const _chargeSelect =
       'id, student_id, concept_id, description, amount, discount, late_fee, '
@@ -235,6 +238,7 @@ class SupabasePaymentsRepository implements PaymentsRepository {
         'payerName': payerName,
         'reference': reference,
         'gatewayName': gatewayName,
+        'idempotencyKey': _uuid.v4(),
       },
     );
     final data = Map<String, dynamic>.from(response as Map);

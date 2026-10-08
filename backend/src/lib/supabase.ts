@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 import { env } from "./env";
+import { HttpError } from "./errors";
 
 type SupabaseClientLike = ReturnType<typeof createClient<any>>;
 
@@ -25,9 +26,32 @@ function createUserClient(accessToken: string) {
 
 const fallbackClient = createClient(
   env.supabaseUrl,
-  env.supabaseServiceRoleKey || env.supabaseAnonKey,
+  env.supabaseAnonKey,
   { auth: authOptions },
 );
+
+export const supabasePublic = fallbackClient;
+
+export const supabaseServiceRole = env.supabaseServiceRoleKey
+  ? createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
+    auth: authOptions,
+  })
+  : null;
+
+export function requireSupabaseServiceRole() {
+  if (supabaseServiceRole == null) {
+    throw new HttpError(
+      503,
+      "SUPABASE_SERVICE_ROLE_KEY es requerida para esta operación backend.",
+      "service_role_required",
+    );
+  }
+  return supabaseServiceRole as any;
+}
+
+export function createAuthorizedSupabase(accessToken: string) {
+  return createUserClient(accessToken);
+}
 
 export function withRequestSupabase<T>(
   accessToken: string,

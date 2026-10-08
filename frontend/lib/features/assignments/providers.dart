@@ -58,11 +58,13 @@ final teacherClassesProvider =
 final fileUploadServiceProvider = Provider<FileUploadService>((ref) {
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
-  if (client == null || auth.institution == null) {
+  final api = ref.watch(backendApiClientProvider);
+  if (client == null || api == null || auth.institution == null) {
     return const DemoFileUploadService();
   }
   return SupabaseFileUploadService(
     client: client,
+    api: api,
     institutionId: auth.institution!.id,
   );
 });

@@ -11,17 +11,26 @@ export async function summary(req: AppRequest, res: Response) {
 }
 
 export async function institutions(req: AppRequest, res: Response) {
-  const data = await developerService.institutions(requireAppContext(req));
+  const data = await developerService.institutions(
+    requireAppContext(req),
+    asRecord(req.query),
+  );
   return res.json({ ok: true, data });
 }
 
 export async function users(req: AppRequest, res: Response) {
-  const data = await developerService.users(requireAppContext(req));
+  const data = await developerService.users(
+    requireAppContext(req),
+    asRecord(req.query),
+  );
   return res.json({ ok: true, data });
 }
 
 export async function auditEvents(req: AppRequest, res: Response) {
-  const data = await developerService.auditEvents(requireAppContext(req));
+  const data = await developerService.auditEvents(
+    requireAppContext(req),
+    asRecord(req.query),
+  );
   return res.json({ ok: true, data });
 }
 

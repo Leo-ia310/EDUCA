@@ -5,6 +5,7 @@ import '../../domain/attendance_repository.dart';
 import '../../domain/attendance_sync_service.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
+import '../../../auth/presentation/identity_providers.dart';
 
 const _uuid = Uuid();
 
@@ -179,13 +180,18 @@ class AttendanceTakeController extends StateNotifier<AttendanceTakeState> {
 
 final attendanceTakeControllerProvider = StateNotifierProvider.autoDispose<
     AttendanceTakeController, AttendanceTakeState>((ref) {
+  final teacherId = ref.watch(currentTeacherIdProvider).valueOrNull ?? 0;
   return AttendanceTakeController(
     repo: ref.watch(attendanceRepositoryProvider),
     sync: ref.watch(attendanceSyncProvider.notifier),
-    teacherId: 0, // En producción: id real del docente actual.
+    teacherId: teacherId,
   );
 });
 
-final todaysClassesProvider = FutureProvider<List<ClassSessionBrief>>((ref) {
-  return ref.watch(attendanceRepositoryProvider).todaysClasses(teacherId: 0);
+final todaysClassesProvider =
+    FutureProvider<List<ClassSessionBrief>>((ref) async {
+  final teacherId = await ref.watch(currentTeacherIdProvider.future);
+  return ref.watch(attendanceRepositoryProvider).todaysClasses(
+        teacherId: teacherId ?? 0,
+      );
 });

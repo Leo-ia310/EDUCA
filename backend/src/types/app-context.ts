@@ -14,4 +14,5 @@ export type AppContext = {
 
 export interface AppRequest extends Request {
   appContext?: AppContext;
+  requestId?: string;
 }
