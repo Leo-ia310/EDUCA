@@ -230,7 +230,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Institution[]",
+            "description": "{ items: Institution[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -402,7 +402,7 @@
         ],
         "responses": {
           "200": {
-            "description": "User[]",
+            "description": "{ items: User[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -574,7 +574,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Role[]",
+            "description": "{ items: Role[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -746,7 +746,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Student[] con persons",
+            "description": "{ items: Student[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -918,7 +918,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Teacher[] con persons",
+            "description": "{ items: Teacher[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -1090,7 +1090,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Parent[] con persons",
+            "description": "{ items: Parent[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -1574,7 +1574,7 @@
         ],
         "responses": {
           "200": {
-            "description": "File[]",
+            "description": "{ items: File[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -1890,7 +1890,7 @@
         ],
         "responses": {
           "200": {
-            "description": "sync_queue[]",
+            "description": "{ items: sync_queue[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2080,7 +2080,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ serverTime, changes, conflictPolicy, scope }",
+            "description": "{ serverTime, changes: { items, pageInfo }, conflictPolicy, scope }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2204,7 +2204,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Institution[]",
+            "description": "{ items: Institution[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2240,7 +2240,7 @@
         ],
         "responses": {
           "200": {
-            "description": "User[] con roles",
+            "description": "{ items: User[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2276,7 +2276,7 @@
         ],
         "responses": {
           "200": {
-            "description": "DeveloperAuditEvent[]",
+            "description": "{ items: DeveloperAuditEvent[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2312,7 +2312,7 @@
         ],
         "responses": {
           "200": {
-            "description": "DeveloperDashboardModule[]",
+            "description": "{ items: DeveloperDashboardModule[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2484,7 +2484,7 @@
         ],
         "responses": {
           "200": {
-            "description": "DeveloperApiRegistry[]",
+            "description": "{ items: DeveloperApiRegistry[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2656,7 +2656,7 @@
         ],
         "responses": {
           "200": {
-            "description": "DeveloperTask[]",
+            "description": "{ items: DeveloperTask[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2828,7 +2828,7 @@
         ],
         "responses": {
           "200": {
-            "description": "DeveloperFeatureFlag[]",
+            "description": "{ items: DeveloperFeatureFlag[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -3000,7 +3000,7 @@
         ],
         "responses": {
           "200": {
-            "description": "DeveloperSystemCheck[]",
+            "description": "{ items: DeveloperSystemCheck[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {

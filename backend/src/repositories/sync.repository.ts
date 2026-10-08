@@ -1,21 +1,26 @@
 import { assertNoDbError, expectSingle } from "../lib/db";
+import { PageOptions, paged } from "../lib/pagination";
 import { supabaseAdmin } from "../lib/supabase";
 
 const db = supabaseAdmin as any;
 
 export class SyncRepository {
-  async listQueue(institutionId: number, userId: number, status?: string | null) {
+  async listQueue(
+    institutionId: number,
+    userId: number,
+    status: string | null | undefined,
+    page: PageOptions,
+  ) {
     let query = db
       .from("sync_queue")
-      .select("*")
+      .select("*", { count: "exact" })
       .eq("institution_id", institutionId)
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(100);
+      .order("created_at", { ascending: false });
     if (status) query = query.eq("status", status);
-    const { data, error } = await query;
+    const { data, error, count } = await query.range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 
   async enqueue(payload: Record<string, unknown>) {
@@ -44,16 +49,16 @@ export class SyncRepository {
     );
   }
 
-  async changesSince(institutionId: number, since: string) {
-    const { data, error } = await db
+  async changesSince(institutionId: number, since: string, page: PageOptions) {
+    const { data, error, count } = await db
       .from("change_log")
-      .select("*")
+      .select("*", { count: "exact" })
       .eq("institution_id", institutionId)
       .gt("changed_at", since)
       .order("changed_at", { ascending: true })
-      .limit(500);
+      .range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 }
 

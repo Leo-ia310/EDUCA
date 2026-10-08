@@ -4,6 +4,7 @@ import { extname } from "node:path";
 import { env } from "../lib/env";
 import { HttpError } from "../lib/errors";
 import { mapAttachment } from "../lib/files";
+import { paginationFromQuery } from "../lib/pagination";
 import type { AppContext } from "../types/app-context";
 import {
   optionalString,
@@ -20,9 +21,15 @@ export class FilesService {
     private readonly repository: FilesRepository = filesRepository,
   ) {}
 
-  async list(ctx: AppContext) {
-    const rows = await this.repository.listFiles(ctx.institutionId);
-    return rows.map((row: Record<string, unknown>) => mapAttachment(row));
+  async list(ctx: AppContext, query: Record<string, unknown> = {}) {
+    const page = await this.repository.listFiles(
+      ctx.institutionId,
+      paginationFromQuery(query),
+    );
+    return {
+      ...page,
+      items: page.items.map((row) => mapAttachment(row as Record<string, unknown>)),
+    };
   }
 
   async prepareUpload(ctx: AppContext, payload: Record<string, unknown>) {

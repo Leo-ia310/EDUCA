@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/env.dart';
+import '../../../core/network/paginated_response.dart';
 import '../domain/developer_repository.dart';
 import '../domain/entities.dart';
 
@@ -26,11 +27,13 @@ class BackendDeveloperRepository implements DeveloperRepository {
     if (token == null || token.isEmpty) {
       throw StateError('Sesión requerida para el panel de desarrollador.');
     }
-    return Options(headers: {
-      'Authorization': 'Bearer $token',
-      'apikey': Env.supabaseAnonKey,
-      'Content-Type': 'application/json',
-    },);
+    return Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+        'apikey': Env.supabaseAnonKey,
+        'Content-Type': 'application/json',
+      },
+    );
   }
 
   /// Ejecuta la petición y desenvuelve `{ ok, data }`.
@@ -42,7 +45,8 @@ class BackendDeveloperRepository implements DeveloperRepository {
       throw StateError(_messageFrom(data) ?? 'Respuesta inválida del backend.');
     } on DioException catch (e) {
       throw StateError(
-          _messageFrom(e.response?.data) ?? e.message ?? 'Error de red.',);
+        _messageFrom(e.response?.data) ?? e.message ?? 'Error de red.',
+      );
     }
   }
 
@@ -70,9 +74,7 @@ class BackendDeveloperRepository implements DeveloperRepository {
     final data = await _unwrap(
       _dio.get('$_base/developer/apis', options: _authOptions),
     );
-    return ((data as List?) ?? const [])
-        .map((e) => DevApi.fromMap(devMap(e)))
-        .toList();
+    return itemsFromBackend(data, (m) => DevApi.fromMap(m));
   }
 
   @override
@@ -84,16 +86,17 @@ class BackendDeveloperRepository implements DeveloperRepository {
         options: _authOptions,
       ),
     );
-    return ((data as List?) ?? const [])
-        .map((e) => DevTask.fromMap(devMap(e)))
-        .toList();
+    return itemsFromBackend(data, (m) => DevTask.fromMap(m));
   }
 
   @override
   Future<DevTask> createTask(Map<String, dynamic> payload) async {
     final data = await _unwrap(
-      _dio.post('$_base/developer/tasks',
-          data: payload, options: _authOptions,),
+      _dio.post(
+        '$_base/developer/tasks',
+        data: payload,
+        options: _authOptions,
+      ),
     );
     return DevTask.fromMap(devMap(devMap(data)['task']));
   }
@@ -101,8 +104,11 @@ class BackendDeveloperRepository implements DeveloperRepository {
   @override
   Future<DevTask> updateTask(int id, Map<String, dynamic> payload) async {
     final data = await _unwrap(
-      _dio.patch('$_base/developer/tasks/$id',
-          data: payload, options: _authOptions,),
+      _dio.patch(
+        '$_base/developer/tasks/$id',
+        data: payload,
+        options: _authOptions,
+      ),
     );
     return DevTask.fromMap(devMap(devMap(data)['task']));
   }
@@ -123,26 +129,32 @@ class BackendDeveloperRepository implements DeveloperRepository {
         options: _authOptions,
       ),
     );
-    return ((data as List?) ?? const [])
-        .map((e) => DevFeatureFlag.fromMap(devMap(e)))
-        .toList();
+    return itemsFromBackend(data, (m) => DevFeatureFlag.fromMap(m));
   }
 
   @override
   Future<DevFeatureFlag> createFeatureFlag(Map<String, dynamic> payload) async {
     final data = await _unwrap(
-      _dio.post('$_base/developer/feature-flags',
-          data: payload, options: _authOptions,),
+      _dio.post(
+        '$_base/developer/feature-flags',
+        data: payload,
+        options: _authOptions,
+      ),
     );
     return DevFeatureFlag.fromMap(devMap(devMap(data)['featureFlag']));
   }
 
   @override
   Future<DevFeatureFlag> updateFeatureFlag(
-      int id, Map<String, dynamic> payload,) async {
+    int id,
+    Map<String, dynamic> payload,
+  ) async {
     final data = await _unwrap(
-      _dio.patch('$_base/developer/feature-flags/$id',
-          data: payload, options: _authOptions,),
+      _dio.patch(
+        '$_base/developer/feature-flags/$id',
+        data: payload,
+        options: _authOptions,
+      ),
     );
     return DevFeatureFlag.fromMap(devMap(devMap(data)['featureFlag']));
   }
@@ -155,8 +167,10 @@ class BackendDeveloperRepository implements DeveloperRepository {
   }
 
   @override
-  Future<List<DevSystemCheck>> systemChecks(
-      {String? status, String? severity,}) async {
+  Future<List<DevSystemCheck>> systemChecks({
+    String? status,
+    String? severity,
+  }) async {
     final data = await _unwrap(
       _dio.get(
         '$_base/developer/system-checks',
@@ -167,26 +181,32 @@ class BackendDeveloperRepository implements DeveloperRepository {
         options: _authOptions,
       ),
     );
-    return ((data as List?) ?? const [])
-        .map((e) => DevSystemCheck.fromMap(devMap(e)))
-        .toList();
+    return itemsFromBackend(data, (m) => DevSystemCheck.fromMap(m));
   }
 
   @override
   Future<DevSystemCheck> createSystemCheck(Map<String, dynamic> payload) async {
     final data = await _unwrap(
-      _dio.post('$_base/developer/system-checks',
-          data: payload, options: _authOptions,),
+      _dio.post(
+        '$_base/developer/system-checks',
+        data: payload,
+        options: _authOptions,
+      ),
     );
     return DevSystemCheck.fromMap(devMap(devMap(data)['systemCheck']));
   }
 
   @override
   Future<DevSystemCheck> updateSystemCheck(
-      int id, Map<String, dynamic> payload,) async {
+    int id,
+    Map<String, dynamic> payload,
+  ) async {
     final data = await _unwrap(
-      _dio.patch('$_base/developer/system-checks/$id',
-          data: payload, options: _authOptions,),
+      _dio.patch(
+        '$_base/developer/system-checks/$id',
+        data: payload,
+        options: _authOptions,
+      ),
     );
     return DevSystemCheck.fromMap(devMap(devMap(data)['systemCheck']));
   }
@@ -203,16 +223,17 @@ class BackendDeveloperRepository implements DeveloperRepository {
     final data = await _unwrap(
       _dio.get('$_base/developer/modules', options: _authOptions),
     );
-    return ((data as List?) ?? const [])
-        .map((e) => DevModule.fromMap(devMap(e)))
-        .toList();
+    return itemsFromBackend(data, (m) => DevModule.fromMap(m));
   }
 
   @override
   Future<DevModule> createModule(Map<String, dynamic> payload) async {
     final data = await _unwrap(
-      _dio.post('$_base/developer/modules',
-          data: payload, options: _authOptions,),
+      _dio.post(
+        '$_base/developer/modules',
+        data: payload,
+        options: _authOptions,
+      ),
     );
     return DevModule.fromMap(devMap(devMap(data)['module']));
   }
@@ -220,8 +241,11 @@ class BackendDeveloperRepository implements DeveloperRepository {
   @override
   Future<DevModule> updateModule(int id, Map<String, dynamic> payload) async {
     final data = await _unwrap(
-      _dio.patch('$_base/developer/modules/$id',
-          data: payload, options: _authOptions,),
+      _dio.patch(
+        '$_base/developer/modules/$id',
+        data: payload,
+        options: _authOptions,
+      ),
     );
     return DevModule.fromMap(devMap(devMap(data)['module']));
   }
@@ -238,9 +262,7 @@ class BackendDeveloperRepository implements DeveloperRepository {
     final data = await _unwrap(
       _dio.get('$_base/developer/institutions', options: _authOptions),
     );
-    return ((data as List?) ?? const [])
-        .map((e) => DevInstitution.fromMap(devMap(e)))
-        .toList();
+    return itemsFromBackend(data, (m) => DevInstitution.fromMap(m));
   }
 
   @override
@@ -248,9 +270,7 @@ class BackendDeveloperRepository implements DeveloperRepository {
     final data = await _unwrap(
       _dio.get('$_base/developer/users', options: _authOptions),
     );
-    return ((data as List?) ?? const [])
-        .map((e) => DevUser.fromMap(devMap(e)))
-        .toList();
+    return itemsFromBackend(data, (m) => DevUser.fromMap(m));
   }
 
   @override
@@ -258,8 +278,6 @@ class BackendDeveloperRepository implements DeveloperRepository {
     final data = await _unwrap(
       _dio.get('$_base/developer/audit-events', options: _authOptions),
     );
-    return ((data as List?) ?? const [])
-        .map((e) => DevAuditEvent.fromMap(devMap(e)))
-        .toList();
+    return itemsFromBackend(data, (m) => DevAuditEvent.fromMap(m));
   }
 }

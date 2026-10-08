@@ -6,7 +6,10 @@ import type { AppRequest } from "../types/app-context";
 import { asRecord } from "../validators/common.validators";
 
 export async function listFiles(req: AppRequest, res: Response) {
-  const data = await filesService.list(requireAppContext(req));
+  const data = await filesService.list(
+    requireAppContext(req),
+    asRecord(req.query),
+  );
   return res.json({ ok: true, data });
 }
 

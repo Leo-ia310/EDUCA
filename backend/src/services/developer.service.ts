@@ -1,4 +1,5 @@
 import { HttpError } from "../lib/errors";
+import { paginationFromQuery } from "../lib/pagination";
 import {
   asList,
   asRecord,
@@ -63,19 +64,21 @@ export class DeveloperService {
     return { counts, pendingTasks, recentAuditEvents };
   }
 
-  async institutions(ctx: AppContext) {
+  async institutions(ctx: AppContext, query: Record<string, unknown> = {}) {
     this.ensureDeveloper(ctx);
-    return this.repository.listInstitutions();
+    return this.repository.listInstitutions(paginationFromQuery(query));
   }
 
-  async users(ctx: AppContext) {
+  async users(ctx: AppContext, query: Record<string, unknown> = {}) {
     this.ensureDeveloper(ctx);
-    return this.repository.listUsers();
+    return this.repository.listUsers(paginationFromQuery(query));
   }
 
-  async auditEvents(ctx: AppContext) {
+  async auditEvents(ctx: AppContext, query: Record<string, unknown> = {}) {
     this.ensureDeveloper(ctx);
-    return this.repository.listRecentAuditEvents(100);
+    return this.repository.listRecentAuditEventsPage(
+      paginationFromQuery(query, { pageSize: 100, maxPageSize: 200 }),
+    );
   }
 
   async list(
@@ -87,6 +90,7 @@ export class DeveloperService {
     return this.repository.list(
       RESOURCES[resource].table,
       this.filtersFor(resource, query),
+      paginationFromQuery(query),
     );
   }
 

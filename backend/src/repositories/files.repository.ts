@@ -1,4 +1,5 @@
 import { assertNoDbError, expectSingle } from "../lib/db";
+import { PageOptions, paged } from "../lib/pagination";
 import { currentSupabaseClient, supabaseAdmin } from "../lib/supabase";
 
 const db = supabaseAdmin as any;
@@ -20,15 +21,18 @@ export class FilesRepository {
     );
   }
 
-  async listFiles(institutionId: number) {
-    const { data, error } = await db
+  async listFiles(institutionId: number, page: PageOptions) {
+    const { data, error, count } = await db
       .from("files")
-      .select("*")
+      .select("id, institution_id, original_name, storage_path, url, size_bytes, mime_type, uploaded_by, created_at, updated_at", {
+        count: "exact",
+      })
       .eq("institution_id", institutionId)
       .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 }
 

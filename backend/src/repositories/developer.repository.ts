@@ -1,4 +1,5 @@
 import { assertNoDbError, expectSingle } from "../lib/db";
+import { PageOptions, paged } from "../lib/pagination";
 import { supabaseAdmin } from "../lib/supabase";
 
 const db = supabaseAdmin as any;
@@ -79,38 +80,56 @@ export class DeveloperRepository {
     return data ?? [];
   }
 
-  async listInstitutions() {
-    const { data, error } = await db
+  async listRecentAuditEventsPage(page: PageOptions) {
+    const { data, error, count } = await db
+      .from("developer_audit_events")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(page.from, page.to);
+    assertNoDbError(error);
+    return paged(data ?? [], count, page);
+  }
+
+  async listInstitutions(page: PageOptions) {
+    const { data, error, count } = await db
       .from("institutions")
       .select(
         "id, code, name, commercial_name, subdomain, email, active, timezone, created_at, updated_at",
+        { count: "exact" },
       )
       .is("deleted_at", null)
-      .order("name");
+      .order("name")
+      .range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 
-  async listUsers() {
-    const { data, error } = await db
+  async listUsers(page: PageOptions) {
+    const { data, error, count } = await db
       .from("users")
       .select(
         "id, institution_id, email, full_name, active, last_sign_in, created_at, updated_at, user_roles(roles(code, name))",
+        { count: "exact" },
       )
       .is("deleted_at", null)
-      .order("full_name");
+      .order("full_name")
+      .range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 
-  async list(table: DeveloperTable, filters: Record<string, unknown> = {}) {
-    let query = db.from(table).select("*").is("deleted_at", null);
+  async list(
+    table: DeveloperTable,
+    filters: Record<string, unknown> = {},
+    page: PageOptions,
+  ) {
+    let query = db.from(table).select("*", { count: "exact" }).is("deleted_at", null);
     query = this.applyFilters(query, filters);
-    const { data, error } = await query.order("created_at", {
-      ascending: false,
-    });
+    const { data, error, count } = await query
+      .order("created_at", { ascending: false })
+      .range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 
   async findById(table: DeveloperTable, id: number) {

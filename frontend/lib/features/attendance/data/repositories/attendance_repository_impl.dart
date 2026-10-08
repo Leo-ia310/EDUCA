@@ -32,7 +32,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   final int institutionId;
 
   @override
-  Future<List<ClassSessionBrief>> todaysClasses({required int teacherId}) async {
+  Future<List<ClassSessionBrief>> todaysClasses({
+    required int teacherId,
+  }) async {
     if (remote != null && institutionId > 0) {
       return remote!.todaysClasses(teacherId: teacherId);
     }
@@ -81,8 +83,16 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           id: _uuid.v4(),
           tableName: 'attendances',
           recordUuid: merged.uuid,
-          operation: 'UPSERT',
-          payload: const {},
+          operation: 'upsert',
+          payload: {
+            'uuid': merged.uuid,
+            'classId': merged.classId,
+            'classSessionId': merged.classSessionId,
+            'studentId': merged.studentId,
+            'statusId': merged.status.id,
+            'recordedAtMs': merged.recordedAt.millisecondsSinceEpoch,
+            'notes': merged.notes,
+          },
           createdAtMs: DateTime.now().millisecondsSinceEpoch,
         ),
       );
@@ -114,8 +124,14 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         id: _uuid.v4(),
         tableName: 'class_sessions',
         recordUuid: session.uuid,
-        operation: 'UPSERT',
-        payload: const {},
+        operation: 'upsert',
+        payload: {
+          'uuid': session.uuid,
+          'classId': session.classId,
+          'dateMs': session.dateMs,
+          'teacherId': session.teacherId,
+          'createdAtMs': session.createdAtMs,
+        },
         createdAtMs: DateTime.now().millisecondsSinceEpoch,
       ),
     );
@@ -163,18 +179,20 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           pending++;
         }
       }
-      result.add(AttendanceSessionSummary(
-        sessionUuid: s.uuid,
-        classId: s.classId,
-        subjectName: AttendanceMock.subjectOf(s.classId),
-        groupName: AttendanceMock.groupOf(s.classId),
-        date: s.date,
-        totalStudents: records.length,
-        present: present,
-        absent: absent,
-        late: late,
-        pendingSync: pending,
-      ),);
+      result.add(
+        AttendanceSessionSummary(
+          sessionUuid: s.uuid,
+          classId: s.classId,
+          subjectName: AttendanceMock.subjectOf(s.classId),
+          groupName: AttendanceMock.groupOf(s.classId),
+          date: s.date,
+          totalStudents: records.length,
+          present: present,
+          absent: absent,
+          late: late,
+          pendingSync: pending,
+        ),
+      );
       if (result.length >= limit) break;
     }
     return result;

@@ -4,14 +4,18 @@ import '../../../../core/network/backend_api_client.dart';
 import '../../domain/entities.dart';
 import '../models/local_attendance.dart';
 import '../models/local_class_session.dart';
+import '../models/sync_entry.dart';
+import '../repositories/backend_sync_repository.dart';
 
 /// Acceso a las tablas `class_sessions` y `attendances` de Supabase. Diseñado
 /// para idempotencia: si el `uuid` ya existe en el server, hace UPDATE.
 class AttendanceRemoteDataSource {
-  AttendanceRemoteDataSource(this._api, this._client);
+  AttendanceRemoteDataSource(this._api, this._client)
+      : _sync = BackendSyncRepository(_api);
 
   final BackendApiClient _api;
   final SupabaseClient _client;
+  final BackendSyncRepository _sync;
 
   Future<List<ClassSessionBrief>> todaysClasses({
     required int teacherId,
@@ -82,6 +86,25 @@ class AttendanceRemoteDataSource {
     });
     final data = Map<String, dynamic>.from(response as Map);
     return (data['id'] as num).toInt();
+  }
+
+  Future<void> enqueueSyncEntry(SyncEntry entry) async {
+    await _sync.enqueue(entry);
+  }
+
+  Future<List<Map<String, dynamic>>> syncQueue({String? status}) async {
+    final page = await _sync.listQueue(status: status);
+    return page.items;
+  }
+
+  Future<Map<String, dynamic>> retrySyncQueue(int id) => _sync.retry(id);
+
+  Future<Map<String, dynamic>> markSyncQueueFailed(int id, {String? error}) {
+    return _sync.markFailed(id, error: error);
+  }
+
+  Future<Map<String, dynamic>> pullSyncChanges({DateTime? since}) {
+    return _sync.pullChanges(since: since);
   }
 
   ClassSessionBrief _classFromMap(Map<String, dynamic> row) {

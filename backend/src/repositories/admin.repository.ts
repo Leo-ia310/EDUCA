@@ -1,4 +1,5 @@
 import { assertNoDbError, expectSingle } from "../lib/db";
+import { PageOptions, paged } from "../lib/pagination";
 import { requireSupabaseServiceRole } from "../lib/supabase";
 
 const db = new Proxy({} as any, {
@@ -10,10 +11,16 @@ const db = new Proxy({} as any, {
 });
 
 export class AdminRepository {
-  async listInstitutions(filters: Record<string, unknown> = {}) {
+  async listInstitutions(
+    filters: Record<string, unknown> = {},
+    page: PageOptions,
+  ) {
     let query = db
       .from("institutions")
-      .select("*")
+      .select(
+        "id, code, name, commercial_name, subdomain, email, phone, timezone, active, created_at, updated_at",
+        { count: "exact" },
+      )
       .is("deleted_at", null)
       .order("name");
     if (filters.active != null) query = query.eq("active", filters.active);
@@ -21,9 +28,9 @@ export class AdminRepository {
       const search = String(filters.search).replace(/[%_]/g, "");
       query = query.or(`name.ilike.%${search}%,commercial_name.ilike.%${search}%,code.ilike.%${search}%`);
     }
-    const { data, error } = await query;
+    const { data, error, count } = await query.range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 
   async findInstitution(id: number) {
@@ -60,10 +67,17 @@ export class AdminRepository {
     });
   }
 
-  async listUsers(institutionId: number | null, filters: Record<string, unknown> = {}) {
+  async listUsers(
+    institutionId: number | null,
+    filters: Record<string, unknown> = {},
+    page: PageOptions,
+  ) {
     let query = db
       .from("users")
-      .select("*, persons(*), user_roles(roles(id, code, name))")
+      .select(
+        "id, institution_id, person_id, auth_user_id, username, email, phone, full_name, avatar_url, active, last_sign_in, created_at, updated_at, persons(id, first_name, last_name, email, phone, deleted_at), user_roles(roles(id, code, name))",
+        { count: "exact" },
+      )
       .is("deleted_at", null)
       .order("full_name");
     if (institutionId != null) query = query.eq("institution_id", institutionId);
@@ -72,9 +86,9 @@ export class AdminRepository {
       query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,username.ilike.%${search}%`);
     }
     if (filters.active != null) query = query.eq("active", filters.active);
-    const { data, error } = await query;
+    const { data, error, count } = await query.range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 
   async findUser(institutionId: number, id: number) {
@@ -118,19 +132,21 @@ export class AdminRepository {
     });
   }
 
-  async listRoles(institutionId: number | null) {
+  async listRoles(institutionId: number | null, page: PageOptions) {
     let query = db
       .from("roles")
-      .select("*")
+      .select("id, institution_id, name, code, description, is_system, active, created_at, updated_at", {
+        count: "exact",
+      })
       .eq("active", true)
       .order("is_system", { ascending: false })
       .order("name");
     if (institutionId != null) {
       query = query.or(`institution_id.is.null,institution_id.eq.${institutionId}`);
     }
-    const { data, error } = await query;
+    const { data, error, count } = await query.range(page.from, page.to);
     assertNoDbError(error);
-    return data ?? [];
+    return paged(data ?? [], count, page);
   }
 
   async findRoleForAssignment(institutionId: number, code: string) {
@@ -220,36 +236,35 @@ export class AdminRepository {
     table: "students" | "teachers" | "parents",
     institutionId: number | null,
     filters: Record<string, unknown> = {},
+    page: PageOptions,
   ) {
+    const extraSelect = table === "students"
+      ? "student_code, enrollment_date, blood_type, allergies, medical_notes, active"
+      : table === "teachers"
+        ? "teacher_code, specialty, academic_title, hired_at, active"
+        : "occupation, workplace, work_phone, is_emergency_contact";
     let query = db
       .from(table)
-      .select("*, persons(*)")
+      .select(
+        `id, institution_id, person_id, ${extraSelect}, created_at, updated_at, persons!inner(id, first_name, last_name, document_number, birth_date, email, phone, address, photo_url, deleted_at)`,
+        { count: "exact" },
+      )
+      .is("persons.deleted_at", null)
       .order("created_at", { ascending: false });
     if (institutionId != null) query = query.eq("institution_id", institutionId);
     if (filters.active != null && table !== "parents") {
       query = query.eq("active", filters.active);
     }
-    const { data, error } = await query;
-    assertNoDbError(error);
-    let rows = (data ?? []).filter((row: Record<string, unknown>) => {
-      const person = row.persons as Record<string, unknown> | null;
-      return person?.deleted_at == null;
-    });
     if (filters.search) {
-      const search = String(filters.search).toLowerCase();
-      rows = rows.filter((row: Record<string, unknown>) => {
-        const person = row.persons as Record<string, unknown> | null;
-        const haystack = [
-          person?.first_name,
-          person?.last_name,
-          person?.email,
-          row.student_code,
-          row.teacher_code,
-        ].join(" ").toLowerCase();
-        return haystack.includes(search);
-      });
+      const search = String(filters.search).replace(/[%_]/g, "");
+      query = query.or(
+        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
+        { referencedTable: "persons" },
+      );
     }
-    return rows;
+    const { data, error, count } = await query.range(page.from, page.to);
+    assertNoDbError(error);
+    return paged(data ?? [], count, page);
   }
 
   async findPeopleResource(

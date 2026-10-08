@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { HttpError } from "../lib/errors";
+import { paginationFromQuery } from "../lib/pagination";
 import type { AppContext } from "../types/app-context";
 import { asRecord, optionalString, requiredString } from "../validators/common.validators";
 import {
@@ -27,7 +28,12 @@ export class SyncService {
     if (status != null && !ALLOWED_STATUSES.has(status)) {
       throw new HttpError(400, "Estado de sync inválido.", "validation_error");
     }
-    return this.repository.listQueue(ctx.institutionId, ctx.userId, status);
+    return this.repository.listQueue(
+      ctx.institutionId,
+      ctx.userId,
+      status,
+      paginationFromQuery(query, { pageSize: 100, maxPageSize: 200 }),
+    );
   }
 
   async enqueue(ctx: AppContext, payload: Record<string, unknown>) {
@@ -99,9 +105,14 @@ export class SyncService {
     if (Number.isNaN(date.getTime())) {
       throw new HttpError(400, "Fecha since inválida.", "validation_error");
     }
+    const page = paginationFromQuery(query, { pageSize: 500, maxPageSize: 1000 });
     return {
       serverTime: new Date().toISOString(),
-      changes: await this.repository.changesSince(ctx.institutionId, date.toISOString()),
+      changes: await this.repository.changesSince(
+        ctx.institutionId,
+        date.toISOString(),
+        page,
+      ),
       conflictPolicy: "teacher_attendance_upload_only",
       scope: "teacher_attendance_offline",
     };

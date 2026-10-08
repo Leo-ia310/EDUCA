@@ -1,4 +1,5 @@
 import { HttpError } from "../lib/errors";
+import { paginationFromQuery, singlePage } from "../lib/pagination";
 import type { AppContext } from "../types/app-context";
 import { asList, asRecord, optionalId, optionalString, requiredId, requiredString } from "../validators/common.validators";
 import {
@@ -18,9 +19,12 @@ export class AdminService {
   async listInstitutions(ctx: AppContext, query: Record<string, unknown> = {}) {
     this.ensurePlatformAdmin(ctx);
     if (ctx.roles.has("super_admin")) {
-      return this.repository.listInstitutions(this.listFilters(query));
+      return this.repository.listInstitutions(
+        this.listFilters(query),
+        paginationFromQuery(query),
+      );
     }
-    return [await this.repository.findInstitution(ctx.institutionId)];
+    return singlePage([await this.repository.findInstitution(ctx.institutionId)]);
   }
 
   async createInstitution(ctx: AppContext, payload: Record<string, unknown>) {
@@ -73,6 +77,7 @@ export class AdminService {
     return this.repository.listUsers(
       this.targetInstitutionFilter(ctx, query),
       this.listFilters(query),
+      paginationFromQuery(query),
     );
   }
 
@@ -122,6 +127,7 @@ export class AdminService {
     this.ensurePlatformAdmin(ctx);
     return this.repository.listRoles(
       this.targetInstitutionFilter(ctx, query),
+      paginationFromQuery(query, { pageSize: 100, maxPageSize: 200 }),
     );
   }
 
@@ -165,6 +171,7 @@ export class AdminService {
       resource,
       this.targetInstitutionFilter(ctx, query),
       this.listFilters(query),
+      paginationFromQuery(query),
     );
   }
 

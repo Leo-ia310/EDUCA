@@ -82,6 +82,12 @@ class AttendanceSyncService extends StateNotifier<SyncStatus> {
     state = state.copyWith(syncing: true, clearError: true);
 
     try {
+      // Registrar la cola offline en el backend antes de aplicar los upserts.
+      for (final entry in local.queuedEntries()) {
+        await remote!.enqueueSyncEntry(entry);
+        await local.removeFromQueue(entry.id);
+      }
+
       // 1) Subir sesiones primero (los marcados dependen de ellas).
       for (final s in local.allSessions().where((s) => !s.synced)) {
         final serverId = await remote!.upsertClassSession(
