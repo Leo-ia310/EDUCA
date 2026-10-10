@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../shared/models/app_role.dart';
+import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import 'admin_widgets.dart';
 
@@ -46,6 +47,8 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
   late final TextEditingController _name;
   late final TextEditingController _email;
   late final TextEditingController _phone;
+  late final TextEditingController _username;
+  late final TextEditingController _password;
   late AppRole _role;
   late bool _active;
   String? _groupId;
@@ -54,6 +57,9 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
   late Set<String> _teacherClassIds; // clases asignadas (maestro)
   String? _nameError;
   String? _emailError;
+  String? _passwordError;
+  bool _saving = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -62,6 +68,8 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
     _name = TextEditingController(text: p?.name ?? '');
     _email = TextEditingController(text: p?.email ?? '');
     _phone = TextEditingController(text: p?.phone ?? '');
+    _username = TextEditingController();
+    _password = TextEditingController();
     _role = widget.initialRole;
     _active = p?.active ?? true;
     _groupId = p?.groupId;
@@ -78,24 +86,37 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
     _name.dispose();
     _email.dispose();
     _phone.dispose();
+    _username.dispose();
+    _password.dispose();
     super.dispose();
   }
 
   bool _validate() {
     final name = _name.text.trim();
     final email = _email.text.trim();
+    final connected = ref.read(adminBackendRepositoryProvider) != null;
     setState(() {
       _nameError = name.isEmpty ? 'El nombre es obligatorio' : null;
-      _emailError = email.isNotEmpty &&
-              !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)
-          ? 'Correo no válido'
+      _emailError = connected && email.isEmpty
+          ? 'El correo es obligatorio para crear acceso'
+          : email.isNotEmpty &&
+                  !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)
+              ? 'Correo no válido'
+              : null;
+      _passwordError = widget.existing == null && _password.text.length < 6
+          ? 'Mínimo 6 caracteres'
           : null;
     });
-    return _nameError == null && _emailError == null;
+    return _nameError == null && _emailError == null && _passwordError == null;
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_validate()) return;
+    final repo = ref.read(adminBackendRepositoryProvider);
+    if (repo != null) {
+      await _saveBackend(repo);
+      return;
+    }
     final store = ref.read(schoolDirectoryProvider.notifier);
     final old = widget.existing;
     final isStudent = _role == AppRole.student;
@@ -130,6 +151,57 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
     Navigator.of(context).pop();
   }
 
+  Future<void> _saveBackend(AdminBackendRepository repo) async {
+    setState(() {
+      _saving = true;
+      _saveError = null;
+    });
+    try {
+      final parts = _name.text.trim().split(RegExp(r'\s+'));
+      final firstName = parts.isEmpty ? _name.text.trim() : parts.first;
+      final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '—';
+      final resource = switch (_role) {
+        AppRole.teacher => 'teachers',
+        AppRole.student => 'students',
+        AppRole.parent => 'parents',
+        _ => 'students',
+      };
+      final payload = <String, dynamic>{
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': _email.text.trim(),
+        'phone': _phone.text.trim(),
+        'username':
+            _username.text.trim().isEmpty ? null : _username.text.trim(),
+        'active': _active,
+        if (widget.existing == null) 'password': _password.text,
+      };
+      if (_role == AppRole.teacher) {
+        payload['teacherCode'] = 'DOC-${DateTime.now().millisecondsSinceEpoch}';
+      } else if (_role == AppRole.student) {
+        payload['studentCode'] = 'EST-${DateTime.now().millisecondsSinceEpoch}';
+        payload['groupId'] = _groupId;
+      } else if (_role == AppRole.parent) {
+        payload['isEmergencyContact'] = true;
+        payload['childIds'] = _childIds.toList();
+      }
+
+      if (widget.existing == null) {
+        await repo.createPeople(resource, payload);
+      } else {
+        await repo.updatePeople(resource, widget.existing!.id, payload);
+      }
+      ref.invalidate(adminPeopleByRoleProvider(_role));
+      ref.invalidate(adminSchoolDirectoryProvider);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saveError = '$e'.replaceFirst('Bad state: ', ''));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Future<void> _delete() async {
     final p = widget.existing!;
     if (!await confirmDelete(context, p.name)) return;
@@ -139,7 +211,11 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
 
   @override
   Widget build(BuildContext context) {
-    final dir = ref.watch(schoolDirectoryProvider);
+    final repo = ref.watch(adminBackendRepositoryProvider);
+    final remote =
+        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
+    final SchoolDirectory dir =
+        remote?.asData?.value ?? ref.watch(schoolDirectoryProvider);
     final students = dir.byRole(AppRole.student);
 
     String classLabel(SchoolClass c) =>
@@ -188,6 +264,22 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
           icon: Icons.phone_rounded,
           keyboardType: TextInputType.phone,
         ),
+        if (widget.existing == null) ...[
+          const SizedBox(height: 12),
+          BrutalTextField(
+            controller: _username,
+            label: 'Usuario para iniciar sesión (opcional)',
+            icon: Icons.badge_rounded,
+          ),
+          const SizedBox(height: 12),
+          BrutalTextField(
+            controller: _password,
+            label: 'Contraseña inicial',
+            icon: Icons.lock_rounded,
+            obscureText: true,
+            errorText: _passwordError,
+          ),
+        ],
         const SizedBox(height: 8),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -283,11 +375,23 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
           ),
         ],
         const SizedBox(height: 20),
+        if (_saveError != null) ...[
+          Text(
+            _saveError!,
+            style: context.textTheme.bodySmall
+                ?.copyWith(color: context.palette.danger),
+          ),
+          const SizedBox(height: 10),
+        ],
         BrutalButton(
           expand: true,
-          onTap: _save,
-          icon: Icons.save_rounded,
-          label: widget.existing == null ? 'Crear' : 'Guardar cambios',
+          onTap: _saving ? () {} : () => _save(),
+          icon: _saving ? Icons.hourglass_top_rounded : Icons.save_rounded,
+          label: _saving
+              ? 'Guardando…'
+              : widget.existing == null
+                  ? 'Crear acceso'
+                  : 'Guardar cambios',
         ),
         if (widget.existing != null) ...[
           const SizedBox(height: 10),

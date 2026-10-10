@@ -19,20 +19,20 @@ function api(entry: Omit<ApiManifestEntry, "backendStatus">): ApiManifestEntry {
   return { backendStatus: implemented, ...entry };
 }
 
-const businessSource = "backend/src/services/business-api.service.ts";
+const businessSource = "backend/src/modules/business-api/business-api.handlers.ts";
 
 export const apiManifest: ApiManifestEntry[] = [
   api({
     module: "auth",
     method: "POST",
     path: "/api/auth/login",
-    summary: "Login institucional por codigo de colegio, usuario y contraseña",
+    summary: "Login institucional por codigo de colegio, usuario/email y contraseña",
     auth: "publico",
     frontendStatus: "connected",
     request: "{ institutionCode, username, password }",
     response: "{ session, authUser, user, institution }",
-    source: "backend/src/routes/auth.routes.ts",
-    notes: "Resuelve institutions.code + users.username y autentica contra Supabase Auth; Node no almacena contraseñas.",
+    source: "backend/src/modules/auth/auth.routes.ts",
+    notes: "Resuelve institutions.code + users.username/users.email y autentica contra Supabase Auth; Node no almacena contraseñas.",
   }),
   api({
     module: "auth",
@@ -43,7 +43,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ refreshToken }",
     response: "{ session, authUser }",
-    source: "backend/src/routes/auth.routes.ts",
+    source: "backend/src/modules/auth/auth.routes.ts",
   }),
   api({
     module: "auth",
@@ -54,7 +54,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ institutionCode, username }",
     response: "{ ok, message }",
-    source: "backend/src/routes/auth.routes.ts",
+    source: "backend/src/modules/auth/auth.routes.ts",
     notes: "Genera link con Supabase Admin y envia correo via Resend; PASSWORD_RESET_REDIRECT_URL es opcional.",
   }),
   api({
@@ -66,7 +66,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "sin body",
     response: "{ ok: true }",
-    source: "backend/src/routes/auth.routes.ts",
+    source: "backend/src/modules/auth/auth.routes.ts",
   }),
   api({
     module: "admin",
@@ -77,7 +77,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: search, active, page, pageSize",
     response: "{ items: Institution[], pageInfo }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
     notes: "Super admin ve todas y puede filtrar por search/active; admin institucional solo ve su institucion.",
   }),
   api({
@@ -89,7 +89,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ code, name, commercialName?, subdomain?, email?, phone?, timezone?, active? }",
     response: "{ institution }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -100,7 +100,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales de institucion",
     response: "{ institution }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -111,7 +111,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id",
     response: "{ institution }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -122,7 +122,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: institutionId, search, active, page, pageSize",
     response: "{ items: User[], pageInfo }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -133,7 +133,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ institutionId? solo super_admin, email, fullName, username?, personId?, authUserId?, roleCodes? }",
     response: "{ user }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
     notes: "No crea contraseña; invitacion/credencial Supabase queda en flujo de correo/Auth.",
   }),
   api({
@@ -145,7 +145,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales de usuario; institutionId? solo super_admin; roleCodes? reemplaza roles",
     response: "{ user }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -156,7 +156,84 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id; query opcional: institutionId solo super_admin, page, pageSize",
     response: "{ user }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
+  }),
+  api({
+    module: "admin",
+    method: "GET",
+    path: "/api/admin/directory",
+    summary: "Devuelve directorio institucional para admin: personas, salones y clases",
+    auth: "admin, super_admin",
+    frontendStatus: "connected",
+    request: "query opcional: institutionId solo super_admin",
+    response: "{ people: Person[], groups: Group[], classes: Class[] }",
+    source: "backend/src/modules/admin/admin.routes.ts",
+  }),
+  api({
+    module: "admin",
+    method: "POST",
+    path: "/api/admin/groups",
+    summary: "Crea salón/grupo académico",
+    auth: "admin, super_admin",
+    frontendStatus: "connected",
+    request: "{ institutionId? solo super_admin, name, section?, room?, maxCapacity?, guideTeacherId? }",
+    response: "{ group }",
+    source: "backend/src/modules/admin/admin.routes.ts",
+  }),
+  api({
+    module: "admin",
+    method: "PATCH",
+    path: "/api/admin/groups/:id",
+    summary: "Actualiza salón/grupo académico",
+    auth: "admin, super_admin",
+    frontendStatus: "connected",
+    request: "campos parciales; institutionId? solo super_admin",
+    response: "{ group }",
+    source: "backend/src/modules/admin/admin.routes.ts",
+  }),
+  api({
+    module: "admin",
+    method: "DELETE",
+    path: "/api/admin/groups/:id",
+    summary: "Archiva salón/grupo y sus clases",
+    auth: "admin, super_admin",
+    frontendStatus: "connected",
+    request: "param id; query opcional: institutionId solo super_admin",
+    response: "{ group }",
+    source: "backend/src/modules/admin/admin.routes.ts",
+  }),
+  api({
+    module: "admin",
+    method: "POST",
+    path: "/api/admin/classes",
+    summary: "Crea clase con materia, salón y maestro asignado",
+    auth: "admin, super_admin",
+    frontendStatus: "connected",
+    request: "{ institutionId? solo super_admin, subject, groupId, teacherId? }",
+    response: "{ class }",
+    source: "backend/src/modules/admin/admin.routes.ts",
+  }),
+  api({
+    module: "admin",
+    method: "PATCH",
+    path: "/api/admin/classes/:id",
+    summary: "Actualiza clase, salón, materia o maestro",
+    auth: "admin, super_admin",
+    frontendStatus: "connected",
+    request: "campos parciales; institutionId? solo super_admin",
+    response: "{ class }",
+    source: "backend/src/modules/admin/admin.routes.ts",
+  }),
+  api({
+    module: "admin",
+    method: "DELETE",
+    path: "/api/admin/classes/:id",
+    summary: "Archiva clase",
+    auth: "admin, super_admin",
+    frontendStatus: "connected",
+    request: "param id; query opcional: institutionId solo super_admin",
+    response: "{ class }",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -167,7 +244,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: institutionId solo super_admin, page, pageSize",
     response: "{ items: Role[], pageInfo }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -178,7 +255,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ institutionId? solo super_admin, name, code, description?, active? }",
     response: "{ role }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -189,7 +266,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales de rol; institutionId? solo super_admin",
     response: "{ role }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -200,7 +277,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id; query opcional: institutionId solo super_admin, page, pageSize",
     response: "{ role }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -211,18 +288,18 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: institutionId solo super_admin, search, active, page, pageSize",
     response: "{ items: Student[], pageInfo }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
     method: "POST",
     path: "/api/admin/students",
-    summary: "Crea estudiante y persona",
+    summary: "Crea estudiante, persona y cuenta de acceso",
     auth: "admin, super_admin",
     frontendStatus: "connected",
-    request: "{ institutionId? solo super_admin, firstName, lastName, studentCode, ... }",
-    response: "{ student }",
-    source: "backend/src/routes/admin.routes.ts",
+    request: "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, studentCode, ... }",
+    response: "{ student: { ..., user } }",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -233,7 +310,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales; institutionId? solo super_admin",
     response: "{ student }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -244,7 +321,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id; query opcional: institutionId solo super_admin, page, pageSize",
     response: "{ ok: true }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -255,18 +332,18 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: institutionId solo super_admin, search, active, page, pageSize",
     response: "{ items: Teacher[], pageInfo }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
     method: "POST",
     path: "/api/admin/teachers",
-    summary: "Crea docente y persona",
+    summary: "Crea docente, persona y cuenta de acceso",
     auth: "admin, super_admin",
     frontendStatus: "connected",
-    request: "{ institutionId? solo super_admin, firstName, lastName, teacherCode, ... }",
-    response: "{ teacher }",
-    source: "backend/src/routes/admin.routes.ts",
+    request: "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, teacherCode, ... }",
+    response: "{ teacher: { ..., user } }",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -277,7 +354,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales; institutionId? solo super_admin",
     response: "{ teacher }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -288,7 +365,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id; query opcional: institutionId solo super_admin, page, pageSize",
     response: "{ ok: true }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -299,18 +376,18 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: institutionId solo super_admin, search, page, pageSize",
     response: "{ items: Parent[], pageInfo }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
     method: "POST",
     path: "/api/admin/parents",
-    summary: "Crea padre/acudiente y persona",
+    summary: "Crea padre/acudiente, persona y cuenta de acceso",
     auth: "admin, super_admin",
     frontendStatus: "connected",
-    request: "{ institutionId? solo super_admin, firstName, lastName, occupation?, ... }",
-    response: "{ parent }",
-    source: "backend/src/routes/admin.routes.ts",
+    request: "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, occupation?, ... }",
+    response: "{ parent: { ..., user } }",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -321,7 +398,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales; institutionId? solo super_admin",
     response: "{ parent }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "admin",
@@ -332,7 +409,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id; query opcional: institutionId solo super_admin, page, pageSize",
     response: "{ ok: true }",
-    source: "backend/src/routes/admin.routes.ts",
+    source: "backend/src/modules/admin/admin.routes.ts",
   }),
   api({
     module: "business_api",
@@ -343,7 +420,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ action, payload }",
     response: "{ ok, data }",
-    source: "backend/src/routes/business-api.routes.ts",
+    source: "backend/src/modules/business-api/business-api.routes.ts",
     notes: "Contrato usado por BackendApiClient; se conserva tambien en /functions/v1/business-api.",
   }),
   api({
@@ -421,7 +498,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "not_needed",
     request: "payloads equivalentes a las actions assignments.*",
     response: "{ ok, data }",
-    source: "backend/src/routes/assignments.routes.ts",
+    source: "backend/src/modules/assignments/assignments.routes.ts",
     notes: "Disponibles para clientes nuevos; Flutter usa /api/business-api por compatibilidad.",
   }),
   api({
@@ -457,7 +534,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "not_needed",
     request: "payloads equivalentes a attendance.*",
     response: "{ ok, data }",
-    source: "backend/src/routes/attendance.routes.ts",
+    source: "backend/src/modules/attendance/attendance.routes.ts",
   }),
   api({
     module: "chat",
@@ -501,7 +578,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "not_needed",
     request: "payloads equivalentes a chat.*",
     response: "{ ok, data }",
-    source: "backend/src/routes/chats.routes.ts",
+    source: "backend/src/modules/chats/chats.routes.ts",
   }),
   api({
     module: "events",
@@ -524,7 +601,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "not_needed",
     request: "{ title, description, date, audience }",
     response: "{ event }",
-    source: "backend/src/routes/events.routes.ts",
+    source: "backend/src/modules/events/events.routes.ts",
   }),
   api({
     module: "grades",
@@ -568,7 +645,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "not_needed",
     request: "payloads equivalentes a grades.*",
     response: "{ ok, data }",
-    source: "backend/src/routes/grades.routes.ts",
+    source: "backend/src/modules/grades/grades.routes.ts",
   }),
   api({
     module: "notifications",
@@ -590,7 +667,8 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: page, pageSize",
     response: "{ items: File[], pageInfo }",
-    source: "backend/src/routes/files.routes.ts",
+    source: "backend/src/modules/files/files.routes.ts",
+    notes: "Query validada por backend/src/modules/files/files.schemas.ts; lista limitada por institution_id del contexto autenticado.",
   }),
   api({
     module: "files",
@@ -601,7 +679,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ originalName, mimeType, sizeBytes, folder? }",
     response: "{ bucket, storagePath, signedUpload, maxBytes, allowedMimeTypes }",
-    source: "backend/src/routes/files.routes.ts",
+    source: "backend/src/modules/files/files.routes.ts",
     notes: "Valida MIME/tamaño y fuerza ruta {institution_id}/...",
   }),
   api({
@@ -613,7 +691,8 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ originalName, storagePath, mimeType, sizeBytes, url? }",
     response: "{ file }",
-    source: "backend/src/routes/files.routes.ts",
+    source: "backend/src/modules/files/files.routes.ts",
+    notes: "Payload validado por backend/src/modules/files/files.schemas.ts; rechaza storagePath fuera de la institucion autenticada.",
   }),
   api({
     module: "reports",
@@ -624,7 +703,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query: studentId, academicPeriodId",
     response: "{ student, academicPeriodId, calculation, overallAverage, lines }",
-    source: "backend/src/routes/reports.routes.ts",
+    source: "backend/src/modules/reports/reports.routes.ts",
     notes: "Calculo oficial MVP: promedio aritmetico simple de period_grades.final_score.",
   }),
   api({
@@ -636,7 +715,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ studentId, academicPeriodId, generalNotes? }",
     response: "{ reportCard }",
-    source: "backend/src/routes/reports.routes.ts",
+    source: "backend/src/modules/reports/reports.routes.ts",
     notes: "PDF binario queda fuera del MVP hasta definir plantilla/proveedor; devuelve pdfStatus.",
   }),
   api({
@@ -648,7 +727,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id",
     response: "{ reportCard }",
-    source: "backend/src/routes/reports.routes.ts",
+    source: "backend/src/modules/reports/reports.routes.ts",
   }),
   api({
     module: "notifications",
@@ -659,7 +738,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "not_needed",
     request: "{ endpoint, pushToken }",
     response: "{ ok: true }",
-    source: "backend/src/routes/notifications.routes.ts",
+    source: "backend/src/modules/notifications/notifications.routes.ts",
   }),
   api({
     module: "payments",
@@ -682,7 +761,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: status, page, pageSize",
     response: "{ items: sync_queue[], pageInfo }",
-    source: "backend/src/routes/sync.routes.ts",
+    source: "backend/src/modules/sync/sync.routes.ts",
     notes: "Offline sync queda limitado a profesores tomando asistencia sin internet/luz.",
   }),
   api({
@@ -694,7 +773,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ tableName: attendances|class_sessions, operation: insert|update|upsert, recordUuid?, payload, clientTimestamp? }",
     response: "{ item }",
-    source: "backend/src/routes/sync.routes.ts",
+    source: "backend/src/modules/sync/sync.routes.ts",
     notes: "Solo para profesor tomando asistencia; el registro se guarda localmente en el telefono y se sube cuando vuelva la conexion.",
   }),
   api({
@@ -706,7 +785,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id",
     response: "{ item }",
-    source: "backend/src/routes/sync.routes.ts",
+    source: "backend/src/modules/sync/sync.routes.ts",
   }),
   api({
     module: "sync",
@@ -717,7 +796,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ error? }",
     response: "{ item }",
-    source: "backend/src/routes/sync.routes.ts",
+    source: "backend/src/modules/sync/sync.routes.ts",
   }),
   api({
     module: "sync",
@@ -728,7 +807,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: since, page, pageSize",
     response: "{ serverTime, changes: { items, pageInfo }, conflictPolicy, scope }",
-    source: "backend/src/routes/sync.routes.ts",
+    source: "backend/src/modules/sync/sync.routes.ts",
     notes: "Politica: teacher_attendance_upload_only. No se usa para pagos, chat, tareas o calificaciones.",
   }),
   api({
@@ -751,7 +830,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "not_needed",
     request: "payloads equivalentes a payments.*",
     response: "{ ok, data }",
-    source: "backend/src/routes/payments.routes.ts",
+    source: "backend/src/modules/payments/payments.routes.ts",
   }),
   api({
     module: "developer",
@@ -762,7 +841,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: page, pageSize",
     response: "{ counts, pendingTasks, recentAuditEvents }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -773,7 +852,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: page, pageSize",
     response: "{ items: Institution[], pageInfo }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -784,7 +863,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: page, pageSize",
     response: "{ items: User[], pageInfo }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -795,7 +874,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: page, pageSize",
     response: "{ items: DeveloperAuditEvent[], pageInfo }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -806,7 +885,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: moduleKey, page, pageSize",
     response: "{ items: DeveloperDashboardModule[], pageInfo }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -817,7 +896,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ moduleKey, title, description?, category?, icon?, frontendRoute?, enabled? }",
     response: "{ module }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -828,7 +907,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales del modulo",
     response: "{ module }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -839,7 +918,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id",
     response: "{ module }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
     notes: "Soft-delete: marca deleted_at.",
   }),
   api({
@@ -851,7 +930,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: moduleKey, backendStatus, frontendStatus, page, pageSize",
     response: "{ items: DeveloperApiRegistry[], pageInfo }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -862,7 +941,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ moduleKey, method, path, summary, action?, requestSchema?, responseSchema? }",
     response: "{ api }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -873,7 +952,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales del registro API",
     response: "{ api }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -884,7 +963,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id",
     response: "{ api }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
     notes: "Soft-delete: marca deleted_at.",
   }),
   api({
@@ -896,7 +975,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: moduleKey, status, page, pageSize",
     response: "{ items: DeveloperTask[], pageInfo }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -907,7 +986,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ title, moduleKey?, description?, priority?, owner? }",
     response: "{ task }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -918,7 +997,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales de la tarea",
     response: "{ task }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -929,7 +1008,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id",
     response: "{ task }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
     notes: "Soft-delete: marca deleted_at.",
   }),
   api({
@@ -941,7 +1020,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: enabled, page, pageSize",
     response: "{ items: DeveloperFeatureFlag[], pageInfo }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -952,7 +1031,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ flagKey, title, description?, enabled?, rolloutPercent?, config? }",
     response: "{ featureFlag }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -963,7 +1042,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales del flag",
     response: "{ featureFlag }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -974,7 +1053,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id",
     response: "{ featureFlag }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
     notes: "Soft-delete: marca deleted_at.",
   }),
   api({
@@ -986,7 +1065,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "query opcional: status, severity, page, pageSize",
     response: "{ items: DeveloperSystemCheck[], pageInfo }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -997,7 +1076,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "{ checkKey, title, checkType?, target?, severity? }",
     response: "{ systemCheck }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -1008,7 +1087,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "campos parciales del check",
     response: "{ systemCheck }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
   }),
   api({
     module: "developer",
@@ -1019,8 +1098,7 @@ export const apiManifest: ApiManifestEntry[] = [
     frontendStatus: "connected",
     request: "param id",
     response: "{ systemCheck }",
-    source: "backend/src/routes/developer.routes.ts",
+    source: "backend/src/modules/developer/developer.routes.ts",
     notes: "Soft-delete: marca deleted_at.",
   }),
 ];
-

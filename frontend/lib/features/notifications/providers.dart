@@ -7,7 +7,8 @@ import '../../core/services/hive_init.dart';
 import '../auth/presentation/auth_controller.dart';
 import 'data/demo_push_service.dart';
 import 'data/hive_notifications_repository.dart';
-import 'data/web_push_service.dart';
+import 'data/web_push_service_stub.dart'
+    if (dart.library.html) 'data/web_push_service.dart';
 import 'domain/entities.dart';
 import 'domain/notifications_repository.dart';
 import 'domain/push_service.dart';

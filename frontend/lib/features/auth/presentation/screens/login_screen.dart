@@ -67,6 +67,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 48),
+                Center(
+                  child: Image.asset(
+                    'assets/images/nivra_logo.png',
+                    height: 132,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 20),
                 GestureDetector(
                   onLongPress: _devShortcut,
                   behavior: HitTestBehavior.opaque,
@@ -99,7 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ],
                           validator: Validators.email,
                           decoration: const InputDecoration(
-                            labelText: AppStrings.emailHint,
+                            labelText: 'Correo o usuario',
                             prefixIcon: Icon(Icons.person_outline),
                           ),
                         ),
@@ -116,9 +124,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
                               tooltip: 'Mostrar u ocultar contraseña',
-                              icon: Icon(_obscure
-                                  ? Icons.visibility_off_rounded
-                                  : Icons.visibility_rounded,),
+                              icon: Icon(
+                                _obscure
+                                    ? Icons.visibility_off_rounded
+                                    : Icons.visibility_rounded,
+                              ),
                               onPressed: () =>
                                   setState(() => _obscure = !_obscure),
                             ),
@@ -156,19 +166,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       : const Text(AppStrings.loginCta),
                 ),
                 const SizedBox(height: 16),
-                Center(
-                  child: Text(
-                    'Demo: usa contraseña  demo1234',
-                    style: context.textTheme.bodySmall,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Center(
-                  child: Text(
-                    'student@.., teacher@.., parent@.., admin@..',
-                    style: context.textTheme.bodySmall,
-                  ),
-                ),
               ],
             ),
           ),

@@ -1,5 +1,5 @@
 import type { AppContext } from "../types/app-context";
-import { authRepository, AuthRepository } from "../repositories/auth.repository";
+import { authRepository, AuthRepository } from "../modules/auth/auth.repository";
 import { HttpError } from "../lib/errors";
 import { optionalId } from "../validators/common.validators";
 
@@ -109,7 +109,7 @@ export class PermissionsService {
   ) {
     let gid = groupId ?? null;
     if (gid == null) {
-      const cls = await this.repository.findClassGroupId(classId);
+      const cls = await this.repository.findClassGroupId(institutionId, classId);
       gid = Number(cls.group_id);
     }
     if (!Number.isFinite(gid)) {
@@ -167,6 +167,7 @@ export class PermissionsService {
         );
       }
       const exists = await this.repository.parentStudentLinkExists(
+        ctx.institutionId,
         parentId,
         requestedId,
       );

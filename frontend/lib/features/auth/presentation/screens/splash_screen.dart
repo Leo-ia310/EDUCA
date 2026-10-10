@@ -15,12 +15,25 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+  late final Animation<double> _fade;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: .92, end: 1.04).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future<void>.delayed(const Duration(milliseconds: 1200));
+      await Future<void>.delayed(const Duration(milliseconds: 1700));
       if (!mounted) return;
       final auth = ref.read(authControllerProvider);
       if (auth.isAuthenticated) {
@@ -32,27 +45,51 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 84,
-              height: 84,
-              decoration: BoxDecoration(
-                color: context.palette.accentDeep,
-                borderRadius: BorderRadius.circular(Radii.xl),
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) => Transform.scale(
+                scale: _scale.value,
+                child: Opacity(opacity: _fade.value, child: child),
               ),
-              alignment: Alignment.center,
-              child: const Icon(Icons.school_rounded,
-                  color: Colors.white, size: 40,),
+              child: Container(
+                width: 132,
+                height: 132,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(Radii.xl),
+                  boxShadow: [
+                    BoxShadow(
+                      color: context.palette.accentDeep.withValues(alpha: .24),
+                      blurRadius: 32,
+                      offset: const Offset(0, 14),
+                    ),
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/images/nivra_logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
-            Text('Educa360',
-                style: context.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800),),
+            Text(
+              'Nivra',
+              style: context.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 24),
             const SizedBox(
               width: 28,

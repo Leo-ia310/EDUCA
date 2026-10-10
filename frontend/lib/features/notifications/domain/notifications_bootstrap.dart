@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/routing/app_router.dart';
 import '../../../core/services/local_notifications_service.dart';
+import '../../../core/constants/env.dart';
 import '../data/demo_push_service.dart';
 import '../providers.dart';
 import 'entities.dart';
@@ -73,6 +74,7 @@ class NotificationsBootstrap {
   }
 
   Future<void> _seedDemoIfEmpty() async {
+    if (!Env.isDemoMode) return;
     final now = DateTime.now();
     await _ref.read(notificationsRepositoryProvider).seedIfEmpty([
       AppNotification(
@@ -127,16 +129,17 @@ class NotificationsBootstrap {
 
 /// Provider Riverpod que crea el bootstrap una vez. Se dispara desde el
 /// `Educa360App` con un `ref.listen` que lo mantiene vivo.
-final notificationsBootstrapProvider =
-    Provider<NotificationsBootstrap>((ref) {
+final notificationsBootstrapProvider = Provider<NotificationsBootstrap>((ref) {
   final bootstrap = NotificationsBootstrap(ref);
   ref.onDispose(bootstrap.dispose);
   return bootstrap;
 });
 
 /// Handy: dispara la simulación (solo si el PushService actual es demo).
-Future<void> simulateDemoNotification(WidgetRef ref,
-    {NotificationChannel? channel,}) async {
+Future<void> simulateDemoNotification(
+  WidgetRef ref, {
+  NotificationChannel? channel,
+}) async {
   final push = ref.read(pushServiceProvider);
   if (push is DemoPushService) {
     await push.triggerSample(channel: channel);

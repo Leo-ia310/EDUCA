@@ -1,6 +1,6 @@
 import type { NextFunction, Response } from "express";
 
-import { authRepository } from "../repositories/auth.repository";
+import { authRepository } from "../modules/auth/auth.repository";
 import type { AppContext, AppRequest } from "../types/app-context";
 import { HttpError } from "../lib/errors";
 import { withRequestSupabase } from "../lib/supabase";

@@ -1,20 +1,20 @@
 import express from "express";
 
 import { env } from "./lib/env";
-import { adminRoutes } from "./routes/admin.routes";
-import { assignmentsRoutes } from "./routes/assignments.routes";
-import { attendanceRoutes } from "./routes/attendance.routes";
-import { authRoutes } from "./routes/auth.routes";
-import { businessApiRoutes } from "./routes/business-api.routes";
-import { chatsRoutes } from "./routes/chats.routes";
-import { developerRoutes } from "./routes/developer.routes";
-import { eventsRoutes } from "./routes/events.routes";
-import { filesRoutes } from "./routes/files.routes";
-import { gradesRoutes } from "./routes/grades.routes";
-import { notificationsRoutes } from "./routes/notifications.routes";
-import { paymentsRoutes } from "./routes/payments.routes";
-import { reportsRoutes } from "./routes/reports.routes";
-import { syncRoutes } from "./routes/sync.routes";
+import { adminRoutes } from "./modules/admin/admin.routes";
+import { assignmentsRoutes } from "./modules/assignments/assignments.routes";
+import { attendanceRoutes } from "./modules/attendance/attendance.routes";
+import { authRoutes } from "./modules/auth/auth.routes";
+import { businessApiRoutes } from "./modules/business-api/business-api.routes";
+import { chatsRoutes } from "./modules/chats/chats.routes";
+import { developerRoutes } from "./modules/developer/developer.routes";
+import { eventsRoutes } from "./modules/events/events.routes";
+import { filesRoutes } from "./modules/files/files.routes";
+import { gradesRoutes } from "./modules/grades/grades.routes";
+import { notificationsRoutes } from "./modules/notifications/notifications.routes";
+import { paymentsRoutes } from "./modules/payments/payments.routes";
+import { reportsRoutes } from "./modules/reports/reports.routes";
+import { syncRoutes } from "./modules/sync/sync.routes";
 import {
   errorHandler,
   notFoundHandler,

@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/constants/env.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -226,8 +227,8 @@ class _MenuButton extends StatelessWidget {
       tooltip: 'Opciones',
       padding: EdgeInsets.zero,
       onSelected: onSelected,
-      itemBuilder: (_) => const [
-        PopupMenuItem(
+      itemBuilder: (_) => [
+        const PopupMenuItem(
           value: 'read_all',
           child: Row(
             children: [
@@ -237,7 +238,7 @@ class _MenuButton extends StatelessWidget {
             ],
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'clear',
           child: Row(
             children: [
@@ -247,16 +248,18 @@ class _MenuButton extends StatelessWidget {
             ],
           ),
         ),
-        PopupMenuItem(
-          value: 'simulate',
-          child: Row(
-            children: [
-              Icon(Icons.notifications_active_rounded, size: 18),
-              SizedBox(width: 8),
-              Text('Simular una (demo)'),
-            ],
+        if (Env.isDemoMode) ...const [
+          PopupMenuItem(
+            value: 'simulate',
+            child: Row(
+              children: [
+                Icon(Icons.notifications_active_rounded, size: 18),
+                SizedBox(width: 8),
+                Text('Simular una (demo)'),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
       child: Container(
         width: 42,

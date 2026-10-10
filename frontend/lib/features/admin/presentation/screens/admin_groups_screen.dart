@@ -6,9 +6,11 @@ import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/class_form.dart';
@@ -54,13 +56,51 @@ class AdminGroupsScreen extends ConsumerWidget {
       ),
     );
     if (name == null) return;
+    final repo = ref.read(adminBackendRepositoryProvider);
+    if (repo != null) {
+      group == null
+          ? await repo.createGroup({'name': name})
+          : await repo.updateGroup(group.id, {'name': name});
+      ref.invalidate(adminSchoolDirectoryProvider);
+      return;
+    }
     final store = ref.read(schoolDirectoryProvider.notifier);
     group == null ? store.addGroup(name) : store.renameGroup(group.id, name);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final repo = ref.watch(adminBackendRepositoryProvider);
+    if (repo != null) {
+      final remote = ref.watch(adminSchoolDirectoryProvider);
+      return remote.when(
+        loading: () => const StudentDetailScaffold(
+          title: 'Salones y años',
+          bottomNav: false,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => StudentDetailScaffold(
+          title: 'Salones y años',
+          bottomNav: false,
+          child: ErrorStateView(message: '$error'),
+        ),
+        data: (dir) =>
+            _GroupsList(dir: dir, onNew: () => _editName(context, ref)),
+      );
+    }
     final dir = ref.watch(schoolDirectoryProvider);
+    return _GroupsList(dir: dir, onNew: () => _editName(context, ref));
+  }
+}
+
+class _GroupsList extends StatelessWidget {
+  const _GroupsList({required this.dir, required this.onNew});
+
+  final SchoolDirectory dir;
+  final VoidCallback onNew;
+
+  @override
+  Widget build(BuildContext context) {
     return StudentDetailScaffold(
       title: 'Salones y años',
       bottomNav: false,
@@ -69,7 +109,7 @@ class AdminGroupsScreen extends ConsumerWidget {
         children: [
           BrutalButton(
             expand: true,
-            onTap: () => _editName(context, ref),
+            onTap: onNew,
             icon: Icons.add_rounded,
             label: 'Nuevo salón',
           ),
@@ -123,7 +163,33 @@ class AdminGroupDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final repo = ref.watch(adminBackendRepositoryProvider);
+    final remote =
+        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
+    if (remote != null) {
+      return remote.when(
+        loading: () => const StudentDetailScaffold(
+          title: 'Salón',
+          bottomNav: false,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => StudentDetailScaffold(
+          title: 'Salón',
+          bottomNav: false,
+          child: ErrorStateView(message: '$error'),
+        ),
+        data: (dir) => _buildDetail(context, ref, dir),
+      );
+    }
     final dir = ref.watch(schoolDirectoryProvider);
+    return _buildDetail(context, ref, dir);
+  }
+
+  Widget _buildDetail(
+    BuildContext context,
+    WidgetRef ref,
+    SchoolDirectory dir,
+  ) {
     final group = dir.group(groupId);
     if (group == null) {
       return const StudentDetailScaffold(
@@ -169,7 +235,13 @@ class AdminGroupDetailScreen extends ConsumerWidget {
                     )) {
                       return;
                     }
-                    store.removeGroup(groupId);
+                    final repo = ref.read(adminBackendRepositoryProvider);
+                    if (repo != null) {
+                      await repo.archiveGroup(groupId);
+                      ref.invalidate(adminSchoolDirectoryProvider);
+                    } else {
+                      store.removeGroup(groupId);
+                    }
                     if (context.mounted) context.pop();
                   },
                   icon: Icons.delete_outline_rounded,

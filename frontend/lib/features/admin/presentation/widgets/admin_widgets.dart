@@ -110,6 +110,7 @@ class BrutalTextField extends StatelessWidget {
     this.icon,
     this.onChanged,
     this.errorText,
+    this.obscureText = false,
   });
 
   final TextEditingController controller;
@@ -118,6 +119,7 @@ class BrutalTextField extends StatelessWidget {
   final IconData? icon;
   final ValueChanged<String>? onChanged;
   final String? errorText;
+  final bool obscureText;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +131,7 @@ class BrutalTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      obscureText: obscureText,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,

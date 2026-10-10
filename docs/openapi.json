@@ -25,8 +25,8 @@
         "tags": [
           "auth"
         ],
-        "summary": "Login institucional por codigo de colegio, usuario y contraseña",
-        "description": "Auth: publico.\n\nNotas: Resuelve institutions.code + users.username y autentica contra Supabase Auth; Node no almacena contraseñas.\n\nFuente: backend/src/routes/auth.routes.ts.",
+        "summary": "Login institucional por codigo de colegio, usuario/email y contraseña",
+        "description": "Auth: publico.\n\nNotas: Resuelve institutions.code + users.username/users.email y autentica contra Supabase Auth; Node no almacena contraseñas.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [],
         "requestBody": {
           "required": false,
@@ -74,7 +74,7 @@
           "auth"
         ],
         "summary": "Renueva sesion Supabase usando refresh token",
-        "description": "Auth: publico.\n\nFuente: backend/src/routes/auth.routes.ts.",
+        "description": "Auth: publico.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [],
         "requestBody": {
           "required": false,
@@ -122,7 +122,7 @@
           "auth"
         ],
         "summary": "Solicita recuperación de contraseña por colegio y usuario",
-        "description": "Auth: publico.\n\nNotas: Genera link con Supabase Admin y envia correo via Resend; PASSWORD_RESET_REDIRECT_URL es opcional.\n\nFuente: backend/src/routes/auth.routes.ts.",
+        "description": "Auth: publico.\n\nNotas: Genera link con Supabase Admin y envia correo via Resend; PASSWORD_RESET_REDIRECT_URL es opcional.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [],
         "requestBody": {
           "required": false,
@@ -170,7 +170,7 @@
           "auth"
         ],
         "summary": "Cierra sesion Supabase desde el backend",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/routes/auth.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -222,7 +222,7 @@
           "admin"
         ],
         "summary": "Lista instituciones disponibles para administracion",
-        "description": "Auth: admin, super_admin.\n\nNotas: Super admin ve todas y puede filtrar por search/active; admin institucional solo ve su institucion.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: Super admin ve todas y puede filtrar por search/active; admin institucional solo ve su institucion.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -256,7 +256,7 @@
           "admin"
         ],
         "summary": "Crea institucion",
-        "description": "Auth: super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -308,7 +308,7 @@
           "admin"
         ],
         "summary": "Actualiza institucion",
-        "description": "Auth: admin de la institucion o super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin de la institucion o super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -358,7 +358,7 @@
           "admin"
         ],
         "summary": "Archiva institucion",
-        "description": "Auth: super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -394,7 +394,7 @@
           "admin"
         ],
         "summary": "Lista usuarios institucionales con roles",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -428,7 +428,7 @@
           "admin"
         ],
         "summary": "Crea usuario de aplicacion y asigna roles",
-        "description": "Auth: admin, super_admin.\n\nNotas: No crea contraseña; invitacion/credencial Supabase queda en flujo de correo/Auth.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: No crea contraseña; invitacion/credencial Supabase queda en flujo de correo/Auth.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -480,7 +480,7 @@
           "admin"
         ],
         "summary": "Actualiza usuario institucional y roles",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -530,7 +530,7 @@
           "admin"
         ],
         "summary": "Archiva usuario institucional",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -560,13 +560,325 @@
         }
       }
     },
+    "/api/admin/directory": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Devuelve directorio institucional para admin: personas, salones y clases",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ people: Person[], groups: Group[], classes: Class[] }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/groups": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Crea salón/grupo académico",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ institutionId? solo super_admin, name, section?, room?, maxCapacity?, guideTeacherId? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ group }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/groups/{id}": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Actualiza salón/grupo académico",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "campos parciales; institutionId? solo super_admin"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ group }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Archiva salón/grupo y sus clases",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ group }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/classes": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Crea clase con materia, salón y maestro asignado",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ institutionId? solo super_admin, subject, groupId, teacherId? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ class }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/classes/{id}": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Actualiza clase, salón, materia o maestro",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "campos parciales; institutionId? solo super_admin"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ class }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Archiva clase",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ class }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/admin/roles": {
       "get": {
         "tags": [
           "admin"
         ],
         "summary": "Lista roles globales e institucionales",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -600,7 +912,7 @@
           "admin"
         ],
         "summary": "Crea rol institucional",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -652,7 +964,7 @@
           "admin"
         ],
         "summary": "Actualiza rol institucional no sistemico",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -702,7 +1014,7 @@
           "admin"
         ],
         "summary": "Desactiva rol institucional no sistemico",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -738,7 +1050,7 @@
           "admin"
         ],
         "summary": "Lista estudiantes institucionales",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -771,8 +1083,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Crea estudiante y persona",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "summary": "Crea estudiante, persona y cuenta de acceso",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -788,7 +1100,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionId? solo super_admin, firstName, lastName, studentCode, ... }"
+                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, studentCode, ... }"
                 }
               }
             }
@@ -796,7 +1108,7 @@
         },
         "responses": {
           "200": {
-            "description": "{ student }",
+            "description": "{ student: { ..., user } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -824,7 +1136,7 @@
           "admin"
         ],
         "summary": "Actualiza estudiante y persona",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -874,7 +1186,7 @@
           "admin"
         ],
         "summary": "Archiva estudiante",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -910,7 +1222,7 @@
           "admin"
         ],
         "summary": "Lista docentes institucionales",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -943,8 +1255,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Crea docente y persona",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "summary": "Crea docente, persona y cuenta de acceso",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -960,7 +1272,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionId? solo super_admin, firstName, lastName, teacherCode, ... }"
+                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, teacherCode, ... }"
                 }
               }
             }
@@ -968,7 +1280,7 @@
         },
         "responses": {
           "200": {
-            "description": "{ teacher }",
+            "description": "{ teacher: { ..., user } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -996,7 +1308,7 @@
           "admin"
         ],
         "summary": "Actualiza docente y persona",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1046,7 +1358,7 @@
           "admin"
         ],
         "summary": "Archiva docente",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1082,7 +1394,7 @@
           "admin"
         ],
         "summary": "Lista padres/acudientes institucionales",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1115,8 +1427,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Crea padre/acudiente y persona",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "summary": "Crea padre/acudiente, persona y cuenta de acceso",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1132,7 +1444,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionId? solo super_admin, firstName, lastName, occupation?, ... }"
+                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, occupation?, ... }"
                 }
               }
             }
@@ -1140,7 +1452,7 @@
         },
         "responses": {
           "200": {
-            "description": "{ parent }",
+            "description": "{ parent: { ..., user } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -1168,7 +1480,7 @@
           "admin"
         ],
         "summary": "Actualiza padre/acudiente y persona",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1218,7 +1530,7 @@
           "admin"
         ],
         "summary": "Archiva padre/acudiente",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/routes/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1254,7 +1566,7 @@
           "business_api"
         ],
         "summary": "Dispatcher compatible para escrituras sensibles del frontend",
-        "description": "Auth: usuario autenticado.\n\nNotas: Contrato usado por BackendApiClient; se conserva tambien en /functions/v1/business-api.\n\nFuente: backend/src/routes/business-api.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Contrato usado por BackendApiClient; se conserva tambien en /functions/v1/business-api.\n\nFuente: backend/src/modules/business-api/business-api.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1306,7 +1618,7 @@
           "assignments"
         ],
         "summary": "Rutas REST equivalentes para tareas",
-        "description": "Auth: teacher/student segun accion.\n\nNotas: Disponibles para clientes nuevos; Flutter usa /api/business-api por compatibilidad.\n\nFuente: backend/src/routes/assignments.routes.ts.",
+        "description": "Auth: teacher/student segun accion.\n\nNotas: Disponibles para clientes nuevos; Flutter usa /api/business-api por compatibilidad.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1358,7 +1670,7 @@
           "attendance"
         ],
         "summary": "Rutas REST equivalentes para asistencia",
-        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/attendance.routes.ts.",
+        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1410,7 +1722,7 @@
           "chat"
         ],
         "summary": "Rutas REST equivalentes para chat",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/routes/chats.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1462,7 +1774,7 @@
           "events"
         ],
         "summary": "Ruta REST equivalente para crear evento",
-        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/events.routes.ts.",
+        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/events/events.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1514,7 +1826,7 @@
           "grades"
         ],
         "summary": "Rutas REST equivalentes para notas",
-        "description": "Auth: admin/teacher segun accion.\n\nFuente: backend/src/routes/grades.routes.ts.",
+        "description": "Auth: admin/teacher segun accion.\n\nFuente: backend/src/modules/grades/grades.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1566,7 +1878,7 @@
           "files"
         ],
         "summary": "Lista metadatos de archivos de la institucion",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/routes/files.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Query validada por backend/src/modules/files/files.schemas.ts; lista limitada por institution_id del contexto autenticado.\n\nFuente: backend/src/modules/files/files.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1602,7 +1914,7 @@
           "files"
         ],
         "summary": "Prepara subida firmada a Supabase Storage",
-        "description": "Auth: usuario autenticado.\n\nNotas: Valida MIME/tamaño y fuerza ruta {institution_id}/...\n\nFuente: backend/src/routes/files.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Valida MIME/tamaño y fuerza ruta {institution_id}/...\n\nFuente: backend/src/modules/files/files.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1654,7 +1966,7 @@
           "files"
         ],
         "summary": "Registra metadatos de archivo subido",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/routes/files.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Payload validado por backend/src/modules/files/files.schemas.ts; rechaza storagePath fuera de la institucion autenticada.\n\nFuente: backend/src/modules/files/files.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1706,7 +2018,7 @@
           "reports"
         ],
         "summary": "Previsualiza boletin calculado desde period_grades",
-        "description": "Auth: admin/teacher o estudiante/padre propio.\n\nNotas: Calculo oficial MVP: promedio aritmetico simple de period_grades.final_score.\n\nFuente: backend/src/routes/reports.routes.ts.",
+        "description": "Auth: admin/teacher o estudiante/padre propio.\n\nNotas: Calculo oficial MVP: promedio aritmetico simple de period_grades.final_score.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1742,7 +2054,7 @@
           "reports"
         ],
         "summary": "Genera y persiste boletin academico",
-        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nNotas: PDF binario queda fuera del MVP hasta definir plantilla/proveedor; devuelve pdfStatus.\n\nFuente: backend/src/routes/reports.routes.ts.",
+        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nNotas: PDF binario queda fuera del MVP hasta definir plantilla/proveedor; devuelve pdfStatus.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1794,7 +2106,7 @@
           "reports"
         ],
         "summary": "Obtiene boletin generado",
-        "description": "Auth: admin/teacher o estudiante/padre propio.\n\nFuente: backend/src/routes/reports.routes.ts.",
+        "description": "Auth: admin/teacher o estudiante/padre propio.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1830,7 +2142,7 @@
           "notifications"
         ],
         "summary": "Ruta REST equivalente para guardar dispositivo Web Push",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/routes/notifications.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/notifications/notifications.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1882,7 +2194,7 @@
           "sync"
         ],
         "summary": "Lista operaciones offline de asistencia del profesor",
-        "description": "Auth: teacher.\n\nNotas: Offline sync queda limitado a profesores tomando asistencia sin internet/luz.\n\nFuente: backend/src/routes/sync.routes.ts.",
+        "description": "Auth: teacher.\n\nNotas: Offline sync queda limitado a profesores tomando asistencia sin internet/luz.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1916,7 +2228,7 @@
           "sync"
         ],
         "summary": "Encola asistencia offline para subir al recuperar conexion",
-        "description": "Auth: teacher.\n\nNotas: Solo para profesor tomando asistencia; el registro se guarda localmente en el telefono y se sube cuando vuelva la conexion.\n\nFuente: backend/src/routes/sync.routes.ts.",
+        "description": "Auth: teacher.\n\nNotas: Solo para profesor tomando asistencia; el registro se guarda localmente en el telefono y se sube cuando vuelva la conexion.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1968,7 +2280,7 @@
           "sync"
         ],
         "summary": "Marca asistencia offline para reintento",
-        "description": "Auth: teacher.\n\nFuente: backend/src/routes/sync.routes.ts.",
+        "description": "Auth: teacher.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2020,7 +2332,7 @@
           "sync"
         ],
         "summary": "Marca asistencia offline como fallida",
-        "description": "Auth: teacher.\n\nFuente: backend/src/routes/sync.routes.ts.",
+        "description": "Auth: teacher.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2072,7 +2384,7 @@
           "sync"
         ],
         "summary": "Lista cambios de asistencia desde una fecha",
-        "description": "Auth: teacher.\n\nNotas: Politica: teacher_attendance_upload_only. No se usa para pagos, chat, tareas o calificaciones.\n\nFuente: backend/src/routes/sync.routes.ts.",
+        "description": "Auth: teacher.\n\nNotas: Politica: teacher_attendance_upload_only. No se usa para pagos, chat, tareas o calificaciones.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2108,7 +2420,7 @@
           "payments"
         ],
         "summary": "Rutas REST equivalentes para pagos",
-        "description": "Auth: parent/admin segun accion.\n\nFuente: backend/src/routes/payments.routes.ts.",
+        "description": "Auth: parent/admin segun accion.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2160,7 +2472,7 @@
           "developer"
         ],
         "summary": "Resumen operativo del dashboard tecnico",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2196,7 +2508,7 @@
           "developer"
         ],
         "summary": "Lista instituciones visibles por RLS",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2232,7 +2544,7 @@
           "developer"
         ],
         "summary": "Lista usuarios visibles por RLS",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2268,7 +2580,7 @@
           "developer"
         ],
         "summary": "Lista auditoria tecnica del dashboard",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2304,7 +2616,7 @@
           "developer"
         ],
         "summary": "Lista modulos configurables del dashboard",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2338,7 +2650,7 @@
           "developer"
         ],
         "summary": "Crea modulo configurable del dashboard",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2390,7 +2702,7 @@
           "developer"
         ],
         "summary": "Actualiza modulo configurable del dashboard",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2440,7 +2752,7 @@
           "developer"
         ],
         "summary": "Archiva modulo configurable del dashboard",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2476,7 +2788,7 @@
           "developer"
         ],
         "summary": "Lista APIs registradas para conectar",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2510,7 +2822,7 @@
           "developer"
         ],
         "summary": "Crea registro en inventario de APIs",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2562,7 +2874,7 @@
           "developer"
         ],
         "summary": "Actualiza registro del inventario de APIs",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2612,7 +2924,7 @@
           "developer"
         ],
         "summary": "Archiva registro del inventario de APIs",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2648,7 +2960,7 @@
           "developer"
         ],
         "summary": "Lista tareas tecnicas del dashboard",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2682,7 +2994,7 @@
           "developer"
         ],
         "summary": "Crea tarea tecnica",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2734,7 +3046,7 @@
           "developer"
         ],
         "summary": "Actualiza tarea tecnica",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2784,7 +3096,7 @@
           "developer"
         ],
         "summary": "Archiva tarea tecnica",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2820,7 +3132,7 @@
           "developer"
         ],
         "summary": "Lista feature flags",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2854,7 +3166,7 @@
           "developer"
         ],
         "summary": "Crea feature flag",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2906,7 +3218,7 @@
           "developer"
         ],
         "summary": "Actualiza feature flag",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2956,7 +3268,7 @@
           "developer"
         ],
         "summary": "Archiva feature flag",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2992,7 +3304,7 @@
           "developer"
         ],
         "summary": "Lista checks de sistema",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3026,7 +3338,7 @@
           "developer"
         ],
         "summary": "Crea check de sistema",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3078,7 +3390,7 @@
           "developer"
         ],
         "summary": "Actualiza check de sistema",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3128,7 +3440,7 @@
           "developer"
         ],
         "summary": "Archiva check de sistema",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/routes/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Soft-delete: marca deleted_at.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []

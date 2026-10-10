@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../shared/models/app_role.dart';
+import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import 'admin_widgets.dart';
 
@@ -36,6 +37,7 @@ class _ClassFormState extends ConsumerState<_ClassForm> {
   String? _groupId;
   String? _teacherId;
   String? _error;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -54,13 +56,40 @@ class _ClassFormState extends ConsumerState<_ClassForm> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     final subject = _subject.text.trim();
     if (subject.isEmpty || _groupId == null) {
       setState(
         () => _error =
             subject.isEmpty ? 'La materia es obligatoria' : 'Elige un salón',
       );
+      return;
+    }
+    final repo = ref.read(adminBackendRepositoryProvider);
+    if (repo != null) {
+      setState(() => _saving = true);
+      try {
+        final payload = <String, dynamic>{
+          'subject': subject,
+          'groupId': _groupId,
+          'teacherId': _teacherId,
+          'room': _room.text.trim(),
+        };
+        if (widget.existing == null) {
+          await repo.createClass(payload);
+        } else {
+          await repo.updateClass(widget.existing!.id, payload);
+        }
+        ref.invalidate(adminSchoolDirectoryProvider);
+        if (mounted) Navigator.of(context).pop();
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _error = '$e'.replaceFirst('Bad state: ', '');
+            _saving = false;
+          });
+        }
+      }
       return;
     }
     final store = ref.read(schoolDirectoryProvider.notifier);
@@ -92,13 +121,23 @@ class _ClassFormState extends ConsumerState<_ClassForm> {
   Future<void> _delete() async {
     final c = widget.existing!;
     if (!await confirmDelete(context, 'la clase ${c.subject}')) return;
-    ref.read(schoolDirectoryProvider.notifier).removeClass(c.id);
+    final repo = ref.read(adminBackendRepositoryProvider);
+    if (repo != null) {
+      await repo.archiveClass(c.id);
+      ref.invalidate(adminSchoolDirectoryProvider);
+    } else {
+      ref.read(schoolDirectoryProvider.notifier).removeClass(c.id);
+    }
     if (mounted) Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final dir = ref.watch(schoolDirectoryProvider);
+    final repo = ref.watch(adminBackendRepositoryProvider);
+    final remote =
+        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
+    final SchoolDirectory dir =
+        remote?.asData?.value ?? ref.watch(schoolDirectoryProvider);
     final teachers = dir.byRole(AppRole.teacher);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -162,9 +201,13 @@ class _ClassFormState extends ConsumerState<_ClassForm> {
         const SizedBox(height: 20),
         BrutalButton(
           expand: true,
-          onTap: _save,
-          icon: Icons.save_rounded,
-          label: widget.existing == null ? 'Crear' : 'Guardar cambios',
+          onTap: _saving ? () {} : () => _save(),
+          icon: _saving ? Icons.hourglass_top_rounded : Icons.save_rounded,
+          label: _saving
+              ? 'Guardando…'
+              : widget.existing == null
+                  ? 'Crear'
+                  : 'Guardar cambios',
         ),
         if (widget.existing != null) ...[
           const SizedBox(height: 10),

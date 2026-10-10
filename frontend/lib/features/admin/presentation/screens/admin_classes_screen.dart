@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/class_form.dart';
@@ -26,11 +28,35 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dir = ref.watch(schoolDirectoryProvider);
+    final repo = ref.watch(adminBackendRepositoryProvider);
+    final remote =
+        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
+    if (remote != null) {
+      return remote.when(
+        loading: () => const StudentDetailScaffold(
+          title: 'Clases y asignaciones',
+          bottomNav: false,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => StudentDetailScaffold(
+          title: 'Clases y asignaciones',
+          bottomNav: false,
+          child: ErrorStateView(message: '$error'),
+        ),
+        data: _buildWithDirectory,
+      );
+    }
+    return _buildWithDirectory(ref.watch(schoolDirectoryProvider));
+  }
+
+  Widget _buildWithDirectory(SchoolDirectory dir) {
     final palette = context.palette;
 
-    Widget tile(SchoolClass c,
-        {bool showGroup = true, bool showTeacher = true,}) {
+    Widget tile(
+      SchoolClass c, {
+      bool showGroup = true,
+      bool showTeacher = true,
+    }) {
       final teacher = dir.person(c.teacherId)?.name ?? 'Sin maestro asignado';
       final group = dir.group(c.groupId)?.name ?? '—';
       return AdminTile(

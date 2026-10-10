@@ -79,6 +79,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
       final loggedIn = auth.isAuthenticated;
+      if (auth.loading && loc == Routes.splash) return null;
 
       // El splash siempre reenvía: al dashboard si hay sesión, o al login si no.
       // (La pantalla splash no navega por sí misma.)

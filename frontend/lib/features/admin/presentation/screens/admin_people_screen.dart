@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/error_state.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/person_form.dart';
@@ -64,13 +66,40 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final repo = ref.watch(adminBackendRepositoryProvider);
+    final remote =
+        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
+    if (remote != null) {
+      return remote.when(
+        loading: () => StudentDetailScaffold(
+          title: _title,
+          bottomNav: false,
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => StudentDetailScaffold(
+          title: _title,
+          bottomNav: false,
+          child: ErrorStateView(message: '$error'),
+        ),
+        data: (dir) => _buildList(context, dir.byRole(widget.role), dir),
+      );
+    }
     final dir = ref.watch(schoolDirectoryProvider);
-    final q = _query.trim().toLowerCase();
-    final list = dir.byRole(widget.role)
+    final people = dir.byRole(widget.role)
       ..sort((a, b) => a.name.compareTo(b.name));
+    return _buildList(context, people, dir);
+  }
+
+  Widget _buildList(
+    BuildContext context,
+    List<Person> list,
+    SchoolDirectory dir,
+  ) {
+    final q = _query.trim().toLowerCase();
+    final sorted = [...list]..sort((a, b) => a.name.compareTo(b.name));
     final shown = q.isEmpty
-        ? list
-        : list
+        ? sorted
+        : sorted
             .where(
               (p) =>
                   p.name.toLowerCase().contains(q) ||

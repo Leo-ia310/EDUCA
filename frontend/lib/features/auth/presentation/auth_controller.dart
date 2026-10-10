@@ -53,8 +53,27 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthController extends StateNotifier<AuthState> {
-  AuthController(this._repo) : super(const AuthState());
+  AuthController(this._repo) : super(const AuthState(loading: true)) {
+    _restoreSession();
+  }
   final AuthRepository _repo;
+
+  Future<void> _restoreSession() async {
+    try {
+      final user = await _repo.currentUser();
+      final institution = user == null
+          ? await _repo.resolveInstitution(Env.defaultInstitutionCode)
+          : await _repo.resolveInstitution(Env.defaultInstitutionCode);
+      state = state.copyWith(
+        user: user,
+        institution: institution,
+        loading: false,
+        clearError: true,
+      );
+    } catch (_) {
+      state = state.copyWith(loading: false, clearUser: true);
+    }
+  }
 
   Future<bool> resolveInstitution(String code) async {
     state = state.copyWith(loading: true, clearError: true);
