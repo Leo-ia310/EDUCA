@@ -20,12 +20,35 @@ enum AppRole {
     return null;
   }
 
+  /// Prioridad para elegir el rol activo cuando un usuario tiene más de un rol.
+  ///
+  /// La base puede devolver `user_roles` sin orden estable. Si tomamos
+  /// `roles.first`, un usuario admin que también tenga perfil de estudiante
+  /// puede entrar por accidente al panel de estudiante. Por eso siempre
+  /// ordenamos por privilegio antes de escoger el rol inicial.
+  int get priority => switch (this) {
+        AppRole.admin => 0,
+        AppRole.director => 1,
+        AppRole.coordinator => 2,
+        AppRole.teacher => 3,
+        AppRole.parent => 4,
+        AppRole.student => 5,
+      };
+
+  static List<AppRole> sortedByPriority(Iterable<AppRole> roles) {
+    final unique = <AppRole>{...roles}.toList()
+      ..sort((a, b) => a.priority.compareTo(b.priority));
+    return unique;
+  }
+
   /// Ruta del dashboard principal de este rol.
   String get dashboardRoute => switch (this) {
         AppRole.student => '/student/dashboard',
         AppRole.teacher => '/teacher/dashboard',
         AppRole.parent => '/parent/dashboard',
-        AppRole.admin || AppRole.coordinator || AppRole.director =>
+        AppRole.admin ||
+        AppRole.coordinator ||
+        AppRole.director =>
           '/admin/dashboard',
       };
 }

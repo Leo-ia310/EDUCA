@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/errors/failures.dart';
 import '../../../core/network/backend_api_client.dart';
@@ -11,11 +12,17 @@ class BackendAuthRepository implements AuthRepository {
   BackendAuthRepository({
     required BackendApiClient api,
     required sb.SupabaseClient supabase,
+    required SharedPreferences prefs,
   })  : _api = api,
-        _supabase = supabase;
+        _supabase = supabase,
+        _prefs = prefs;
 
   final BackendApiClient _api;
   final sb.SupabaseClient _supabase;
+  final SharedPreferences _prefs;
+
+  static const _refreshTokenKey = 'auth.backend.refresh_token';
+  static const _accessTokenKey = 'auth.backend.access_token';
 
   @override
   Future<Institution> resolveInstitution(String code) async {
@@ -55,7 +62,11 @@ class BackendAuthRepository implements AuthRepository {
       if (refreshToken == null || refreshToken.isEmpty) {
         throw const AuthFailure('El backend no devolvió una sesión válida.');
       }
-      await _supabase.auth.setSession(refreshToken, accessToken: accessToken);
+      final authResponse = await _supabase.auth.setSession(
+        refreshToken,
+        accessToken: accessToken,
+      );
+      await _persistSession(authResponse.session);
       return _userFromMap((map['user'] as Map).cast<String, dynamic>());
     } on AuthFailure {
       rethrow;
@@ -71,13 +82,15 @@ class BackendAuthRepository implements AuthRepository {
         await _api.post('/auth/logout');
       }
     } finally {
+      await _clearPersistedSession();
       await _supabase.auth.signOut();
     }
   }
 
   @override
   Future<AppUser?> currentUser() async {
-    final authUser = _supabase.auth.currentSession?.user;
+    final session = _supabase.auth.currentSession ?? await _restoreSession();
+    final authUser = session?.user;
     if (authUser == null) return null;
 
     final me = await _supabase
@@ -94,7 +107,9 @@ class BackendAuthRepository implements AuthRepository {
         .map((e) => (e['roles']?['code']) as String?)
         .whereType<String>()
         .toList();
-    final roles = roleCodes.map(_roleFromCode).whereType<AppRole>().toList();
+    final roles = AppRole.sortedByPriority(
+      roleCodes.map(_roleFromCode).whereType<AppRole>(),
+    );
     if (roles.isEmpty) return null;
 
     final fullName = me['full_name'] as String? ?? 'Usuario';
@@ -120,10 +135,11 @@ class BackendAuthRepository implements AuthRepository {
     );
     final session = ((data as Map)['session'] as Map).cast<String, dynamic>();
     final newRefreshToken = session['refreshToken']?.toString() ?? refreshToken;
-    await _supabase.auth.setSession(
+    final authResponse = await _supabase.auth.setSession(
       newRefreshToken,
       accessToken: session['accessToken']?.toString(),
     );
+    await _persistSession(authResponse.session);
   }
 
   @override
@@ -140,10 +156,11 @@ class BackendAuthRepository implements AuthRepository {
 
   AppUser _userFromMap(Map<String, dynamic> map) {
     final fullName = map['fullName']?.toString() ?? 'Usuario';
-    final roles = ((map['roles'] as List?) ?? const [])
-        .map((role) => _roleFromCode(role?.toString()))
-        .whereType<AppRole>()
-        .toList();
+    final roles = AppRole.sortedByPriority(
+      ((map['roles'] as List?) ?? const [])
+          .map((role) => _roleFromCode(role?.toString()))
+          .whereType<AppRole>(),
+    );
     if (roles.isEmpty) throw const AuthFailure('Usuario sin roles asignados.');
     return AppUser(
       id: map['id'].toString(),
@@ -159,5 +176,34 @@ class BackendAuthRepository implements AuthRepository {
   AppRole? _roleFromCode(String? code) {
     if (code == 'super_admin') return AppRole.admin;
     return AppRole.fromCode(code);
+  }
+
+  Future<sb.Session?> _restoreSession() async {
+    final refreshToken = _prefs.getString(_refreshTokenKey);
+    if (refreshToken == null || refreshToken.isEmpty) return null;
+    final accessToken = _prefs.getString(_accessTokenKey);
+    try {
+      final response = await _supabase.auth.setSession(
+        refreshToken,
+        accessToken:
+            accessToken == null || accessToken.isEmpty ? null : accessToken,
+      );
+      await _persistSession(response.session);
+      return response.session;
+    } catch (_) {
+      await _clearPersistedSession();
+      return null;
+    }
+  }
+
+  Future<void> _persistSession(sb.Session? session) async {
+    if (session == null) return;
+    await _prefs.setString(_refreshTokenKey, session.refreshToken ?? '');
+    await _prefs.setString(_accessTokenKey, session.accessToken);
+  }
+
+  Future<void> _clearPersistedSession() async {
+    await _prefs.remove(_refreshTokenKey);
+    await _prefs.remove(_accessTokenKey);
   }
 }

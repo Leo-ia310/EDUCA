@@ -4,6 +4,7 @@ import '../../../core/constants/env.dart';
 import '../../../core/errors/failures.dart';
 import '../../../core/network/backend_api_client.dart';
 import '../../../core/network/supabase_client.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../../shared/models/app_role.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/models/institution.dart';
@@ -48,8 +49,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   if (Env.isDemoMode) return MockAuthRepository();
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);
+  final prefs = ref.watch(sharedPreferencesProvider);
   if (client == null || api == null) return MockAuthRepository();
-  return BackendAuthRepository(api: api, supabase: client);
+  return BackendAuthRepository(api: api, supabase: client, prefs: prefs);
 });
 
 class AuthController extends StateNotifier<AuthState> {
