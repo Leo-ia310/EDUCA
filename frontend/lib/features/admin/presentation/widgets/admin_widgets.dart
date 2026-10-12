@@ -6,14 +6,17 @@ import '../../../../core/widgets/brutal.dart';
 import '../../../../shared/models/app_role.dart';
 
 /// Color de cada rol (tarjetas y etiquetas).
-Color roleColor(AppRole r) => switch (r) {
-      AppRole.teacher => const Color(0xFF4C8DF5),
-      AppRole.student => const Color(0xFFF3993E),
-      AppRole.parent => const Color(0xFF9A6BE0),
-      AppRole.coordinator => const Color(0xFF33B7A0),
-      AppRole.admin => const Color(0xFFE5484D),
-      AppRole.director => const Color(0xFF2FA869),
-    };
+Color roleColor(BuildContext context, AppRole r) {
+  final p = context.palette;
+  return switch (r) {
+    AppRole.teacher => p.accent,
+    AppRole.student => p.sun,
+    AppRole.parent => p.grape,
+    AppRole.coordinator => p.mint,
+    AppRole.admin => p.coral,
+    AppRole.director => p.success,
+  };
+}
 
 IconData roleIcon(AppRole r) => switch (r) {
       AppRole.teacher => Icons.badge_rounded,

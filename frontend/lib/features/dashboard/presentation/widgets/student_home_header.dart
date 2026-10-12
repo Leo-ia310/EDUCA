@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../profile/presentation/widgets/account_settings_menu.dart';
 
 /// Barra superior del home del estudiante (reemplaza al hero de bienvenida con
@@ -36,7 +35,7 @@ class StudentHomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const barColor = EducaBottomNav.barColor;
+    final barColor = context.palette.bar;
     // Inset superior (status bar / notch): lo absorbe la banda para llegar
     // hasta el borde de la pantalla.
     final topInset = MediaQuery.paddingOf(context).top;
@@ -46,11 +45,11 @@ class StudentHomeHeader extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16, topInset + 12, 12, 30),
       decoration: transparent
           ? null
-          : const BoxDecoration(
+          : BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [barColor, Color(0xFF3B74D6)],
+                colors: [barColor, context.palette.barDeep],
               ),
             ),
       child: Row(

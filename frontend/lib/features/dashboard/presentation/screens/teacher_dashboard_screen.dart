@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -77,7 +78,7 @@ class _TeacherDashboardScreenState
                     icon: Icons.how_to_reg_rounded,
                     title: 'Asistencia Rápida',
                     subtitle: 'Tomar y finalizar pase',
-                    color: const Color(0xFF2FA869),
+                    color: context.palette.success,
                     route: Routes.attendance,
                     art: const ArtCluster([
                       ArtItem.icon(Icons.check_circle_rounded,
@@ -90,7 +91,7 @@ class _TeacherDashboardScreenState
                     icon: Icons.class_rounded,
                     title: 'Mis clases',
                     subtitle: '${data.myClasses.length} clases asignadas',
-                    color: const Color(0xFF4C8DF5),
+                    color: context.palette.accent,
                     route: Routes.myClasses,
                     art: const ArtCluster([
                       ArtItem.icon(Icons.menu_book_rounded,
@@ -103,7 +104,7 @@ class _TeacherDashboardScreenState
                     icon: Icons.assignment_rounded,
                     title: 'Tareas y Exámenes',
                     subtitle: 'Por materia y vista general',
-                    color: const Color(0xFFF3993E),
+                    color: context.palette.sun,
                     route: Routes.assignments,
                     art: const ArtCluster([
                       ArtItem.icon(Icons.edit_rounded,
@@ -116,7 +117,7 @@ class _TeacherDashboardScreenState
                     icon: Icons.grade_rounded,
                     title: 'Calificaciones Recientes',
                     subtitle: 'Libro de notas',
-                    color: const Color(0xFF9A6BE0),
+                    color: context.palette.grape,
                     route: Routes.gradebook,
                     art: const ArtCluster([
                       ArtItem.text('A+', size: 56, top: 6, right: 30, angle: -0.2),
@@ -128,7 +129,7 @@ class _TeacherDashboardScreenState
                     icon: Icons.groups_rounded,
                     title: 'Grupos',
                     subtitle: '${data.myClasses.length} grupos de trabajo',
-                    color: const Color(0xFFE5484D),
+                    color: context.palette.coral,
                     route: Routes.workTeams,
                     art: const ArtCluster([
                       ArtItem.icon(Icons.groups_2_rounded,

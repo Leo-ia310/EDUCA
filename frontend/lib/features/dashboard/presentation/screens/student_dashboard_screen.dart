@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -70,7 +71,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       icon: Icons.note_alt_rounded,
                       title: 'Tareas',
                       subtitle: 'Pendientes y entregadas',
-                      color: const Color(0xFFF3993E),
+                      color: context.palette.sun,
                       onTap: () => context.push(Routes.assignments),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.edit_rounded,
@@ -83,7 +84,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       icon: Icons.school_rounded,
                       title: 'Pruebas',
                       subtitle: 'Exámenes y quizzes',
-                      color: const Color(0xFFD65D6B),
+                      color: context.palette.coral,
                       onTap: () => context.push(Routes.exams),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.description_rounded,
@@ -94,7 +95,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       icon: Icons.menu_book_rounded,
                       title: 'Materias',
                       subtitle: 'Tus materias y profesores',
-                      color: const Color(0xFF4C8DF5),
+                      color: context.palette.accent,
                       onTap: () => context.push(Routes.subjects),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.add_rounded,
@@ -111,7 +112,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       icon: Icons.event_available_rounded,
                       title: 'Asistencia',
                       subtitle: 'Tu porcentaje del periodo',
-                      color: const Color(0xFF34C77A),
+                      color: context.palette.success,
                       onTap: () => context.push(Routes.myAttendance),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.check_rounded,
@@ -122,7 +123,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       icon: Icons.calendar_month_rounded,
                       title: 'Horario',
                       subtitle: 'Tu horario de clases',
-                      color: const Color(0xFF33B7A0),
+                      color: context.palette.mint,
                       onTap: () => context.push(Routes.schedule),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.calendar_month_rounded,
@@ -133,7 +134,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                       icon: Icons.co_present_rounded,
                       title: 'Maestros',
                       subtitle: 'Tus Maestros',
-                      color: const Color(0xFF7C6AE0),
+                      color: context.palette.grape,
                       onTap: () => context.push(Routes.teachers),
                       art: const ArtCluster([
                         ArtItem.icon(Icons.apple,

@@ -104,7 +104,7 @@ class PastelSurface {
   final Color inkMuted;
 }
 
-const Color _pastelInk = Color(0xFF232A33);
+const Color _pastelInk = Color(0xFF14233F);
 
 /// Deriva las superficies pastel/vívidas a partir de un color base (HSL),
 /// sensible al tema: en claro la superficie es un tinte muy claro con tinta

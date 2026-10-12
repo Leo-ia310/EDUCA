@@ -113,10 +113,6 @@ List<EducaTab> navTabsForRole(AppRole role) {
 class EducaBottomNav extends ConsumerWidget {
   const EducaBottomNav({super.key});
 
-  /// Color único de la barra (para todas las pestañas). Público para que otras
-  /// superficies (p. ej. la barra superior del home) puedan igualarlo.
-  static const Color barColor = Color(0xFF4C8DF5);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final role =
@@ -166,7 +162,7 @@ class _BrutalNav extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
           child: BrutalBox(
-            color: EducaBottomNav.barColor,
+            color: context.palette.bar,
             radius: Radii.lg,
             child: SizedBox(
               height: 66,

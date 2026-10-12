@@ -26,11 +26,9 @@ abstract final class Brutal {
   static const double border = 2;
   static const double shadowOffset = 4;
 
-  /// Color de tinta del borde y la sombra (negro en claro, blanco en oscuro).
-  static Color ink(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? Colors.white
-          : Colors.black;
+  /// Color de tinta del borde y la sombra (azul marino en claro, blanco verdoso
+  /// en oscuro).
+  static Color ink(BuildContext context) => context.palette.ink;
 
   /// Decoración de tarjeta con borde y sombra dura.
   static BoxDecoration decoration(
@@ -154,7 +152,9 @@ class BrutalButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = foreground ?? Colors.white;
+    // Sobre el acento por defecto, el texto usa el color de contraste del tema.
+    final fg = foreground ??
+        (color == null ? context.palette.onAccent : Colors.white);
     final child = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -214,7 +214,7 @@ class BrutalPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final fg =
-        selected ? Colors.white : Theme.of(context).colorScheme.onSurface;
+        selected ? palette.onAccent : Theme.of(context).colorScheme.onSurface;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,

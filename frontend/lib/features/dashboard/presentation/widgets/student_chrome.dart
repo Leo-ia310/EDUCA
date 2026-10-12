@@ -96,16 +96,16 @@ class StudentTopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const barColor = EducaBottomNav.barColor;
+    final barColor = context.palette.bar;
     final topInset = MediaQuery.paddingOf(context).top;
     return Container(
       // Borde inferior recto: el panel se monta encima y aporta la curva.
       padding: EdgeInsets.fromLTRB(12, topInset + 10, 12, 30),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [barColor, Color(0xFF3B74D6)],
+          colors: [barColor, context.palette.barDeep],
         ),
       ),
       child: Row(

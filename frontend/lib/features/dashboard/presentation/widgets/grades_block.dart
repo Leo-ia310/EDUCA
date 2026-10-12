@@ -132,7 +132,7 @@ class _AverageHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BrutalBox(
-      color: const Color(0xFF2FA869),
+      color: context.palette.success,
       radius: Radii.md,
       padding: const EdgeInsets.all(14),
       child: Row(

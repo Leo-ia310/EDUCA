@@ -62,7 +62,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           ScheduleMock.days[i],
                           style: context.textTheme.labelMedium?.copyWith(
                             color: selected
-                                ? Colors.white
+                                ? palette.onAccent
                                 : palette.textMuted,
                             fontWeight: FontWeight.w800,
                           ),
@@ -75,7 +75,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                             shape: BoxShape.circle,
                             color: isToday
                                 ? (selected
-                                    ? Colors.white
+                                    ? palette.onAccent
                                     : palette.accentDeep)
                                 : Colors.transparent,
                           ),

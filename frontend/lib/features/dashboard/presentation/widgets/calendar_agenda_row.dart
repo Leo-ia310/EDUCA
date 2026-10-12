@@ -18,7 +18,7 @@ class CalendarAgendaRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTask = item.kind == CalKind.task;
-    final color = isTask ? const Color(0xFFF3993E) : context.palette.accent;
+    final color = isTask ? context.palette.sun : context.palette.accent;
     final s = context.pastel(color);
     final dateLabel = toBeginningOfSentenceCase(
       DateFormat("EEE d 'de' MMM", 'es').format(item.date),

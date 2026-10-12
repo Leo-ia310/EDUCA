@@ -123,7 +123,7 @@ class _MonthGrid extends StatelessWidget {
             children: [
               _dot(context, palette.accent, 'Evento'),
               const SizedBox(width: 16),
-              _dot(context, const Color(0xFFF3993E), 'Tarea'),
+              _dot(context, context.palette.sun, 'Tarea'),
             ],
           ),
         ],
@@ -186,7 +186,7 @@ class _DayDot extends StatelessWidget {
             children: [
               if (hasEvent) _tinyDot(palette.accent),
               if (hasEvent && hasTask) const SizedBox(width: 2),
-              if (hasTask) _tinyDot(const Color(0xFFF3993E)),
+              if (hasTask) _tinyDot(context.palette.sun),
             ],
           ),
         ],

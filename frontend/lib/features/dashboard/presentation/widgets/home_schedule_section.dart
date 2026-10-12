@@ -281,7 +281,7 @@ class _DayPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final fg = selected ? Colors.white : palette.textMuted;
+    final fg = selected ? palette.onAccent : palette.textMuted;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -313,7 +313,7 @@ class _DayPill extends StatelessWidget {
                 Text(
                   '${date.day}',
                   style: context.textTheme.titleLarge?.copyWith(
-                    color: selected ? Colors.white : null,
+                    color: selected ? palette.onAccent : null,
                     fontWeight: FontWeight.w800,
                     height: 1.1,
                   ),
@@ -324,7 +324,7 @@ class _DayPill extends StatelessWidget {
                       ? Text(
                           'Hoy',
                           style: context.textTheme.labelSmall?.copyWith(
-                            color: selected ? Colors.white : palette.accentDeep,
+                            color: selected ? palette.onAccent : palette.accentDeep,
                             fontWeight: FontWeight.w800,
                           ),
                         )

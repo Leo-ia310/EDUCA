@@ -259,7 +259,7 @@ class _ModePill extends StatelessWidget {
         child: Text(
           label,
           style: context.textTheme.labelLarge?.copyWith(
-            color: selected ? Colors.white : palette.textMuted,
+            color: selected ? palette.onAccent : palette.textMuted,
             fontWeight: FontWeight.w800,
           ),
         ),

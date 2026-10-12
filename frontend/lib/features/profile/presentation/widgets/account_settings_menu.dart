@@ -146,28 +146,28 @@ class AccountSettingsList extends ConsumerWidget {
         _SettingsRow(
           icon: Icons.lock_outline,
           label: 'Cambiar contraseña',
-          color: const Color(0xFF4C8DF5),
+          color: context.palette.accent,
           onTap: () => context.push(Routes.changePassword),
         ),
         const SizedBox(height: 10),
         _SettingsRow(
           icon: Icons.notifications_none,
           label: 'Notificaciones',
-          color: const Color(0xFFF3993E),
+          color: context.palette.sun,
           onTap: () => context.push(Routes.notificationSettings),
         ),
         const SizedBox(height: 10),
         _SettingsRow(
           icon: Icons.help_outline,
           label: 'Ayuda y soporte',
-          color: const Color(0xFF33B7A0),
+          color: context.palette.mint,
           onTap: () => context.push(Routes.help),
         ),
         const SizedBox(height: 10),
         _SettingsRow(
           icon: Icons.logout,
           label: 'Cerrar sesión',
-          color: const Color(0xFFE5484D),
+          color: context.palette.coral,
           onTap: () async {
             await ref.read(authControllerProvider.notifier).signOut();
             if (context.mounted) context.go(Routes.login);

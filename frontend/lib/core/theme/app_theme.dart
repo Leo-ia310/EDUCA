@@ -20,6 +20,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.accent,
     required this.accentDeep,
     required this.accentSoft,
+    required this.onAccent,
+    required this.bar,
+    required this.barDeep,
+    required this.ink,
+    required this.sun,
+    required this.coral,
+    required this.mint,
+    required this.grape,
   });
 
   final Color surfaceAlt;
@@ -34,6 +42,23 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color accentDeep;
   final Color accentSoft;
 
+  /// Texto/íconos sobre rellenos de acento (blanco en claro, casi negro en
+  /// oscuro, donde el acento es un verde luminoso).
+  final Color onAccent;
+
+  /// Barras superior e inferior (y el degradado de la barra superior).
+  final Color bar;
+  final Color barDeep;
+
+  /// Tinta de bordes y sombras duras de las tarjetas.
+  final Color ink;
+
+  /// Acentos de contraste (para que la interfaz no sea solo marca + neutros).
+  final Color sun;
+  final Color coral;
+  final Color mint;
+  final Color grape;
+
   @override
   AppPalette copyWith({
     Color? surfaceAlt,
@@ -47,6 +72,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? accent,
     Color? accentDeep,
     Color? accentSoft,
+    Color? onAccent,
+    Color? bar,
+    Color? barDeep,
+    Color? ink,
+    Color? sun,
+    Color? coral,
+    Color? mint,
+    Color? grape,
   }) {
     return AppPalette(
       surfaceAlt: surfaceAlt ?? this.surfaceAlt,
@@ -60,6 +93,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
       accent: accent ?? this.accent,
       accentDeep: accentDeep ?? this.accentDeep,
       accentSoft: accentSoft ?? this.accentSoft,
+      onAccent: onAccent ?? this.onAccent,
+      bar: bar ?? this.bar,
+      barDeep: barDeep ?? this.barDeep,
+      ink: ink ?? this.ink,
+      sun: sun ?? this.sun,
+      coral: coral ?? this.coral,
+      mint: mint ?? this.mint,
+      grape: grape ?? this.grape,
     );
   }
 
@@ -78,6 +119,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
       accent: Color.lerp(accent, other.accent, t)!,
       accentDeep: Color.lerp(accentDeep, other.accentDeep, t)!,
       accentSoft: Color.lerp(accentSoft, other.accentSoft, t)!,
+      onAccent: Color.lerp(onAccent, other.onAccent, t)!,
+      bar: Color.lerp(bar, other.bar, t)!,
+      barDeep: Color.lerp(barDeep, other.barDeep, t)!,
+      ink: Color.lerp(ink, other.ink, t)!,
+      sun: Color.lerp(sun, other.sun, t)!,
+      coral: Color.lerp(coral, other.coral, t)!,
+      mint: Color.lerp(mint, other.mint, t)!,
+      grape: Color.lerp(grape, other.grape, t)!,
     );
   }
 }
@@ -205,6 +254,14 @@ class AppTheme {
           accent: AppColors.accent,
           accentDeep: AppColors.accentDeep,
           accentSoft: AppColors.accentSoft,
+          onAccent: Colors.white,
+          bar: AppColors.barLight,
+          barDeep: AppColors.barDeepLight,
+          ink: AppColors.inkLight,
+          sun: AppColors.sunLight,
+          coral: AppColors.coralLight,
+          mint: AppColors.mintLight,
+          grape: AppColors.grapeLight,
         ),
       ],
       appBarTheme: const AppBarTheme(
@@ -317,11 +374,11 @@ class AppTheme {
   static ThemeData get darkTheme {
     const scheme = ColorScheme.dark(
       primary: AppColors.accentDark,
-      onPrimary: AppColors.textLight,
+      onPrimary: AppColors.onAccentDark,
       primaryContainer: AppColors.accentSoftDark,
-      onPrimaryContainer: AppColors.accentDark,
+      onPrimaryContainer: AppColors.accentDeepDark,
       secondary: AppColors.accentDeepDark,
-      onSecondary: AppColors.textLight,
+      onSecondary: AppColors.onAccentDark,
       surface: AppColors.darkSurface,
       onSurface: AppColors.textDark,
       surfaceContainerHighest: AppColors.darkSurfaceAlt,
@@ -345,15 +402,23 @@ class AppTheme {
         AppPalette(
           surfaceAlt: AppColors.darkSurfaceAlt,
           cardElevated: AppColors.darkSurface,
-          cardContrast: Color(0xFF08090B),
+          cardContrast: Color(0xFF020403),
           textMuted: AppColors.textDarkMuted,
-          success: AppColors.success,
-          warning: AppColors.warning,
-          danger: AppColors.danger,
-          info: AppColors.info,
+          success: AppColors.successDark,
+          warning: AppColors.warningDark,
+          danger: AppColors.dangerDark,
+          info: AppColors.infoDark,
           accent: AppColors.accentDark,
           accentDeep: AppColors.accentDeepDark,
           accentSoft: AppColors.accentSoftDark,
+          onAccent: AppColors.onAccentDark,
+          bar: AppColors.barDark,
+          barDeep: AppColors.barDeepDark,
+          ink: AppColors.inkDark,
+          sun: AppColors.sunDark,
+          coral: AppColors.coralDark,
+          mint: AppColors.mintDark,
+          grape: AppColors.grapeDark,
         ),
       ],
       appBarTheme: const AppBarTheme(
@@ -375,7 +440,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.accentDark,
-          foregroundColor: AppColors.textLight,
+          foregroundColor: AppColors.onAccentDark,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(Radii.md),
@@ -388,7 +453,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF08090B),
+          backgroundColor: const Color(0xFF020403),
           foregroundColor: AppColors.textDark,
           minimumSize: const Size.fromHeight(54),
           elevation: 0,
@@ -448,7 +513,7 @@ class AppTheme {
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.accentDark,
-        foregroundColor: AppColors.textLight,
+        foregroundColor: AppColors.onAccentDark,
         elevation: 4,
         shape: CircleBorder(),
       ),

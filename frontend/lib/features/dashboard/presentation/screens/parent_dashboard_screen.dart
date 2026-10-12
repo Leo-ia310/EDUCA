@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -70,7 +71,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     icon: Icons.family_restroom_rounded,
                     title: 'Mis Hijos',
                     subtitle: data.children.map((c) => c.name).join(', '),
-                    color: const Color(0xFF4C8DF5),
+                    color: context.palette.accent,
                     route: Routes.parentChildren as String?,
                     art: const ArtCluster([
                       ArtItem.icon(Icons.face_rounded,
@@ -83,7 +84,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     icon: Icons.credit_card_rounded,
                     title: 'Pagos',
                     subtitle: 'Cuotas y recibos',
-                    color: const Color(0xFF2FA869),
+                    color: context.palette.success,
                     route: Routes.payments as String?,
                     art: const ArtCluster([
                       ArtItem.icon(Icons.payments_rounded,
@@ -96,7 +97,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     icon: Icons.picture_as_pdf_rounded,
                     title: 'Boletín',
                     subtitle: 'Notas por periodo',
-                    color: const Color(0xFFE5484D),
+                    color: context.palette.coral,
                     route: Routes.reports as String?,
                     art: const ArtCluster([
                       ArtItem.text('A+', size: 56, top: 6, right: 30, angle: -0.2),

@@ -18,7 +18,10 @@ import 'student_attendance_screen.dart';
 /// Hijo seleccionado en el panel "Mis hijos" (índice en la lista).
 final selectedChildIndexProvider = StateProvider<int>((ref) => 0);
 
-const _childColors = [Color(0xFF4C8DF5), Color(0xFFF3993E), Color(0xFF9A6BE0)];
+Color _childColor(BuildContext c, int i) {
+  final p = c.palette;
+  return [p.accent, p.sun, p.grape][i % 3];
+}
 
 /// Panel "Mis hijos": carrusel de tarjetas (una por hijo), promedio de
 /// asistencia del hijo seleccionado y accesos a sus Tareas y Exámenes.
@@ -89,7 +92,7 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: _ChildCard(
                         child: kids[i],
-                        color: _childColors[i % _childColors.length],
+                        color: _childColor(context, i),
                         selected: i == selected,
                       ),
                     ),
@@ -154,7 +157,7 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
                 title: 'Promedio de asistencias',
                 subtitle:
                     '${(child.attendance ?? data.attendancePercent).round()}% · ${child.name}',
-                color: const Color(0xFF2FA869),
+                color: context.palette.success,
                 art: const ArtCluster([
                   ArtItem.icon(
                     Icons.check_circle_rounded,
@@ -180,7 +183,7 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
             icon: Icons.menu_book_rounded,
             title: 'Maestros',
             subtitle: 'Maestros y materias',
-            color: const Color(0xFF9A6BE0),
+            color: context.palette.grape,
             art: const ArtCluster([
               ArtItem.icon(Icons.school_rounded,
                   size: 64, top: 4, right: 40, angle: 0.25,),
@@ -196,7 +199,7 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
                 icon: Icons.note_alt_rounded,
                 title: 'Tareas',
                 subtitle: 'Pendientes y entregadas de ${child.name}',
-                color: const Color(0xFFF3993E),
+                color: context.palette.sun,
                 art: const ArtCluster([
                   ArtItem.icon(
                     Icons.edit_rounded,
@@ -220,7 +223,7 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
                 icon: Icons.school_rounded,
                 title: 'Exámenes',
                 subtitle: 'Pruebas y exámenes de ${child.name}',
-                color: const Color(0xFFE5484D),
+                color: context.palette.coral,
                 art: const ArtCluster([
                   ArtItem.text('A+', size: 56, top: 6, right: 30, angle: -0.2),
                   ArtItem.icon(

@@ -16,8 +16,6 @@ import '../widgets/admin_widgets.dart';
 import '../widgets/class_form.dart';
 import '../widgets/person_form.dart';
 
-const _groupColor = Color(0xFF33B7A0);
-
 /// Salones / años: lista con su CRUD. Cada salón abre el detalle con la lista
 /// de sus estudiantes y de sus clases.
 class AdminGroupsScreen extends ConsumerWidget {
@@ -126,7 +124,7 @@ class _GroupsList extends StatelessWidget {
                 title: g.name,
                 subtitle:
                     '${dir.studentsOfGroup(g.id).length} estudiantes · ${dir.classesOfGroup(g.id).length} clases',
-                color: _groupColor,
+                color: context.palette.mint,
                 leadingIcon: Icons.meeting_room_rounded,
                 trailing: _Chevron(),
                 onTap: () => context.push('${Routes.adminGroups}/${g.id}'),
@@ -299,7 +297,7 @@ class AdminGroupDetailScreen extends ConsumerWidget {
             AdminTile(
               title: s.name,
               subtitle: s.email,
-              color: roleColor(AppRole.student),
+              color: roleColor(context, AppRole.student),
               leadingText: s.initials,
               dimmed: !s.active,
               onTap: () => showPersonSheet(context, existing: s),

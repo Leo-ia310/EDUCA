@@ -40,6 +40,8 @@ class HomeOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onTap != null;
     final ink = Brutal.ink(context);
+    // Texto claro u oscuro según la luminosidad de la tarjeta.
+    final fg = color.computeLuminance() > 0.3 ? Colors.black : Colors.white;
 
     return Opacity(
       opacity: enabled ? 1 : 0.6,
@@ -123,7 +125,7 @@ class HomeOptionCard extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: context.textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
+                              color: fg,
                               fontWeight: FontWeight.w800,
                               height: 1.15,
                             ),

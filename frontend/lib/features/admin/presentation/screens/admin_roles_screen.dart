@@ -108,7 +108,7 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
                 title: p.name,
                 subtitle: p.email,
                 caption: p.active ? p.role.label : '${p.role.label} · Inactivo',
-                color: roleColor(p.role),
+                color: roleColor(context, p.role),
                 leadingText: p.initials,
                 dimmed: !p.active,
                 onTap: () => showPersonSheet(
@@ -145,7 +145,7 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = context.pastel(roleColor(role));
+    final s = context.pastel(roleColor(context, role));
     final ink = Brutal.ink(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),

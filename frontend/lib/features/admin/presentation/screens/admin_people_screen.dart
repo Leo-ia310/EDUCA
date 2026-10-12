@@ -106,7 +106,7 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
                   p.email.toLowerCase().contains(q),
             )
             .toList();
-    final color = roleColor(widget.role);
+    final color = roleColor(context, widget.role);
 
     return StudentDetailScaffold(
       title: _title,

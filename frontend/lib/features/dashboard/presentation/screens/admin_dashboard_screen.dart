@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/educa_bottom_nav.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -44,7 +45,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.badge_rounded,
         title: 'Maestros',
         subtitle: '${dir.byRole(AppRole.teacher).length} maestros y sus clases',
-        color: const Color(0xFF4C8DF5),
+        color: context.palette.accent,
         route: Routes.manageTeachers,
         art: art(Icons.school_rounded, Icons.edit_note_rounded),
       ),
@@ -52,7 +53,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.backpack_rounded,
         title: 'Alumnos',
         subtitle: '${dir.byRole(AppRole.student).length} alumnos inscritos',
-        color: const Color(0xFFF3993E),
+        color: context.palette.sun,
         route: Routes.adminStudents,
         art: art(Icons.face_rounded, Icons.menu_book_rounded),
       ),
@@ -60,7 +61,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.family_restroom_rounded,
         title: 'Padres',
         subtitle: '${dir.byRole(AppRole.parent).length} padres y tutores',
-        color: const Color(0xFF9A6BE0),
+        color: context.palette.grape,
         route: Routes.adminParents,
         art: art(Icons.favorite_rounded, Icons.face_3_rounded),
       ),
@@ -68,7 +69,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.meeting_room_rounded,
         title: 'Salones',
         subtitle: '${dir.groups.length} salones y años',
-        color: const Color(0xFF33B7A0),
+        color: context.palette.mint,
         route: Routes.adminGroups,
         art: art(Icons.groups_rounded, Icons.apartment_rounded),
       ),
@@ -76,7 +77,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.menu_book_rounded,
         title: 'Clases',
         subtitle: '${dir.classes.length} clases y asignaciones',
-        color: const Color(0xFF2FA869),
+        color: context.palette.success,
         route: Routes.adminClasses,
         art: art(Icons.calculate_rounded, Icons.science_rounded),
       ),
@@ -84,7 +85,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.admin_panel_settings_rounded,
         title: 'Roles y perfiles',
         subtitle: '${dir.people.length} perfiles registrados',
-        color: const Color(0xFFE5484D),
+        color: context.palette.coral,
         route: Routes.adminRoles,
         art: art(Icons.verified_user_rounded, Icons.key_rounded),
       ),
@@ -95,7 +96,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.grid_view_rounded,
         title: 'Notas',
         subtitle: 'Libro de calificaciones',
-        color: const Color(0xFF4C8DF5),
+        color: context.palette.accent,
         route: Routes.gradebook,
         art: const ArtCluster([
           ArtItem.text('A+', size: 56, top: 6, right: 30, angle: -0.2),
@@ -112,7 +113,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.payments_rounded,
         title: 'Pagos',
         subtitle: 'Recaudación y morosidad',
-        color: const Color(0xFF2FA869),
+        color: context.palette.success,
         route: Routes.paymentsDunning,
         art: art(Icons.credit_card_rounded, Icons.receipt_long_rounded),
       ),
@@ -120,7 +121,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         icon: Icons.picture_as_pdf_rounded,
         title: 'Boletines',
         subtitle: 'Boletín de cada alumno',
-        color: const Color(0xFFF3993E),
+        color: context.palette.sun,
         route: Routes.adminReportCards,
         art: art(Icons.description_rounded, Icons.workspace_premium_rounded),
       ),

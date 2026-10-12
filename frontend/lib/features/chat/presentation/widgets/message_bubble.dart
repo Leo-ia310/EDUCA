@@ -22,7 +22,8 @@ class MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final bg = isMine ? palette.accentDeep : palette.cardElevated;
-    final fg = isMine ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    final fg =
+        isMine ? palette.onAccent : Theme.of(context).colorScheme.onSurface;
     final align = isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final topRadius = groupWithPrevious ? 6.0 : 18.0;
 

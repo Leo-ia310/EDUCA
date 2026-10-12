@@ -46,7 +46,7 @@ class _AdminReportCardsScreenState
             AdminTile(
               title: s.name,
               subtitle: 'Ver boletín de notas',
-              color: roleColor(AppRole.student),
+              color: roleColor(context, AppRole.student),
               leadingText: s.initials,
               trailing: const Icon(Icons.picture_as_pdf_rounded),
               onTap: () => context.push(
