@@ -64,7 +64,7 @@ import '../../features/profile/presentation/student_profile_screen.dart';
 import '../../shared/models/app_role.dart';
 import '../widgets/empty_state.dart';
 import '../../features/admin/data/admin_permissions.dart';
-import '../widgets/not_found_screen.dart';
+import '../../features/error/presentation/screens/not_found_screen.dart';
 import 'route_paths.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -81,6 +81,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
       final loggedIn = auth.isAuthenticated;
+      final routingError = state.error != null;
       if (auth.loading && loc == Routes.splash) return null;
 
       // El splash siempre reenvía: al dashboard si hay sesión, o al login si no.
@@ -91,7 +92,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       final goingToAuth = loc == Routes.login || loc == Routes.forgotPassword;
 
-      if (!loggedIn && !goingToAuth) return Routes.login;
+      if (!loggedIn && !goingToAuth && !routingError) return Routes.login;
       if (loggedIn && goingToAuth) return auth.user!.activeRole.dashboardRoute;
 
       // Panel admin: un perfil sin permiso sobre la sección vuelve a su inicio.
