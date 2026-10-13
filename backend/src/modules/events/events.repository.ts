@@ -14,6 +14,17 @@ export class EventsRepository {
       "No se pudo crear el evento.",
     );
   }
+
+  async insertAnnouncement(payload: Record<string, unknown>) {
+    return expectSingle<Record<string, unknown>>(
+      db
+        .from("announcements")
+        .insert(payload)
+        .select("id, title, content, audience, published_at")
+        .single(),
+      "No se pudo crear el anuncio.",
+    );
+  }
 }
 
 export const eventsRepository = new EventsRepository();

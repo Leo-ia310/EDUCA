@@ -6,10 +6,10 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
-import '../../data/events_store.dart';
+import '../../../notifications/providers.dart';
+import '../../providers.dart';
 
-/// Formulario para crear un evento/anuncio institucional. Al guardar lo
-/// agrega al [eventsStoreProvider] y vuelve, quedando visible en Anuncios.
+/// Formulario para crear un evento/anuncio institucional.
 class CreateEventScreen extends ConsumerStatefulWidget {
   const CreateEventScreen({super.key});
 
@@ -53,106 +53,112 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    ref.read(eventsStoreProvider.notifier).add(
-          SchoolEvent(
+    try {
+      await ref.read(eventsRepositoryProvider).create(
             title: _titleCtrl.text.trim(),
             description: _descCtrl.text.trim(),
             date: _date,
             audience: _audience,
-          ),
-        );
-    setState(() => _loading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Evento publicado correctamente.')),
-    );
-    context.pop();
+          );
+      ref.invalidate(upcomingEventsViewProvider);
+      ref.invalidate(notificationsFeedProvider);
+      ref.invalidate(notificationsUnreadProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anuncio publicado correctamente.')),
+      );
+      context.pop();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo publicar: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     return StudentDetailScaffold(
-      title: 'Crear evento',
+      title: 'Crear anuncio',
       bottomNav: false,
       child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextFormField(
-                    controller: _titleCtrl,
-                    validator: (v) =>
-                        Validators.required(v, label: 'El título'),
-                    decoration: const InputDecoration(
-                      labelText: 'Título del evento',
-                      prefixIcon: Icon(Icons.title_rounded),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _descCtrl,
-                    minLines: 3,
-                    maxLines: 5,
-                    validator: (v) =>
-                        Validators.required(v, label: 'La descripción'),
-                    decoration: const InputDecoration(
-                      labelText: 'Descripción',
-                      alignLabelWithHint: true,
-                      prefixIcon: Icon(Icons.notes_rounded),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  InkWell(
-                    onTap: _pickDate,
-                    borderRadius: BorderRadius.circular(Radii.md),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Fecha',
-                        prefixIcon: Icon(Icons.calendar_month_rounded),
-                      ),
-                      child: Text(
-                        DateFormat("EEEE d 'de' MMMM y", 'es').format(_date),
-                        style: context.textTheme.bodyLarge,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  DropdownButtonFormField<String>(
-                    initialValue: _audience,
-                    decoration: const InputDecoration(
-                      labelText: 'Dirigido a',
-                      prefixIcon: Icon(Icons.groups_2_outlined),
-                    ),
-                    items: [
-                      for (final a in _audiences)
-                        DropdownMenuItem(value: a, child: Text(a)),
-                    ],
-                    onChanged: (v) => setState(() => _audience = v ?? _audience),
-                  ),
-                  const SizedBox(height: 26),
-                  FilledButton.icon(
-                    onPressed: _loading ? null : _submit,
-                    icon: _loading
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send_rounded),
-                    label: const Text('Publicar evento'),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'El evento aparecerá en Anuncios y en el panel de los '
-                    'destinatarios seleccionados.',
-                    style: context.textTheme.bodySmall
-                        ?.copyWith(color: palette.textMuted),
-                  ),
-                ],
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              controller: _titleCtrl,
+              validator: (v) => Validators.required(v, label: 'El título'),
+              decoration: const InputDecoration(
+                labelText: 'Título del anuncio',
+                prefixIcon: Icon(Icons.title_rounded),
               ),
             ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _descCtrl,
+              minLines: 3,
+              maxLines: 5,
+              validator: (v) => Validators.required(v, label: 'La descripción'),
+              decoration: const InputDecoration(
+                labelText: 'Descripción',
+                alignLabelWithHint: true,
+                prefixIcon: Icon(Icons.notes_rounded),
+              ),
+            ),
+            const SizedBox(height: 14),
+            InkWell(
+              onTap: _pickDate,
+              borderRadius: BorderRadius.circular(Radii.md),
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Fecha',
+                  prefixIcon: Icon(Icons.calendar_month_rounded),
+                ),
+                child: Text(
+                  DateFormat("EEEE d 'de' MMMM y", 'es').format(_date),
+                  style: context.textTheme.bodyLarge,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            DropdownButtonFormField<String>(
+              initialValue: _audience,
+              decoration: const InputDecoration(
+                labelText: 'Dirigido a',
+                prefixIcon: Icon(Icons.groups_2_outlined),
+              ),
+              items: [
+                for (final a in _audiences)
+                  DropdownMenuItem(value: a, child: Text(a)),
+              ],
+              onChanged: (v) => setState(() => _audience = v ?? _audience),
+            ),
+            const SizedBox(height: 26),
+            FilledButton.icon(
+              onPressed: _loading ? null : _submit,
+              icon: _loading
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_rounded),
+              label: const Text('Publicar anuncio'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'El anuncio aparecerá en Anuncios y en el panel de los '
+              'destinatarios seleccionados.',
+              style: context.textTheme.bodySmall
+                  ?.copyWith(color: palette.textMuted),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1798,7 +1798,7 @@
         },
         "responses": {
           "200": {
-            "description": "{ event }",
+            "description": "{ event, announcement, notifications }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2167,6 +2167,92 @@
         "responses": {
           "200": {
             "description": "{ ok: true }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/notifications/preferences": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Obtiene preferencias de notificacion del usuario",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/notifications/notifications.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ emailEnabled }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Actualiza preferencias de notificacion del usuario",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/notifications/notifications.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ emailEnabled? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ emailEnabled }",
             "content": {
               "application/json": {
                 "schema": {

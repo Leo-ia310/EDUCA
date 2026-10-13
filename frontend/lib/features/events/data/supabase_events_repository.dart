@@ -26,6 +26,10 @@ class SupabaseEventsRepository implements EventsRepository {
         .from('calendar_events')
         .select(_select)
         .eq('institution_id', institutionId)
+        .gte(
+          'start_at',
+          DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+        )
         .order('start_at');
     return (rows as List).cast<Map<String, dynamic>>().map(_fromRow).toList();
   }
@@ -41,7 +45,7 @@ class SupabaseEventsRepository implements EventsRepository {
       'title': title,
       'description': description,
       'date': date.toIso8601String(),
-      'audience': audience,
+      'audience': _audienceCode(audience),
     });
     final data = Map<String, dynamic>.from(response as Map);
     return _fromApi(Map<String, dynamic>.from(data['event'] as Map));
@@ -53,7 +57,7 @@ class SupabaseEventsRepository implements EventsRepository {
         description: row['description'] as String? ?? '',
         date: DateTime.tryParse(row['start_at'] as String? ?? '') ??
             DateTime.now(),
-        audience: row['audience'] as String? ?? 'Toda la institución',
+        audience: _audienceLabel(row['audience'] as String?),
       );
 
   SchoolEvent _fromApi(Map<String, dynamic> row) => SchoolEvent(
@@ -61,6 +65,32 @@ class SupabaseEventsRepository implements EventsRepository {
         title: row['title'] as String? ?? '',
         description: row['description'] as String? ?? '',
         date: DateTime.tryParse(row['date'] as String? ?? '') ?? DateTime.now(),
-        audience: row['audience'] as String? ?? 'Toda la institución',
+        audience: _audienceLabel(row['audience'] as String?),
       );
+
+  String _audienceCode(String label) {
+    switch (label) {
+      case 'Padres y tutores':
+        return 'parents';
+      case 'Estudiantes':
+        return 'students';
+      case 'Docentes':
+        return 'teachers';
+      default:
+        return 'all';
+    }
+  }
+
+  String _audienceLabel(String? code) {
+    switch (code) {
+      case 'parents':
+        return 'Padres y tutores';
+      case 'students':
+        return 'Estudiantes';
+      case 'teachers':
+        return 'Docentes';
+      default:
+        return 'Toda la institución';
+    }
+  }
 }

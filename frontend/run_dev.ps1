@@ -5,6 +5,7 @@
 #   .\run_dev.ps1              # ejecuta en el device por defecto
 #   .\run_dev.ps1 -Device windows
 #   .\run_dev.ps1 -Device chrome
+#   .\run_dev.ps1 -Device web-server # ejecuta en http://localhost:8080
 #
 # Lee las credenciales centralizadas en `backend/.env` (copia de backend/.env.example)
 # y arma los `--dart-define` que la app espera. Las claves viven en el backend;
@@ -12,7 +13,8 @@
 # -----------------------------------------------------------------------------
 
 param(
-    [string]$Device = ""
+    [string]$Device = "",
+    [int]$WebPort = 8080
 )
 
 # Credenciales centralizadas en el backend. Fallback a un .env local del frontend.
@@ -37,10 +39,11 @@ Get-Content $envPath | ForEach-Object {
 $url = $env_vars["SUPABASE_URL"]
 $key = $env_vars["SUPABASE_ANON_KEY"]
 $vapidKey = $env_vars["VAPID_PUBLIC_KEY"]
-$backendApiBaseUrl = $env_vars["BACKEND_API_BASE_URL"]
-if (-not $backendApiBaseUrl) {
-    $backendApiBaseUrl = "http://localhost:3000/api"
+$backendPort = $env_vars["PORT"]
+if (-not $backendPort) {
+    $backendPort = "3000"
 }
+$backendApiBaseUrl = "http://localhost:$backendPort/api"
 
 if (-not $url -or -not $key) {
     Write-Error "SUPABASE_URL o SUPABASE_ANON_KEY vacíos en .env"
@@ -61,6 +64,11 @@ if ($vapidKey) {
 if ($Device) {
     $flutterArgs += "-d"
     $flutterArgs += $Device
+
+    if ($Device -eq "web-server") {
+        $flutterArgs += "--web-port"
+        $flutterArgs += "$WebPort"
+    }
 }
 
 Write-Host "Arrancando Educa360 conectado a $url y backend $backendApiBaseUrl" -ForegroundColor Green

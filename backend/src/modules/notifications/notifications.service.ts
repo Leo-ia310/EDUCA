@@ -1,5 +1,7 @@
 import { assertNoDbError } from "../../lib/db";
 import { env } from "../../lib/env";
+import { HttpError } from "../../lib/errors";
+import { emailService } from "../auth/email.service";
 import { requiredString } from "../../validators/common.validators";
 import {
   notificationsRepository,
@@ -52,7 +54,7 @@ export class NotificationsService {
         | null;
       return {
         id: String(row.id),
-        channel: type?.code ?? "system",
+        channel: this.channelForCatalogCode(type?.code),
         title: row.title ?? "",
         body: row.message ?? "",
         data: row.data ?? {},
@@ -60,6 +62,25 @@ export class NotificationsService {
         receivedAt: row.created_at,
       };
     });
+  }
+
+  private channelForCatalogCode(code?: string) {
+    switch (code) {
+      case "MSG":
+        return "message";
+      case "TASK":
+        return "task";
+      case "GRADE":
+        return "grade";
+      case "ATT":
+        return "attendance";
+      case "ANN":
+        return "announcement";
+      case "PAY":
+        return "payment";
+      default:
+        return "system";
+    }
   }
 
   async markRead(ctx: AppContext, id?: number) {
@@ -82,6 +103,42 @@ export class NotificationsService {
     return { ok: true };
   }
 
+  async getPreferences(ctx: AppContext) {
+    const row = await this.repository.getPreferences(
+      ctx.userId,
+      ctx.institutionId,
+    );
+    return {
+      emailEnabled: row.email_notifications_enabled !== false,
+    };
+  }
+
+  async updatePreferences(
+    ctx: AppContext,
+    payload: Record<string, unknown>,
+  ) {
+    const update: Record<string, unknown> = {};
+    if (payload.emailEnabled != null) {
+      if (typeof payload.emailEnabled !== "boolean") {
+        throw new HttpError(
+          400,
+          "Preferencia de correo inválida.",
+          "validation_error",
+        );
+      }
+      update.email_notifications_enabled = payload.emailEnabled;
+    }
+    if (Object.keys(update).length === 0) return this.getPreferences(ctx);
+    const row = await this.repository.updatePreferences(
+      ctx.userId,
+      ctx.institutionId,
+      update,
+    );
+    return {
+      emailEnabled: row.email_notifications_enabled !== false,
+    };
+  }
+
   async notifyAudience(
     ctx: AppContext,
     audience: string,
@@ -90,24 +147,42 @@ export class NotificationsService {
     data: Record<string, unknown> = {},
   ) {
     const roleCodes = this.roleCodesForAudience(audience);
-    if (roleCodes.length === 0) return { created: 0, pushed: 0 };
+    if (roleCodes.length === 0) {
+      return { created: 0, pushed: 0, emailed: 0, emailFailed: 0 };
+    }
     const users = await this.repository.listUsersByRoleCodes(
       ctx.institutionId,
       roleCodes,
     );
+    const notificationTypeId = await this.repository.findNotificationTypeId(
+      "ANN",
+    );
+    const emailChannelId = await this.repository.findChannelId("EMAIL");
     let pushed = 0;
+    let emailed = 0;
+    let emailFailed = 0;
     for (const user of users) {
       const notification = await this.repository.insertNotification({
         institution_id: ctx.institutionId,
         user_id: user.id,
+        notification_type_id: notificationTypeId,
         title,
         message,
         data,
         read: false,
       });
       if (await this.sendPush(Number(notification.id))) pushed += 1;
+      const delivery = await this.sendEmailNotification(
+        Number(notification.id),
+        emailChannelId,
+        user,
+        title,
+        message,
+      );
+      if (delivery === "sent") emailed += 1;
+      if (delivery === "failed") emailFailed += 1;
     }
-    return { created: users.length, pushed };
+    return { created: users.length, pushed, emailed, emailFailed };
   }
 
   private roleCodesForAudience(audience: string) {
@@ -128,6 +203,66 @@ export class NotificationsService {
         return ["admin", "coordinator", "director"];
       default:
         return [];
+    }
+  }
+
+  private async sendEmailNotification(
+    notificationId: number,
+    channelId: number | null,
+    user: Record<string, unknown>,
+    title: string,
+    message: string,
+  ) {
+    if (user.email_notifications_enabled === false) return "skipped";
+    const destination = typeof user.email === "string" ? user.email.trim() : "";
+    if (!destination) return "skipped";
+    try {
+      const response = await emailService.sendAnnouncement(
+        destination,
+        String(user.full_name ?? "usuario"),
+        title,
+        message,
+      );
+      await this.recordDelivery({
+        notification_id: notificationId,
+        channel_id: channelId,
+        destination,
+        status: "sent",
+        provider: "resend",
+        external_ref: String(response.id ?? ""),
+        sent_at: new Date().toISOString(),
+      });
+      return "sent";
+    } catch (error) {
+      await this.recordDelivery({
+        notification_id: notificationId,
+        channel_id: channelId,
+        destination,
+        status: "failed",
+        provider: "resend",
+        error: error instanceof Error ? error.message : String(error),
+      });
+      console.error({
+        level: "warn",
+        event: "announcement_email_failed",
+        notificationId,
+        destination,
+        error,
+      });
+      return "failed";
+    }
+  }
+
+  private async recordDelivery(payload: Record<string, unknown>) {
+    try {
+      await this.repository.insertDelivery(payload);
+    } catch (error) {
+      console.error({
+        level: "warn",
+        event: "notification_delivery_log_failed",
+        payload,
+        error,
+      });
     }
   }
 

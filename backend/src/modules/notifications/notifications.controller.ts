@@ -27,6 +27,25 @@ export async function listNotifications(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function getNotificationPreferences(
+  req: AppRequest,
+  res: Response,
+) {
+  const data = await notificationsService.getPreferences(requireAppContext(req));
+  return res.json({ ok: true, data });
+}
+
+export async function updateNotificationPreferences(
+  req: AppRequest,
+  res: Response,
+) {
+  const data = await notificationsService.updatePreferences(
+    requireAppContext(req),
+    asRecord(req.body),
+  );
+  return res.json({ ok: true, data });
+}
+
 export async function markNotificationRead(req: AppRequest, res: Response) {
   const data = await notificationsService.markRead(
     requireAppContext(req),
