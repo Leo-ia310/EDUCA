@@ -16,6 +16,7 @@ final studentDashboardProvider =
     return StudentDashboardData.mock();
   }
   final studentId = await ref.watch(currentStudentIdProvider.future);
+  if (studentId == null) return StudentDashboardData.empty();
   return SupabaseDashboardDatasource(client, auth.institution!.id)
       .studentData(studentId);
 });
@@ -49,8 +50,7 @@ final parentDashboardProvider =
 });
 
 /// Datos del dashboard del administrador (a nivel institución).
-final adminDashboardProvider =
-    FutureProvider<AdminDashboardData>((ref) async {
+final adminDashboardProvider = FutureProvider<AdminDashboardData>((ref) async {
   final client = ref.watch(supabaseClientProvider);
   final auth = ref.watch(authControllerProvider);
   if (client == null || auth.institution == null) {

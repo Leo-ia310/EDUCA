@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../schedule/data/schedule_mock.dart';
 import '../../../schedule/providers.dart';
@@ -137,52 +138,61 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
         // Movimiento solo con las flechas laterales (sin deslizar).
         SizedBox(
           height: _cardHeight,
-          child: Stack(
-            children: [
-              LayoutBuilder(
-                builder: (context, c) => OverflowBox(
-                  maxWidth: c.maxWidth + 32,
-                  minWidth: c.maxWidth + 32,
-                  maxHeight: _cardHeight,
-                  child: SizedBox(
-                    height: _cardHeight,
-                    width: c.maxWidth + 32,
-                    child: PageView.builder(
-                      key: ValueKey(_selected),
-                      controller: _controller,
-                      physics: const NeverScrollableScrollPhysics(),
-                      clipBehavior: Clip.none,
-                      itemCount: slots.length,
-                      itemBuilder: (context, i) {
-                        final slot = slots[i];
-                        return _CarouselItem(
-                          controller: _controller,
-                          index: i,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: slot.isBreak
-                                ? _BreakCard(slot: slot)
-                                : _ClassCard(
-                                    slot: slot,
-                                    current: _selected == _todayIdx &&
-                                        !_weekend &&
-                                        nowMin >=
-                                            DateUtilsX.hhmmToMinutes(
-                                              slot.start,
-                                            ) &&
-                                        nowMin <
-                                            DateUtilsX.hhmmToMinutes(slot.end),
-                                  ),
+          child: slots.isEmpty
+              ? const EmptyState(
+                  icon: Icons.event_available_rounded,
+                  title: 'Sin clases para este día',
+                  subtitle: 'No hay clases programadas para este día.',
+                )
+              : Stack(
+                  children: [
+                    LayoutBuilder(
+                      builder: (context, c) => OverflowBox(
+                        maxWidth: c.maxWidth + 32,
+                        minWidth: c.maxWidth + 32,
+                        maxHeight: _cardHeight,
+                        child: SizedBox(
+                          height: _cardHeight,
+                          width: c.maxWidth + 32,
+                          child: PageView.builder(
+                            key: ValueKey(_selected),
+                            controller: _controller,
+                            physics: const NeverScrollableScrollPhysics(),
+                            clipBehavior: Clip.none,
+                            itemCount: slots.length,
+                            itemBuilder: (context, i) {
+                              final slot = slots[i];
+                              return _CarouselItem(
+                                controller: _controller,
+                                index: i,
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 6),
+                                  child: slot.isBreak
+                                      ? _BreakCard(slot: slot)
+                                      : _ClassCard(
+                                          slot: slot,
+                                          current: _selected == _todayIdx &&
+                                              !_weekend &&
+                                              nowMin >=
+                                                  DateUtilsX.hhmmToMinutes(
+                                                    slot.start,
+                                                  ) &&
+                                              nowMin <
+                                                  DateUtilsX.hhmmToMinutes(
+                                                      slot.end,),
+                                        ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
+                    _CarouselArrows(
+                        controller: _controller, count: slots.length,),
+                  ],
                 ),
-              ),
-              _CarouselArrows(controller: _controller, count: slots.length),
-            ],
-          ),
         ),
       ],
     );
@@ -357,7 +367,9 @@ class _DayPill extends StatelessWidget {
                       ? Text(
                           'Hoy',
                           style: context.textTheme.labelSmall?.copyWith(
-                            color: selected ? palette.onAccent : palette.accentDeep,
+                            color: selected
+                                ? palette.onAccent
+                                : palette.accentDeep,
                             fontWeight: FontWeight.w800,
                           ),
                         )

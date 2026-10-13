@@ -826,13 +826,22 @@ class _StudentAssignmentsResolved extends ConsumerWidget {
     this.builder = StudentAssignmentsScreen.new,
   });
 
-  final FutureProvider<int> idProvider;
+  final FutureProvider<int?> idProvider;
   final Widget Function({Key? key, required int studentId}) builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(idProvider).when(
-          data: (id) => builder(studentId: id),
+          data: (id) => id == null
+              ? const Scaffold(
+                  body: EmptyState(
+                    icon: Icons.person_off_rounded,
+                    title: 'Sin estudiante vinculado',
+                    subtitle:
+                        'Tu usuario todavía no tiene un perfil de alumno asociado.',
+                  ),
+                )
+              : builder(studentId: id),
           loading: () =>
               const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),

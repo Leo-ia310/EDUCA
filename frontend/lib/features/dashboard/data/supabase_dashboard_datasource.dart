@@ -25,6 +25,8 @@ class SupabaseDashboardDatasource {
       _studentGrades(studentId),
       _weightedAverage(studentId),
       _classmates(studentId),
+      _studentGradeGroup(studentId),
+      _attendancePct(studentId: studentId),
     ]);
 
     final classes = results[0] as List<_ClassInfo>;
@@ -33,14 +35,18 @@ class SupabaseDashboardDatasource {
     final grades = results[3] as List<GradeBrief>;
     final avg = results[4] as double;
     final classmates = results[5] as List<String>;
+    final gradeGroup = results[6] as String;
+    final attendancePct = results[7] as double;
 
     final subjects = classes
-        .map((c) => SubjectProgress(
-              name: c.subject,
-              teacher: c.teacher ?? 'Docente',
-              progress: (avg / 100).clamp(0, 1).toDouble(),
-              icon: iconForSubject(c.subject),
-            ),)
+        .map(
+          (c) => SubjectProgress(
+            name: c.subject,
+            teacher: c.teacher ?? 'Docente',
+            progress: (avg / 100).clamp(0, 1).toDouble(),
+            icon: iconForSubject(c.subject),
+          ),
+        )
         .toList();
 
     final pending = tasks.where((t) => t.status == TaskStatus.pending).length;
@@ -54,6 +60,8 @@ class SupabaseDashboardDatasource {
       averageScore: double.parse((avg / 10).toStringAsFixed(1)),
       classmates: classmates.take(4).toList(),
       classmatesExtra: classmates.length > 4 ? classmates.length - 4 : 0,
+      attendanceRate: attendancePct / 100,
+      gradeGroup: gradeGroup,
     );
   }
 
@@ -67,8 +75,7 @@ class SupabaseDashboardDatasource {
     final classes = (classRows as List).cast<Map<String, dynamic>>();
     if (classes.isEmpty) return TeacherDashboardData.empty();
 
-    final classIds =
-        classes.map((c) => (c['id'] as num).toInt()).toList();
+    final classIds = classes.map((c) => (c['id'] as num).toInt()).toList();
     final groupIds = classes
         .map((c) => (c['group_id'] as num?)?.toInt())
         .whereType<int>()
@@ -84,12 +91,15 @@ class SupabaseDashboardDatasource {
     ]);
 
     final myClasses = classes
-        .map((c) => TeacherClass(
-              name: (c['subjects'] as Map?)?['name'] as String? ?? 'Clase',
-              room: (c['groups'] as Map?)?['name'] as String? ?? '',
-              icon: iconForSubject(
-                  (c['subjects'] as Map?)?['name'] as String? ?? '',),
-            ),)
+        .map(
+          (c) => TeacherClass(
+            name: (c['subjects'] as Map?)?['name'] as String? ?? 'Clase',
+            room: (c['groups'] as Map?)?['name'] as String? ?? '',
+            icon: iconForSubject(
+              (c['subjects'] as Map?)?['name'] as String? ?? '',
+            ),
+          ),
+        )
         .toList();
 
     return TeacherDashboardData(
@@ -103,7 +113,9 @@ class SupabaseDashboardDatasource {
   }
 
   Future<List<UpcomingAssignment>> _teacherAssignments(
-      List<int> classIds, List<int> groupIds,) async {
+    List<int> classIds,
+    List<int> groupIds,
+  ) async {
     final rows = await _c
         .from('assignments')
         .select('id, title, due_at, class_id, classes(groups(name))')
@@ -116,8 +128,7 @@ class SupabaseDashboardDatasource {
 
     final totalByGroup = <int, int>{};
     for (final g in groupIds) {
-      final enr =
-          await _c.from('enrollments').select('id').eq('group_id', g);
+      final enr = await _c.from('enrollments').select('id').eq('group_id', g);
       totalByGroup[g] = (enr as List).length;
     }
     final ids = list.map((a) => (a['id'] as num).toInt()).toList();
@@ -170,7 +181,8 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('grades')
         .select(
-            'score, evaluation_id, created_at, students(persons(first_name, last_name)), evaluations(max_score)',)
+          'score, evaluation_id, created_at, students(persons(first_name, last_name)), evaluations(max_score)',
+        )
         .inFilter('evaluation_id', evalTitles.keys.toList())
         .not('score', 'is', null)
         .order('created_at', ascending: false)
@@ -181,8 +193,8 @@ class SupabaseDashboardDatasource {
           (m['students'] as Map?)?['persons'] as Map<String, dynamic>?;
       final name =
           '${person?['first_name'] ?? ''} ${person?['last_name'] ?? ''}'.trim();
-      final max = ((m['evaluations'] as Map?)?['max_score'] as num?)?.toDouble() ??
-          100;
+      final max =
+          ((m['evaluations'] as Map?)?['max_score'] as num?)?.toDouble() ?? 100;
       final raw = (m['score'] as num?)?.toDouble() ?? 0;
       final title = evalTitles[(m['evaluation_id'] as num).toInt()] ?? '';
       return RecentGrade(
@@ -200,8 +212,7 @@ class SupabaseDashboardDatasource {
         .select('id')
         .inFilter('class_id', classIds)
         .filter('deleted_at', 'is', null);
-    final ids =
-        (assigns as List).map((a) => (a['id'] as num).toInt()).toList();
+    final ids = (assigns as List).map((a) => (a['id'] as num).toInt()).toList();
     if (ids.isEmpty) return 0;
     final statuses = await _taskStatusCodes();
     int? caliId;
@@ -225,7 +236,9 @@ class SupabaseDashboardDatasource {
         .eq('group_id', groupIds.first)
         .limit(5);
     return (rows as List)
-        .map((r) => (r['students'] as Map?)?['persons'] as Map<String, dynamic>?)
+        .map(
+          (r) => (r['students'] as Map?)?['persons'] as Map<String, dynamic>?,
+        )
         .whereType<Map<String, dynamic>>()
         .map((p) => '${p['first_name'] ?? ''} ${p['last_name'] ?? ''}'.trim())
         .where((n) => n.isNotEmpty)
@@ -242,10 +255,11 @@ class SupabaseDashboardDatasource {
     final kids = (psRows as List).map((r) {
       final m = r as Map<String, dynamic>;
       final p = (m['students'] as Map?)?['persons'] as Map<String, dynamic>?;
-      final name =
-          '${p?['first_name'] ?? ''} ${p?['last_name'] ?? ''}'.trim();
-      return _ChildRef((m['student_id'] as num).toInt(),
-          name.isEmpty ? 'Hijo' : name,);
+      final name = '${p?['first_name'] ?? ''} ${p?['last_name'] ?? ''}'.trim();
+      return _ChildRef(
+        (m['student_id'] as num).toInt(),
+        name.isEmpty ? 'Hijo' : name,
+      );
     }).toList();
     if (kids.isEmpty) return ParentDashboardData.empty();
 
@@ -285,7 +299,8 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('grades')
         .select(
-            'score, created_at, evaluations(title, max_score)',)
+          'score, created_at, evaluations(title, max_score)',
+        )
         .eq('student_id', studentId)
         .not('score', 'is', null)
         .order('created_at', ascending: false)
@@ -300,7 +315,8 @@ class SupabaseDashboardDatasource {
         tag: 'Nueva Nota',
         title: eval?['title'] as String? ?? 'Evaluación',
         score: '${(raw / max * 10).toStringAsFixed(1)}/10',
-        timeAgo: _relativeWhen(DateTime.tryParse(m['created_at'] as String? ?? '')),
+        timeAgo:
+            _relativeWhen(DateTime.tryParse(m['created_at'] as String? ?? '')),
         progress: pct.clamp(0, 1).toDouble(),
       );
     }).toList();
@@ -371,7 +387,8 @@ class SupabaseDashboardDatasource {
         .toList();
     if (vals.isEmpty) return 0;
     return double.parse(
-        (vals.reduce((a, b) => a + b) / vals.length / 10).toStringAsFixed(1),);
+      (vals.reduce((a, b) => a + b) / vals.length / 10).toStringAsFixed(1),
+    );
   }
 
   Future<List<Announcement>> _announcements() async {
@@ -383,8 +400,12 @@ class SupabaseDashboardDatasource {
         .order('published_at', ascending: false)
         .limit(5);
     return (rows as List)
-        .map((r) => Announcement(
-            r['title'] as String? ?? 'Anuncio', r['content'] as String? ?? '',),)
+        .map(
+          (r) => Announcement(
+            r['title'] as String? ?? 'Anuncio',
+            r['content'] as String? ?? '',
+          ),
+        )
         .toList();
   }
 
@@ -406,8 +427,7 @@ class SupabaseDashboardDatasource {
     return (rows as List).map((r) {
       final m = r as Map<String, dynamic>;
       final p = m['persons'] as Map<String, dynamic>?;
-      final name =
-          '${p?['first_name'] ?? ''} ${p?['last_name'] ?? ''}'.trim();
+      final name = '${p?['first_name'] ?? ''} ${p?['last_name'] ?? ''}'.trim();
       final classesList = (m['classes'] as List?) ?? const [];
       final subject = classesList.isEmpty
           ? 'Docente'
@@ -419,7 +439,7 @@ class SupabaseDashboardDatasource {
   }
 
   /// % de asistencia REAL = presentes (código PRE, id 1) / total de registros.
-  /// Si no hay registros aún, asume 100% (estudiante) / 94% (institución).
+  /// Si no hay registros aún, devuelve 0 para no inventar datos.
   Future<double> _attendancePct({int? studentId}) async {
     var query = _c
         .from('attendances')
@@ -428,11 +448,13 @@ class SupabaseDashboardDatasource {
     if (studentId != null) query = query.eq('student_id', studentId);
     final rows = await query;
     final list = rows as List;
-    if (list.isEmpty) return studentId != null ? 100.0 : 94.0;
+    if (list.isEmpty) return 0;
     const presentStatusId = 1; // catalog_attendance_statuses code 'PRE'
     final present = list
-        .where((r) => (r['attendance_status_id'] as num?)?.toInt() ==
-            presentStatusId,)
+        .where(
+          (r) =>
+              (r['attendance_status_id'] as num?)?.toInt() == presentStatusId,
+        )
         .length;
     return double.parse((100.0 * present / list.length).toStringAsFixed(1));
   }
@@ -464,7 +486,8 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('classes')
         .select('id, subjects(name), teachers(persons(first_name, last_name))')
-        .inFilter('id', classIds);
+        .inFilter('id', classIds)
+        .eq('institution_id', institutionId);
     return (rows as List).map((r) {
       final m = r as Map<String, dynamic>;
       final person =
@@ -481,35 +504,46 @@ class SupabaseDashboardDatasource {
   }
 
   Future<List<ScheduleSlot>> _todaySchedule(List<int> classIds) async {
-    final today = DateTime.now().weekday; // 1=Lun..7=Dom (coincide con weekday_id)
+    final today =
+        DateTime.now().weekday; // 1=Lun..7=Dom (coincide con weekday_id)
     final rows = await _c
         .from('schedules')
         .select(
-            'start_time, end_time, weekday_id, classes(subjects(name)), classrooms(name)',)
+          'start_time, end_time, weekday_id, classes(subjects(name), teachers(persons(first_name, last_name))), classrooms(name)',
+        )
         .inFilter('class_id', classIds)
+        .eq('institution_id', institutionId)
         .eq('weekday_id', today)
         .order('start_time');
     return (rows as List).map((r) {
       final m = r as Map<String, dynamic>;
-      final subject = ((m['classes'] as Map?)?['subjects'] as Map?)?['name']
-              as String? ??
-          'Clase';
+      final subject =
+          ((m['classes'] as Map?)?['subjects'] as Map?)?['name'] as String? ??
+              'Clase';
+      final person =
+          ((m['classes'] as Map?)?['teachers'] as Map?)?['persons'] as Map?;
+      final teacher =
+          '${person?['first_name'] ?? ''} ${person?['last_name'] ?? ''}'.trim();
       return ScheduleSlot(
         startTime: _hhmm(m['start_time'] as String?),
         endTime: _hhmm(m['end_time'] as String?),
         subject: subject,
         room: (m['classrooms'] as Map?)?['name'] as String? ?? '',
+        teacher: teacher.isEmpty ? null : teacher,
         icon: iconForSubject(subject),
       );
     }).toList();
   }
 
   Future<List<TaskBrief>> _studentAssignments(
-      List<int> classIds, int studentId,) async {
+    List<int> classIds,
+    int studentId,
+  ) async {
     final rows = await _c
         .from('assignments')
         .select('id, title, due_at, classes(subjects(name))')
         .inFilter('class_id', classIds)
+        .eq('institution_id', institutionId)
         .eq('published', true)
         .filter('deleted_at', 'is', null)
         .order('due_at')
@@ -540,9 +574,7 @@ class SupabaseDashboardDatasource {
           ? TaskStatus.pending
           : (code == 'CALI'
               ? TaskStatus.reviewed
-              : (code == 'ENTR'
-                  ? TaskStatus.submitted
-                  : TaskStatus.pending));
+              : (code == 'ENTR' ? TaskStatus.submitted : TaskStatus.pending));
       return TaskBrief(
         title: m['title'] as String? ?? 'Tarea',
         subject: subject,
@@ -555,16 +587,18 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('grades')
         .select(
-            'score, evaluations(title, max_score, classes(subjects(name)))',)
+          'score, evaluations(title, max_score, classes(subjects(name)))',
+        )
         .eq('student_id', studentId)
+        .eq('institution_id', institutionId)
         .not('score', 'is', null)
         .limit(5);
     return (rows as List).map((r) {
       final m = r as Map<String, dynamic>;
       final eval = m['evaluations'] as Map<String, dynamic>?;
-      final subject =
-          ((eval?['classes'] as Map?)?['subjects'] as Map?)?['name'] as String? ??
-              'Materia';
+      final subject = ((eval?['classes'] as Map?)?['subjects'] as Map?)?['name']
+              as String? ??
+          'Materia';
       final max = (eval?['max_score'] as num?)?.toDouble() ?? 100;
       final raw = (m['score'] as num?)?.toDouble() ?? 0;
       final score10 = max == 0 ? 0.0 : (raw / max * 10);
@@ -582,7 +616,8 @@ class SupabaseDashboardDatasource {
     final rows = await _c
         .from('student_weighted_averages')
         .select('weighted_pct')
-        .eq('student_id', studentId);
+        .eq('student_id', studentId)
+        .eq('institution_id', institutionId);
     final vals = (rows as List)
         .map((r) => (r['weighted_pct'] as num?)?.toDouble())
         .whereType<double>()
@@ -595,7 +630,8 @@ class SupabaseDashboardDatasource {
     final groups = await _c
         .from('enrollments')
         .select('group_id')
-        .eq('student_id', studentId);
+        .eq('student_id', studentId)
+        .eq('institution_id', institutionId);
     final groupIds = (groups as List)
         .map((e) => (e['group_id'] as num?)?.toInt())
         .whereType<int>()
@@ -605,13 +641,29 @@ class SupabaseDashboardDatasource {
         .from('enrollments')
         .select('students(persons(first_name, last_name))')
         .inFilter('group_id', groupIds)
+        .eq('institution_id', institutionId)
         .neq('student_id', studentId);
     return (rows as List)
-        .map((r) => (r['students'] as Map?)?['persons'] as Map<String, dynamic>?)
+        .map(
+          (r) => (r['students'] as Map?)?['persons'] as Map<String, dynamic>?,
+        )
         .whereType<Map<String, dynamic>>()
         .map((p) => '${p['first_name'] ?? ''} ${p['last_name'] ?? ''}'.trim())
         .where((n) => n.isNotEmpty)
         .toList();
+  }
+
+  Future<String> _studentGradeGroup(int studentId) async {
+    final rows = await _c
+        .from('enrollments')
+        .select('groups(name)')
+        .eq('student_id', studentId)
+        .eq('institution_id', institutionId)
+        .limit(1);
+    final list = rows as List;
+    if (list.isEmpty) return '';
+    final group = (list.first as Map<String, dynamic>)['groups'] as Map?;
+    return group?['name'] as String? ?? '';
   }
 
   Map<int, String>? _statusCache;
@@ -631,8 +683,18 @@ class SupabaseDashboardDatasource {
       t == null ? '' : (t.length >= 5 ? t.substring(0, 5) : t);
 
   static const _months = [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
   ];
 
   static String _shortDate(DateTime d) => '${d.day} ${_months[d.month - 1]}';
@@ -669,7 +731,9 @@ IconData iconForSubject(String name) {
     return Icons.science_rounded;
   }
   if (n.contains('biolog') || n.contains('celul')) return Icons.biotech_rounded;
-  if (n.contains('litera') || n.contains('lengua')) return Icons.menu_book_rounded;
+  if (n.contains('litera') || n.contains('lengua')) {
+    return Icons.menu_book_rounded;
+  }
   if (n.contains('geograf')) return Icons.public_rounded;
   if (n.contains('geometr')) return Icons.architecture_rounded;
   return Icons.menu_book_rounded;
