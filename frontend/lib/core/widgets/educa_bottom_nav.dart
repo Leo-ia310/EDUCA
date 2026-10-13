@@ -77,11 +77,6 @@ List<EducaTab> navTabsForRole(AppRole role) {
           route: Routes.adminDashboard,
         ),
         EducaTab(
-          icon: Icons.groups_rounded,
-          label: 'Maestros',
-          route: Routes.manageTeachers,
-        ),
-        EducaTab(
           icon: Icons.campaign_rounded,
           label: 'Anuncios',
           route: Routes.announcements,
