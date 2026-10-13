@@ -9,7 +9,8 @@ import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/glass.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
-import '../../../attendance/data/mock_attendance_data.dart';
+import '../../../assignments/providers.dart';
+import '../../../attendance/domain/entities.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../domain/grades_repository.dart';
@@ -28,24 +29,33 @@ class TeacherGradebookScreen extends ConsumerStatefulWidget {
 
 class _TeacherGradebookScreenState
     extends ConsumerState<TeacherGradebookScreen> {
-  int _classId = 101;
+  int? _classId;
   String? _periodId;
 
   @override
   Widget build(BuildContext context) {
     final periodsAsync = ref.watch(periodsProvider);
+    final classesAsync = ref.watch(teacherClassesProvider);
     // Periodos sin ids repetidos; el seleccionado debe existir en la lista
     // (si no, se usa el vigente o el primero) para no romper el dropdown.
     final periods = _uniquePeriods(periodsAsync.valueOrNull ?? const []);
-    final periodId = periods.any((p) => p.id == _periodId)
-        ? _periodId!
+    final classes = classesAsync.valueOrNull ?? const [];
+    final selectedClassId = classes.any((c) => c.classId == _classId)
+        ? _classId
+        : classes.isEmpty
+            ? null
+            : classes.first.classId;
+    final selectedPeriodId = periods.any((p) => p.id == _periodId)
+        ? _periodId
         : periods.isEmpty
-            ? (_periodId ?? 'p2')
+            ? null
             : periods
                 .firstWhere((p) => p.isCurrent, orElse: () => periods.first)
                 .id;
-    final args = GradebookArgs(classId: _classId, periodId: periodId);
-    final data = ref.watch(gradebookProvider(args));
+    final args = selectedClassId == null || selectedPeriodId == null
+        ? null
+        : GradebookArgs(classId: selectedClassId, periodId: selectedPeriodId);
+    final data = args == null ? null : ref.watch(gradebookProvider(args));
     final scaleAsync = ref.watch(defaultScaleProvider);
 
     return StudentDetailScaffold(
@@ -58,35 +68,22 @@ class _TeacherGradebookScreenState
         child: Column(
           children: [
             _Filters(
-              classId: _classId,
-              periodId: periodId,
+              classId: selectedClassId,
+              periodId: selectedPeriodId,
+              classes: classes,
               periods: periods,
               onClass: (v) => setState(() => _classId = v),
               onPeriod: (v) => setState(() => _periodId = v),
             ),
             Expanded(
-              child: data.when(
-                loading: () => const SkeletonList(),
-                error: (e, _) => ErrorStateView(message: '$e'),
-                data: (matrix) {
-                  if (matrix.evaluations.isEmpty) {
-                    return const EmptyState(
-                      icon: Icons.assessment_rounded,
-                      title: 'Sin evaluaciones',
-                      subtitle:
-                          'Crea una tarea o examen para calificar aquí.',
-                    );
-                  }
-                  return scaleAsync.when(
-                    loading: () => const SkeletonList(),
-                    error: (e, _) => ErrorStateView(message: '$e'),
-                    data: (scale) => _Matrix(
-                      matrix: matrix,
-                      scale: scale,
-                      args: args,
-                    ),
-                  );
-                },
+              child: _GradebookBody(
+                classesLoading: classesAsync.isLoading,
+                periodsLoading: periodsAsync.isLoading,
+                hasClasses: classes.isNotEmpty,
+                hasPeriods: periods.isNotEmpty,
+                data: data,
+                scaleAsync: scaleAsync,
+                args: args,
               ),
             ),
           ],
@@ -108,13 +105,15 @@ class _Filters extends StatelessWidget {
   const _Filters({
     required this.classId,
     required this.periodId,
+    required this.classes,
     required this.periods,
     required this.onClass,
     required this.onPeriod,
   });
 
-  final int classId;
-  final String periodId;
+  final int? classId;
+  final String? periodId;
+  final List<ClassSessionBrief> classes;
   final List<AcademicPeriod> periods;
   final ValueChanged<int> onClass;
   final ValueChanged<String> onPeriod;
@@ -132,10 +131,11 @@ class _Filters extends StatelessWidget {
             Expanded(
               child: DropdownButton<int>(
                 value: classId,
+                hint: const Text('Sin clases'),
                 underline: const SizedBox.shrink(),
                 isExpanded: true,
                 items: [
-                  for (final c in AttendanceMock.todaysClasses)
+                  for (final c in classes)
                     DropdownMenuItem(
                       value: c.classId,
                       child: Text(
@@ -145,9 +145,11 @@ class _Filters extends StatelessWidget {
                       ),
                     ),
                 ],
-                onChanged: (v) {
-                  if (v != null) onClass(v);
-                },
+                onChanged: classes.isEmpty
+                    ? null
+                    : (v) {
+                        if (v != null) onClass(v);
+                      },
               ),
             ),
             const SizedBox(width: 12),
@@ -173,6 +175,70 @@ class _Filters extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _GradebookBody extends StatelessWidget {
+  const _GradebookBody({
+    required this.classesLoading,
+    required this.periodsLoading,
+    required this.hasClasses,
+    required this.hasPeriods,
+    required this.data,
+    required this.scaleAsync,
+    required this.args,
+  });
+
+  final bool classesLoading;
+  final bool periodsLoading;
+  final bool hasClasses;
+  final bool hasPeriods;
+  final AsyncValue<GradebookMatrix>? data;
+  final AsyncValue<GradingScale> scaleAsync;
+  final GradebookArgs? args;
+
+  @override
+  Widget build(BuildContext context) {
+    if (classesLoading || periodsLoading) return const SkeletonList();
+    if (!hasClasses) {
+      return const EmptyState(
+        icon: Icons.school_rounded,
+        title: 'Sin clases',
+        subtitle: 'Asigna clases al maestro para usar el libro de notas.',
+      );
+    }
+    if (!hasPeriods) {
+      return const EmptyState(
+        icon: Icons.calendar_month_rounded,
+        title: 'Sin períodos académicos',
+        subtitle: 'Crea un período académico para registrar calificaciones.',
+      );
+    }
+    final data = this.data;
+    final args = this.args;
+    if (data == null || args == null) return const SkeletonList();
+    return data.when(
+      loading: () => const SkeletonList(),
+      error: (e, _) => ErrorStateView(message: '$e'),
+      data: (matrix) {
+        if (matrix.evaluations.isEmpty) {
+          return const EmptyState(
+            icon: Icons.assessment_rounded,
+            title: 'Sin evaluaciones',
+            subtitle: 'Crea una tarea o examen para calificar aquí.',
+          );
+        }
+        return scaleAsync.when(
+          loading: () => const SkeletonList(),
+          error: (e, _) => ErrorStateView(message: '$e'),
+          data: (scale) => _Matrix(
+            matrix: matrix,
+            scale: scale,
+            args: args,
+          ),
+        );
+      },
     );
   }
 }
@@ -258,8 +324,7 @@ class _Matrix extends ConsumerWidget {
                               ref: ref,
                               evaluation: e,
                               studentId: s.studentId,
-                              existing:
-                                  matrix.grades[s.studentId]?[e.id],
+                              existing: matrix.grades[s.studentId]?[e.id],
                             ),
                           ),
                       ],
@@ -311,18 +376,22 @@ class _Matrix extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
-            Text(evaluation.title,
-                style: Theme.of(ctx)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),),
+            Text(
+              evaluation.title,
+              style: Theme.of(ctx)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: ctrl,
               keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,),
+                decimal: true,
+              ),
               decoration: InputDecoration(
-                labelText: 'Puntaje sobre ${evaluation.maxScore.toStringAsFixed(0)}',
+                labelText:
+                    'Puntaje sobre ${evaluation.maxScore.toStringAsFixed(0)}',
               ),
             ),
             const SizedBox(height: 20),

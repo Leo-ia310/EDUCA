@@ -252,7 +252,8 @@ class SupabaseGradesRepository implements GradesRepository {
     final rows = await _c
         .from('grades')
         .select(
-            'evaluation_id, student_id, score, notes, evaluations!inner(academic_period_id)',)
+          'evaluation_id, student_id, score, notes, evaluations!inner(academic_period_id)',
+        )
         .eq('student_id', studentId)
         .eq('institution_id', institutionId);
     return (rows as List)
@@ -496,9 +497,20 @@ class SupabaseGradesRepository implements GradesRepository {
         .map(_evalFromRow)
         .toList();
 
-    final classRow =
-        await _c.from('classes').select('group_id').eq('id', classId).single();
-    final groupId = classRow['group_id'];
+    final classRow = await _c
+        .from('classes')
+        .select('group_id')
+        .eq('id', classId)
+        .eq('institution_id', institutionId)
+        .maybeSingle();
+    final groupId = classRow?['group_id'];
+    if (groupId == null) {
+      return GradebookMatrix(
+        evaluations: evaluations,
+        students: const [],
+        grades: const {},
+      );
+    }
 
     final enrollments = await _c
         .from('enrollments')
@@ -537,7 +549,10 @@ class SupabaseGradesRepository implements GradesRepository {
     }
 
     return GradebookMatrix(
-        evaluations: evaluations, students: students, grades: grades,);
+      evaluations: evaluations,
+      students: students,
+      grades: grades,
+    );
   }
 
   @override
