@@ -251,7 +251,7 @@ class SupabaseDashboardDatasource {
 
     final children = [
       for (var i = 0; i < kids.length; i++)
-        ChildBrief(kids[i].name, selected: i == 0),
+        ChildBrief(kids[i].name, id: kids[i].id, selected: i == 0),
     ];
     final childId = kids.first.id;
     final classIds = await _classIdsForStudent(childId);

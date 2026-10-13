@@ -94,6 +94,15 @@ class AdminDashboardScreen extends ConsumerWidget {
         perm: Perm.classesView,
       ),
       (
+        icon: Icons.schedule_rounded,
+        title: 'Horarios',
+        subtitle: 'Horas, recesos y turnos',
+        color: context.palette.accent,
+        route: Routes.adminSchedules,
+        art: art(Icons.access_time_filled_rounded, Icons.free_breakfast_rounded),
+        perm: Perm.schedulesView,
+      ),
+      (
         icon: Icons.admin_panel_settings_rounded,
         title: 'Roles y perfiles',
         subtitle: '${dir.people.length} perfiles registrados',

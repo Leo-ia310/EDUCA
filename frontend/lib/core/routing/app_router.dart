@@ -64,6 +64,8 @@ import '../../features/profile/presentation/student_profile_screen.dart';
 import '../../shared/models/app_role.dart';
 import '../widgets/empty_state.dart';
 import '../../features/admin/data/admin_permissions.dart';
+import '../../features/schedule/presentation/screens/parent_schedule_screen.dart';
+import '../../features/admin/presentation/screens/admin_schedules_screen.dart';
 import '../../features/error/presentation/screens/not_found_screen.dart';
 import 'route_paths.dart';
 
@@ -205,6 +207,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RoleGuard(
           allowed: {AppRole.parent},
           child: ParentTeachersScreen(),
+        ),
+      ),
+
+      // ----- Horario de los hijos (padre) -----
+      GoRoute(
+        path: Routes.parentSchedule,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.parent},
+          child: ParentScheduleScreen(),
         ),
       ),
 
@@ -549,6 +560,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RoleGuard(
           allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
           child: AdminClassesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminSchedules,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminSchedulesScreen(),
         ),
       ),
       GoRoute(

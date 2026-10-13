@@ -81,6 +81,19 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     ]),
                   ),
                   (
+                    icon: Icons.calendar_month_rounded,
+                    title: 'Horario',
+                    subtitle: 'Clases y recesos de tus hijos',
+                    color: context.palette.sun,
+                    route: Routes.parentSchedule as String?,
+                    art: const ArtCluster([
+                      ArtItem.icon(Icons.access_time_filled_rounded,
+                          size: 64, top: 4, right: 40, angle: 0.2,),
+                      ArtItem.icon(Icons.free_breakfast_rounded,
+                          size: 48, top: 50, right: 0, angle: -0.3,),
+                    ]),
+                  ),
+                  (
                     icon: Icons.credit_card_rounded,
                     title: 'Pagos',
                     subtitle: 'Cuotas y recibos',

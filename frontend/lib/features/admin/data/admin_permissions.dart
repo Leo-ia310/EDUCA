@@ -12,6 +12,7 @@ abstract final class Perm {
   static const studentsView = 'students.view';
   static const teachersView = 'teachers.view';
   static const classesView = 'classes.view';
+  static const schedulesView = 'schedules.view';
   static const paymentsView = 'payments.view';
   static const reportsView = 'reports.view';
   static const rolesView = 'roles.view';
@@ -66,6 +67,12 @@ const adminPermissionModules = <AdminPermissionModule>[
     _edit,
     _delete,
   ]),
+  AdminPermissionModule('schedules', 'Horarios', Icons.schedule_rounded, [
+    _view,
+    _create,
+    _edit,
+    _delete,
+  ]),
   AdminPermissionModule('payments', 'Pagos', Icons.payments_rounded, [
     _view,
     _create,
@@ -110,6 +117,7 @@ String? permissionForAdminRoute(String path) {
       path.startsWith(Routes.adminClasses)) {
     return Perm.classesView;
   }
+  if (path.startsWith(Routes.adminSchedules)) return Perm.schedulesView;
   if (path.startsWith(Routes.adminRoles)) return Perm.rolesView;
   if (path.startsWith(Routes.adminReportCards) ||
       path.startsWith(Routes.gradebook)) {

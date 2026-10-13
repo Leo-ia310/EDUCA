@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
@@ -9,25 +10,43 @@ import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../schedule/data/schedule_mock.dart';
+import '../../../schedule/providers.dart';
 
 /// Sección "Horario" del home: píldoras de días (lun–vie, con la fecha y
 /// "Hoy" en el actual) y un carrusel de tarjetas verticales con las clases
 /// del día seleccionado (siempre una centrada, asomando las vecinas).
-class HomeScheduleSection extends StatefulWidget {
+class HomeScheduleSection extends ConsumerStatefulWidget {
   const HomeScheduleSection({super.key});
 
   @override
-  State<HomeScheduleSection> createState() => _HomeScheduleSectionState();
+  ConsumerState<HomeScheduleSection> createState() =>
+      _HomeScheduleSectionState();
 }
 
-class _HomeScheduleSectionState extends State<HomeScheduleSection> {
+class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
   static const _cardHeight = 226.0;
 
-  late final int _todayIdx = ScheduleMock.todayIndex();
+  /// Hoy dentro de los días mostrados (si no, el lunes).
+  int get _todayIdx => _realToday < _dayCount ? _realToday : 0;
+  int get _realToday => DateTime.now().weekday - 1;
   late int _selected = _todayIdx;
   late PageController _controller = _controllerFor(_selected);
 
-  bool get _weekend => DateTime.now().weekday > 5;
+  /// Horario real (o de ejemplo en demo); vacío mientras carga.
+  Map<int, List<ClassSlot>> get _byDay =>
+      ref.read(weeklySlotsProvider).valueOrNull ?? const {};
+
+  /// Lun–Vie siempre; sábado/domingo solo si el admin los programó.
+  int get _dayCount => _dayCountOf(_byDay);
+
+  static int _dayCountOf(Map<int, List<ClassSlot>> data) =>
+      data.entries
+          .where((e) => e.value.isNotEmpty)
+          .fold<int>(4, (m, e) => e.key > m ? e.key : m) +
+      1;
+
+  /// Hoy no está entre los días mostrados (fin de semana sin clases).
+  bool get _weekend => _realToday >= _dayCount;
 
   /// Fecha del día `i` (0 = lunes) de la semana en curso.
   DateTime _dateFor(int i) {
@@ -43,7 +62,7 @@ class _HomeScheduleSectionState extends State<HomeScheduleSection> {
     if (day == _todayIdx && !_weekend) {
       final now = DateTime.now();
       final nowMin = now.hour * 60 + now.minute;
-      final slots = ScheduleMock.byDay[day] ?? const <ClassSlot>[];
+      final slots = _byDay[day] ?? const <ClassSlot>[];
       final i = slots.indexWhere(
         (s) => !s.isBreak && nowMin < DateUtilsX.hhmmToMinutes(s.end),
       );
@@ -70,7 +89,21 @@ class _HomeScheduleSectionState extends State<HomeScheduleSection> {
 
   @override
   Widget build(BuildContext context) {
-    final slots = ScheduleMock.byDay[_selected] ?? const <ClassSlot>[];
+    // Al llegar el horario real, hoy arranca en la clase en curso.
+    ref.listen(weeklySlotsProvider, (prev, next) {
+      if (prev?.valueOrNull == null && next.valueOrNull != null) {
+        final old = _controller;
+        setState(() {
+          _selected = _todayIdx;
+          _controller = _controllerFor(_selected);
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+      }
+    });
+    final weekly = ref.watch(weeklySlotsProvider).valueOrNull ??
+        const <int, List<ClassSlot>>{};
+    final dayCount = _dayCountOf(weekly);
+    final slots = weekly[_selected] ?? const <ClassSlot>[];
     final now = DateTime.now();
     final nowMin = now.hour * 60 + now.minute;
 
@@ -85,11 +118,11 @@ class _HomeScheduleSectionState extends State<HomeScheduleSection> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              for (var i = 0; i < 5; i++) ...[
-                if (i > 0) const SizedBox(width: 8),
+              for (var i = 0; i < dayCount; i++) ...[
+                if (i > 0) SizedBox(width: dayCount > 5 ? 4 : 8),
                 Expanded(
                   child: _DayPill(
-                    label: ScheduleMock.days[i],
+                    label: ScheduleMock.weekDays[i],
                     date: _dateFor(i),
                     isToday: i == _todayIdx && !_weekend,
                     selected: i == _selected,

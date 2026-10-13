@@ -1,6 +1,7 @@
 import 'package:educa360/core/routing/route_paths.dart';
 import 'package:educa360/features/admin/data/admin_permissions.dart';
 import 'package:educa360/features/admin/data/admin_profile.dart';
+import 'package:educa360/features/admin/data/admin_schedule.dart';
 import 'package:educa360/shared/models/app_role.dart';
 import 'package:educa360/shared/models/app_user.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,6 +44,10 @@ void main() {
     );
     expect(permissionForAdminRoute(Routes.adminClasses), Perm.classesView);
     expect(permissionForAdminRoute(Routes.adminRoles), Perm.rolesView);
+    expect(
+      permissionForAdminRoute(Routes.adminSchedules),
+      Perm.schedulesView,
+    );
     expect(permissionForAdminRoute(Routes.paymentsDunning), Perm.paymentsView);
     expect(permissionForAdminRoute(Routes.adminReportCards), Perm.reportsView);
     expect(permissionForAdminRoute(Routes.adminDashboard), isNull);
@@ -78,5 +83,34 @@ void main() {
     expect(p.customized, isTrue);
     expect(p.permissions, ['students.view']);
     expect(p.active, isTrue);
+  });
+
+  test('AdminScheduleEntry distingue clase y receso', () {
+    final cls = AdminScheduleEntry.fromJson(const {
+      'id': 1,
+      'kind': 'class',
+      'weekdayId': 2,
+      'startTime': '08:00',
+      'endTime': '09:00',
+      'subject': 'Matemáticas',
+      'teacher': 'Laura Díaz',
+      'room': 'Aula 1',
+      'shift': 'morning',
+    });
+    expect(cls.isBreak, isFalse);
+    expect(weekdayLabel(cls.weekdayId), 'Martes');
+    expect(shiftLabel(cls.shift), 'Mañana');
+
+    final brk = AdminScheduleEntry.fromJson(const {
+      'id': 2,
+      'kind': 'break',
+      'weekdayId': 2,
+      'startTime': '10:00',
+      'endTime': '10:20',
+      'subject': 'Receso',
+    });
+    expect(brk.isBreak, isTrue);
+    expect(brk.groupId, isNull);
+    expect(shiftLabel(null), '');
   });
 }

@@ -11,6 +11,7 @@ class ClassSlot {
     required this.icon,
     required this.color,
     this.isBreak = false,
+    this.shift,
   });
 
   final String start;
@@ -23,6 +24,9 @@ class ClassSlot {
 
   /// Receso (sin maestro ni aula).
   final bool isBreak;
+
+  /// Turno (`morning`, `afternoon`, `evening`) si el admin lo indicó.
+  final String? shift;
 }
 
 /// Horario semanal de demostración, indexado por día (0 = Lunes .. 4 = Viernes).
@@ -30,6 +34,26 @@ class ScheduleMock {
   ScheduleMock._();
 
   static const days = <String>['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
+
+  /// Semana completa (el horario real puede incluir sábado y domingo).
+  static const weekDays = <String>[
+    'Lun',
+    'Mar',
+    'Mié',
+    'Jue',
+    'Vie',
+    'Sáb',
+    'Dom',
+  ];
+  static const weekDaysLong = <String>[
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
+  ];
   static const daysLong = <String>[
     'Lunes',
     'Martes',

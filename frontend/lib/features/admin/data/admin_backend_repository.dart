@@ -5,6 +5,8 @@ import '../../../core/network/paginated_response.dart';
 import '../../../shared/models/app_role.dart';
 import '../../auth/presentation/auth_controller.dart';
 import 'admin_profile.dart';
+import 'admin_schedule.dart';
+import 'demo_schedules.dart';
 import 'school_directory.dart';
 
 typedef JsonMap = Map<String, dynamic>;
@@ -170,6 +172,42 @@ class AdminBackendRepository {
     return AdminProfile.fromJson(
       ((data as Map)['profile'] as Map).cast<String, dynamic>(),
     );
+  }
+
+  Future<List<AdminScheduleEntry>> listSchedules({
+    String? groupId,
+    String? weekdayId,
+  }) async {
+    final data = await _api.get(
+      '/schedules',
+      queryParameters: {'groupId': groupId, 'weekdayId': weekdayId},
+    );
+    final map = (data as Map).cast<String, dynamic>();
+    return [
+      for (final row in (map['schedules'] as List? ?? const []))
+        AdminScheduleEntry.fromJson((row as Map).cast<String, dynamic>()),
+    ];
+  }
+
+  /// Crea el horario en uno o varios días (`weekdayIds`) y devuelve lo creado.
+  Future<List<AdminScheduleEntry>> createSchedules(JsonMap payload) async {
+    final data = await _api.post('/schedules', data: payload);
+    final map = (data as Map).cast<String, dynamic>();
+    return [
+      for (final row in (map['schedules'] as List? ?? const []))
+        AdminScheduleEntry.fromJson((row as Map).cast<String, dynamic>()),
+    ];
+  }
+
+  Future<AdminScheduleEntry> updateSchedule(String id, JsonMap payload) async {
+    final data = await _api.patch('/schedules/$id', data: payload);
+    return AdminScheduleEntry.fromJson(
+      ((data as Map)['schedule'] as Map).cast<String, dynamic>(),
+    );
+  }
+
+  Future<void> deleteSchedule(String id) async {
+    await _api.delete('/schedules/$id');
   }
 
   Future<SchoolDirectory> listDirectory({int? institutionId}) async {
@@ -389,6 +427,14 @@ final adminProfilesProvider =
   final repo = ref.watch(adminBackendRepositoryProvider);
   if (repo == null) return const [];
   return repo.listProfiles();
+});
+
+final adminSchedulesProvider =
+    FutureProvider.autoDispose<List<AdminScheduleEntry>>((ref) async {
+  final repo = ref.watch(adminBackendRepositoryProvider);
+  // Sin servidor (demo): horarios en memoria.
+  if (repo == null) return ref.watch(demoSchedulesProvider);
+  return repo.listSchedules();
 });
 
 final adminSchoolDirectoryProvider =

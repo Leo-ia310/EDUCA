@@ -9,6 +9,7 @@ class Routes {
   static const teacherDashboard = '/teacher/dashboard';
   static const myClasses = '/teacher/classes';
   static const parentTeachers = '/parent/teachers';
+  static const parentSchedule = '/parent/schedule';
   static const parentChildren = '/parent/children';
   static const parentAttendance = '/parent/attendance';
   static const parentDashboard = '/parent/dashboard';
@@ -31,6 +32,7 @@ class Routes {
   static const adminParents = '/admin/parents';
   static const adminGroups = '/admin/groups';
   static const adminClasses = '/admin/classes';
+  static const adminSchedules = '/admin/schedules';
   static const adminRoles = '/admin/roles';
   static const adminReportCards = '/admin/report-cards';
   static const developer = '/developer';

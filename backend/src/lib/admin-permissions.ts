@@ -10,6 +10,7 @@ export const ADMIN_PERMISSION_MODULES = [
   { key: "students", label: "Alumnos", actions: ["view", "create", "edit", "delete"] },
   { key: "teachers", label: "Maestros", actions: ["view", "create", "edit", "delete"] },
   { key: "classes", label: "Clases", actions: ["view", "create", "edit", "delete"] },
+  { key: "schedules", label: "Horarios", actions: ["view", "create", "edit", "delete"] },
   { key: "payments", label: "Pagos", actions: ["view", "create", "edit", "cancel"] },
   { key: "reports", label: "Reportes", actions: ["view", "generate", "download"] },
   { key: "roles", label: "Roles y permisos", actions: ["view", "create", "edit", "delete"] },

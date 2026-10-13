@@ -229,6 +229,7 @@ class TeacherMockData {
 class ChildBrief {
   const ChildBrief(
     this.name, {
+    this.id,
     this.selected = false,
     this.grade = '',
     this.age,
@@ -237,6 +238,9 @@ class ChildBrief {
     this.subjects = const [],
   });
   final String name;
+
+  /// Id del estudiante (conectado); null en datos de ejemplo.
+  final int? id;
   final bool selected;
 
   /// Grado y grupo ("4° Grado A").

@@ -13,6 +13,7 @@ import { filesRoutes } from "./modules/files/files.routes";
 import { gradesRoutes } from "./modules/grades/grades.routes";
 import { notificationsRoutes } from "./modules/notifications/notifications.routes";
 import { paymentsRoutes } from "./modules/payments/payments.routes";
+import { schedulesRoutes } from "./modules/schedules/schedules.routes";
 import { reportsRoutes } from "./modules/reports/reports.routes";
 import { syncRoutes } from "./modules/sync/sync.routes";
 import {
@@ -59,6 +60,7 @@ export function createApp() {
   app.use("/api/notifications", authenticatedRateLimit, notificationsRoutes);
   app.use("/api/payments", authenticatedRateLimit, paymentsRoutes);
   app.use("/api/reports", authenticatedRateLimit, reportsRoutes);
+  app.use("/api/schedules", authenticatedRateLimit, schedulesRoutes);
   app.use("/api/sync", authenticatedRateLimit, syncRoutes);
 
   app.use(notFoundHandler);

@@ -8,12 +8,30 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
+import '../../../admin/data/admin_schedule.dart';
 import '../../data/schedule_mock.dart';
+import '../../providers.dart';
 
 /// Horario semanal. Alimenta la pestaña "Horario" del bottom nav y los
 /// accesos "Ver Horario" / "Modificar Horarios".
 class ScheduleScreen extends ConsumerStatefulWidget {
-  const ScheduleScreen({super.key});
+  const ScheduleScreen({
+    super.key,
+    this.forChild = false,
+    this.studentId,
+    this.title = 'Horario',
+    this.header,
+  });
+
+  /// Vista del padre: horario del hijo [studentId] (en vez del propio).
+  final bool forChild;
+  final int? studentId;
+  final String title;
+
+  /// Contenido opcional sobre el selector de día (p. ej. elegir hijo).
+  final Widget? header;
 
   @override
   ConsumerState<ScheduleScreen> createState() => _ScheduleScreenState();
@@ -21,27 +39,52 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   late int _selectedDay = ScheduleMock.todayIndex();
+  String? _shift;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final slots = ScheduleMock.byDay[_selectedDay] ?? const <ClassSlot>[];
+    final weekly = widget.forChild
+        ? ref.watch(childWeeklySlotsProvider(widget.studentId))
+        : ref.watch(weeklySlotsProvider);
+    final byDay = weekly.valueOrNull ?? const <int, List<ClassSlot>>{};
+    // Lun–Vie siempre; sábado/domingo solo si el admin los programó.
+    final dayCount = byDay.entries
+            .where((e) => e.value.isNotEmpty)
+            .fold<int>(4, (m, e) => e.key > m ? e.key : m) +
+        1;
+    final selectedDay = _selectedDay < dayCount ? _selectedDay : 0;
+    // Turnos presentes en el horario: si hay más de uno se puede filtrar.
+    final shifts = {
+      for (final day in byDay.values)
+        for (final s in day)
+          if (s.shift != null) s.shift!,
+    };
+    final activeShift = shifts.contains(_shift) ? _shift : null;
+    final slots = [
+      for (final s in byDay[selectedDay] ?? const <ClassSlot>[])
+        if (activeShift == null || s.shift == null || s.shift == activeShift) s,
+    ];
 
     return StudentDetailScaffold(
-      title: 'Horario',
+      title: widget.title,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.header != null) ...[
+            widget.header!,
+            const SizedBox(height: 12),
+          ],
           // Selector de día
           SizedBox(
             height: 76,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
-              itemCount: ScheduleMock.days.length,
+              itemCount: dayCount,
               separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (context, i) {
-                final selected = i == _selectedDay;
+                final selected = i == selectedDay;
                 final isToday = i == ScheduleMock.todayIndex();
                 return GestureDetector(
                   onTap: () => setState(() => _selectedDay = i),
@@ -59,7 +102,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          ScheduleMock.days[i],
+                          ScheduleMock.weekDays[i],
                           style: context.textTheme.labelMedium?.copyWith(
                             color: selected
                                 ? palette.onAccent
@@ -87,10 +130,43 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               },
             ),
           ),
+          if (shifts.length > 1) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                BrutalPill(
+                  compact: true,
+                  label: 'Todos los turnos',
+                  selected: activeShift == null,
+                  onTap: () => setState(() => _shift = null),
+                ),
+                for (final code in scheduleShifts.map((s) => s.$1))
+                  if (shifts.contains(code))
+                    BrutalPill(
+                      compact: true,
+                      label: shiftLabel(code),
+                      selected: activeShift == code,
+                      onTap: () => setState(() => _shift = code),
+                    ),
+              ],
+            ),
+          ],
           const SizedBox(height: 20),
-          SectionHeader(title: ScheduleMock.daysLong[_selectedDay]),
+          SectionHeader(title: ScheduleMock.weekDaysLong[selectedDay]),
           const SizedBox(height: 8),
-          if (slots.isEmpty)
+          if (weekly.isLoading && byDay.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 24),
+              child: SkeletonList(),
+            )
+          else if (weekly.hasError && byDay.isEmpty)
+            ErrorStateView(
+              message: '${weekly.error}',
+              onRetry: () => ref.invalidate(weeklySlotsProvider),
+            )
+          else if (slots.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 40),
               child: EmptyState(
