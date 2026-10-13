@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
@@ -40,12 +41,43 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
   AppRole? _filter;
   String _query = '';
 
+  Future<void> _openPersonSheet(
+    BuildContext context, {
+    Person? existing,
+  }) async {
+    await showPersonSheet(context, existing: existing, pickRole: true);
+    if (!mounted) return;
+    ref.invalidate(adminSchoolDirectoryProvider);
+    await ref.read(adminSchoolDirectoryProvider.future);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Conectado: directorio del backend; demo: el de memoria.
-    final SchoolDirectory dir =
-        ref.watch(adminSchoolDirectoryProvider).valueOrNull ??
-            ref.watch(schoolDirectoryProvider);
+    final repo = ref.watch(adminBackendRepositoryProvider);
+    final remote =
+        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
+    final fallbackDir = ref.watch(schoolDirectoryProvider);
+
+    if (remote != null) {
+      return remote.when(
+        loading: () => const StudentDetailScaffold(
+          title: 'Roles y perfiles',
+          bottomNav: false,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => StudentDetailScaffold(
+          title: 'Roles y perfiles',
+          bottomNav: false,
+          child: ErrorStateView(message: '$error'),
+        ),
+        data: (dir) => _buildContent(context, dir),
+      );
+    }
+
+    return _buildContent(context, fallbackDir);
+  }
+
+  Widget _buildContent(BuildContext context, SchoolDirectory dir) {
     final palette = context.palette;
     final q = _query.trim().toLowerCase();
     final profiles = dir.people
@@ -67,7 +99,7 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
         children: [
           BrutalButton(
             expand: true,
-            onTap: () => showPersonSheet(context, pickRole: true),
+            onTap: () => _openPersonSheet(context),
             icon: Icons.person_add_alt_1_rounded,
             label: 'Nuevo perfil',
           ),
@@ -115,11 +147,7 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
                 color: roleColor(context, p.role),
                 leadingText: p.initials,
                 dimmed: !p.active,
-                onTap: () => showPersonSheet(
-                  context,
-                  existing: p,
-                  pickRole: true,
-                ),
+                onTap: () => _openPersonSheet(context, existing: p),
               ),
           const SizedBox(height: 4),
           Text(

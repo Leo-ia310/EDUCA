@@ -89,10 +89,17 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
     super.dispose();
   }
 
+  static const _backendPeopleRoles = {
+    AppRole.student,
+    AppRole.teacher,
+    AppRole.parent,
+  };
+
   bool _validate() {
     final name = _name.text.trim();
     final email = _email.text.trim();
     final connected = ref.read(adminBackendRepositoryProvider) != null;
+    final unsupportedRole = connected && !_backendPeopleRoles.contains(_role);
     setState(() {
       _nameError = name.isEmpty ? 'El nombre es obligatorio' : null;
       _emailError = connected && email.isEmpty
@@ -104,8 +111,14 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
       _passwordError = widget.existing == null && _password.text.length < 6
           ? 'Mínimo 6 caracteres'
           : null;
+      _saveError = unsupportedRole
+          ? 'Este formulario solo crea perfiles de alumno, maestro o padre. Los roles administrativos se gestionan desde Usuarios.'
+          : null;
     });
-    return _nameError == null && _emailError == null && _passwordError == null;
+    return _nameError == null &&
+        _emailError == null &&
+        _passwordError == null &&
+        !unsupportedRole;
   }
 
   void _hydrateTeacherClassIds(SchoolDirectory dir) {
@@ -241,12 +254,13 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
   @override
   Widget build(BuildContext context) {
     final repo = ref.watch(adminBackendRepositoryProvider);
-    final remote =
-        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
+    final connected = repo != null;
+    final remote = connected ? ref.watch(adminSchoolDirectoryProvider) : null;
     final SchoolDirectory dir =
         remote?.asData?.value ?? ref.watch(schoolDirectoryProvider);
     _hydrateTeacherClassIds(dir);
     final students = dir.byRole(AppRole.student);
+    final roleOptions = connected ? _backendPeopleRoles : AppRole.values;
 
     String classLabel(SchoolClass c) =>
         '${c.subject} · ${dir.group(c.groupId)?.name ?? '—'}';
@@ -260,7 +274,7 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
             spacing: 4,
             runSpacing: 4,
             children: [
-              for (final r in AppRole.values)
+              for (final r in roleOptions)
                 BrutalPill(
                   compact: true,
                   label: r.label,
