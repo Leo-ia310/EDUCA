@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/presentation/auth_controller.dart';
-import '../routing/route_paths.dart';
-import '../theme/app_theme.dart';
-import 'brutal.dart';
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../../core/routing/route_paths.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brutal.dart';
 
 /// Pantalla 404: ruta inexistente o no disponible. Siempre ofrece una salida
 /// válida: volver atrás (si hay historial) o ir al inicio del rol actual.
@@ -42,6 +42,18 @@ class _NotFoundScreenState extends ConsumerState<NotFoundScreen>
   void _goHome() {
     final user = ref.read(authControllerProvider).user;
     context.go(user?.activeRole.dashboardRoute ?? Routes.login);
+  }
+
+  String _homeLabel() {
+    final user = ref.read(authControllerProvider).user;
+    final role = user?.activeRole;
+    if (role == null) return 'Ir al inicio de sesión';
+    return switch (role) {
+      // Director y coordinador comparten el panel administrativo.
+      _ when role.dashboardRoute == Routes.adminDashboard =>
+        'Ir al dashboard administrativo',
+      _ => 'Ir al dashboard ${role.label.toLowerCase()}',
+    };
   }
 
   void _goBack() {
@@ -163,9 +175,7 @@ class _NotFoundScreenState extends ConsumerState<NotFoundScreen>
                     expand: true,
                     onTap: _goHome,
                     icon: hasSession ? Icons.home_rounded : Icons.login_rounded,
-                    label: hasSession
-                        ? 'Ir a mi inicio'
-                        : 'Ir al inicio de sesión',
+                    label: _homeLabel(),
                   ),
                   const SizedBox(height: 12),
                   BrutalButton(

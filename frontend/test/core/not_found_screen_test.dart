@@ -1,5 +1,5 @@
 import 'package:educa360/core/theme/app_theme.dart';
-import 'package:educa360/core/widgets/not_found_screen.dart';
+import 'package:educa360/features/error/presentation/screens/not_found_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
