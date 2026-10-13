@@ -358,7 +358,7 @@ final adminUsersProvider =
 });
 
 final adminSchoolDirectoryProvider =
-    FutureProvider<SchoolDirectory>((ref) async {
+    FutureProvider.autoDispose<SchoolDirectory>((ref) async {
   final repo = ref.watch(adminBackendRepositoryProvider);
   if (repo == null) return ref.watch(schoolDirectoryProvider);
   return repo.listDirectory();

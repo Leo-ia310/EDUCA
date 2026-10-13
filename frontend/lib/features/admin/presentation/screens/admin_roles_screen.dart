@@ -8,6 +8,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/person_form.dart';
@@ -41,7 +42,10 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dir = ref.watch(schoolDirectoryProvider);
+    // Conectado: directorio del backend; demo: el de memoria.
+    final SchoolDirectory dir =
+        ref.watch(adminSchoolDirectoryProvider).valueOrNull ??
+            ref.watch(schoolDirectoryProvider);
     final palette = context.palette;
     final q = _query.trim().toLowerCase();
     final profiles = dir.people

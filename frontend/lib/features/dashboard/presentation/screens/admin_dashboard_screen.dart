@@ -10,6 +10,7 @@ import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../admin/data/school_directory.dart';
+import '../../../admin/data/admin_backend_repository.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
 import '../widgets/home_hero.dart';
@@ -33,7 +34,10 @@ class AdminDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user!;
-    final dir = ref.watch(schoolDirectoryProvider);
+    // Conectado: contadores del backend; demo: directorio en memoria.
+    final remote = ref.watch(adminSchoolDirectoryProvider);
+    final SchoolDirectory dir =
+        remote.valueOrNull ?? ref.watch(schoolDirectoryProvider);
 
     Widget art(IconData a, IconData b) => ArtCluster([
           ArtItem.icon(a, size: 64, top: 4, right: 40, angle: 0.25),

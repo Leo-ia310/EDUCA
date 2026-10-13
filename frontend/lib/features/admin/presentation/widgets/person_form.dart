@@ -215,7 +215,26 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
   Future<void> _delete() async {
     final p = widget.existing!;
     if (!await confirmDelete(context, p.name)) return;
-    ref.read(schoolDirectoryProvider.notifier).removePerson(p.id);
+    final repo = ref.read(adminBackendRepositoryProvider);
+    final resource = switch (p.role) {
+      AppRole.teacher => 'teachers',
+      AppRole.student => 'students',
+      AppRole.parent => 'parents',
+      _ => null,
+    };
+    if (repo != null && resource != null) {
+      try {
+        await repo.archivePeople(resource, p.id);
+        ref.invalidate(adminPeopleByRoleProvider(p.role));
+        ref.invalidate(adminSchoolDirectoryProvider);
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _saveError = '$e'.replaceFirst('Bad state: ', ''));
+        return;
+      }
+    } else {
+      ref.read(schoolDirectoryProvider.notifier).removePerson(p.id);
+    }
     if (mounted) Navigator.of(context).pop();
   }
 
