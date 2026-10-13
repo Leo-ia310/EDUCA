@@ -29,8 +29,8 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> signIn({
-    required Institution institution,
+  Future<AuthSession> signIn({
+    Institution? institution,
     required String emailOrUsername,
     required String password,
   }) async {
@@ -42,20 +42,26 @@ class MockAuthRepository implements AuthRepository {
     final role = _roleFromEmail(email) ?? AppRole.student;
     _current = AppUser(
       id: 'demo-${role.code}',
-      institutionId: institution.id,
+      institutionId: (institution ?? _demoInstitution).id,
       email: email.contains('@') ? email : '$email@$role.educa',
       fullName: _displayNameFor(role),
       firstName: _firstNameFor(role),
       roles: [role],
       activeRole: role,
     );
-    return _current!;
+    return AuthSession(
+      user: _current!,
+      institution: institution ?? _demoInstitution,
+    );
   }
 
   AppRole? _roleFromEmail(String email) {
     // "developer" es un alias de acceso al panel técnico (superadmin). Usa rol
     // admin para pasar el RoleGuard del panel de desarrollador.
-    if (email.endsWith('@developer.educa') || email.startsWith('developer')) {
+    if (email == 'demo2' ||
+        email.startsWith('demo2@') ||
+        email.endsWith('@developer.educa') ||
+        email.startsWith('developer')) {
       return AppRole.admin;
     }
     if (email.endsWith('@teacher.educa') || email.startsWith('teacher')) {
@@ -93,7 +99,11 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser?> currentUser() async => _current;
+  Future<AuthSession?> currentSession() async {
+    final user = _current;
+    if (user == null) return null;
+    return AuthSession(user: user, institution: _demoInstitution);
+  }
 
   @override
   Future<void> sendPasswordReset(String email) async {

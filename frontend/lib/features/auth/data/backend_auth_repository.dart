@@ -23,6 +23,9 @@ class BackendAuthRepository implements AuthRepository {
 
   static const _refreshTokenKey = 'auth.backend.refresh_token';
   static const _accessTokenKey = 'auth.backend.access_token';
+  static const _institutionIdKey = 'auth.backend.institution_id';
+  static const _institutionCodeKey = 'auth.backend.institution_code';
+  static const _institutionNameKey = 'auth.backend.institution_name';
 
   @override
   Future<Institution> resolveInstitution(String code) async {
@@ -40,8 +43,8 @@ class BackendAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> signIn({
-    required Institution institution,
+  Future<AuthSession> signIn({
+    Institution? institution,
     required String emailOrUsername,
     required String password,
   }) async {
@@ -49,7 +52,8 @@ class BackendAuthRepository implements AuthRepository {
       final data = await _api.post(
         '/auth/login',
         data: {
-          'institutionCode': institution.code,
+          if (institution != null && institution.code.trim().isNotEmpty)
+            'institutionCode': institution.code,
           'username': emailOrUsername.trim(),
           'password': password,
         },
@@ -67,7 +71,14 @@ class BackendAuthRepository implements AuthRepository {
         accessToken: accessToken,
       );
       await _persistSession(authResponse.session);
-      return _userFromMap((map['user'] as Map).cast<String, dynamic>());
+      final resolvedInstitution = _institutionFromMap(
+        (map['institution'] as Map).cast<String, dynamic>(),
+      );
+      await _persistInstitution(resolvedInstitution);
+      return AuthSession(
+        user: _userFromMap((map['user'] as Map).cast<String, dynamic>()),
+        institution: resolvedInstitution,
+      );
     } on AuthFailure {
       rethrow;
     } catch (e) {
@@ -88,7 +99,7 @@ class BackendAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser?> currentUser() async {
+  Future<AuthSession?> currentSession() async {
     final session = _supabase.auth.currentSession ?? await _restoreSession();
     final authUser = session?.user;
     if (authUser == null) return null;
@@ -112,8 +123,11 @@ class BackendAuthRepository implements AuthRepository {
     );
     if (roles.isEmpty) return null;
 
+    final institution = await _institutionForUser(me);
+    if (institution == null) return null;
+
     final fullName = me['full_name'] as String? ?? 'Usuario';
-    return AppUser(
+    final user = AppUser(
       id: me['id'].toString(),
       institutionId: (me['institution_id'] as num).toInt(),
       email: me['email'] as String? ?? authUser.email ?? '',
@@ -123,6 +137,7 @@ class BackendAuthRepository implements AuthRepository {
       roles: roles,
       activeRole: roles.first,
     );
+    return AuthSession(user: user, institution: institution);
   }
 
   Future<void> refreshSession(String refreshToken) async {
@@ -152,6 +167,36 @@ class BackendAuthRepository implements AuthRepository {
       },
       authenticated: false,
     );
+  }
+
+  Institution _institutionFromMap(Map<String, dynamic> map) {
+    return Institution(
+      id: int.tryParse('${map['id']}') ?? 0,
+      code: map['code']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+    );
+  }
+
+  Future<Institution?> _institutionForUser(Map<String, dynamic> user) async {
+    final id = (user['institution_id'] as num?)?.toInt();
+    final persistedId = _prefs.getInt(_institutionIdKey);
+    if (id != null && persistedId == id) {
+      final code = _prefs.getString(_institutionCodeKey);
+      final name = _prefs.getString(_institutionNameKey);
+      if (code != null && name != null) {
+        return Institution(id: id, code: code, name: name);
+      }
+    }
+    if (id == null) return null;
+    final institution = await _supabase
+        .from('institutions')
+        .select('id, code, name, logo_url, primary_color, timezone, active')
+        .eq('id', id)
+        .maybeSingle();
+    if (institution == null) return null;
+    final resolved = Institution.fromJson(institution);
+    await _persistInstitution(resolved);
+    return resolved;
   }
 
   AppUser _userFromMap(Map<String, dynamic> map) {
@@ -196,6 +241,12 @@ class BackendAuthRepository implements AuthRepository {
     }
   }
 
+  Future<void> _persistInstitution(Institution institution) async {
+    await _prefs.setInt(_institutionIdKey, institution.id);
+    await _prefs.setString(_institutionCodeKey, institution.code);
+    await _prefs.setString(_institutionNameKey, institution.name);
+  }
+
   Future<void> _persistSession(sb.Session? session) async {
     if (session == null) return;
     await _prefs.setString(_refreshTokenKey, session.refreshToken ?? '');
@@ -205,5 +256,8 @@ class BackendAuthRepository implements AuthRepository {
   Future<void> _clearPersistedSession() async {
     await _prefs.remove(_refreshTokenKey);
     await _prefs.remove(_accessTokenKey);
+    await _prefs.remove(_institutionIdKey);
+    await _prefs.remove(_institutionCodeKey);
+    await _prefs.remove(_institutionNameKey);
   }
 }

@@ -133,7 +133,10 @@ class BrutalTextField extends StatelessWidget {
     final ink = Brutal.ink(context);
     return TextField(
       controller: controller,
-      keyboardType: keyboardType,
+      keyboardType: obscureText ? TextInputType.visiblePassword : keyboardType,
+      textCapitalization: TextCapitalization.none,
+      autocorrect: !obscureText,
+      enableSuggestions: !obscureText,
       obscureText: obscureText,
       onChanged: onChanged,
       decoration: InputDecoration(

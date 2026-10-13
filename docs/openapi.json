@@ -38,7 +38,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionCode, username, password }"
+                  "value": "{ username, password, institutionCode? }"
                 }
               }
             }
@@ -134,7 +134,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionCode, username }"
+                  "value": "{ username, institutionCode? }"
                 }
               }
             }

@@ -114,6 +114,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _passwordCtrl,
+                          keyboardType: TextInputType.visiblePassword,
+                          textCapitalization: TextCapitalization.none,
+                          autocorrect: false,
+                          enableSuggestions: false,
                           obscureText: _obscure,
                           autofillHints: const [AutofillHints.password],
                           validator: Validators.password,

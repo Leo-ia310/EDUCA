@@ -31,8 +31,8 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> signIn({
-    required Institution institution,
+  Future<AuthSession> signIn({
+    Institution? institution,
     required String emailOrUsername,
     required String password,
   }) async {
@@ -45,6 +45,8 @@ class SupabaseAuthRepository implements AuthRepository {
       if (session == null) {
         throw const AuthFailure('No se pudo iniciar sesión.');
       }
+
+      institution ??= await resolveInstitution('EDU360');
 
       final me = await _client
           .from('users')
@@ -59,7 +61,8 @@ class SupabaseAuthRepository implements AuthRepository {
       if (me == null) {
         await _client.auth.signOut();
         throw const AuthFailure(
-            'Tu usuario no pertenece a este colegio.',);
+          'Tu usuario no pertenece a este colegio.',
+        );
       }
 
       final roleCodes = (me['user_roles'] as List? ?? const [])
@@ -67,16 +70,15 @@ class SupabaseAuthRepository implements AuthRepository {
           .whereType<String>()
           .toList();
 
-      final roles = roleCodes
-          .map(AppRole.fromCode)
-          .whereType<AppRole>()
-          .toList();
+      final roles = AppRole.sortedByPriority(
+        roleCodes.map(AppRole.fromCode).whereType<AppRole>(),
+      );
       if (roles.isEmpty) {
         throw const AuthFailure('Usuario sin roles asignados.');
       }
 
       final fullName = me['full_name'] as String? ?? 'Usuario';
-      return AppUser(
+      final user = AppUser(
         id: me['id'].toString(),
         institutionId: institution.id,
         email: me['email'] as String? ?? emailOrUsername,
@@ -86,6 +88,7 @@ class SupabaseAuthRepository implements AuthRepository {
         roles: roles,
         activeRole: roles.first,
       );
+      return AuthSession(user: user, institution: institution);
     } on sb.AuthException catch (e) {
       throw AuthFailure(e.message, cause: e);
     }
@@ -95,7 +98,7 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> signOut() => _client.auth.signOut();
 
   @override
-  Future<AppUser?> currentUser() async {
+  Future<AuthSession?> currentSession() async {
     final authUser = _client.auth.currentSession?.user;
     if (authUser == null) return null;
 
@@ -113,12 +116,20 @@ class SupabaseAuthRepository implements AuthRepository {
         .map((e) => (e['roles']?['code']) as String?)
         .whereType<String>()
         .toList();
-    final roles =
-        roleCodes.map(AppRole.fromCode).whereType<AppRole>().toList();
+    final roles = AppRole.sortedByPriority(
+      roleCodes.map(AppRole.fromCode).whereType<AppRole>(),
+    );
     if (roles.isEmpty) return null;
 
     final fullName = me['full_name'] as String? ?? 'Usuario';
-    return AppUser(
+    final institution = await _client
+        .from('institutions')
+        .select('id, code, name, logo_url, primary_color, timezone, active')
+        .eq('id', (me['institution_id'] as num).toInt())
+        .maybeSingle();
+    if (institution == null) return null;
+
+    final user = AppUser(
       id: me['id'].toString(),
       institutionId: (me['institution_id'] as num).toInt(),
       email: me['email'] as String? ?? authUser.email ?? '',
@@ -127,6 +138,10 @@ class SupabaseAuthRepository implements AuthRepository {
       avatarUrl: me['avatar_url'] as String?,
       roles: roles,
       activeRole: roles.first,
+    );
+    return AuthSession(
+      user: user,
+      institution: Institution.fromJson(institution),
     );
   }
 

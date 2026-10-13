@@ -27,11 +27,11 @@ import {
 } from "./admin.controller";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { asyncHandler } from "../../middleware/error.middleware";
-import { requirePlatformAdmin } from "../../middleware/permissions.middleware";
+import { requireAdmin } from "../../middleware/permissions.middleware";
 
 export const adminRoutes = Router();
 
-adminRoutes.use(authMiddleware, requirePlatformAdmin);
+adminRoutes.use(authMiddleware, requireAdmin);
 
 adminRoutes.get("/institutions", asyncHandler(listInstitutions));
 adminRoutes.post("/institutions", asyncHandler(createInstitution));

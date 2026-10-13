@@ -37,6 +37,24 @@ export class AuthFlowRepository {
     return byEmail.data == null ? null : byEmail.data as Record<string, unknown>;
   }
 
+
+  async findLoginUserByIdentifier(username: string) {
+    const db = requireSupabaseServiceRole();
+    const select =
+      "id, auth_user_id, institution_id, person_id, username, email, full_name, active, locked_until, user_roles(roles(code, name)), institutions(id, code, name, commercial_name, active)";
+    const safeUsername = username.replace(/[%_]/g, "");
+    const { data, error } = await db
+      .from("users")
+      .select(select)
+      .or(`username.ilike.${safeUsername},email.ilike.${safeUsername}`)
+      .is("deleted_at", null)
+      .limit(2);
+    assertNoDbError(error);
+    if (!Array.isArray(data) || data.length === 0) return null;
+    if (data.length > 1) return { ambiguous: true } as Record<string, unknown>;
+    return data[0] as Record<string, unknown>;
+  }
+
   async updateLastSignIn(userId: number) {
     const db = requireSupabaseServiceRole();
     const { error } = await db

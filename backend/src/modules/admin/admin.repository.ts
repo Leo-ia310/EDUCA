@@ -247,7 +247,7 @@ export class AdminRepository {
     let query = db
       .from(table)
       .select(
-        `id, institution_id, person_id, ${extraSelect}, created_at, updated_at, persons!inner(id, first_name, last_name, document_number, birth_date, email, phone, address, photo_url, deleted_at)`,
+        `id, institution_id, person_id, ${extraSelect}, created_at, persons!inner(id, first_name, last_name, document_number, birth_date, email, phone, address, photo_url, deleted_at)`,
         { count: "exact" },
       )
       .is("persons.deleted_at", null)

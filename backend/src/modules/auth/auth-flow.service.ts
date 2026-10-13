@@ -1,4 +1,4 @@
-import { asList, asRecord, requiredString } from "../../validators/common.validators";
+import { asList, asRecord, optionalString, requiredString } from "../../validators/common.validators";
 import { env } from "../../lib/env";
 import { HttpError } from "../../lib/errors";
 import { requireSupabaseServiceRole, supabasePublic } from "../../lib/supabase";
@@ -14,30 +14,18 @@ export class AuthFlowService {
   ) {}
 
   async login(payload: Record<string, unknown>) {
-    const institutionCode = requiredString(
+    const institutionCode = optionalString(
       payload.institutionCode ?? payload.institution_code ?? payload.schoolCode,
-      "C√≥digo de colegio",
       50,
     );
     const username = requiredString(payload.username, "Usuario", 100);
-    const password = requiredString(payload.password, "Contrase√±a", 200);
+    const password = requiredString(payload.password, "ContraseÒa", 200);
 
-    const institution = await this.repository.findInstitutionByCode(
-      institutionCode,
-    );
-    if (institution == null || institution.active === false) {
-      throw new HttpError(
-        401,
-        "Credenciales inv√°lidas.",
-        "invalid_credentials",
-      );
-    }
-
-    const appUser = await this.repository.findLoginUser(
-      Number(institution.id),
+    const { institution, appUser } = await this.resolveLoginTarget(
       username,
+      institutionCode ?? undefined,
     );
-    if (appUser == null || appUser.active === false) {
+    if (institution == null || institution.active === false || appUser == null || appUser.active === false) {
       throw new HttpError(
         401,
         "Credenciales inv√°lidas.",
@@ -98,18 +86,24 @@ export class AuthFlowService {
   }
 
   async recoverPassword(payload: Record<string, unknown>) {
-    const institutionCode = requiredString(
+    const institutionCode = optionalString(
       payload.institutionCode ?? payload.institution_code ?? payload.schoolCode,
-      "C√≥digo de colegio",
       50,
     );
     const username = requiredString(payload.username, "Usuario", 100);
-    const institution = await this.repository.findInstitutionByCode(
-      institutionCode,
-    );
-    const appUser = institution == null
-      ? null
-      : await this.repository.findLoginUser(Number(institution.id), username);
+    let appUser: Record<string, unknown> | null = null;
+
+    if (institutionCode != null) {
+      const institution = await this.repository.findInstitutionByCode(
+        institutionCode,
+      );
+      appUser = institution == null
+        ? null
+        : await this.repository.findLoginUser(Number(institution.id), username);
+    } else {
+      const found = await this.repository.findLoginUserByIdentifier(username);
+      appUser = found?.ambiguous === true ? null : found;
+    }
 
     if (appUser?.email) {
       const admin = requireSupabaseServiceRole();
@@ -141,7 +135,7 @@ export class AuthFlowService {
     return {
       ok: true,
       message:
-        "Si la cuenta existe y tiene correo, Supabase Auth enviar√° instrucciones de recuperaci√≥n.",
+        "Si la cuenta existe y tiene correo, Supabase Auth enviar· instrucciones de recuperaciÛn.",
     };
   }
 
@@ -157,6 +151,38 @@ export class AuthFlowService {
       throw new HttpError(400, "No se pudo cerrar sesi√≥n.", "logout_failed");
     }
     return { ok: true };
+  }
+
+
+  private async resolveLoginTarget(username: string, institutionCode?: string) {
+    if (institutionCode != null && institutionCode.trim() !== "") {
+      const institution = await this.repository.findInstitutionByCode(
+        institutionCode,
+      );
+      if (institution == null || institution.active === false) {
+        throw new HttpError(
+          401,
+          "Credenciales inv·lidas.",
+          "invalid_credentials",
+        );
+      }
+      const appUser = await this.repository.findLoginUser(
+        Number(institution.id),
+        username,
+      );
+      return { institution, appUser };
+    }
+
+    const appUser = await this.repository.findLoginUserByIdentifier(username);
+    if (appUser?.ambiguous === true) {
+      throw new HttpError(
+        401,
+        "Credenciales inv·lidas.",
+        "invalid_credentials",
+      );
+    }
+    const institution = asRecord(appUser?.institutions);
+    return { institution, appUser };
   }
 
   private authResponse(

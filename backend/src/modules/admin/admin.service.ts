@@ -18,7 +18,7 @@ export class AdminService {
   ) {}
 
   async listInstitutions(ctx: AppContext, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     if (ctx.roles.has("super_admin")) {
       return this.repository.listInstitutions(
         this.listFilters(query),
@@ -47,7 +47,7 @@ export class AdminService {
   }
 
   async updateInstitution(ctx: AppContext, idValue: unknown, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const id = requiredId(idValue, "Institución");
     if (!ctx.roles.has("super_admin") && id !== ctx.institutionId) {
       throw new HttpError(403, "No puedes modificar otra institución.", "forbidden");
@@ -74,7 +74,7 @@ export class AdminService {
   }
 
   async listUsers(ctx: AppContext, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     return this.repository.listUsers(
       this.targetInstitutionFilter(ctx, query),
       this.listFilters(query),
@@ -83,7 +83,7 @@ export class AdminService {
   }
 
   async createUser(ctx: AppContext, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     const personId = optionalId(payload.personId ?? payload.person_id);
     const user = await this.repository.createUser({
@@ -102,7 +102,7 @@ export class AdminService {
   }
 
   async updateUser(ctx: AppContext, idValue: unknown, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     const id = requiredId(idValue, "Usuario");
     const user = await this.repository.updateUser(institutionId, id, this.clean({
@@ -119,13 +119,13 @@ export class AdminService {
   }
 
   async archiveUser(ctx: AppContext, idValue: unknown, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, query);
     return { user: await this.repository.archiveUser(institutionId, requiredId(idValue, "Usuario")) };
   }
 
   async listRoles(ctx: AppContext, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     return this.repository.listRoles(
       this.targetInstitutionFilter(ctx, query),
       paginationFromQuery(query, { pageSize: 100, maxPageSize: 200 }),
@@ -133,7 +133,7 @@ export class AdminService {
   }
 
   async createRole(ctx: AppContext, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     return {
       role: await this.repository.createRole({
@@ -148,7 +148,7 @@ export class AdminService {
   }
 
   async updateRole(ctx: AppContext, idValue: unknown, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     return {
       role: await this.repository.updateRole(institutionId, requiredId(idValue, "Rol"), this.clean({
@@ -161,13 +161,13 @@ export class AdminService {
   }
 
   async archiveRole(ctx: AppContext, idValue: unknown, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, query);
     return { role: await this.repository.archiveRole(institutionId, requiredId(idValue, "Rol")) };
   }
 
   async listPeople(ctx: AppContext, resource: PeopleResource, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     return this.repository.listPeopleResource(
       resource,
       this.targetInstitutionFilter(ctx, query),
@@ -177,13 +177,13 @@ export class AdminService {
   }
 
   async directory(ctx: AppContext, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, query);
     return this.repository.listDirectory(institutionId);
   }
 
   async createPeople(ctx: AppContext, resource: PeopleResource, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     const personPayload = this.personPayload(ctx, payload, "create");
     personPayload.institution_id = institutionId;
@@ -226,7 +226,7 @@ export class AdminService {
     idValue: unknown,
     payload: Record<string, unknown>,
   ) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     const id = requiredId(idValue, "Registro");
     const current = await this.repository.findPeopleResource(resource, institutionId, id);
@@ -243,7 +243,7 @@ export class AdminService {
   }
 
   async createGroup(ctx: AppContext, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     const name = requiredString(payload.name, "Salón", 80);
     const year = await this.repository.currentAcademicYear(institutionId);
@@ -272,7 +272,7 @@ export class AdminService {
   }
 
   async updateGroup(ctx: AppContext, idValue: unknown, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     const classroom = await this.repository.findOrCreateClassroom(
       institutionId,
@@ -290,13 +290,13 @@ export class AdminService {
   }
 
   async archiveGroup(ctx: AppContext, idValue: unknown, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, query);
     return { group: await this.repository.archiveGroup(institutionId, requiredId(idValue, "Salón")) };
   }
 
   async createClass(ctx: AppContext, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     const groupId = requiredId(payload.groupId ?? payload.group_id, "Salón");
     const subjectName = requiredString(payload.subject ?? payload.subjectName ?? payload.subject_name, "Materia", 100);
@@ -323,7 +323,7 @@ export class AdminService {
   }
 
   async updateClass(ctx: AppContext, idValue: unknown, payload: Record<string, unknown>) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, payload);
     const groupId = this.optionalIdValue(payload.groupId ?? payload.group_id);
     const classroom = await this.repository.findOrCreateClassroom(
@@ -351,13 +351,13 @@ export class AdminService {
   }
 
   async archiveClass(ctx: AppContext, idValue: unknown, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, query);
     return { class: await this.repository.archiveClass(institutionId, requiredId(idValue, "Clase")) };
   }
 
   async archivePeople(ctx: AppContext, resource: PeopleResource, idValue: unknown, query: Record<string, unknown> = {}) {
-    this.ensurePlatformAdmin(ctx);
+    this.ensureInstitutionAdmin(ctx);
     const institutionId = this.targetInstitutionId(ctx, query);
     const id = requiredId(idValue, "Registro");
     const current = await this.repository.findPeopleResource(resource, institutionId, id);
@@ -368,9 +368,13 @@ export class AdminService {
     return { ok: true };
   }
 
-  private ensurePlatformAdmin(ctx: AppContext) {
-    if (!this.permissions.isPlatformAdmin(ctx)) {
-      throw new HttpError(403, "Solo admin o super admin puede gestionar catálogos institucionales.", "forbidden");
+  private ensureInstitutionAdmin(ctx: AppContext) {
+    if (!this.permissions.isAdmin(ctx)) {
+      throw new HttpError(
+        403,
+        "Solo administracion institucional puede gestionar catalogos escolares.",
+        "forbidden",
+      );
     }
   }
 

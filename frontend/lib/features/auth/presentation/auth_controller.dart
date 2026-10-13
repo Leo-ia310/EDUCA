@@ -12,7 +12,7 @@ import '../data/backend_auth_repository.dart';
 import '../data/mock_auth_repository.dart';
 import '../domain/auth_repository.dart';
 
-/// Estado de sesión global de la app.
+/// Estado de sesiÃ³n global de la app.
 class AuthState {
   const AuthState({
     this.user,
@@ -62,13 +62,10 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<void> _restoreSession() async {
     try {
-      final user = await _repo.currentUser();
-      final institution = user == null
-          ? await _repo.resolveInstitution(Env.defaultInstitutionCode)
-          : await _repo.resolveInstitution(Env.defaultInstitutionCode);
+      final session = await _repo.currentSession();
       state = state.copyWith(
-        user: user,
-        institution: institution,
+        user: session?.user,
+        institution: session?.institution,
         loading: false,
         clearError: true,
       );
@@ -89,7 +86,7 @@ class AuthController extends StateNotifier<AuthState> {
     } catch (_) {
       state = state.copyWith(
         loading: false,
-        error: 'No se pudo validar el código.',
+        error: 'No se pudo validar el cÃ³digo.',
       );
       return false;
     }
@@ -98,29 +95,26 @@ class AuthController extends StateNotifier<AuthState> {
   Future<AppRole?> signIn(String emailOrUsername, String password) async {
     state = state.copyWith(loading: true, clearError: true);
     try {
-      // Ya no existe la pantalla de código de colegio: si aún no hay una
-      // institución resuelta, se toma la institución por defecto (configurable
-      // con `--dart-define=INSTITUTION_CODE`, `EDU360` en demo).
-      final institution = state.institution ??
-          await _repo.resolveInstitution(Env.defaultInstitutionCode);
-      final user = await _repo.signIn(
-        institution: institution,
+      // El login ya no pide código de colegio. El backend resuelve y valida
+      // la institución según el usuario/email antes de autenticar.
+      final session = await _repo.signIn(
+        institution: state.institution,
         emailOrUsername: emailOrUsername,
         password: password,
       );
       state = state.copyWith(
-        user: user,
-        institution: institution,
+        user: session.user,
+        institution: session.institution,
         loading: false,
       );
-      return user.activeRole;
+      return session.user.activeRole;
     } on Failure catch (e) {
       state = state.copyWith(loading: false, error: e.message);
       return null;
     } catch (_) {
       state = state.copyWith(
         loading: false,
-        error: 'No se pudo iniciar sesión.',
+        error: 'No se pudo iniciar sesiÃ³n.',
       );
       return null;
     }
