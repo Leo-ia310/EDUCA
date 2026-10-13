@@ -42,6 +42,11 @@ class SupabaseChatRepository implements ChatRepository {
   final _unreadCtrl = StreamController<int>.broadcast();
 
   final _channels = <String, RealtimeChannel>{};
+  final _messageCache = <String, List<Message>>{};
+  final _messageParticipants = <String, List<ChatParticipant>>{};
+  final _messagePollTimers = <String, Timer>{};
+  List<Conversation> _conversationCache = const [];
+  Timer? _conversationPollTimer;
 
   void _ensureConversationsChannel() {
     _channels.putIfAbsent('conversations', () {
@@ -61,12 +66,28 @@ class SupabaseChatRepository implements ChatRepository {
     });
   }
 
+  void _ensureConversationsPolling() {
+    _conversationPollTimer ??= Timer.periodic(
+      const Duration(seconds: 20),
+      (_) => unawaited(_emitConversationSnapshotSafely()),
+    );
+  }
+
+  Future<void> _emitConversationSnapshotSafely() async {
+    try {
+      await _emitConversationSnapshot();
+    } catch (_) {
+      // El siguiente polling/realtime volverá a intentar.
+    }
+  }
+
   @override
   Stream<List<Conversation>> watchConversations() async* {
     final convos = await _fetchConversations();
     yield convos;
     _unreadCtrl.add(convos.fold<int>(0, (s, c) => s + c.unreadCount));
     _ensureConversationsChannel();
+    _ensureConversationsPolling();
     yield* _conversationsCtrl.stream;
   }
 
@@ -75,6 +96,7 @@ class SupabaseChatRepository implements ChatRepository {
     final convos = await _fetchConversations();
     yield convos.fold<int>(0, (s, c) => s + c.unreadCount);
     _ensureConversationsChannel();
+    _ensureConversationsPolling();
     yield* _unreadCtrl.stream;
   }
 
@@ -98,7 +120,8 @@ class SupabaseChatRepository implements ChatRepository {
       baseById.entries.map((e) => _hydrateConversation(e.key, e.value)),
     );
     result.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    return result;
+    _conversationCache = List.unmodifiable(result);
+    return _conversationCache;
   }
 
   Future<void> _emitConversationSnapshot() async {
@@ -200,6 +223,7 @@ class SupabaseChatRepository implements ChatRepository {
       () => StreamController<List<Message>>.broadcast(),
     );
     final participants = await _participantsFor(conversationId);
+    _messageParticipants[conversationId] = participants;
 
     _channels.putIfAbsent(conversationId, () {
       final ch = _client.channel('messages:$conversationId');
@@ -212,18 +236,51 @@ class SupabaseChatRepository implements ChatRepository {
           column: 'conversation_id',
           value: conversationId,
         ),
-        callback: (payload) {
-          ctrl.add(
-            [_msgFromRow(payload.newRecord, participants: participants)],
-          );
+        callback: (_) {
+          unawaited(_refreshMessagesSafely(conversationId));
+          unawaited(_emitConversationSnapshotSafely());
         },
       );
       ch.subscribe();
       return ch;
     });
 
-    yield await _fetchMessages(conversationId, participants);
-    yield* ctrl.stream;
+    _ensureMessagesPolling(conversationId);
+
+    try {
+      final initial = await _fetchMessages(conversationId, participants);
+      _setServerMessages(conversationId, initial);
+      yield _messageCache[conversationId] ?? const [];
+      yield* ctrl.stream;
+    } finally {
+      _messagePollTimers.remove(conversationId)?.cancel();
+    }
+  }
+
+  void _ensureMessagesPolling(String conversationId) {
+    _messagePollTimers.putIfAbsent(
+      conversationId,
+      () => Timer.periodic(
+        const Duration(seconds: 8),
+        (_) => unawaited(_refreshMessagesSafely(conversationId)),
+      ),
+    );
+  }
+
+  Future<void> _refreshMessagesSafely(String conversationId) async {
+    try {
+      await _refreshMessages(conversationId);
+    } catch (_) {
+      // El stream mantiene el último estado válido y reintenta luego.
+    }
+  }
+
+  Future<void> _refreshMessages(String conversationId) async {
+    final participants = _messageParticipants[conversationId] ??
+        await _participantsFor(conversationId);
+    _messageParticipants[conversationId] = participants;
+    final messages = await _fetchMessages(conversationId, participants);
+    _setServerMessages(conversationId, messages);
   }
 
   Future<List<Message>> _fetchMessages(
@@ -235,10 +292,105 @@ class SupabaseChatRepository implements ChatRepository {
         .select(_messageSelect)
         .eq('conversation_id', conversationId)
         .order('created_at');
-    return (rows as List)
+    final messages = (rows as List)
         .cast<Map<String, dynamic>>()
         .map<Message>((r) => _msgFromRow(r, participants: participants))
         .toList();
+    messages.sort(_compareMessages);
+    return messages;
+  }
+
+  void _setServerMessages(String conversationId, List<Message> serverMessages) {
+    final existing = _messageCache[conversationId] ?? const <Message>[];
+    final localTransient = existing.where(
+      (message) =>
+          message.id.startsWith('local-') &&
+          (message.status == MessageDeliveryStatus.sending ||
+              message.status == MessageDeliveryStatus.failed) &&
+          !serverMessages
+              .any((remote) => _looksLikeSameMessage(message, remote)),
+    );
+    _setMessages(conversationId, [...serverMessages, ...localTransient]);
+  }
+
+  void _upsertMessage(String conversationId, Message message) {
+    final current = _messageCache[conversationId] ?? const <Message>[];
+    _setMessages(conversationId, [
+      ...current.where((m) => m.id != message.id && m.uuid != message.uuid),
+      message,
+    ]);
+  }
+
+  void _replaceMessage(
+    String conversationId,
+    Message previous,
+    Message replacement,
+  ) {
+    final current = _messageCache[conversationId] ?? const <Message>[];
+    _setMessages(conversationId, [
+      ...current.where(
+        (m) =>
+            m.id != previous.id &&
+            m.uuid != previous.uuid &&
+            m.id != replacement.id &&
+            m.uuid != replacement.uuid,
+      ),
+      replacement,
+    ]);
+  }
+
+  void _setMessages(String conversationId, List<Message> messages) {
+    final byKey = <String, Message>{};
+    for (final message in messages) {
+      byKey[message.id.startsWith('local-') ? message.uuid : message.id] =
+          message;
+    }
+    final sorted = byKey.values.toList()..sort(_compareMessages);
+    _messageCache[conversationId] = List.unmodifiable(sorted);
+    final ctrl = _messagesCtrls[conversationId];
+    if (ctrl != null && !ctrl.isClosed) {
+      ctrl.add(_messageCache[conversationId]!);
+    }
+  }
+
+  int _compareMessages(Message a, Message b) {
+    final byDate = a.sentAt.compareTo(b.sentAt);
+    if (byDate != 0) return byDate;
+    return a.id.compareTo(b.id);
+  }
+
+  bool _looksLikeSameMessage(Message local, Message remote) {
+    final sameAttachment = local.attachment?.id == remote.attachment?.id;
+    final sameText = (local.content ?? '') == (remote.content ?? '');
+    final closeEnough = remote.sentAt.difference(local.sentAt).abs() <
+        const Duration(minutes: 2);
+    return local.senderId == remote.senderId &&
+        sameText &&
+        sameAttachment &&
+        closeEnough;
+  }
+
+  void _applyConversationMessage(Message message) {
+    if (_conversationCache.isEmpty) return;
+    final updated = _conversationCache
+        .map(
+          (conversation) => conversation.id == message.conversationId
+              ? conversation.copyWith(
+                  lastMessage: message,
+                  updatedAt: message.sentAt,
+                )
+              : conversation,
+        )
+        .toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    _conversationCache = List.unmodifiable(updated);
+    _conversationsCtrl.add(_conversationCache);
+    _unreadCtrl.add(
+      _conversationCache.fold<int>(
+        0,
+        (sum, conversation) => sum + conversation.unreadCount,
+      ),
+    );
   }
 
   Message _msgFromRow(
@@ -255,8 +407,7 @@ class SupabaseChatRepository implements ChatRepository {
       senderId: senderId,
       senderName: senderId == meUserId ? myName : (sender?.name ?? 'Usuario'),
       senderAvatarUrl: sender?.avatarUrl,
-      sentAt:
-          DateTime.tryParse(r['created_at'] as String? ?? '') ?? DateTime.now(),
+      sentAt: _parseDate(r['created_at'] as String?),
       content: r['content'] as String?,
       attachment: file == null
           ? null
@@ -278,34 +429,48 @@ class SupabaseChatRepository implements ChatRepository {
     MessageAttachment? attachment,
     Message? replyTo,
   }) async {
-    final response = await _api.call('chat.sendMessage', {
-      'conversationId': conversationId,
-      'content': content,
-      'attachment': attachment == null
-          ? null
-          : {
-              'id': attachment.id,
-              'name': attachment.name,
-              'url': attachment.url,
-              'sizeBytes': attachment.sizeBytes,
-              'mimeType': attachment.mimeType,
-            },
-    });
-    final data = Map<String, dynamic>.from(response as Map);
-    final message =
-        _msgFromApi(Map<String, dynamic>.from(data['message'] as Map));
-    final ctrl = _messagesCtrls[conversationId];
-    if (ctrl != null) {
-      final participants = await _participantsFor(conversationId);
-      ctrl.add(await _fetchMessages(conversationId, participants));
+    final local = _localMessage(
+      conversationId: conversationId,
+      content: content,
+      attachment: attachment,
+      replyTo: replyTo,
+    );
+    _upsertMessage(conversationId, local);
+    _applyConversationMessage(local);
+
+    try {
+      final response = await _api.call('chat.sendMessage', {
+        'conversationId': conversationId,
+        'content': content,
+        'attachment': attachment == null
+            ? null
+            : {
+                'id': attachment.id,
+                'name': attachment.name,
+                'url': attachment.url,
+                'sizeBytes': attachment.sizeBytes,
+                'mimeType': attachment.mimeType,
+              },
+      });
+      final data = Map<String, dynamic>.from(response as Map);
+      final message =
+          _msgFromApi(Map<String, dynamic>.from(data['message'] as Map));
+      _replaceMessage(conversationId, local, message);
+      _applyConversationMessage(message);
+      await _emitConversationSnapshot();
+      return message;
+    } catch (_) {
+      final failed = local.copyWith(status: MessageDeliveryStatus.failed);
+      _replaceMessage(conversationId, local, failed);
+      _applyConversationMessage(failed);
+      rethrow;
     }
-    await _emitConversationSnapshot();
-    return message;
   }
 
   @override
   Future<void> markAsRead(String conversationId) async {
     await _api.call('chat.markAsRead', {'conversationId': conversationId});
+    await _emitConversationSnapshot();
   }
 
   @override
@@ -371,6 +536,10 @@ class SupabaseChatRepository implements ChatRepository {
     for (final ch in _channels.values) {
       _client.removeChannel(ch);
     }
+    _conversationPollTimer?.cancel();
+    for (final timer in _messagePollTimers.values) {
+      timer.cancel();
+    }
     _conversationsCtrl.close();
     _unreadCtrl.close();
     for (final c in _messagesCtrls.values) {
@@ -388,7 +557,7 @@ class SupabaseChatRepository implements ChatRepository {
       conversationId: r['conversationId'].toString(),
       senderId: r['senderId'].toString(),
       senderName: r['senderName'] as String? ?? myName,
-      sentAt: DateTime.tryParse(r['sentAt'] as String? ?? '') ?? DateTime.now(),
+      sentAt: _parseDate(r['sentAt'] as String?),
       content: r['content'] as String?,
       attachment: attachment == null
           ? null
@@ -402,6 +571,31 @@ class SupabaseChatRepository implements ChatRepository {
       status: MessageDeliveryStatus.delivered,
     );
   }
+
+  Message _localMessage({
+    required String conversationId,
+    String? content,
+    MessageAttachment? attachment,
+    Message? replyTo,
+  }) {
+    final now = DateTime.now();
+    final localId = 'local-${now.microsecondsSinceEpoch}';
+    return Message(
+      id: localId,
+      uuid: localId,
+      conversationId: conversationId,
+      senderId: meUserId,
+      senderName: myName,
+      sentAt: now,
+      content: content,
+      attachment: attachment,
+      replyTo: replyTo,
+      status: MessageDeliveryStatus.sending,
+    );
+  }
+
+  DateTime _parseDate(String? raw) =>
+      DateTime.tryParse(raw ?? '')?.toLocal() ?? DateTime.now();
 
   String _roleCodeFromUser(Map<String, dynamic>? user) {
     final roles = user?['user_roles'];

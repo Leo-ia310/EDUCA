@@ -75,23 +75,25 @@ class ChatComposerController extends StateNotifier<ComposerState> {
       );
     } catch (e) {
       state = state.copyWith(
-          uploading: false, error: 'No se pudo adjuntar: $e',);
+        uploading: false,
+        error: 'No se pudo adjuntar: $e',
+      );
     }
   }
 
-  void clearAttachment() =>
-      state = state.copyWith(clearAttachment: true);
+  void clearAttachment() => state = state.copyWith(clearAttachment: true);
 
   Future<void> send(String text) async {
     if (text.trim().isEmpty && state.attachment == null) return;
+    final attachment = state.attachment;
     state = state.copyWith(sending: true, clearError: true);
     try {
+      state = const ComposerState();
       await _ref.read(chatRepositoryProvider).sendMessage(
             conversationId: conversationId,
             content: text.trim().isEmpty ? null : text.trim(),
-            attachment: state.attachment,
+            attachment: attachment,
           );
-      state = const ComposerState();
     } catch (e) {
       state = state.copyWith(sending: false, error: 'No se pudo enviar: $e');
     }

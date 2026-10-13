@@ -58,8 +58,8 @@ class _ChatInputState extends State<ChatInput> {
   @override
   void didUpdateWidget(covariant ChatInput oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final v = _controller.text.trim().isNotEmpty ||
-        widget.pendingAttachment != null;
+    final v =
+        _controller.text.trim().isNotEmpty || widget.pendingAttachment != null;
     if (v != _canSend) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _canSend = v);
@@ -78,10 +78,11 @@ class _ChatInputState extends State<ChatInput> {
     if (widget.sending) return;
     final text = _controller.text.trim();
     if (text.isEmpty && widget.pendingAttachment == null) return;
-    await widget.onSend(text);
+    final send = widget.onSend(text);
     _controller.clear();
     _focus.requestFocus();
     setState(() => _canSend = widget.pendingAttachment != null);
+    await send;
   }
 
   @override
@@ -120,7 +121,8 @@ class _ChatInputState extends State<ChatInput> {
                       color: palette.surfaceAlt,
                       borderRadius: BorderRadius.circular(Radii.xl),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: TextField(
                       controller: _controller,
                       focusNode: _focus,
@@ -152,14 +154,11 @@ class _ChatInputState extends State<ChatInput> {
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Icon(
                             Icons.send_rounded,
-                            color: _canSend
-                                ? Colors.white
-                                : palette.textMuted,
+                            color: _canSend ? Colors.white : palette.textMuted,
                           ),
                     onPressed: (_canSend && !widget.sending) ? _send : null,
                   ),
@@ -216,8 +215,11 @@ class _PendingAttachment extends StatelessWidget {
                   borderRadius: BorderRadius.circular(Radii.pill),
                   child: Padding(
                     padding: const EdgeInsets.all(6),
-                    child: Icon(Icons.close_rounded,
-                        size: 18, color: palette.textMuted,),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: palette.textMuted,
+                    ),
                   ),
                 ),
               ),

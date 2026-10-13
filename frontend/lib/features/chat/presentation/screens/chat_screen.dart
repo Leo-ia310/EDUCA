@@ -22,14 +22,29 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen>
+    with WidgetsBindingObserver {
   final _scrollCtrl = ScrollController();
   int _lastCount = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    ref.invalidate(messagesStreamProvider(widget.conversationId));
+    ref.invalidate(conversationsStreamProvider);
   }
 
   void _scrollToBottom() {
@@ -49,7 +64,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final me = ref.watch(authControllerProvider).user;
     final messages = ref.watch(messagesStreamProvider(widget.conversationId));
     final composer = ref.watch(chatComposerProvider(widget.conversationId));
-    final composerCtrl = ref.read(chatComposerProvider(widget.conversationId).notifier);
+    final composerCtrl =
+        ref.read(chatComposerProvider(widget.conversationId).notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -79,7 +95,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Conversación silenciada.'),),
+                            content: Text('Conversación silenciada.'),
+                          ),
                         );
                       },
                     ),
@@ -95,7 +112,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Reporte enviado a coordinación.'),),
+                            content: Text('Reporte enviado a coordinación.'),
+                          ),
                         );
                       },
                     ),
@@ -113,11 +131,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => ErrorStateView(message: '$e'),
               data: (list) {
-                if (list.length != _lastCount) {
-                  _lastCount = list.length;
+                final ordered = [...list]..sort((a, b) {
+                    final byDate = a.sentAt.compareTo(b.sentAt);
+                    if (byDate != 0) return byDate;
+                    return a.id.compareTo(b.id);
+                  });
+                if (ordered.length != _lastCount) {
+                  _lastCount = ordered.length;
                   _scrollToBottom();
                 }
-                if (list.isEmpty) {
+                if (ordered.isEmpty) {
                   return const EmptyState(
                     icon: Icons.forum_rounded,
                     title: 'Empieza la conversación',
@@ -126,7 +149,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 }
                 return _MessagesList(
                   scrollCtrl: _scrollCtrl,
-                  messages: list,
+                  messages: ordered,
                   meId: me?.id ?? '',
                 );
               },
@@ -168,7 +191,7 @@ class _HeaderTitle extends ConsumerWidget {
                 ? '${conv.participants.length} miembros'
                 : (conv.counterpart?.isOnline == true
                     ? 'En línea'
-                    : 'Última vez ${_relative(conv.counterpart?.lastSeen)}'));
+                    : _activitySubtitle(conv)));
         return Row(
           children: [
             ConversationAvatar(conversation: conv, size: 38),
@@ -209,6 +232,16 @@ class _HeaderTitle extends ConsumerWidget {
     if (diff.inMinutes < 60) return 'hace ${diff.inMinutes} min';
     if (diff.inHours < 24) return 'hace ${diff.inHours} h';
     return DateFormat('d MMM HH:mm', 'es').format(d);
+  }
+
+  String _activitySubtitle(Conversation conv) {
+    final lastSeen = conv.counterpart?.lastSeen;
+    if (lastSeen != null) return 'Última vez ${_relative(lastSeen)}';
+    final lastMessageAt = conv.lastMessage?.sentAt;
+    if (lastMessageAt != null) {
+      return 'Último mensaje ${_relative(lastMessageAt)}';
+    }
+    return 'Sin mensajes recientes';
   }
 }
 
