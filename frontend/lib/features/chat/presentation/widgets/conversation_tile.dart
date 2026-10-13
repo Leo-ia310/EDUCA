@@ -25,6 +25,9 @@ class ConversationTile extends StatelessWidget {
     final last = conversation.lastMessage;
     final unread = conversation.unreadCount;
     final isMine = last?.senderId == currentUserId;
+    final role = conversation.kind == ConversationKind.individual
+        ? _roleLabel(conversation.counterpart?.role ?? '')
+        : 'Grupo';
 
     return BrutalBox(
       onTap: onTap,
@@ -32,112 +35,121 @@ class ConversationTile extends StatelessWidget {
       radius: Radii.md,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: Row(
+        children: [
+          ConversationAvatar(conversation: conversation),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ConversationAvatar(conversation: conversation),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              conversation.title,
-                              style: context.textTheme.titleSmall?.copyWith(
-                                color: s.ink,
-                                fontWeight: unread > 0
-                                    ? FontWeight.w800
-                                    : FontWeight.w700,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (last != null)
-                            Text(
-                              _relative(last.sentAt),
-                              style: context.textTheme.labelSmall?.copyWith(
-                                color: unread > 0 ? s.ink : s.inkMuted,
-                                fontWeight: unread > 0
-                                    ? FontWeight.w800
-                                    : FontWeight.w500,
-                              ),
-                            ),
-                        ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        conversation.title,
+                        style: context.textTheme.titleSmall?.copyWith(
+                          color: s.ink,
+                          fontWeight:
+                              unread > 0 ? FontWeight.w800 : FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          if (conversation.typing)
-                            Text(
-                              'Escribiendo…',
-                              style: context.textTheme.bodySmall?.copyWith(
-                                color: s.vivid,
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.w700,
+                    ),
+                    if (last != null)
+                      Text(
+                        _relative(last.sentAt),
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: unread > 0 ? s.ink : s.inkMuted,
+                          fontWeight:
+                              unread > 0 ? FontWeight.w800 : FontWeight.w500,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  role,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.labelSmall?.copyWith(
+                    color: s.inkMuted,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    if (conversation.typing)
+                      Text(
+                        'Escribiendo…',
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: s.vivid,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                    else if (last != null)
+                      Expanded(
+                        child: Row(
+                          children: [
+                            if (isMine)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: Icon(
+                                  _statusIcon(last.status),
+                                  size: 14,
+                                  color:
+                                      last.status == MessageDeliveryStatus.read
+                                          ? s.vivid
+                                          : s.inkMuted,
+                                ),
                               ),
-                            )
-                          else if (last != null)
                             Expanded(
-                              child: Row(
-                                children: [
-                                  if (isMine)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 4),
-                                      child: Icon(
-                                        _statusIcon(last.status),
-                                        size: 14,
-                                        color: last.status ==
-                                                MessageDeliveryStatus.read
-                                            ? s.vivid
-                                            : s.inkMuted,
-                                      ),
-                                    ),
-                                  Expanded(
-                                    child: Text(
-                                      _preview(last),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: context.textTheme.bodySmall
-                                          ?.copyWith(
-                                        color: s.inkMuted,
-                                        fontWeight: unread > 0
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          if (unread > 0)
-                            Container(
-                              margin: const EdgeInsets.only(left: 8),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2,),
-                              constraints: const BoxConstraints(minWidth: 22),
-                              decoration: BoxDecoration(
-                                color: s.vivid,
-                                borderRadius: BorderRadius.circular(Radii.pill),
-                              ),
-                              alignment: Alignment.center,
                               child: Text(
-                                '$unread',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
+                                _preview(last),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.textTheme.bodySmall?.copyWith(
+                                  color: s.inkMuted,
+                                  fontWeight: unread > 0
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
                                 ),
                               ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    if (unread > 0)
+                      Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 22),
+                        decoration: BoxDecoration(
+                          color: s.vivid,
+                          borderRadius: BorderRadius.circular(Radii.pill),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$unread',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -155,6 +167,17 @@ class ConversationTile extends StatelessWidget {
     }
     return m.content ?? '';
   }
+
+  String _roleLabel(String code) => switch (code) {
+        'teacher' => 'Maestro',
+        'parent' => 'Padre',
+        'student' => 'Estudiante',
+        'admin' => 'Administrador',
+        'coordinator' => 'Coordinador',
+        'director' => 'Director',
+        'support' => 'Soporte',
+        _ => code.isEmpty ? 'Sin rol asignado' : code,
+      };
 
   String _relative(DateTime d) {
     final diff = DateTime.now().difference(d);

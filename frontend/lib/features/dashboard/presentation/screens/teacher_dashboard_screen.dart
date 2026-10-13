@@ -17,7 +17,6 @@ import '../widgets/home_schedule_section.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/student_home_header.dart';
 
-
 class TeacherDashboardScreen extends ConsumerStatefulWidget {
   const TeacherDashboardScreen({super.key});
 
@@ -67,7 +66,7 @@ class _TeacherDashboardScreenState
             child: StaggeredEntrance(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const HomeScheduleSection(),
+                const HomeScheduleSection(todaySchedule: []),
                 const SizedBox(height: 24),
 
                 // Secciones principales como tarjetas.
@@ -81,10 +80,20 @@ class _TeacherDashboardScreenState
                     color: context.palette.success,
                     route: Routes.attendance,
                     art: const ArtCluster([
-                      ArtItem.icon(Icons.check_circle_rounded,
-                          size: 64, top: 4, right: 40, angle: 0.2,),
-                      ArtItem.icon(Icons.groups_rounded,
-                          size: 48, top: 50, right: 0, angle: -0.3,),
+                      ArtItem.icon(
+                        Icons.check_circle_rounded,
+                        size: 64,
+                        top: 4,
+                        right: 40,
+                        angle: 0.2,
+                      ),
+                      ArtItem.icon(
+                        Icons.groups_rounded,
+                        size: 48,
+                        top: 50,
+                        right: 0,
+                        angle: -0.3,
+                      ),
                     ]),
                   ),
                   (
@@ -94,10 +103,20 @@ class _TeacherDashboardScreenState
                     color: context.palette.accent,
                     route: Routes.myClasses,
                     art: const ArtCluster([
-                      ArtItem.icon(Icons.menu_book_rounded,
-                          size: 64, top: 4, right: 40, angle: 0.3,),
-                      ArtItem.icon(Icons.architecture_rounded,
-                          size: 48, top: 50, right: 0, angle: -0.4,),
+                      ArtItem.icon(
+                        Icons.menu_book_rounded,
+                        size: 64,
+                        top: 4,
+                        right: 40,
+                        angle: 0.3,
+                      ),
+                      ArtItem.icon(
+                        Icons.architecture_rounded,
+                        size: 48,
+                        top: 50,
+                        right: 0,
+                        angle: -0.4,
+                      ),
                     ]),
                   ),
                   (
@@ -107,10 +126,20 @@ class _TeacherDashboardScreenState
                     color: context.palette.sun,
                     route: Routes.assignments,
                     art: const ArtCluster([
-                      ArtItem.icon(Icons.edit_rounded,
-                          size: 64, top: 4, right: 40, angle: 0.35,),
-                      ArtItem.icon(Icons.description_rounded,
-                          size: 48, top: 50, right: 0, angle: -0.4,),
+                      ArtItem.icon(
+                        Icons.edit_rounded,
+                        size: 64,
+                        top: 4,
+                        right: 40,
+                        angle: 0.35,
+                      ),
+                      ArtItem.icon(
+                        Icons.description_rounded,
+                        size: 48,
+                        top: 50,
+                        right: 0,
+                        angle: -0.4,
+                      ),
                     ]),
                   ),
                   (
@@ -120,9 +149,20 @@ class _TeacherDashboardScreenState
                     color: context.palette.grape,
                     route: Routes.gradebook,
                     art: const ArtCluster([
-                      ArtItem.text('A+', size: 56, top: 6, right: 30, angle: -0.2),
-                      ArtItem.icon(Icons.check_circle_rounded,
-                          size: 44, top: 56, right: 0, angle: 0.2,),
+                      ArtItem.text(
+                        'A+',
+                        size: 56,
+                        top: 6,
+                        right: 30,
+                        angle: -0.2,
+                      ),
+                      ArtItem.icon(
+                        Icons.check_circle_rounded,
+                        size: 44,
+                        top: 56,
+                        right: 0,
+                        angle: 0.2,
+                      ),
                     ]),
                   ),
                   (
@@ -132,10 +172,20 @@ class _TeacherDashboardScreenState
                     color: context.palette.coral,
                     route: Routes.workTeams,
                     art: const ArtCluster([
-                      ArtItem.icon(Icons.groups_2_rounded,
-                          size: 64, top: 4, right: 40, angle: 0.25,),
-                      ArtItem.icon(Icons.diversity_3_rounded,
-                          size: 48, top: 50, right: 0, angle: -0.3,),
+                      ArtItem.icon(
+                        Icons.groups_2_rounded,
+                        size: 64,
+                        top: 4,
+                        right: 40,
+                        angle: 0.25,
+                      ),
+                      ArtItem.icon(
+                        Icons.diversity_3_rounded,
+                        size: 48,
+                        top: 50,
+                        right: 0,
+                        angle: -0.3,
+                      ),
                     ]),
                   ),
                 ])

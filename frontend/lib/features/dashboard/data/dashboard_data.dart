@@ -56,6 +56,8 @@ class StudentDashboardData {
         averageScore: 0,
         classmates: [],
         classmatesExtra: 0,
+        attendanceRate: 0,
+        gradeGroup: '',
       );
 }
 

@@ -101,6 +101,12 @@ class SupabaseChatRepository implements ChatRepository {
     return result;
   }
 
+  Future<void> _emitConversationSnapshot() async {
+    final convos = await _fetchConversations();
+    _conversationsCtrl.add(convos);
+    _unreadCtrl.add(convos.fold<int>(0, (s, c) => s + c.unreadCount));
+  }
+
   Future<Conversation> _hydrateConversation(
     String id,
     Map<String, dynamic> conv,
@@ -141,7 +147,9 @@ class SupabaseChatRepository implements ChatRepository {
   Future<List<ChatParticipant>> _participantsFor(String conversationId) async {
     final rows = await _client
         .from('conversation_participants')
-        .select('user_id, role, users(id, full_name, avatar_url)')
+        .select(
+          'user_id, users(id, full_name, avatar_url, user_roles(roles(code)))',
+        )
         .eq('conversation_id', conversationId);
     return (rows as List).map((p) {
       final u = p['users'] as Map<String, dynamic>?;
@@ -149,7 +157,7 @@ class SupabaseChatRepository implements ChatRepository {
       return ChatParticipant(
         userId: userId,
         name: u?['full_name'] as String? ?? '—',
-        role: p['role'] as String? ?? '',
+        role: _roleCodeFromUser(u),
         avatarUrl: u?['avatar_url'] as String?,
         isMe: userId == meUserId,
       );
@@ -206,7 +214,8 @@ class SupabaseChatRepository implements ChatRepository {
         ),
         callback: (payload) {
           ctrl.add(
-              [_msgFromRow(payload.newRecord, participants: participants)],);
+            [_msgFromRow(payload.newRecord, participants: participants)],
+          );
         },
       );
       ch.subscribe();
@@ -283,7 +292,15 @@ class SupabaseChatRepository implements ChatRepository {
             },
     });
     final data = Map<String, dynamic>.from(response as Map);
-    return _msgFromApi(Map<String, dynamic>.from(data['message'] as Map));
+    final message =
+        _msgFromApi(Map<String, dynamic>.from(data['message'] as Map));
+    final ctrl = _messagesCtrls[conversationId];
+    if (ctrl != null) {
+      final participants = await _participantsFor(conversationId);
+      ctrl.add(await _fetchMessages(conversationId, participants));
+    }
+    await _emitConversationSnapshot();
+    return message;
   }
 
   @override
@@ -304,26 +321,40 @@ class SupabaseChatRepository implements ChatRepository {
     final data = Map<String, dynamic>.from(response as Map);
     final conversationId = data['conversationId'].toString();
     final conv = await conversationById(conversationId);
+    await _emitConversationSnapshot();
     return conv ?? (throw StateError('No se pudo crear la conversación'));
   }
 
   @override
   Future<List<ChatParticipant>> discoverableContacts({String? query}) async {
-    var q = _client
+    final rows = await _client
         .from('users')
-        .select('id, full_name, email')
-        .eq('institution_id', institutionId);
-    if (query != null && query.trim().isNotEmpty) {
-      q = q.ilike('full_name', '%${query.trim()}%');
-    }
-    final rows = await q.limit(30);
-    return rows.map<ChatParticipant>((r) {
-      return ChatParticipant(
-        userId: r['id'].toString(),
-        name: r['full_name'] as String? ?? '—',
-        role: '',
-      );
-    }).toList();
+        .select('id, full_name, email, avatar_url, user_roles(roles(code))')
+        .eq('institution_id', institutionId)
+        .eq('active', true)
+        .filter('deleted_at', 'is', null)
+        .neq('id', meUserId)
+        .limit(60);
+    final needle = query?.trim().toLowerCase() ?? '';
+    return (rows as List)
+        .map<ChatParticipant>((r) {
+          final row = r as Map<String, dynamic>;
+          final role = _roleCodeFromUser(row);
+          return ChatParticipant(
+            userId: row['id'].toString(),
+            name: row['full_name'] as String? ?? '—',
+            role: role,
+            avatarUrl: row['avatar_url'] as String?,
+          );
+        })
+        .where((contact) {
+          if (needle.isEmpty) return true;
+          return contact.name.toLowerCase().contains(needle) ||
+              contact.role.toLowerCase().contains(needle) ||
+              _roleLabel(contact.role).toLowerCase().contains(needle);
+        })
+        .take(30)
+        .toList();
   }
 
   @override
@@ -371,4 +402,42 @@ class SupabaseChatRepository implements ChatRepository {
       status: MessageDeliveryStatus.delivered,
     );
   }
+
+  String _roleCodeFromUser(Map<String, dynamic>? user) {
+    final roles = user?['user_roles'];
+    if (roles is! List || roles.isEmpty) return '';
+    final codes = roles
+        .map((entry) {
+          if (entry is! Map) return null;
+          final role = entry['roles'];
+          if (role is! Map) return null;
+          return role['code'] as String?;
+        })
+        .whereType<String>()
+        .toSet();
+    const priority = [
+      'admin',
+      'director',
+      'coordinator',
+      'teacher',
+      'parent',
+      'student',
+      'support',
+    ];
+    for (final code in priority) {
+      if (codes.contains(code)) return code;
+    }
+    return codes.isEmpty ? '' : codes.first;
+  }
+
+  String _roleLabel(String code) => switch (code) {
+        'teacher' => 'Maestro',
+        'parent' => 'Padre',
+        'student' => 'Estudiante',
+        'admin' => 'Administrador',
+        'coordinator' => 'Coordinador',
+        'director' => 'Director',
+        'support' => 'Soporte',
+        _ => code,
+      };
 }
