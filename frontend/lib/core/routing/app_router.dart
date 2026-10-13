@@ -63,6 +63,7 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/student_profile_screen.dart';
 import '../../shared/models/app_role.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/not_found_screen.dart';
 import 'route_paths.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -649,13 +650,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      body: EmptyState(
-        icon: Icons.error_outline,
-        title: 'Pantalla no encontrada',
-        subtitle: state.error?.message,
-      ),
-    ),
+    errorBuilder: (context, state) =>
+        NotFoundScreen(location: state.uri.toString()),
   );
 });
 
