@@ -102,8 +102,13 @@ export class ChatsService {
       created_by: ctx.userId,
     });
     const conversationId = Number(created.id);
+    // RLS en `conversation_participants` permite insertar al usuario actual y
+    // permite agregar otros usuarios solo después de que la conversación ya sea
+    // visible como propia. Por eso los inserts deben ser secuenciales.
     await this.repository.insertConversationParticipants([
       { conversation_id: conversationId, user_id: ctx.userId, role: "member" },
+    ]);
+    await this.repository.insertConversationParticipants([
       { conversation_id: conversationId, user_id: otherUserId, role: "member" },
     ]);
     return { conversationId: String(conversationId) };
