@@ -5,6 +5,7 @@ import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
 import '../../core/services/hive_init.dart';
 import '../auth/presentation/auth_controller.dart';
+import 'data/backend_notifications_repository.dart';
 import 'data/demo_push_service.dart';
 import 'data/hive_notifications_repository.dart';
 import 'data/web_push_service_stub.dart'
@@ -28,8 +29,18 @@ final pushServiceProvider = Provider<PushService>((ref) {
   return WebPushService(api: api, userId: auth.user!.id);
 });
 
+/// Demo: feed local (Hive) con semillas. Real: notificaciones del backend,
+/// atadas al usuario (cambiar de cuenta recrea el repositorio y no mezcla
+/// datos entre roles).
 final notificationsRepositoryProvider =
     Provider<NotificationsRepository>((ref) {
+  final api = ref.watch(backendApiClientProvider);
+  final userId = ref.watch(authControllerProvider.select((a) => a.user?.id));
+  if (!Env.isDemoMode && api != null && userId != null) {
+    final repo = BackendNotificationsRepository(api);
+    ref.onDispose(repo.dispose);
+    return repo;
+  }
   final box = ref.watch(notificationsBoxProvider);
   return HiveNotificationsRepository(box);
 });

@@ -40,6 +40,48 @@ export class NotificationsService {
     return { ok: true };
   }
 
+  /** Notificaciones reales del usuario autenticado (su cuenta e institución). */
+  async listMine(ctx: AppContext) {
+    const rows = await this.repository.listForUser(
+      ctx.userId,
+      ctx.institutionId,
+    );
+    return rows.map((row) => {
+      const type = row.catalog_notification_types as
+        | { code?: string }
+        | null;
+      return {
+        id: String(row.id),
+        channel: type?.code ?? "system",
+        title: row.title ?? "",
+        body: row.message ?? "",
+        data: row.data ?? {},
+        read: row.read === true,
+        receivedAt: row.created_at,
+      };
+    });
+  }
+
+  async markRead(ctx: AppContext, id?: number) {
+    const { error } = await this.repository.markRead(
+      ctx.userId,
+      ctx.institutionId,
+      id,
+    );
+    assertNoDbError(error);
+    return { ok: true };
+  }
+
+  async remove(ctx: AppContext, id?: number) {
+    const { error } = await this.repository.deleteForUser(
+      ctx.userId,
+      ctx.institutionId,
+      id,
+    );
+    assertNoDbError(error);
+    return { ok: true };
+  }
+
   async notifyAudience(
     ctx: AppContext,
     audience: string,

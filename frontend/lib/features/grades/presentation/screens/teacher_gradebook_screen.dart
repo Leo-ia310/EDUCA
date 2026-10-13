@@ -29,14 +29,24 @@ class TeacherGradebookScreen extends ConsumerStatefulWidget {
 class _TeacherGradebookScreenState
     extends ConsumerState<TeacherGradebookScreen> {
   int _classId = 101;
-  String _periodId = 'p2';
+  String? _periodId;
 
   @override
   Widget build(BuildContext context) {
-    final args = GradebookArgs(classId: _classId, periodId: _periodId);
+    final periodsAsync = ref.watch(periodsProvider);
+    // Periodos sin ids repetidos; el seleccionado debe existir en la lista
+    // (si no, se usa el vigente o el primero) para no romper el dropdown.
+    final periods = _uniquePeriods(periodsAsync.valueOrNull ?? const []);
+    final periodId = periods.any((p) => p.id == _periodId)
+        ? _periodId!
+        : periods.isEmpty
+            ? (_periodId ?? 'p2')
+            : periods
+                .firstWhere((p) => p.isCurrent, orElse: () => periods.first)
+                .id;
+    final args = GradebookArgs(classId: _classId, periodId: periodId);
     final data = ref.watch(gradebookProvider(args));
     final scaleAsync = ref.watch(defaultScaleProvider);
-    final periodsAsync = ref.watch(periodsProvider);
 
     return StudentDetailScaffold(
       title: 'Libro de notas',
@@ -49,8 +59,8 @@ class _TeacherGradebookScreenState
           children: [
             _Filters(
               classId: _classId,
-              periodId: _periodId,
-              periodsAsync: periodsAsync,
+              periodId: periodId,
+              periods: periods,
               onClass: (v) => setState(() => _classId = v),
               onPeriod: (v) => setState(() => _periodId = v),
             ),
@@ -86,18 +96,26 @@ class _TeacherGradebookScreenState
   }
 }
 
+List<AcademicPeriod> _uniquePeriods(List<AcademicPeriod> list) {
+  final seen = <String>{};
+  return [
+    for (final p in list)
+      if (seen.add(p.id)) p,
+  ];
+}
+
 class _Filters extends StatelessWidget {
   const _Filters({
     required this.classId,
     required this.periodId,
-    required this.periodsAsync,
+    required this.periods,
     required this.onClass,
     required this.onPeriod,
   });
 
   final int classId;
   final String periodId;
-  final AsyncValue<List<AcademicPeriod>> periodsAsync;
+  final List<AcademicPeriod> periods;
   final ValueChanged<int> onClass;
   final ValueChanged<String> onPeriod;
 
@@ -133,25 +151,25 @@ class _Filters extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            periodsAsync.maybeWhen(
-              data: (list) => DropdownButton<String>(
+            if (periods.isNotEmpty)
+              DropdownButton<String>(
                 value: periodId,
                 underline: const SizedBox.shrink(),
                 items: [
-                  for (final p in list)
+                  for (final p in periods)
                     DropdownMenuItem(
                       value: p.id,
-                      child: Text(p.name,
-                          style: context.textTheme.titleSmall
-                              ?.copyWith(color: palette.accentDeep),),
+                      child: Text(
+                        p.name,
+                        style: context.textTheme.titleSmall
+                            ?.copyWith(color: palette.accentDeep),
+                      ),
                     ),
                 ],
                 onChanged: (v) {
                   if (v != null) onPeriod(v);
                 },
               ),
-              orElse: () => const SizedBox.shrink(),
-            ),
           ],
         ),
       ),

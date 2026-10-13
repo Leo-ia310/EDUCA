@@ -72,7 +72,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     return EmptyState(
                       icon: Icons.notifications_off_rounded,
                       title: _filter == null
-                          ? 'Sin alertas'
+                          ? 'No tienes notificaciones'
                           : 'Sin alertas de ${_filter!.title}',
                       subtitle:
                           'Tus notificaciones aparecerán aquí en tiempo real.',
