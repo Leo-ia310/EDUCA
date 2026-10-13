@@ -10,7 +10,7 @@ create index if not exists idx_sync_queue_user_status_created
   on sync_queue(institution_id, user_id, status, created_at desc);
 
 create index if not exists idx_change_log_institution_changed
-  on change_log(institution_id, changed_at);
+  on change_log(institution_id, updated_at);
 
 create index if not exists idx_developer_audit_events_created
   on developer_audit_events(created_at desc);

@@ -26,6 +26,7 @@ export class PaymentsService {
 
   async registerPayment(ctx: AppContext, payload: Record<string, unknown>) {
     this.permissions.requireRole(ctx, ["parent"]);
+    this.permissions.enforceAdminPermission(ctx, "payments.create", ["parent"]);
     const chargeId = requiredId(payload.chargeId, "Cargo");
     const amount = requiredNumber(payload.amount, "Monto");
     if (amount <= 0) {
@@ -124,6 +125,7 @@ export class PaymentsService {
         "forbidden",
       );
     }
+    this.permissions.requireAdminPermission(ctx, "payments.cancel");
     const chargeId = requiredId(payload.chargeId, "Cargo");
     const { error } = await this.repository.cancelCharge(
       chargeId,

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../shared/models/app_role.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import 'admin_widgets.dart';
@@ -209,7 +210,9 @@ class _ClassFormState extends ConsumerState<_ClassForm> {
                   ? 'Crear'
                   : 'Guardar cambios',
         ),
-        if (widget.existing != null) ...[
+        if (widget.existing != null &&
+            (ref.read(authControllerProvider).user?.can('classes.delete') ??
+                false)) ...[
           const SizedBox(height: 10),
           BrutalButton(
             expand: true,

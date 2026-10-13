@@ -17,6 +17,7 @@ export class ReportsService {
   ) {}
 
   async previewReportCard(ctx: AppContext, query: Record<string, unknown>) {
+    this.permissions.enforceAdminPermission(ctx, "reports.view", ["teacher", "student", "parent"]);
     const studentId = await this.permissions.normalizeStudentId(
       ctx,
       query.studentId ?? query.student_id,
@@ -33,6 +34,7 @@ export class ReportsService {
     if (!this.permissions.isAdmin(ctx) && !ctx.roles.has("teacher")) {
       throw new HttpError(403, "No puedes generar boletines.", "forbidden");
     }
+    this.permissions.enforceAdminPermission(ctx, "reports.generate", ["teacher"]);
     const studentId = requiredId(payload.studentId ?? payload.student_id, "Estudiante");
     const academicPeriodId = requiredId(
       payload.academicPeriodId ?? payload.academic_period_id,
@@ -71,6 +73,7 @@ export class ReportsService {
   }
 
   async getReportCard(ctx: AppContext, idValue: unknown) {
+    this.permissions.enforceAdminPermission(ctx, "reports.view", ["teacher", "student", "parent"]);
     const id = requiredId(idValue, "Boletín");
     const card = await this.repository.findReportCard(ctx.institutionId, id);
     await this.permissions.normalizeStudentId(ctx, card.student_id, "estudiante");

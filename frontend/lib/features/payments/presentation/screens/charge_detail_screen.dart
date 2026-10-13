@@ -10,6 +10,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../core/widgets/skeleton.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
@@ -37,8 +38,12 @@ class ChargeDetailScreen extends ConsumerWidget {
               title: 'Cargo no encontrado',
             );
           }
-          final canPay =
-              charge.status != ChargeStatus.paid && charge.status != ChargeStatus.cancelled;
+          // Padres no tienen lista de permisos (can == true); un admin sin
+          // payments.create no ve el botón de pagar.
+          final canPay = charge.status != ChargeStatus.paid &&
+              charge.status != ChargeStatus.cancelled &&
+              (ref.watch(authControllerProvider).user?.can('payments.create') ??
+                  false);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

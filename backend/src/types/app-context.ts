@@ -7,6 +7,8 @@ export type AppContext = {
   personId: number | null;
   fullName: string;
   roles: Set<string>;
+  /** Permisos admin del usuario; null = sin restricciones (histórico). */
+  adminPermissions: string[] | null;
   teacherId?: number | null;
   studentId?: number | null;
   parentId?: number | null;

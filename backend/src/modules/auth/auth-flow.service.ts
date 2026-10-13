@@ -200,6 +200,9 @@ export class AuthFlowService {
         username: appUser.username ?? null,
         email: appUser.email ?? null,
         fullName: String(appUser.full_name ?? ""),
+        adminPermissions: Array.isArray(appUser.admin_permissions)
+          ? (appUser.admin_permissions as unknown[]).map(String)
+          : null,
         roles: asList(appUser.user_roles)
           .map((entry) =>
             (asRecord(asRecord(entry).roles).code ?? null)

@@ -8,6 +8,7 @@ import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
@@ -68,7 +69,10 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
         caption: c.room.isEmpty ? null : c.room,
         color: subjectTone(c.subject),
         leadingIcon: Icons.menu_book_rounded,
-        onTap: () => showClassSheet(context, existing: c),
+        onTap:
+            ref.read(authControllerProvider).user?.can('classes.edit') ?? false
+                ? () => showClassSheet(context, existing: c)
+                : null,
       );
     }
 
@@ -109,13 +113,16 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BrutalButton(
-            expand: true,
-            onTap: () => showClassSheet(context),
-            icon: Icons.add_rounded,
-            label: 'Nueva clase',
-          ),
-          const SizedBox(height: 14),
+          if (ref.watch(authControllerProvider).user?.can('classes.create') ??
+              false) ...[
+            BrutalButton(
+              expand: true,
+              onTap: () => showClassSheet(context),
+              icon: Icons.add_rounded,
+              label: 'Nueva clase',
+            ),
+            const SizedBox(height: 14),
+          ],
           Row(
             children: [
               BrutalPill(

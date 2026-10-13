@@ -12,6 +12,42 @@ export class PermissionsService {
     );
   }
 
+  /**
+   * Permiso administrativo por persona. super_admin siempre puede; un perfil
+   * admin/coordinator/director con lista explícita solo puede lo que figura
+   * en ella; sin lista (null) conserva el acceso histórico de su rol.
+   */
+  hasAdminPermission(ctx: AppContext, code: string) {
+    if (ctx.roles.has("super_admin")) return true;
+    if (!this.isAdmin(ctx)) return false;
+    return ctx.adminPermissions == null || ctx.adminPermissions.includes(code);
+  }
+
+  /**
+   * Para servicios que también atienden a otros roles: si quien llama actúa
+   * como administrador (y no por otro rol de [exceptRoles]), exige el permiso.
+   */
+  enforceAdminPermission(
+    ctx: AppContext,
+    code: string,
+    exceptRoles: string[] = [],
+  ) {
+    if (!this.isAdmin(ctx)) return;
+    if (exceptRoles.some((role) => ctx.roles.has(role))) return;
+    this.requireAdminPermission(ctx, code);
+  }
+
+  requireAdminPermission(ctx: AppContext, codes: string | string[]) {
+    const list = Array.isArray(codes) ? codes : [codes];
+    if (!list.some((code) => this.hasAdminPermission(ctx, code))) {
+      throw new HttpError(
+        403,
+        "No tienes permiso para realizar esta acción.",
+        "forbidden",
+      );
+    }
+  }
+
   isPlatformAdmin(ctx: AppContext) {
     return ctx.roles.has("admin") || ctx.roles.has("super_admin");
   }

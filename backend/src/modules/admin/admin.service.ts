@@ -1,3 +1,10 @@
+import {
+  ADMIN_PERMISSION_CODES,
+  ADMIN_PERMISSION_MODULES,
+  ADMIN_PROFILE_ROLES,
+  isAdminProfileRole,
+  normalizeAdminPermissions,
+} from "../../lib/admin-permissions";
 import { HttpError } from "../../lib/errors";
 import { paginationFromQuery, singlePage } from "../../lib/pagination";
 import { requireSupabaseServiceRole } from "../../lib/supabase";
@@ -409,6 +416,215 @@ export class AdminService {
     });
   }
 
+  // ---------- Perfiles administrativos (rol + permisos por persona) ----------
+
+  async listPermissionCatalog(ctx: AppContext) {
+    this.ensureInstitutionAdmin(ctx);
+    return {
+      modules: ADMIN_PERMISSION_MODULES,
+      roles: ADMIN_PROFILE_ROLES,
+      mine: this.effectivePermissions(ctx),
+    };
+  }
+
+  async listProfiles(ctx: AppContext, query: Record<string, unknown> = {}) {
+    this.ensureInstitutionAdmin(ctx);
+    const institutionId = this.targetInstitutionId(ctx, query);
+    const rows = await this.repository.listAdminProfiles(
+      institutionId,
+      ADMIN_PROFILE_ROLES,
+    );
+    return { profiles: rows.map((row) => this.profileView(row)) };
+  }
+
+  async createProfile(ctx: AppContext, payload: Record<string, unknown>) {
+    this.ensureInstitutionAdmin(ctx);
+    const institutionId = this.targetInstitutionId(ctx, payload);
+    const roleCode = this.profileRoleCode(payload.roleCode ?? payload.role);
+    this.assertCanAssignRole(ctx, roleCode);
+    const permissions = this.permissionsFromPayload(ctx, payload.permissions, [
+      "dashboard.view",
+    ]);
+    const email = requiredString(payload.email, "Correo", 150);
+    const password = requiredString(payload.password, "Contraseña", 200);
+    if (password.length < 6) {
+      throw new HttpError(400, "La contraseña debe tener al menos 6 caracteres.", "validation_error");
+    }
+    const fullName = requiredString(payload.fullName ?? payload.full_name, "Nombre completo", 200);
+
+    const admin = requireSupabaseServiceRole();
+    const { data, error } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+      app_metadata: {
+        institution_id: institutionId,
+        roles: [roleCode],
+        provider: "email",
+        providers: ["email"],
+      },
+    });
+    if (error || data?.user == null) {
+      throw new HttpError(
+        400,
+        error?.message ?? "No se pudo crear la cuenta de acceso.",
+        "auth_user_create_failed",
+      );
+    }
+    try {
+      const user = await this.repository.createProfileUser({
+        institution_id: institutionId,
+        auth_user_id: data.user.id,
+        username: optionalString(payload.username, 100),
+        email,
+        phone: optionalString(payload.phone, 30),
+        full_name: fullName,
+        active: this.optionalBoolean(payload.active, true),
+        admin_permissions: permissions,
+      });
+      await this.replaceRolesIfPresent(ctx, institutionId, Number(user.id), {
+        roleCodes: [roleCode],
+      });
+      const created = await this.repository.findUser(institutionId, Number(user.id));
+      return { profile: this.profileView(created) };
+    } catch (failure) {
+      await admin.auth.admin.deleteUser(data.user.id).catch(() => undefined);
+      throw failure;
+    }
+  }
+
+  async updateProfile(ctx: AppContext, idValue: unknown, payload: Record<string, unknown>) {
+    this.ensureInstitutionAdmin(ctx);
+    const institutionId = this.targetInstitutionId(ctx, payload);
+    const id = requiredId(idValue, "Perfil");
+    const current = await this.repository.findUser(institutionId, id);
+    const currentRole = this.profileRoleOf(current);
+    if (currentRole == null) {
+      throw new HttpError(400, "El usuario no es un perfil administrativo.", "validation_error");
+    }
+    this.assertCanAssignRole(ctx, currentRole);
+
+    const wantsRole = payload.roleCode !== undefined || payload.role !== undefined;
+    const roleCode = wantsRole
+      ? this.profileRoleCode(payload.roleCode ?? payload.role)
+      : currentRole;
+    if (roleCode !== currentRole) this.assertCanAssignRole(ctx, roleCode);
+
+    const changesAccess = roleCode !== currentRole ||
+      payload.permissions !== undefined ||
+      this.optionalBoolean(payload.active) === false;
+    if (id === ctx.userId && changesAccess) {
+      throw new HttpError(
+        400,
+        "No puedes cambiar tu propio rol, permisos ni desactivar tu cuenta.",
+        "validation_error",
+      );
+    }
+
+    const changes = this.clean({
+      full_name: this.optionalText(payload.fullName ?? payload.full_name, 200),
+      phone: this.optionalText(payload.phone, 30),
+      active: this.optionalBoolean(payload.active),
+      admin_permissions: payload.permissions === undefined
+        ? undefined
+        : this.permissionsFromPayload(ctx, payload.permissions, []),
+    });
+    const user = Object.keys(changes).length > 0
+      ? await this.repository.updateProfileUser(institutionId, id, changes)
+      : current;
+
+    if (roleCode !== currentRole) {
+      await this.replaceRolesIfPresent(ctx, institutionId, id, { roleCodes: [roleCode] });
+      const authUserId = String(current.auth_user_id ?? "");
+      if (authUserId) {
+        await requireSupabaseServiceRole()
+          .auth.admin.updateUserById(authUserId, { app_metadata: { roles: [roleCode] } })
+          .catch(() => undefined);
+      }
+    }
+    const updated = await this.repository.findUser(institutionId, Number(user.id));
+    return { profile: this.profileView(updated) };
+  }
+
+  private profileRoleCode(value: unknown) {
+    const code = String(value ?? "").trim();
+    if (!isAdminProfileRole(code)) {
+      throw new HttpError(
+        400,
+        "El rol debe ser administrador, coordinador o director.",
+        "validation_error",
+      );
+    }
+    return code;
+  }
+
+  private profileRoleOf(row: Record<string, unknown>) {
+    const roles = Array.isArray(row.user_roles) ? row.user_roles : [];
+    for (const entry of roles as Record<string, unknown>[]) {
+      const code = String((entry.roles as Record<string, unknown> | null)?.code ?? "");
+      if (isAdminProfileRole(code)) return code;
+    }
+    return null;
+  }
+
+  /** Solo un administrador puede crear o editar perfiles con rol administrador. */
+  private assertCanAssignRole(ctx: AppContext, roleCode: string) {
+    if (roleCode === "admin" && !this.permissions.isPlatformAdmin(ctx)) {
+      throw new HttpError(
+        403,
+        "Solo un administrador puede gestionar perfiles de administrador.",
+        "forbidden",
+      );
+    }
+  }
+
+  /** Permisos efectivos de quien llama (null en el contexto = todos). */
+  private effectivePermissions(ctx: AppContext) {
+    if (ctx.roles.has("super_admin") || ctx.adminPermissions == null) {
+      return [...ADMIN_PERMISSION_CODES];
+    }
+    return ctx.adminPermissions;
+  }
+
+  /** Valida la lista y evita conceder permisos que quien llama no tiene. */
+  private permissionsFromPayload(
+    ctx: AppContext,
+    value: unknown,
+    fallback: string[],
+  ) {
+    const permissions = value === undefined
+      ? fallback
+      : normalizeAdminPermissions(value);
+    const own = this.effectivePermissions(ctx);
+    const excess = permissions.filter((code) => !own.includes(code));
+    if (excess.length > 0) {
+      throw new HttpError(
+        403,
+        `No puedes conceder permisos que no tienes: ${excess.join(", ")}`,
+        "forbidden",
+      );
+    }
+    return permissions;
+  }
+
+  private profileView(row: Record<string, unknown>) {
+    const customized = Array.isArray(row.admin_permissions);
+    return {
+      id: String(row.id),
+      fullName: row.full_name,
+      email: row.email,
+      phone: row.phone ?? null,
+      username: row.username ?? null,
+      active: row.active !== false,
+      roleCode: this.profileRoleOf(row),
+      customized,
+      permissions: customized
+        ? (row.admin_permissions as unknown[]).map(String)
+        : [...ADMIN_PERMISSION_CODES],
+    };
+  }
+
   private async replaceRolesIfPresent(
     ctx: AppContext,
     institutionId: number,
@@ -420,6 +636,13 @@ export class AdminService {
       .map((role) => requiredString(role, "Rol", 30));
     const roleIds: number[] = [];
     for (const code of codes) {
+      if (code === "super_admin" && !ctx.roles.has("super_admin")) {
+        throw new HttpError(
+          403,
+          "Solo un super administrador puede asignar ese rol.",
+          "forbidden",
+        );
+      }
       const role = await this.repository.findRoleForAssignment(institutionId, code);
       if (role == null) {
         throw new HttpError(400, `Rol no existe o no pertenece a la institución: ${code}`, "validation_error");

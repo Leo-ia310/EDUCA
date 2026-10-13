@@ -204,7 +204,9 @@ class BrutalPill extends StatelessWidget {
 
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+
+  /// `null` deshabilita la píldora (se ve atenuada y no responde).
+  final VoidCallback? onTap;
   final IconData? icon;
 
   /// Versión más pequeña (barras de filtros).
@@ -215,7 +217,9 @@ class BrutalPill extends StatelessWidget {
     final palette = context.palette;
     final fg =
         selected ? palette.onAccent : Theme.of(context).colorScheme.onSurface;
-    return GestureDetector(
+    return Opacity(
+      opacity: onTap == null ? 0.45 : 1,
+      child: GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
@@ -250,6 +254,7 @@ class BrutalPill extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -68,5 +68,8 @@ async function loadContextFromToken(token: string): Promise<AppContext> {
     personId: appUser.person_id == null ? null : Number(appUser.person_id),
     fullName: String(appUser.full_name ?? "Usuario"),
     roles,
+    adminPermissions: Array.isArray(appUser.admin_permissions)
+      ? (appUser.admin_permissions as unknown[]).map(String)
+      : null,
   };
 }

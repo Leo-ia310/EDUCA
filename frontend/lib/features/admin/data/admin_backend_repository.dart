@@ -4,6 +4,7 @@ import '../../../core/network/backend_api_client.dart';
 import '../../../core/network/paginated_response.dart';
 import '../../../shared/models/app_role.dart';
 import '../../auth/presentation/auth_controller.dart';
+import 'admin_profile.dart';
 import 'school_directory.dart';
 
 typedef JsonMap = Map<String, dynamic>;
@@ -143,6 +144,32 @@ class AdminBackendRepository {
       },
     );
     return _page(data);
+  }
+
+  Future<List<AdminProfile>> listProfiles({int? institutionId}) async {
+    final data = await _api.get(
+      '/admin/profiles',
+      queryParameters: {'institutionId': institutionId},
+    );
+    final map = (data as Map).cast<String, dynamic>();
+    return [
+      for (final row in (map['profiles'] as List? ?? const []))
+        AdminProfile.fromJson((row as Map).cast<String, dynamic>()),
+    ];
+  }
+
+  Future<AdminProfile> createProfile(JsonMap payload) async {
+    final data = await _api.post('/admin/profiles', data: payload);
+    return AdminProfile.fromJson(
+      ((data as Map)['profile'] as Map).cast<String, dynamic>(),
+    );
+  }
+
+  Future<AdminProfile> updateProfile(String id, JsonMap payload) async {
+    final data = await _api.patch('/admin/profiles/$id', data: payload);
+    return AdminProfile.fromJson(
+      ((data as Map)['profile'] as Map).cast<String, dynamic>(),
+    );
   }
 
   Future<SchoolDirectory> listDirectory({int? institutionId}) async {
@@ -355,6 +382,13 @@ final adminUsersProvider =
     );
   }
   return repo.listUsers();
+});
+
+final adminProfilesProvider =
+    FutureProvider.autoDispose<List<AdminProfile>>((ref) async {
+  final repo = ref.watch(adminBackendRepositoryProvider);
+  if (repo == null) return const [];
+  return repo.listProfiles();
 });
 
 final adminSchoolDirectoryProvider =

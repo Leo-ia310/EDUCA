@@ -107,7 +107,7 @@ class BackendAuthRepository implements AuthRepository {
     final me = await _supabase
         .from('users')
         .select(
-          'id, full_name, email, avatar_url, institution_id, '
+          'id, full_name, email, avatar_url, institution_id, admin_permissions, '
           'user_roles(roles(code))',
         )
         .eq('auth_user_id', authUser.id)
@@ -136,6 +136,7 @@ class BackendAuthRepository implements AuthRepository {
       avatarUrl: me['avatar_url'] as String?,
       roles: roles,
       activeRole: roles.first,
+      adminPermissions: _permissionsFrom(me['admin_permissions']),
     );
     return AuthSession(user: user, institution: institution);
   }
@@ -215,8 +216,13 @@ class BackendAuthRepository implements AuthRepository {
       firstName: fullName.split(' ').first,
       roles: roles,
       activeRole: roles.first,
+      adminPermissions: _permissionsFrom(map['adminPermissions']),
     );
   }
+
+  /// `null` = sin restricciones; una lista (aunque vacía) = permisos exactos.
+  List<String>? _permissionsFrom(Object? raw) =>
+      raw is List ? [for (final p in raw) p.toString()] : null;
 
   AppRole? _roleFromCode(String? code) {
     if (code == 'super_admin') return AppRole.admin;

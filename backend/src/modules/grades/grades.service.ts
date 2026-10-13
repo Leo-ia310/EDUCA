@@ -32,6 +32,7 @@ export class GradesService {
         "forbidden",
       );
     }
+    this.permissions.requireAdminPermission(ctx, "settings.edit");
     const id = optionalId(payload.id);
     const name = requiredString(payload.name, "Nombre de escala", 80);
     const type = requiredString(
@@ -114,6 +115,7 @@ export class GradesService {
         "forbidden",
       );
     }
+    this.permissions.requireAdminPermission(ctx, "settings.edit");
     const id = requiredId(payload.id, "Escala");
     await this.repository.findInstitutionScale(ctx.institutionId, id);
     await this.repository.upsertDefaultScaleSetting(ctx.institutionId, id);

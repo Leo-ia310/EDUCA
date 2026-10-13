@@ -14,6 +14,7 @@ class AppUser extends Equatable {
     required this.activeRole,
     this.avatarUrl,
     this.firstName,
+    this.adminPermissions,
   });
 
   final String id;
@@ -25,6 +26,13 @@ class AppUser extends Equatable {
   final List<AppRole> roles;
   final AppRole activeRole;
 
+  /// Permisos del panel admin concedidos a esta persona. `null` = sin
+  /// restricciones (acceso histórico del rol, también en demo).
+  final List<String>? adminPermissions;
+
+  bool can(String code) =>
+      adminPermissions == null || adminPermissions!.contains(code);
+
   AppUser copyWith({AppRole? activeRole}) => AppUser(
         id: id,
         institutionId: institutionId,
@@ -34,11 +42,12 @@ class AppUser extends Equatable {
         avatarUrl: avatarUrl,
         roles: roles,
         activeRole: activeRole ?? this.activeRole,
+        adminPermissions: adminPermissions,
       );
 
   String get displayFirstName => firstName ?? fullName.split(' ').first;
 
   @override
   List<Object?> get props =>
-      [id, institutionId, email, fullName, roles, activeRole];
+      [id, institutionId, email, fullName, roles, activeRole, adminPermissions];
 }

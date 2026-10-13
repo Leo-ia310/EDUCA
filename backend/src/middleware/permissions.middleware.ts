@@ -28,6 +28,18 @@ export function requireAdmin(req: AppRequest, _res: Response, next: NextFunction
   }
 }
 
+/** Exige admin + al menos uno de los permisos indicados (por persona). */
+export function requireAdminPermission(...codes: string[]) {
+  return (req: AppRequest, _res: Response, next: NextFunction) => {
+    try {
+      permissionsService.requireAdminPermission(requireAppContext(req), codes);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+
 export function requirePlatformAdmin(req: AppRequest, _res: Response, next: NextFunction) {
   try {
     const ctx = requireAppContext(req);

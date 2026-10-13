@@ -41,6 +41,12 @@ enum AppRole {
     return unique;
   }
 
+  /// Roles que usan el panel administrativo (permisos por persona).
+  bool get isAdminPanel =>
+      this == AppRole.admin ||
+      this == AppRole.coordinator ||
+      this == AppRole.director;
+
   /// Ruta del dashboard principal de este rol.
   String get dashboardRoute => switch (this) {
         AppRole.student => '/student/dashboard',

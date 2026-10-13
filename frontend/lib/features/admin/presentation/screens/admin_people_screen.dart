@@ -7,6 +7,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
@@ -107,6 +108,10 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
     List<Person> list,
     SchoolDirectory dir,
   ) {
+    final user = ref.watch(authControllerProvider).user;
+    final module = widget.role == AppRole.teacher ? 'teachers' : 'students';
+    final canCreate = user?.can('$module.create') ?? false;
+    final canEdit = user?.can('$module.edit') ?? false;
     final q = _query.trim().toLowerCase();
     final sorted = [...list]..sort((a, b) => a.name.compareTo(b.name));
     final shown = q.isEmpty
@@ -126,13 +131,15 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BrutalButton(
-            expand: true,
-            onTap: () => showPersonSheet(context, role: widget.role),
-            icon: Icons.person_add_alt_1_rounded,
-            label: 'Nuevo $_singular',
-          ),
-          const SizedBox(height: 14),
+          if (canCreate) ...[
+            BrutalButton(
+              expand: true,
+              onTap: () => showPersonSheet(context, role: widget.role),
+              icon: Icons.person_add_alt_1_rounded,
+              label: 'Nuevo $_singular',
+            ),
+            const SizedBox(height: 14),
+          ],
           AdminSearchField(
             hint: 'Buscar por nombre o correo…',
             onChanged: (v) => setState(() => _query = v),
@@ -163,7 +170,9 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
                 color: color,
                 leadingText: p.initials,
                 dimmed: !p.active,
-                onTap: () => showPersonSheet(context, existing: p),
+                onTap: canEdit
+                    ? () => showPersonSheet(context, existing: p)
+                    : null,
               ),
         ],
       ),

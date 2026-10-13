@@ -9,6 +9,7 @@ import '../../../core/widgets/depth_card.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../core/widgets/skeleton.dart';
+import '../../auth/presentation/auth_controller.dart';
 import '../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../grades/domain/entities.dart';
 import '../../grades/presentation/controllers/grades_controller.dart';
@@ -30,6 +31,9 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    // Alumnos y padres no tienen lista de permisos (can == true).
+    final canDownload =
+        ref.watch(authControllerProvider).user?.can('reports.download') ?? false;
     final periodsAsync = ref.watch(periodsProvider);
     final scaleAsync = ref.watch(defaultScaleProvider);
     final card = ref.watch(reportCardProvider(
@@ -78,22 +82,24 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                BrutalButton(
-                  expand: true,
-                  onTap: () => _openPdf(data),
-                  icon: Icons.picture_as_pdf_rounded,
-                  label: 'Ver / Descargar boletín en PDF',
-                ),
-                const SizedBox(height: 10),
-                BrutalButton(
-                  expand: true,
-                  onTap: () => _sharePdf(data),
-                  icon: Icons.ios_share_rounded,
-                  label: 'Compartir boletín',
-                  color: context.palette.cardElevated,
-                  foreground: Theme.of(context).colorScheme.onSurface,
-                ),
+                if (canDownload) ...[
+                  const SizedBox(height: 16),
+                  BrutalButton(
+                    expand: true,
+                    onTap: () => _openPdf(data),
+                    icon: Icons.picture_as_pdf_rounded,
+                    label: 'Ver / Descargar boletín en PDF',
+                  ),
+                  const SizedBox(height: 10),
+                  BrutalButton(
+                    expand: true,
+                    onTap: () => _sharePdf(data),
+                    icon: Icons.ios_share_rounded,
+                    label: 'Compartir boletín',
+                    color: context.palette.cardElevated,
+                    foreground: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Center(
                   child: Text(

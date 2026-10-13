@@ -11,8 +11,10 @@ import '../../../../core/widgets/staggered_entrance.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../admin/data/school_directory.dart';
 import '../../../admin/data/admin_backend_repository.dart';
+import '../../../admin/data/admin_permissions.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/providers.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../widgets/home_hero.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/student_home_header.dart';
@@ -24,6 +26,7 @@ typedef _Tile = ({
   Color color,
   String route,
   Widget art,
+  String perm,
 });
 
 /// Home del director/administración: hero + tarjetas a los CRUD
@@ -52,6 +55,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         color: context.palette.accent,
         route: Routes.manageTeachers,
         art: art(Icons.school_rounded, Icons.edit_note_rounded),
+        perm: Perm.teachersView,
       ),
       (
         icon: Icons.backpack_rounded,
@@ -60,6 +64,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         color: context.palette.sun,
         route: Routes.adminStudents,
         art: art(Icons.face_rounded, Icons.menu_book_rounded),
+        perm: Perm.studentsView,
       ),
       (
         icon: Icons.family_restroom_rounded,
@@ -68,6 +73,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         color: context.palette.grape,
         route: Routes.adminParents,
         art: art(Icons.favorite_rounded, Icons.face_3_rounded),
+        perm: Perm.studentsView,
       ),
       (
         icon: Icons.meeting_room_rounded,
@@ -76,6 +82,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         color: context.palette.mint,
         route: Routes.adminGroups,
         art: art(Icons.groups_rounded, Icons.apartment_rounded),
+        perm: Perm.classesView,
       ),
       (
         icon: Icons.menu_book_rounded,
@@ -84,6 +91,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         color: context.palette.success,
         route: Routes.adminClasses,
         art: art(Icons.calculate_rounded, Icons.science_rounded),
+        perm: Perm.classesView,
       ),
       (
         icon: Icons.admin_panel_settings_rounded,
@@ -92,6 +100,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         color: context.palette.coral,
         route: Routes.adminRoles,
         art: art(Icons.verified_user_rounded, Icons.key_rounded),
+        perm: Perm.rolesView,
       ),
     ];
 
@@ -112,6 +121,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             angle: 0.2,
           ),
         ]),
+        perm: Perm.reportsView,
       ),
       (
         icon: Icons.payments_rounded,
@@ -120,6 +130,7 @@ class AdminDashboardScreen extends ConsumerWidget {
         color: context.palette.success,
         route: Routes.paymentsDunning,
         art: art(Icons.credit_card_rounded, Icons.receipt_long_rounded),
+        perm: Perm.paymentsView,
       ),
       (
         icon: Icons.picture_as_pdf_rounded,
@@ -128,23 +139,29 @@ class AdminDashboardScreen extends ConsumerWidget {
         color: context.palette.sun,
         route: Routes.adminReportCards,
         art: art(Icons.description_rounded, Icons.workspace_premium_rounded),
+        perm: Perm.reportsView,
       ),
     ];
 
+    // Cada perfil solo ve las secciones para las que tiene permiso.
     List<Widget> cards(List<_Tile> tiles) => [
           for (final t in tiles)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: HomeOptionCard(
-                icon: t.icon,
-                title: t.title,
-                subtitle: t.subtitle,
-                color: t.color,
-                art: t.art,
-                onTap: () => context.push(t.route),
+            if (user.can(t.perm))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: HomeOptionCard(
+                  icon: t.icon,
+                  title: t.title,
+                  subtitle: t.subtitle,
+                  color: t.color,
+                  art: t.art,
+                  onTap: () => context.push(t.route),
+                ),
               ),
-            ),
         ];
+
+    final spaceCards = cards(space);
+    final controlCards = cards(control);
 
     return AppScaffold(
       padding: EdgeInsets.zero,
@@ -178,16 +195,26 @@ class AdminDashboardScreen extends ConsumerWidget {
             child: StaggeredEntrance(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionHeader(title: 'Mi Espacio', accent: false),
-                const SizedBox(height: 12),
-                ...cards(space),
-                const SizedBox(height: 20),
-                const SectionHeader(
-                  title: 'Control Institucional',
-                  accent: false,
-                ),
-                const SizedBox(height: 12),
-                ...cards(control),
+                if (spaceCards.isNotEmpty) ...[
+                  const SectionHeader(title: 'Mi Espacio', accent: false),
+                  const SizedBox(height: 12),
+                  ...spaceCards,
+                ],
+                if (controlCards.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const SectionHeader(
+                    title: 'Control Institucional',
+                    accent: false,
+                  ),
+                  const SizedBox(height: 12),
+                  ...controlCards,
+                ],
+                if (spaceCards.isEmpty && controlCards.isEmpty)
+                  const EmptyState(
+                    icon: Icons.lock_outline_rounded,
+                    title: 'Sin secciones asignadas',
+                    subtitle: 'Pide a un administrador que te asigne permisos.',
+                  ),
               ],
             ),
           ),

@@ -872,6 +872,180 @@
         }
       }
     },
+    "/api/admin/permissions/catalog": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Catalogo de permisos por modulo y permisos efectivos de quien consulta",
+        "description": "Auth: admin, coordinator, director.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ modules: [{ key, label, actions }], roles, mine: string[] }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/profiles": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Lista perfiles administrativos con rol y permisos",
+        "description": "Auth: admin/coordinator/director con roles.view.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ profiles: [{ id, fullName, email, phone, active, roleCode, customized, permissions }] }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Crea perfil administrativo (cuenta de acceso + rol + permisos)",
+        "description": "Auth: admin/coordinator/director con roles.create; rol admin solo por admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ fullName, email, password, roleCode: admin|coordinator|director, permissions: string[], phone?, username?, active? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ profile }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/profiles/{id}": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Actualiza rol, permisos y datos de un perfil administrativo",
+        "description": "Auth: admin/coordinator/director con roles.edit; no permite editar el propio acceso ni conceder permisos que no se tienen.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ roleCode?, permissions?, fullName?, phone?, active? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ profile }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/admin/roles": {
       "get": {
         "tags": [

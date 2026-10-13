@@ -105,6 +105,40 @@ export class AdminRepository {
     );
   }
 
+  /**
+   * Escrituras de perfiles administrativos: van con la service role porque
+   * `users.admin_permissions` está protegida por un trigger contra escrituras
+   * directas de usuarios autenticados (0018_guard_admin_permissions.sql).
+   */
+  async createProfileUser(payload: Record<string, unknown>) {
+    return expectSingle<Record<string, unknown>>(
+      requireSupabaseServiceRole()
+        .from("users")
+        .insert(payload)
+        .select("*")
+        .single(),
+      "No se pudo crear el perfil.",
+    );
+  }
+
+  async updateProfileUser(
+    institutionId: number,
+    id: number,
+    payload: Record<string, unknown>,
+  ) {
+    return expectSingle<Record<string, unknown>>(
+      requireSupabaseServiceRole()
+        .from("users")
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq("institution_id", institutionId)
+        .eq("id", id)
+        .is("deleted_at", null)
+        .select("*")
+        .single(),
+      "No se pudo actualizar el perfil.",
+    );
+  }
+
   async createUser(payload: Record<string, unknown>) {
     return expectSingle<Record<string, unknown>>(
       db.from("users").insert(payload).select("*").single(),
@@ -150,6 +184,26 @@ export class AdminRepository {
     return paged(data ?? [], count, page);
   }
 
+  async listAdminProfiles(institutionId: number, roleCodes: readonly string[]) {
+    const { data, error } = await db
+      .from("users")
+      .select(
+        "id, institution_id, username, email, phone, full_name, active, admin_permissions, created_at, user_roles(roles(code, name))",
+      )
+      .eq("institution_id", institutionId)
+      .is("deleted_at", null)
+      .order("full_name");
+    assertNoDbError(error);
+    return ((data ?? []) as Record<string, unknown>[]).filter((row) => {
+      const roles = Array.isArray(row.user_roles) ? row.user_roles : [];
+      return roles.some((entry: Record<string, unknown>) =>
+        roleCodes.includes(
+          String((entry.roles as Record<string, unknown> | null)?.code ?? ""),
+        )
+      );
+    });
+  }
+
   async findRoleForAssignment(institutionId: number, code: string) {
     const { data } = await db
       .from("roles")
@@ -189,14 +243,17 @@ export class AdminRepository {
   }
 
   async replaceUserRoles(institutionId: number, userId: number, roleIds: number[]) {
-    const { error: deleteError } = await db
+    // Con la service role: user_roles está protegida por un trigger contra
+    // escrituras directas de usuarios autenticados (0019_guard_user_roles.sql).
+    const service = requireSupabaseServiceRole();
+    const { error: deleteError } = await service
       .from("user_roles")
       .delete()
       .eq("institution_id", institutionId)
       .eq("user_id", userId);
     assertNoDbError(deleteError);
     if (roleIds.length === 0) return;
-    const { error } = await db.from("user_roles").insert(
+    const { error } = await service.from("user_roles").insert(
       roleIds.map((roleId) => ({
         institution_id: institutionId,
         user_id: userId,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -91,27 +92,31 @@ class AdminGroupsScreen extends ConsumerWidget {
   }
 }
 
-class _GroupsList extends StatelessWidget {
+class _GroupsList extends ConsumerWidget {
   const _GroupsList({required this.dir, required this.onNew});
 
   final SchoolDirectory dir;
   final VoidCallback onNew;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final canCreate =
+        ref.watch(authControllerProvider).user?.can('classes.create') ?? false;
     return StudentDetailScaffold(
       title: 'Salones y años',
       bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BrutalButton(
-            expand: true,
-            onTap: onNew,
-            icon: Icons.add_rounded,
-            label: 'Nuevo salón',
-          ),
-          const SizedBox(height: 18),
+          if (canCreate) ...[
+            BrutalButton(
+              expand: true,
+              onTap: onNew,
+              icon: Icons.add_rounded,
+              label: 'Nuevo salón',
+            ),
+            const SizedBox(height: 18),
+          ],
           if (dir.groups.isEmpty)
             const EmptyState(
               icon: Icons.meeting_room_rounded,
@@ -204,6 +209,12 @@ class AdminGroupDetailScreen extends ConsumerWidget {
       ..sort((a, b) => a.name.compareTo(b.name));
     final classes = dir.classesOfGroup(groupId);
     final store = ref.read(schoolDirectoryProvider.notifier);
+    final me = ref.watch(authControllerProvider).user;
+    final canEditGroup = me?.can('classes.edit') ?? false;
+    final canDeleteGroup = me?.can('classes.delete') ?? false;
+    final canCreateClass = me?.can('classes.create') ?? false;
+    final canCreateStudent = me?.can('students.create') ?? false;
+    final canEditStudent = me?.can('students.edit') ?? false;
 
     return StudentDetailScaffold(
       title: group.name,
@@ -211,55 +222,59 @@ class AdminGroupDetailScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: BrutalButton(
-                  onTap: () => const AdminGroupsScreen()
-                      ._editName(context, ref, group: group),
-                  icon: Icons.edit_rounded,
-                  label: 'Renombrar',
-                  color: context.palette.cardElevated,
-                  foreground: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: BrutalButton(
-                  onTap: () async {
-                    if (!await confirmDelete(
-                      context,
-                      'el salón ${group.name} (también sus clases)',
-                    )) {
-                      return;
-                    }
-                    final repo = ref.read(adminBackendRepositoryProvider);
-                    if (repo != null) {
-                      await repo.archiveGroup(groupId);
-                      ref.invalidate(adminSchoolDirectoryProvider);
-                    } else {
-                      store.removeGroup(groupId);
-                    }
-                    if (context.mounted) context.pop();
-                  },
-                  icon: Icons.delete_outline_rounded,
-                  label: 'Eliminar',
-                  color: context.palette.danger,
-                ),
-              ),
-            ],
-          ),
+          if (canEditGroup || canDeleteGroup)
+            Row(
+              children: [
+                if (canEditGroup)
+                  Expanded(
+                    child: BrutalButton(
+                      onTap: () => const AdminGroupsScreen()
+                          ._editName(context, ref, group: group),
+                      icon: Icons.edit_rounded,
+                      label: 'Renombrar',
+                      color: context.palette.cardElevated,
+                      foreground: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                if (canEditGroup && canDeleteGroup) const SizedBox(width: 10),
+                if (canDeleteGroup)
+                  Expanded(
+                    child: BrutalButton(
+                      onTap: () async {
+                        if (!await confirmDelete(
+                          context,
+                          'el salón ${group.name} (también sus clases)',
+                        )) {
+                          return;
+                        }
+                        final repo = ref.read(adminBackendRepositoryProvider);
+                        if (repo != null) {
+                          await repo.archiveGroup(groupId);
+                          ref.invalidate(adminSchoolDirectoryProvider);
+                        } else {
+                          store.removeGroup(groupId);
+                        }
+                        if (context.mounted) context.pop();
+                      },
+                      icon: Icons.delete_outline_rounded,
+                      label: 'Eliminar',
+                      color: context.palette.danger,
+                    ),
+                  ),
+              ],
+            ),
           const SizedBox(height: 22),
           Row(
             children: [
               const Expanded(
                 child: SectionHeader(title: 'Clases', accent: false),
               ),
-              TextButton.icon(
-                onPressed: () => showClassSheet(context, groupId: groupId),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Nueva'),
-              ),
+              if (canCreateClass)
+                TextButton.icon(
+                  onPressed: () => showClassSheet(context, groupId: groupId),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Nueva'),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -275,7 +290,9 @@ class AdminGroupDetailScreen extends ConsumerWidget {
               caption: c.room.isEmpty ? null : c.room,
               color: subjectTone(c.subject),
               leadingIcon: Icons.menu_book_rounded,
-              onTap: () => showClassSheet(context, existing: c),
+              onTap: me?.can('classes.edit') ?? false
+                  ? () => showClassSheet(context, existing: c)
+                  : null,
             ),
           const SizedBox(height: 14),
           Row(
@@ -283,12 +300,13 @@ class AdminGroupDetailScreen extends ConsumerWidget {
               const Expanded(
                 child: SectionHeader(title: 'Estudiantes', accent: false),
               ),
-              TextButton.icon(
-                onPressed: () =>
-                    showPersonSheet(context, role: AppRole.student),
-                icon: const Icon(Icons.person_add_alt_1_rounded),
-                label: const Text('Nuevo'),
-              ),
+              if (canCreateStudent)
+                TextButton.icon(
+                  onPressed: () =>
+                      showPersonSheet(context, role: AppRole.student),
+                  icon: const Icon(Icons.person_add_alt_1_rounded),
+                  label: const Text('Nuevo'),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -300,7 +318,9 @@ class AdminGroupDetailScreen extends ConsumerWidget {
               color: roleColor(context, AppRole.student),
               leadingText: s.initials,
               dimmed: !s.active,
-              onTap: () => showPersonSheet(context, existing: s),
+              onTap: canEditStudent
+                  ? () => showPersonSheet(context, existing: s)
+                  : null,
             ),
         ],
       ),

@@ -63,6 +63,7 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/student_profile_screen.dart';
 import '../../shared/models/app_role.dart';
 import '../widgets/empty_state.dart';
+import '../../features/admin/data/admin_permissions.dart';
 import '../widgets/not_found_screen.dart';
 import 'route_paths.dart';
 
@@ -92,6 +93,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       if (!loggedIn && !goingToAuth) return Routes.login;
       if (loggedIn && goingToAuth) return auth.user!.activeRole.dashboardRoute;
+
+      // Panel admin: un perfil sin permiso sobre la sección vuelve a su inicio.
+      final user = auth.user;
+      if (user != null && user.activeRole.isAdminPanel) {
+        final needed = permissionForAdminRoute(loc);
+        if (needed != null && !user.can(needed)) {
+          return user.activeRole.dashboardRoute;
+        }
+      }
       return null;
     },
     routes: [

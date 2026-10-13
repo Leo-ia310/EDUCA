@@ -16,7 +16,7 @@ export class AuthFlowRepository {
   async findLoginUser(institutionId: number, username: string) {
     const db = requireSupabaseServiceRole();
     const select =
-      "id, auth_user_id, institution_id, person_id, username, email, full_name, active, locked_until, user_roles(roles(code, name))";
+      "id, auth_user_id, institution_id, person_id, username, email, full_name, admin_permissions, active, locked_until, user_roles(roles(code, name))";
     const byUsername = await db
       .from("users")
       .select(select)
@@ -41,7 +41,7 @@ export class AuthFlowRepository {
   async findLoginUserByIdentifier(username: string) {
     const db = requireSupabaseServiceRole();
     const select =
-      "id, auth_user_id, institution_id, person_id, username, email, full_name, active, locked_until, user_roles(roles(code, name)), institutions(id, code, name, commercial_name, active)";
+      "id, auth_user_id, institution_id, person_id, username, email, full_name, admin_permissions, active, locked_until, user_roles(roles(code, name)), institutions(id, code, name, commercial_name, active)";
     const safeUsername = username.replace(/[%_]/g, "");
     const { data, error } = await db
       .from("users")

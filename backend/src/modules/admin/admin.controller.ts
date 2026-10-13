@@ -128,3 +128,23 @@ export async function archiveClass(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+
+export async function listPermissionCatalog(req: AppRequest, res: Response) {
+  const data = await adminService.listPermissionCatalog(requireAppContext(req));
+  return res.json({ ok: true, data });
+}
+
+export async function listProfiles(req: AppRequest, res: Response) {
+  const data = await adminService.listProfiles(requireAppContext(req), asRecord(req.query));
+  return res.json({ ok: true, data });
+}
+
+export async function createProfile(req: AppRequest, res: Response) {
+  const data = await adminService.createProfile(requireAppContext(req), asRecord(req.body));
+  return res.status(201).json({ ok: true, data });
+}
+
+export async function updateProfile(req: AppRequest, res: Response) {
+  const data = await adminService.updateProfile(requireAppContext(req), req.params.id, asRecord(req.body));
+  return res.json({ ok: true, data });
+}

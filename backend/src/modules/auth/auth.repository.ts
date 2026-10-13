@@ -13,7 +13,7 @@ export class AuthRepository {
       db
         .from("users")
         .select(
-          "id, institution_id, person_id, full_name, user_roles(roles(code))",
+          "id, institution_id, person_id, full_name, admin_permissions, user_roles(roles(code))",
         )
         .eq("auth_user_id", authUserId)
         .eq("active", true)

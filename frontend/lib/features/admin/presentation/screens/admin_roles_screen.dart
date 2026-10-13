@@ -9,8 +9,12 @@ import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../data/admin_backend_repository.dart';
+import '../../data/admin_permissions.dart';
+import '../../data/admin_profile.dart';
 import '../../data/school_directory.dart';
+import '../widgets/admin_profile_form.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/person_form.dart';
 
@@ -79,6 +83,10 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
 
   Widget _buildContent(BuildContext context, SchoolDirectory dir) {
     final palette = context.palette;
+    final connected = ref.watch(adminBackendRepositoryProvider) != null;
+    final me = ref.watch(authControllerProvider).user;
+    final canCreate = me?.can('roles.create') ?? false;
+    final canEdit = me?.can('roles.edit') ?? false;
     final q = _query.trim().toLowerCase();
     final profiles = dir.people
         .where((p) => _filter == null || p.role == _filter)
@@ -97,13 +105,26 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BrutalButton(
-            expand: true,
-            onTap: () => _openPersonSheet(context),
-            icon: Icons.person_add_alt_1_rounded,
-            label: 'Nuevo perfil',
-          ),
-          const SizedBox(height: 20),
+          if (canCreate) ...[
+            BrutalButton(
+              expand: true,
+              onTap: () => connected
+                  ? showAdminProfileSheet(context)
+                  : _openPersonSheet(context),
+              icon: Icons.person_add_alt_1_rounded,
+              label: 'Nuevo perfil',
+            ),
+            const SizedBox(height: 20),
+          ],
+          if (connected) ...[
+            const SectionHeader(
+              title: 'Perfiles administrativos',
+              accent: false,
+            ),
+            const SizedBox(height: 8),
+            _AdminProfilesList(canEdit: canEdit, meId: me?.id),
+            const SizedBox(height: 20),
+          ],
           const SectionHeader(title: 'Roles', accent: false),
           const SizedBox(height: 8),
           for (final r in AppRole.values)
@@ -147,7 +168,9 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
                 color: roleColor(context, p.role),
                 leadingText: p.initials,
                 dimmed: !p.active,
-                onTap: () => _openPersonSheet(context, existing: p),
+                onTap: canEdit && !p.role.isAdminPanel
+                    ? () => _openPersonSheet(context, existing: p)
+                    : null,
               ),
           const SizedBox(height: 4),
           Text(
@@ -241,4 +264,67 @@ class _RoleCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Perfiles con acceso al dashboard admin (administrador, supervisor /
+/// coordinador, director) y cuántos permisos tiene cada uno.
+class _AdminProfilesList extends ConsumerWidget {
+  const _AdminProfilesList({required this.canEdit, required this.meId});
+
+  final bool canEdit;
+  final String? meId;
+
+  static String _roleLabel(String code) => adminProfileRoles
+      .firstWhere((r) => r.$1 == code, orElse: () => (code, code))
+      .$2;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profiles = ref.watch(adminProfilesProvider);
+    return profiles.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => ErrorStateView(
+        message: '$e',
+        onRetry: () => ref.invalidate(adminProfilesProvider),
+      ),
+      data: (list) {
+        if (list.isEmpty) {
+          return const EmptyState(
+            icon: Icons.admin_panel_settings_rounded,
+            title: 'Sin perfiles administrativos',
+            subtitle: 'Crea el primero con "Nuevo perfil".',
+          );
+        }
+        return Column(
+          children: [
+            for (final p in list)
+              AdminTile(
+                title: p.fullName,
+                subtitle: p.email,
+                caption:
+                    '${_roleLabel(p.roleCode)} · ${_summary(p)}${p.active ? '' : ' · Inactivo'}',
+                color: roleColor(context, _appRole(p.roleCode)),
+                leadingText: p.initials,
+                dimmed: !p.active,
+                onTap: canEdit
+                    ? () => showAdminProfileSheet(context, existing: p)
+                    : null,
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  static String _summary(AdminProfile p) =>
+      p.customized ? '${p.permissions.length} permisos' : 'Acceso completo';
+
+  static AppRole _appRole(String code) => switch (code) {
+        'coordinator' => AppRole.coordinator,
+        'director' => AppRole.director,
+        _ => AppRole.admin,
+      };
 }
