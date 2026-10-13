@@ -151,14 +151,19 @@ class AdminBackendRepository {
       queryParameters: {'institutionId': institutionId},
     );
     final map = (data as Map).cast<String, dynamic>();
-    final people = ((map['people'] as List?) ?? const [])
-        .map((row) => _directoryPerson((row as Map).cast<String, dynamic>()))
-        .toList();
     final groups = ((map['groups'] as List?) ?? const [])
         .map((row) => _directoryGroup((row as Map).cast<String, dynamic>()))
         .toList();
     final classes = ((map['classes'] as List?) ?? const [])
         .map((row) => _directoryClass((row as Map).cast<String, dynamic>()))
+        .toList();
+    final people = ((map['people'] as List?) ?? const [])
+        .map(
+          (row) => _directoryPerson(
+            (row as Map).cast<String, dynamic>(),
+            classes,
+          ),
+        )
         .toList();
     return SchoolDirectory(people: people, groups: groups, classes: classes);
   }
@@ -267,7 +272,7 @@ class AdminBackendRepository {
   }
 }
 
-Person _directoryPerson(JsonMap row) {
+Person _directoryPerson(JsonMap row, List<SchoolClass> classes) {
   final person = (row['persons'] as Map?)?.cast<String, dynamic>() ??
       const <String, dynamic>{};
   final role = AppRole.fromCode(row['role']?.toString()) ?? AppRole.student;
@@ -275,6 +280,16 @@ Person _directoryPerson(JsonMap row) {
   final last = person['last_name']?.toString() ?? '';
   final fullName =
       [first, last].where((part) => part.trim().isNotEmpty).join(' ').trim();
+  final groupId = row['group_id']?.toString();
+  final backendClassIds = ((row['class_ids'] as List?) ?? const [])
+      .map((value) => value.toString())
+      .toSet();
+  final classIds = backendClassIds.isNotEmpty || groupId == null
+      ? backendClassIds
+      : classes
+          .where((schoolClass) => schoolClass.groupId == groupId)
+          .map((schoolClass) => schoolClass.id)
+          .toSet();
   final childIds = ((row['child_ids'] as List?) ?? const [])
       .map((value) => value.toString())
       .toSet();
@@ -285,7 +300,8 @@ Person _directoryPerson(JsonMap row) {
     email: person['email']?.toString() ?? '',
     phone: person['phone']?.toString() ?? '',
     active: row['active'] != false,
-    groupId: row['group_id']?.toString(),
+    groupId: groupId,
+    classIds: classIds,
     childIds: childIds,
   );
 }

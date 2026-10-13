@@ -39,20 +39,32 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
         _ => widget.role.label.toLowerCase(),
       };
 
+  Set<String> _studentClassIds(Person p, SchoolDirectory dir) {
+    if (p.classIds.isNotEmpty) return p.classIds;
+    final groupId = p.groupId;
+    if (groupId == null) return const <String>{};
+    return dir.classesOfGroup(groupId).map((c) => c.id).toSet();
+  }
+
   String _subtitle(Person p, SchoolDirectory dir) {
     switch (widget.role) {
       case AppRole.teacher:
         final cls = dir.classesOfTeacher(p.id);
-        return cls.isEmpty
-            ? 'Sin clases asignadas'
-            : cls
-                .map(
-                  (c) => '${c.subject} (${dir.group(c.groupId)?.name ?? '—'})',
-                )
-                .join(' · ');
+        if (cls.isEmpty) return 'Sin clases asignadas';
+        final countLabel = cls.length == 1
+            ? '1 clase asignada'
+            : '${cls.length} clases asignadas';
+        final names = cls
+            .map(
+              (c) => '${c.subject} (${dir.group(c.groupId)?.name ?? '—'})',
+            )
+            .join(' · ');
+        return '$countLabel · $names';
       case AppRole.student:
         final g = dir.group(p.groupId)?.name ?? 'Sin salón';
-        return '$g · ${p.classIds.length} clases';
+        final count = _studentClassIds(p, dir).length;
+        final label = count == 1 ? '1 clase' : '$count clases';
+        return '$g · $label';
       case AppRole.parent:
         final kids = p.childIds
             .map((id) => dir.person(id)?.name)

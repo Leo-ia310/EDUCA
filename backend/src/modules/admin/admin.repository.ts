@@ -357,13 +357,13 @@ export class AdminRepository {
     return {
       people: [
         ...students.map((row: Record<string, unknown>) =>
-          this.directoryPerson(row, "student", enrollments.data ?? [], parentLinks.data ?? [])
+          this.directoryPerson(row, "student", enrollments.data ?? [], parentLinks.data ?? [], classes.data ?? [])
         ),
         ...teachers.map((row: Record<string, unknown>) =>
-          this.directoryPerson(row, "teacher", enrollments.data ?? [], parentLinks.data ?? [])
+          this.directoryPerson(row, "teacher", enrollments.data ?? [], parentLinks.data ?? [], classes.data ?? [])
         ),
         ...parents.map((row: Record<string, unknown>) =>
-          this.directoryPerson(row, "parent", enrollments.data ?? [], parentLinks.data ?? [])
+          this.directoryPerson(row, "parent", enrollments.data ?? [], parentLinks.data ?? [], classes.data ?? [])
         ),
       ],
       groups: groups.data ?? [],
@@ -396,14 +396,21 @@ export class AdminRepository {
     role: "student" | "teacher" | "parent",
     enrollments: Record<string, unknown>[],
     parentLinks: Record<string, unknown>[],
+    classes: Record<string, unknown>[],
   ) {
     const person = row.persons as Record<string, unknown> | null;
+    const groupId = role === "student"
+      ? enrollments.find((e) => String(e.student_id) === String(row.id))?.group_id ?? null
+      : null;
     return {
       ...row,
       role,
-      group_id: role === "student"
-        ? enrollments.find((e) => String(e.student_id) === String(row.id))?.group_id ?? null
-        : null,
+      group_id: groupId,
+      class_ids: role === "student" && groupId != null
+        ? classes
+          .filter((classRow) => String(classRow.group_id) === String(groupId))
+          .map((classRow) => String(classRow.id))
+        : [],
       child_ids: role === "parent"
         ? parentLinks
           .filter((link) => String(link.parent_id) === String(row.id))
@@ -588,6 +595,54 @@ export class AdminRepository {
         .single(),
       "No se pudo actualizar la clase.",
     );
+  }
+
+  async findClasses(institutionId: number, classIds: number[]) {
+    const uniqueIds = [...new Set(classIds)];
+    if (uniqueIds.length === 0) return [];
+    const { data, error } = await db
+      .from("classes")
+      .select("id, group_id, teacher_id, active")
+      .eq("institution_id", institutionId)
+      .in("id", uniqueIds)
+      .eq("active", true);
+    assertNoDbError(error);
+    return data ?? [];
+  }
+
+  async replaceTeacherClassAssignments(
+    institutionId: number,
+    teacherId: number,
+    classIds: number[],
+  ) {
+    await expectSingle<Record<string, unknown>>(
+      db
+        .from("teachers")
+        .select("id")
+        .eq("institution_id", institutionId)
+        .eq("id", teacherId)
+        .eq("active", true)
+        .single(),
+      "Maestro no encontrado.",
+    );
+    const uniqueClassIds = [...new Set(classIds)];
+    const foundClasses = await this.findClasses(institutionId, uniqueClassIds);
+    if (foundClasses.length !== uniqueClassIds.length) {
+      throw new HttpError(400, "Una o más clases no existen o no pertenecen a la institución.", "validation_error");
+    }
+    const { error: clearError } = await db
+      .from("classes")
+      .update({ teacher_id: null })
+      .eq("institution_id", institutionId)
+      .eq("teacher_id", teacherId);
+    assertNoDbError(clearError);
+    if (uniqueClassIds.length === 0) return;
+    const { error } = await db
+      .from("classes")
+      .update({ teacher_id: teacherId })
+      .eq("institution_id", institutionId)
+      .in("id", uniqueClassIds);
+    assertNoDbError(error);
   }
 
   async archiveClass(institutionId: number, id: number) {

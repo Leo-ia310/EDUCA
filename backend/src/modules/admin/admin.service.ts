@@ -435,18 +435,55 @@ export class AdminService {
     resourceId: number,
     payload: Record<string, unknown>,
   ) {
-    if (resource === "students" && ("groupId" in payload || "group_id" in payload)) {
+    if (resource === "students" && this.hasStudentEnrollmentPayload(payload)) {
       await this.repository.replaceStudentEnrollment(
         institutionId,
         resourceId,
-        optionalId(payload.groupId ?? payload.group_id),
+        await this.resolveEnrollmentGroupId(institutionId, payload),
       );
+    }
+    if (resource === "teachers" && ("classIds" in payload || "class_ids" in payload)) {
+      const classIds = asList(payload.classIds ?? payload.class_ids)
+        .map((value) => requiredId(value, "Clase"));
+      await this.repository.replaceTeacherClassAssignments(institutionId, resourceId, classIds);
     }
     if (resource === "parents" && ("childIds" in payload || "child_ids" in payload)) {
       const childIds = asList(payload.childIds ?? payload.child_ids)
         .map((value) => requiredId(value, "Estudiante"));
       await this.repository.replaceParentStudents(institutionId, resourceId, childIds);
     }
+  }
+
+  private hasStudentEnrollmentPayload(payload: Record<string, unknown>): boolean {
+    return "groupId" in payload || "group_id" in payload ||
+      "classId" in payload || "class_id" in payload ||
+      "classIds" in payload || "class_ids" in payload;
+  }
+
+  private async resolveEnrollmentGroupId(
+    institutionId: number,
+    payload: Record<string, unknown>,
+  ): Promise<number | null> {
+    const explicitGroupId = optionalId(payload.groupId ?? payload.group_id) as number | null;
+    const classIds: number[] = [
+      ...asList(payload.classIds ?? payload.class_ids),
+      ...(payload.classId !== undefined || payload.class_id !== undefined
+        ? [payload.classId ?? payload.class_id]
+        : []),
+    ].map((value) => requiredId(value, "Clase"));
+    if (classIds.length === 0) return explicitGroupId;
+    const classes = await this.repository.findClasses(institutionId, classIds) as Record<string, unknown>[];
+    if (classes.length !== [...new Set(classIds)].length) {
+      throw new HttpError(400, "Una o más clases no existen o no pertenecen a la institución.", "validation_error");
+    }
+    const groupIds = [...new Set(classes.map((row) => Number(row.group_id)))];
+    if (groupIds.length !== 1) {
+      throw new HttpError(400, "Las clases seleccionadas deben pertenecer al mismo salón.", "validation_error");
+    }
+    if (explicitGroupId != null && explicitGroupId !== groupIds[0]) {
+      throw new HttpError(400, "La clase seleccionada no pertenece al salón indicado.", "validation_error");
+    }
+    return groupIds[0];
   }
 
   private async createLoginForPeopleResource(

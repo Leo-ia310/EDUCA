@@ -55,6 +55,7 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
   late Set<String> _classIds;
   late Set<String> _childIds;
   late Set<String> _teacherClassIds; // clases asignadas (maestro)
+  bool _teacherClassIdsHydrated = false;
   String? _nameError;
   String? _emailError;
   String? _passwordError;
@@ -75,10 +76,7 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
     _groupId = p?.groupId;
     _classIds = {...?p?.classIds};
     _childIds = {...?p?.childIds};
-    final dir = ref.read(schoolDirectoryProvider);
-    _teacherClassIds = p == null
-        ? <String>{}
-        : dir.classesOfTeacher(p.id).map((c) => c.id).toSet();
+    _teacherClassIds = <String>{};
   }
 
   @override
@@ -108,6 +106,15 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
           : null;
     });
     return _nameError == null && _emailError == null && _passwordError == null;
+  }
+
+  void _hydrateTeacherClassIds(SchoolDirectory dir) {
+    if (_teacherClassIdsHydrated || widget.existing == null) return;
+    _teacherClassIdsHydrated = true;
+    if (_role == AppRole.teacher) {
+      _teacherClassIds =
+          dir.classesOfTeacher(widget.existing!.id).map((c) => c.id).toSet();
+    }
   }
 
   Future<void> _save() async {
@@ -178,9 +185,11 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
       };
       if (_role == AppRole.teacher) {
         payload['teacherCode'] = 'DOC-${DateTime.now().millisecondsSinceEpoch}';
+        payload['classIds'] = _teacherClassIds.toList();
       } else if (_role == AppRole.student) {
         payload['studentCode'] = 'EST-${DateTime.now().millisecondsSinceEpoch}';
         payload['groupId'] = _groupId;
+        payload['classIds'] = _classIds.toList();
       } else if (_role == AppRole.parent) {
         payload['isEmergencyContact'] = true;
         payload['childIds'] = _childIds.toList();
@@ -193,6 +202,7 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
       }
       ref.invalidate(adminPeopleByRoleProvider(_role));
       ref.invalidate(adminSchoolDirectoryProvider);
+      await ref.read(adminSchoolDirectoryProvider.future);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -216,6 +226,7 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
         repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
     final SchoolDirectory dir =
         remote?.asData?.value ?? ref.watch(schoolDirectoryProvider);
+    _hydrateTeacherClassIds(dir);
     final students = dir.byRole(AppRole.student);
 
     String classLabel(SchoolClass c) =>
@@ -318,12 +329,22 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
                   label: classLabel(c),
                   selected: _classIds.contains(c.id),
                   onTap: () => setState(() {
-                    _classIds.contains(c.id)
-                        ? _classIds.remove(c.id)
-                        : _classIds.add(c.id);
+                    _groupId = c.groupId;
+                    _classIds = dir
+                        .classesOfGroup(c.groupId)
+                        .map((schoolClass) => schoolClass.id)
+                        .toSet();
                   }),
                 ),
             ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'La inscripción se guarda por salón; sus clases se cargan automáticamente desde ese salón.',
+              style: context.textTheme.bodySmall
+                  ?.copyWith(color: context.palette.textMuted),
+            ),
           ),
         ],
         if (_role == AppRole.parent) ...[

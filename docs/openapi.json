@@ -566,7 +566,7 @@
           "admin"
         ],
         "summary": "Devuelve directorio institucional para admin: personas, salones y clases",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: Para estudiantes, classIds se deriva del salón/grupo inscrito en enrollments.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -574,7 +574,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ people: Person[], groups: Group[], classes: Class[] }",
+            "description": "{ people: Person[] con groupId/classIds/childIds, groups: Group[], classes: Class[] }",
             "content": {
               "application/json": {
                 "schema": {
@@ -1100,7 +1100,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, studentCode, ... }"
+                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, studentCode, groupId?, classId?/classIds?, ... }"
                 }
               }
             }
@@ -1135,7 +1135,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Actualiza estudiante y persona",
+        "summary": "Actualiza estudiante, persona e inscripción por salón/clase",
         "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
@@ -1152,7 +1152,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "campos parciales; institutionId? solo super_admin"
+                  "value": "campos parciales; institutionId? solo super_admin; groupId? o classId?/classIds? actualiza enrollments"
                 }
               }
             }
@@ -1272,7 +1272,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, teacherCode, ... }"
+                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, teacherCode, classIds?, ... }"
                 }
               }
             }
@@ -1307,7 +1307,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Actualiza docente y persona",
+        "summary": "Actualiza docente, persona y clases asignadas",
         "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
@@ -1324,7 +1324,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "campos parciales; institutionId? solo super_admin"
+                  "value": "campos parciales; institutionId? solo super_admin; classIds? reemplaza classes.teacher_id del docente"
                 }
               }
             }
