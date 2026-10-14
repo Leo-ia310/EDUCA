@@ -43,6 +43,8 @@ class BackendNotificationsRepository
   bool _loaded = false;
   bool _securityPromptRead = false;
   bool _securityPromptHidden = false;
+  bool _twoFactorEnabled = false;
+  DateTime? _twoFactorCheckedAt;
 
   /// Notificaciones que llegan **después** de la primera carga (para mostrar
   /// un aviso local mientras la app está abierta).
@@ -90,6 +92,7 @@ class BackendNotificationsRepository
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
+    await _refreshTwoFactorStatus();
     try {
       final raw = await _api.get('/notifications');
       final list = raw is List ? raw : const [];
@@ -119,12 +122,25 @@ class BackendNotificationsRepository
     _emit();
   }
 
-  /// Aviso local (no viene del backend) que invita a activar el 2FA.
+  /// Consulta si el 2FA ya está activo (máx. una vez por minuto). Si falla,
+  /// se conserva el último valor conocido.
+  Future<void> _refreshTwoFactorStatus() async {
+    final at = _twoFactorCheckedAt;
+    if (at != null && DateTime.now().difference(at).inSeconds < 60) return;
+    try {
+      final raw = await _api.get('/auth/2fa/status');
+      _twoFactorEnabled = raw is Map && raw['enabled'] == true;
+      _twoFactorCheckedAt = DateTime.now();
+    } catch (_) {}
+  }
+
+  /// Aviso local (no viene del backend) que invita a activar el 2FA; no se
+  /// muestra si el usuario ya lo tiene activo.
   List<AppNotification> _withSecurityPrompt(List<AppNotification> items) {
     final withoutPrompt = items
         .where((item) => item.id != 'security-2fa')
         .toList(growable: false);
-    if (_securityPromptHidden) return withoutPrompt;
+    if (_securityPromptHidden || _twoFactorEnabled) return withoutPrompt;
     return [_securityPrompt(), ...withoutPrompt];
   }
 
