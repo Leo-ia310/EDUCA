@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+
 import '../../../core/network/backend_api_client.dart';
 import '../domain/entities.dart';
 import '../domain/notifications_repository.dart';
@@ -20,7 +22,10 @@ class BackendNotificationsRepository implements NotificationsRepository {
   Timer? _timer;
   final _ctrl = StreamController<List<AppNotification>>.broadcast();
   List<AppNotification> _items = const [];
+  final DateTime _securityPromptAt = DateTime.now();
   bool _loaded = false;
+  bool _securityPromptRead = false;
+  bool _securityPromptHidden = false;
 
   void dispose() {
     _timer?.cancel();
@@ -31,15 +36,38 @@ class BackendNotificationsRepository implements NotificationsRepository {
     try {
       final raw = await _api.get('/notifications');
       final list = raw is List ? raw : const [];
-      _items = [
+      _items = _withSecurityPrompt([
         for (final e in list)
           if (e is Map) _parse(Map<String, dynamic>.from(e)),
-      ];
+      ]);
     } catch (_) {
-      // Sin red o sin sesión: se conserva lo último cargado (vacío al inicio).
+      // Sin red o sin sesión: mantenemos visible el aviso local de seguridad.
+      _items = _withSecurityPrompt(_items);
     }
     _loaded = true;
     _emit();
+  }
+
+  List<AppNotification> _withSecurityPrompt(List<AppNotification> items) {
+    final withoutPrompt = items
+        .where((item) => item.id != 'security-2fa')
+        .toList(growable: false);
+    if (_securityPromptHidden) return withoutPrompt;
+    return [_securityPrompt(), ...withoutPrompt];
+  }
+
+  AppNotification _securityPrompt() {
+    return AppNotification(
+      id: 'security-2fa',
+      channel: NotificationChannel.system,
+      title: 'Activa el 2FA',
+      body: 'Agrega verificación en dos pasos para proteger tu cuenta escolar.',
+      receivedAt: _securityPromptAt,
+      priority: NotificationPriority.high,
+      read: _securityPromptRead,
+      deepLink: '/settings/security',
+      iconOverride: Icons.verified_user_rounded,
+    );
   }
 
   static AppNotification _parse(Map<String, dynamic> m) {
@@ -84,6 +112,12 @@ class BackendNotificationsRepository implements NotificationsRepository {
 
   @override
   Future<void> markRead(String id) async {
+    if (id == 'security-2fa') {
+      _securityPromptRead = true;
+      _items = _withSecurityPrompt(_items);
+      _emit();
+      return;
+    }
     _items = [for (final n in _items) n.id == id ? n.copyWith(read: true) : n];
     _emit();
     try {
@@ -95,6 +129,7 @@ class BackendNotificationsRepository implements NotificationsRepository {
 
   @override
   Future<void> markAllRead() async {
+    _securityPromptRead = true;
     _items = [for (final n in _items) n.copyWith(read: true)];
     _emit();
     try {
@@ -106,6 +141,12 @@ class BackendNotificationsRepository implements NotificationsRepository {
 
   @override
   Future<void> remove(String id) async {
+    if (id == 'security-2fa') {
+      _securityPromptHidden = true;
+      _items = _withSecurityPrompt(_items);
+      _emit();
+      return;
+    }
     _items = _items.where((n) => n.id != id).toList();
     _emit();
     try {
@@ -117,6 +158,7 @@ class BackendNotificationsRepository implements NotificationsRepository {
 
   @override
   Future<void> clearAll() async {
+    _securityPromptHidden = true;
     _items = const [];
     _emit();
     try {

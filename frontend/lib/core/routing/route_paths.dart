@@ -3,6 +3,7 @@ class Routes {
 
   static const splash = '/';
   static const login = '/login';
+  static const twoFactor = '/login/2fa';
   static const forgotPassword = '/forgot-password';
 
   static const studentDashboard = '/student/dashboard';
@@ -23,6 +24,7 @@ class Routes {
   static const alerts = '/alerts';
   static const profile = '/profile';
   static const changePassword = '/change-password';
+  static const security = '/settings/security';
   static const notificationSettings = '/settings/notifications';
   static const help = '/help';
   static const announcements = '/announcements';

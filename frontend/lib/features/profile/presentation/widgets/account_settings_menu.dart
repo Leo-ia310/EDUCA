@@ -58,31 +58,35 @@ class AccountSettingsMenu extends ConsumerWidget {
               ),
             )
           : circular
-          ? Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.settings_rounded, color: Colors.white),
-            )
-          : boxed
               ? Container(
-                  width: 48,
-                  height: 48,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
-                    color: palette.cardElevated,
-                    borderRadius: BorderRadius.circular(Radii.sm),
-                    border: Border.all(color: Theme.of(context).dividerColor),
+                    color: Colors.white.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.settings_rounded),
+                  child:
+                      const Icon(Icons.settings_rounded, color: Colors.white),
                 )
-              : null,
+              : boxed
+                  ? Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: palette.cardElevated,
+                        borderRadius: BorderRadius.circular(Radii.sm),
+                        border:
+                            Border.all(color: Theme.of(context).dividerColor),
+                      ),
+                      child: const Icon(Icons.settings_rounded),
+                    )
+                  : null,
       onSelected: (v) async {
         switch (v) {
           case 'appearance':
             _showAppearanceSheet(context, ref);
+          case 'security':
+            context.push(Routes.security);
           case 'password':
             context.push(Routes.changePassword);
           case 'notifications':
@@ -96,6 +100,7 @@ class AccountSettingsMenu extends ConsumerWidget {
       },
       itemBuilder: (_) => [
         _item('appearance', Icons.palette_rounded, 'Apariencia'),
+        _item('security', Icons.verified_user_rounded, 'Activar 2FA'),
         _item('password', Icons.lock_outline, 'Cambiar contraseña'),
         _item('notifications', Icons.notifications_none, 'Notificaciones'),
         _item('help', Icons.help_outline, 'Ayuda y soporte'),
@@ -106,8 +111,10 @@ class AccountSettingsMenu extends ConsumerWidget {
             dense: true,
             contentPadding: EdgeInsets.zero,
             leading: Icon(Icons.logout, color: palette.danger),
-            title: Text('Cerrar sesión',
-                style: TextStyle(color: palette.danger),),
+            title: Text(
+              'Cerrar sesión',
+              style: TextStyle(color: palette.danger),
+            ),
           ),
         ),
       ],
@@ -141,6 +148,13 @@ class AccountSettingsList extends ConsumerWidget {
           label: 'Apariencia',
           color: const Color(0xFF8A5CF6),
           onTap: () => _showAppearanceSheet(context, ref),
+        ),
+        const SizedBox(height: 10),
+        _SettingsRow(
+          icon: Icons.verified_user_rounded,
+          label: 'Activar verificación de 2 pasos',
+          color: context.palette.accent,
+          onTap: () => context.push(Routes.security),
         ),
         const SizedBox(height: 10),
         _SettingsRow(
@@ -262,9 +276,11 @@ void _showAppearanceSheet(BuildContext context, WidgetRef ref) {
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
                   child: Row(
                     children: [
-                      Text('Apariencia',
-                          style: context.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w800),),
+                      Text(
+                        'Apariencia',
+                        style: context.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
                     ],
                   ),
                 ),

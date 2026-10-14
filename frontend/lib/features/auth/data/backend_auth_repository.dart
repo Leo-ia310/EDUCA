@@ -43,7 +43,7 @@ class BackendAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSession> signIn({
+  Future<SignInResult> signIn({
     Institution? institution,
     required String emailOrUsername,
     required String password,
@@ -60,30 +60,75 @@ class BackendAuthRepository implements AuthRepository {
         authenticated: false,
       );
       final map = (data as Map).cast<String, dynamic>();
-      final session = (map['session'] as Map).cast<String, dynamic>();
-      final refreshToken = session['refreshToken']?.toString();
-      final accessToken = session['accessToken']?.toString();
-      if (refreshToken == null || refreshToken.isEmpty) {
-        throw const AuthFailure('El backend no devolvió una sesión válida.');
+      if (map['twoFactorRequired'] == true) {
+        final challenge = (map['challenge'] as Map).cast<String, dynamic>();
+        return SignInResult.twoFactor(
+          TwoFactorChallenge(
+            id: challenge['id'].toString(),
+            method: challenge['method']?.toString() ?? 'email',
+            expiresAt: DateTime.tryParse(
+              challenge['expiresAt']?.toString() ?? '',
+            ),
+            emailHint: challenge['emailHint']?.toString(),
+            debugCode: challenge['debugCode']?.toString(),
+            requiredByRole: challenge['requiredByRole'] == true,
+          ),
+        );
       }
-      final authResponse = await _supabase.auth.setSession(
-        refreshToken,
-        accessToken: accessToken,
-      );
-      await _persistSession(authResponse.session);
-      final resolvedInstitution = _institutionFromMap(
-        (map['institution'] as Map).cast<String, dynamic>(),
-      );
-      await _persistInstitution(resolvedInstitution);
-      return AuthSession(
-        user: _userFromMap((map['user'] as Map).cast<String, dynamic>()),
-        institution: resolvedInstitution,
-      );
+      final session = await _authSessionFromLoginMap(map);
+      return SignInResult.session(session);
     } on AuthFailure {
       rethrow;
     } catch (e) {
-      throw AuthFailure('No se pudo iniciar sesión.', cause: e);
+      throw _authFailureFrom(e, 'No se pudo iniciar sesión.');
     }
+  }
+
+  @override
+  Future<AuthSession> verifyTwoFactorLogin({
+    required String challengeId,
+    String? code,
+    String? recoveryCode,
+  }) async {
+    try {
+      final data = await _api.post(
+        '/auth/2fa/verify-login',
+        data: {
+          'challengeId': challengeId,
+          if (code != null && code.trim().isNotEmpty) 'code': code.trim(),
+          if (recoveryCode != null && recoveryCode.trim().isNotEmpty)
+            'recoveryCode': recoveryCode.trim(),
+        },
+        authenticated: false,
+      );
+      return await _authSessionFromLoginMap(
+        (data as Map).cast<String, dynamic>(),
+      );
+    } catch (e) {
+      throw _authFailureFrom(e, 'No se pudo verificar el código 2FA.');
+    }
+  }
+
+  Future<AuthSession> _authSessionFromLoginMap(Map<String, dynamic> map) async {
+    final session = (map['session'] as Map).cast<String, dynamic>();
+    final refreshToken = session['refreshToken']?.toString();
+    final accessToken = session['accessToken']?.toString();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw const AuthFailure('El backend no devolvió una sesión válida.');
+    }
+    final authResponse = await _supabase.auth.setSession(
+      refreshToken,
+      accessToken: accessToken,
+    );
+    await _persistSession(authResponse.session);
+    final resolvedInstitution = _institutionFromMap(
+      (map['institution'] as Map).cast<String, dynamic>(),
+    );
+    await _persistInstitution(resolvedInstitution);
+    return AuthSession(
+      user: _userFromMap((map['user'] as Map).cast<String, dynamic>()),
+      institution: resolvedInstitution,
+    );
   }
 
   @override
@@ -159,14 +204,75 @@ class BackendAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> sendPasswordReset(String email) async {
+  Future<void> sendPasswordReset(
+    String email, {
+    Institution? institution,
+  }) async {
     await _api.post(
       '/auth/recover-password',
       data: {
-        'institutionCode': 'EDU360',
+        if (institution != null && institution.code.trim().isNotEmpty)
+          'institutionCode': institution.code,
         'username': email.trim(),
       },
       authenticated: false,
+    );
+  }
+
+  @override
+  Future<TwoFactorStatus> twoFactorStatus() async {
+    final data = await _api.get('/auth/2fa/status');
+    final map = (data as Map).cast<String, dynamic>();
+    return TwoFactorStatus(
+      enabled: map['enabled'] == true,
+      required: map['required'] == true,
+      method: map['method']?.toString() ?? 'email',
+      hasAuthenticator: map['hasAuthenticator'] == true,
+      recoveryCodesRemaining:
+          int.tryParse('${map['recoveryCodesRemaining']}') ?? 0,
+    );
+  }
+
+  @override
+  Future<TwoFactorSetup> setupTwoFactor() async {
+    final data = await _api.post(
+      '/auth/2fa/setup',
+      data: const {'method': 'totp'},
+    );
+    final map = (data as Map).cast<String, dynamic>();
+    return TwoFactorSetup(
+      secret: map['secret']?.toString() ?? '',
+      otpauthUrl: map['otpauthUrl']?.toString() ?? '',
+      accountName: map['accountName']?.toString() ?? '',
+      issuer: map['issuer']?.toString() ?? 'Nivra',
+    );
+  }
+
+  @override
+  Future<TwoFactorEnableResult> enableTwoFactor(String code) async {
+    final data = await _api.post(
+      '/auth/2fa/enable',
+      data: {'code': code.trim()},
+    );
+    final map = (data as Map).cast<String, dynamic>();
+    return TwoFactorEnableResult(
+      enabled: map['enabled'] == true,
+      method: map['method']?.toString() ?? 'totp',
+      recoveryCodes: ((map['recoveryCodes'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .toList(),
+    );
+  }
+
+  @override
+  Future<void> disableTwoFactor({String? code, String? recoveryCode}) async {
+    await _api.post(
+      '/auth/2fa/disable',
+      data: {
+        if (code != null && code.trim().isNotEmpty) 'code': code.trim(),
+        if (recoveryCode != null && recoveryCode.trim().isNotEmpty)
+          'recoveryCode': recoveryCode.trim(),
+      },
     );
   }
 
@@ -265,5 +371,13 @@ class BackendAuthRepository implements AuthRepository {
     await _prefs.remove(_institutionIdKey);
     await _prefs.remove(_institutionCodeKey);
     await _prefs.remove(_institutionNameKey);
+  }
+
+  AuthFailure _authFailureFrom(Object error, String fallback) {
+    if (error is AuthFailure) return error;
+    if (error is StateError && error.message.isNotEmpty) {
+      return AuthFailure(error.message, cause: error);
+    }
+    return AuthFailure(fallback, cause: error);
   }
 }

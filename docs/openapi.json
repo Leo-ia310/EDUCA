@@ -26,7 +26,7 @@
           "auth"
         ],
         "summary": "Login institucional por codigo de colegio, usuario/email y contraseña",
-        "description": "Auth: publico.\n\nNotas: Resuelve institutions.code + users.username/users.email y autentica contra Supabase Auth; Node no almacena contraseñas.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "description": "Auth: publico.\n\nNotas: Resuelve institutions.code + users.username/users.email y autentica contra Supabase Auth; solo pide 2FA cuando el usuario lo activo. 2FA esta disponible para todos los usuarios desde Cuenta > Seguridad 2FA.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [],
         "requestBody": {
           "required": false,
@@ -39,6 +39,58 @@
               "examples": {
                 "manifest": {
                   "value": "{ username, password, institutionCode? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ session, authUser, user, institution } o { twoFactorRequired, challenge }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/auth/2fa/verify-login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Completa login pendiente de 2FA con codigo temporal o recuperacion",
+        "description": "Auth: publico con challenge vigente.\n\nNotas: Consume el challenge, registra intentos fallidos, invalida codigos usados y desbloquea la entrega de sesion.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ challengeId, code? | recoveryCode? }"
                 }
               }
             }
@@ -195,6 +247,198 @@
         "responses": {
           "200": {
             "description": "{ ok: true }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/auth/2fa/status": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Consulta estado de 2FA del usuario autenticado",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ enabled, required, method, hasAuthenticator, recoveryCodesRemaining }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/auth/2fa/setup": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Inicia configuracion 2FA con app autenticadora",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ method: 'totp' }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ method, secret, otpauthUrl, accountName, issuer }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/auth/2fa/enable": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Activa 2FA y genera codigos de recuperacion",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ code }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ enabled, method, recoveryCodes }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/auth/2fa/disable": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Desactiva 2FA validando codigo actual o recuperacion",
+        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ code? | recoveryCode? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ enabled: false }",
             "content": {
               "application/json": {
                 "schema": {

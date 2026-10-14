@@ -17,12 +17,14 @@ class AuthState {
   const AuthState({
     this.user,
     this.institution,
+    this.pendingTwoFactor,
     this.loading = false,
     this.error,
   });
 
   final AppUser? user;
   final Institution? institution;
+  final TwoFactorChallenge? pendingTwoFactor;
   final bool loading;
   final String? error;
 
@@ -31,14 +33,19 @@ class AuthState {
   AuthState copyWith({
     AppUser? user,
     Institution? institution,
+    TwoFactorChallenge? pendingTwoFactor,
     bool? loading,
     String? error,
     bool clearError = false,
     bool clearUser = false,
+    bool clearPendingTwoFactor = false,
   }) {
     return AuthState(
       user: clearUser ? null : (user ?? this.user),
       institution: institution ?? this.institution,
+      pendingTwoFactor: clearPendingTwoFactor
+          ? null
+          : (pendingTwoFactor ?? this.pendingTwoFactor),
       loading: loading ?? this.loading,
       error: clearError ? null : (error ?? this.error),
     );
@@ -68,6 +75,7 @@ class AuthController extends StateNotifier<AuthState> {
         institution: session?.institution,
         loading: false,
         clearError: true,
+        clearPendingTwoFactor: true,
       );
     } catch (_) {
       state = state.copyWith(loading: false, clearUser: true);
@@ -102,12 +110,21 @@ class AuthController extends StateNotifier<AuthState> {
         emailOrUsername: emailOrUsername,
         password: password,
       );
+      if (session.requiresTwoFactor) {
+        state = state.copyWith(
+          pendingTwoFactor: session.challenge,
+          loading: false,
+        );
+        return null;
+      }
+      final authSession = session.session!;
       state = state.copyWith(
-        user: session.user,
-        institution: session.institution,
+        user: authSession.user,
+        institution: authSession.institution,
         loading: false,
+        clearPendingTwoFactor: true,
       );
-      return session.user.activeRole;
+      return authSession.user.activeRole;
     } on Failure catch (e) {
       state = state.copyWith(loading: false, error: e.message);
       return null;
@@ -117,6 +134,59 @@ class AuthController extends StateNotifier<AuthState> {
         error: 'No se pudo iniciar sesiÃ³n.',
       );
       return null;
+    }
+  }
+
+  Future<AppRole?> verifyTwoFactor(
+    String value, {
+    bool recovery = false,
+  }) async {
+    final challenge = state.pendingTwoFactor;
+    if (challenge == null) {
+      state = state.copyWith(error: 'Inicia sesión nuevamente.');
+      return null;
+    }
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final session = await _repo.verifyTwoFactorLogin(
+        challengeId: challenge.id,
+        code: recovery ? null : value,
+        recoveryCode: recovery ? value : null,
+      );
+      state = state.copyWith(
+        user: session.user,
+        institution: session.institution,
+        loading: false,
+        clearPendingTwoFactor: true,
+      );
+      return session.user.activeRole;
+    } on Failure catch (e) {
+      state = state.copyWith(loading: false, error: e.message);
+      return null;
+    } catch (_) {
+      state = state.copyWith(
+        loading: false,
+        error: 'No se pudo verificar el código 2FA.',
+      );
+      return null;
+    }
+  }
+
+  Future<bool> sendPasswordReset(String email) async {
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      await _repo.sendPasswordReset(email, institution: state.institution);
+      state = state.copyWith(loading: false);
+      return true;
+    } on Failure catch (e) {
+      state = state.copyWith(loading: false, error: e.message);
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        loading: false,
+        error: 'No se pudo enviar el correo de recuperación.',
+      );
+      return false;
     }
   }
 
