@@ -71,7 +71,6 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
-
           const SectionHeader(title: 'Apariencia'),
           const SizedBox(height: 8),
           DepthCard(
@@ -106,7 +105,6 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-
           const SectionHeader(title: 'Cuenta'),
           const SizedBox(height: 8),
           DepthCard(
@@ -114,6 +112,15 @@ class ProfileScreen extends ConsumerWidget {
             padding: EdgeInsets.zero,
             child: Column(
               children: [
+                _ProfileAction(
+                  icon: Icons.verified_user_rounded,
+                  label: 'Activar verificación de 2 pasos',
+                  onTap: () => context.push(Routes.security),
+                ),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                ),
                 _ProfileAction(
                   icon: Icons.lock_outline,
                   label: 'Cambiar contraseña',
@@ -141,15 +148,16 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-
           OutlinedButton.icon(
             onPressed: () async {
               await ref.read(authControllerProvider.notifier).signOut();
               if (context.mounted) context.go(Routes.login);
             },
             icon: Icon(Icons.logout, color: palette.danger),
-            label: Text('Cerrar sesión',
-                style: TextStyle(color: palette.danger),),
+            label: Text(
+              'Cerrar sesión',
+              style: TextStyle(color: palette.danger),
+            ),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: palette.danger.withValues(alpha: 0.4)),
             ),
@@ -175,9 +183,11 @@ class _ProfileAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: context.palette.textMuted),
-      title: Text(label,
-          style: context.textTheme.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w700),),
+      title: Text(
+        label,
+        style:
+            context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      ),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
     );

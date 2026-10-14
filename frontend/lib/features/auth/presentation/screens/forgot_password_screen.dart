@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
+import '../auth_controller.dart';
 
 /// Recuperación de contraseña. En modo demo simula el envío del correo de
 /// restablecimiento; con Supabase real llamaría a `resetPasswordForEmail`.
@@ -32,11 +33,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 900));
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .sendPasswordReset(_emailCtrl.text);
     if (!mounted) return;
     setState(() {
       _loading = false;
-      _sent = true;
+      _sent = ok;
     });
   }
 
@@ -108,6 +111,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 )
               : const Text('Enviar enlace'),
         ),
+        if (ref.watch(authControllerProvider).error != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            ref.watch(authControllerProvider).error!,
+            style: TextStyle(color: context.palette.danger),
+          ),
+        ],
       ],
     );
   }
@@ -124,8 +134,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             color: palette.accentSoft,
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.mark_email_read_rounded,
-              size: 42, color: palette.accentDeep,),
+          child: Icon(
+            Icons.mark_email_read_rounded,
+            size: 42,
+            color: palette.accentDeep,
+          ),
         ),
         const SizedBox(height: 24),
         Text(

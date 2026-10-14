@@ -36,6 +36,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email,
           _passwordCtrl.text,
         );
+    if (ref.read(authControllerProvider).pendingTwoFactor != null && mounted) {
+      final suffix =
+          email.toLowerCase().startsWith('developer') ? '?developer=1' : '';
+      context.go('${Routes.twoFactor}$suffix');
+      return;
+    }
     if (role == null || !mounted) return;
     // Acceso al panel técnico (superadmin): el alias "developer" entra directo
     // al panel de desarrollador en lugar del dashboard de admin.

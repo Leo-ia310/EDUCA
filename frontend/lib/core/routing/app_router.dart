@@ -28,7 +28,9 @@ import '../../features/auth/presentation/identity_providers.dart';
 import '../../features/auth/presentation/screens/change_password_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/security_settings_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/auth/presentation/screens/two_factor_screen.dart';
 import '../../features/admin/presentation/screens/admin_classes_screen.dart';
 import '../../features/admin/presentation/screens/admin_groups_screen.dart';
 import '../../features/admin/presentation/screens/admin_people_screen.dart';
@@ -92,8 +94,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return loggedIn ? auth.user!.activeRole.dashboardRoute : Routes.login;
       }
 
-      final goingToAuth = loc == Routes.login || loc == Routes.forgotPassword;
+      final goingToAuth = loc == Routes.login ||
+          loc == Routes.forgotPassword ||
+          loc == Routes.twoFactor;
 
+      if (!loggedIn &&
+          auth.pendingTwoFactor != null &&
+          loc != Routes.twoFactor &&
+          !routingError) {
+        return Routes.twoFactor;
+      }
+      if (!loggedIn &&
+          loc == Routes.twoFactor &&
+          auth.pendingTwoFactor == null) {
+        return Routes.login;
+      }
       if (!loggedIn && !goingToAuth && !routingError) return Routes.login;
       if (loggedIn && goingToAuth) return auth.user!.activeRole.dashboardRoute;
 
@@ -110,6 +125,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: Routes.splash, builder: (_, __) => const SplashScreen()),
       GoRoute(path: Routes.login, builder: (_, __) => const LoginScreen()),
+      GoRoute(
+        path: Routes.twoFactor,
+        builder: (_, state) => TwoFactorScreen(
+          developerLogin: state.uri.queryParameters['developer'] == '1',
+        ),
+      ),
       GoRoute(
         path: Routes.forgotPassword,
         builder: (_, __) => const ForgotPasswordScreen(),
@@ -475,6 +496,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.changePassword,
         builder: (_, __) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: Routes.security,
+        builder: (_, __) => const SecuritySettingsScreen(),
       ),
       GoRoute(
         path: Routes.notificationSettings,

@@ -66,6 +66,20 @@ export class EmailService {
     });
   }
 
+  async sendTwoFactorCode(to: string, fullName: string, code: string) {
+    return this.send({
+      to,
+      subject: "Código de seguridad de Nivra",
+      html: [
+        `<p>Hola ${this.escape(fullName || "usuario")},</p>`,
+        "<p>Usa este código para completar tu inicio de sesión:</p>",
+        `<p style="font-size: 28px; font-weight: 700; letter-spacing: 4px;">${this.escape(code)}</p>`,
+        "<p>El código vence en 5 minutos. Si no intentaste entrar, cambia tu contraseña.</p>",
+      ].join(""),
+      text: `Tu código de seguridad de Nivra es: ${code}. Vence en 5 minutos.`,
+    });
+  }
+
   async sendInvitation(to: string, fullName: string, invitationUrl: string) {
     return this.send({
       to,

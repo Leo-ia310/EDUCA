@@ -133,6 +133,19 @@ class NotificationsBootstrap {
   Future<void> _seedDemoIfEmpty() async {
     if (!Env.isDemoMode) return;
     final now = DateTime.now();
+    await _ref.read(notificationsRepositoryProvider).add(
+          AppNotification(
+            id: 'demo-security-2fa',
+            channel: NotificationChannel.system,
+            title: 'Activa el 2FA',
+            body:
+                'Agrega verificación en dos pasos para proteger tu cuenta escolar.',
+            receivedAt: now.subtract(const Duration(minutes: 2)),
+            priority: NotificationPriority.high,
+            read: false,
+            deepLink: '/settings/security',
+          ),
+        );
     await _ref.read(notificationsRepositoryProvider).seedIfEmpty([
       AppNotification(
         id: _uuid.v4(),

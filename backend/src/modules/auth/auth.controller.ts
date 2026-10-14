@@ -2,6 +2,7 @@ import type { Response } from "express";
 
 import { authFlowService } from "./auth-flow.service";
 import type { AppRequest } from "../../types/app-context";
+import { requireAppContext } from "../../middleware/auth.middleware";
 import { asRecord } from "../../validators/common.validators";
 
 export async function login(req: AppRequest, res: Response) {
@@ -16,6 +17,35 @@ export async function refresh(req: AppRequest, res: Response) {
 
 export async function recoverPassword(req: AppRequest, res: Response) {
   const data = await authFlowService.recoverPassword(asRecord(req.body));
+  return res.json({ ok: true, data });
+}
+
+export async function verifyTwoFactorLogin(req: AppRequest, res: Response) {
+  const data = await authFlowService.verifyTwoFactorLogin(asRecord(req.body));
+  return res.json({ ok: true, data });
+}
+
+export async function twoFactorStatus(req: AppRequest, res: Response) {
+  const ctx = requireAppContext(req);
+  const data = await authFlowService.twoFactorStatus(ctx.userId);
+  return res.json({ ok: true, data });
+}
+
+export async function setupTwoFactor(req: AppRequest, res: Response) {
+  const ctx = requireAppContext(req);
+  const data = await authFlowService.setupTwoFactor(ctx.userId, asRecord(req.body));
+  return res.json({ ok: true, data });
+}
+
+export async function enableTwoFactor(req: AppRequest, res: Response) {
+  const ctx = requireAppContext(req);
+  const data = await authFlowService.enableTwoFactor(ctx.userId, asRecord(req.body));
+  return res.json({ ok: true, data });
+}
+
+export async function disableTwoFactor(req: AppRequest, res: Response) {
+  const ctx = requireAppContext(req);
+  const data = await authFlowService.disableTwoFactor(ctx.userId, asRecord(req.body));
   return res.json({ ok: true, data });
 }
 

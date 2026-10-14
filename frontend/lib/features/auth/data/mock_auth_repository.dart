@@ -29,7 +29,7 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSession> signIn({
+  Future<SignInResult> signIn({
     Institution? institution,
     required String emailOrUsername,
     required String password,
@@ -49,9 +49,33 @@ class MockAuthRepository implements AuthRepository {
       roles: [role],
       activeRole: role,
     );
-    return AuthSession(
-      user: _current!,
-      institution: institution ?? _demoInstitution,
+    return SignInResult.session(
+      AuthSession(
+        user: _current!,
+        institution: institution ?? _demoInstitution,
+      ),
+    );
+  }
+
+  @override
+  Future<AuthSession> verifyTwoFactorLogin({
+    required String challengeId,
+    String? code,
+    String? recoveryCode,
+  }) async {
+    final user = _current;
+    if (user == null) throw const AuthFailure('Sesión demo no encontrada.');
+    return const AuthSession(
+      user: AppUser(
+        id: 'demo-admin',
+        institutionId: 1,
+        email: 'admin@demo.com',
+        fullName: 'Roberto Castillo',
+        firstName: 'Roberto',
+        roles: [AppRole.admin],
+        activeRole: AppRole.admin,
+      ),
+      institution: _demoInstitution,
     );
   }
 
@@ -106,7 +130,49 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> sendPasswordReset(String email) async {
+  Future<void> sendPasswordReset(
+    String email, {
+    Institution? institution,
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 300));
+  }
+
+  @override
+  Future<TwoFactorStatus> twoFactorStatus() async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return const TwoFactorStatus(
+      enabled: false,
+      required: false,
+      method: 'email',
+      hasAuthenticator: false,
+      recoveryCodesRemaining: 0,
+    );
+  }
+
+  @override
+  Future<TwoFactorSetup> setupTwoFactor() async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return const TwoFactorSetup(
+      secret: 'JBSWY3DPEHPK3PXP',
+      otpauthUrl:
+          'otpauth://totp/Nivra:demo?secret=JBSWY3DPEHPK3PXP&issuer=Nivra',
+      accountName: 'demo',
+      issuer: 'Nivra',
+    );
+  }
+
+  @override
+  Future<TwoFactorEnableResult> enableTwoFactor(String code) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    return const TwoFactorEnableResult(
+      enabled: true,
+      method: 'totp',
+      recoveryCodes: ['ABCDE-12345', 'FGHIJ-67890'],
+    );
+  }
+
+  @override
+  Future<void> disableTwoFactor({String? code, String? recoveryCode}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
   }
 }

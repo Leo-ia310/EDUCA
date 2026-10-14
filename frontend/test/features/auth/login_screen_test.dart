@@ -24,30 +24,77 @@ class _FakeAuthRepository implements AuthRepository {
   Future<Institution> resolveInstitution(String code) async => institution;
 
   @override
-  Future<AuthSession> signIn({
+  Future<SignInResult> signIn({
     Institution? institution,
     required String emailOrUsername,
     required String password,
   }) async {
     final resolvedInstitution = institution ?? _FakeAuthRepository.institution;
-    return AuthSession(
-      institution: resolvedInstitution,
-      user: AppUser(
-        id: 'admin-1',
-        institutionId: resolvedInstitution.id,
-        email: emailOrUsername,
-        fullName: 'Admin Demo',
-        roles: const [AppRole.admin],
-        activeRole: AppRole.admin,
+    return SignInResult.session(
+      AuthSession(
+        institution: resolvedInstitution,
+        user: AppUser(
+          id: 'admin-1',
+          institutionId: resolvedInstitution.id,
+          email: emailOrUsername,
+          fullName: 'Admin Demo',
+          roles: const [AppRole.admin],
+          activeRole: AppRole.admin,
+        ),
       ),
     );
+  }
+
+  @override
+  Future<AuthSession> verifyTwoFactorLogin({
+    required String challengeId,
+    String? code,
+    String? recoveryCode,
+  }) async {
+    throw UnimplementedError();
   }
 
   @override
   Future<void> signOut() async {}
 
   @override
-  Future<void> sendPasswordReset(String email) async {}
+  Future<void> sendPasswordReset(
+    String email, {
+    Institution? institution,
+  }) async {}
+
+  @override
+  Future<TwoFactorStatus> twoFactorStatus() async {
+    return const TwoFactorStatus(
+      enabled: false,
+      required: false,
+      method: 'email',
+      hasAuthenticator: false,
+      recoveryCodesRemaining: 0,
+    );
+  }
+
+  @override
+  Future<TwoFactorSetup> setupTwoFactor() async {
+    return const TwoFactorSetup(
+      secret: 'JBSWY3DPEHPK3PXP',
+      otpauthUrl: 'otpauth://totp/Nivra:test?secret=JBSWY3DPEHPK3PXP',
+      accountName: 'test',
+      issuer: 'Nivra',
+    );
+  }
+
+  @override
+  Future<TwoFactorEnableResult> enableTwoFactor(String code) async {
+    return const TwoFactorEnableResult(
+      enabled: true,
+      method: 'totp',
+      recoveryCodes: [],
+    );
+  }
+
+  @override
+  Future<void> disableTwoFactor({String? code, String? recoveryCode}) async {}
 }
 
 void main() {
@@ -60,8 +107,8 @@ void main() {
       password: 'demo1234',
     );
 
-    expect(session.user.activeRole, AppRole.admin);
-    expect(session.user.roles, [AppRole.admin]);
+    expect(session.session!.user.activeRole, AppRole.admin);
+    expect(session.session!.user.roles, [AppRole.admin]);
   });
 
   testWidgets('el login permite escribir en el campo de contraseña',

@@ -4,10 +4,26 @@ import { supabaseAdmin } from "../../lib/supabase";
 const db = supabaseAdmin as any;
 
 export class NotificationsRepository {
+  private isOptionalNotificationsSchemaError(error: unknown) {
+    if (error == null || typeof error !== "object") return false;
+    const record = error as Record<string, unknown>;
+    const code = String(record.code ?? "");
+    const message = String(record.message ?? record.details ?? "");
+    return (
+      code === "42P01" ||
+      code === "PGRST200" ||
+      message.includes('relation "notifications" does not exist') ||
+      message.includes("Could not find a relationship") ||
+      message.includes("catalog_notification_types")
+    );
+  }
+
   async listUsersByRoleCodes(institutionId: number, roleCodes: string[]) {
     const { data, error } = await db
       .from("users")
-      .select("id, email, full_name, email_notifications_enabled, user_roles(roles(code))")
+      .select(
+        "id, email, full_name, email_notifications_enabled, user_roles(roles(code))",
+      )
       .eq("institution_id", institutionId)
       .eq("active", true)
       .is("deleted_at", null);
@@ -91,7 +107,10 @@ export class NotificationsRepository {
       .eq("institution_id", institutionId)
       .order("created_at", { ascending: false })
       .limit(limit);
-    if (error) throw error;
+    if (error) {
+      if (this.isOptionalNotificationsSchemaError(error)) return [];
+      throw error;
+    }
     return (data ?? []) as Record<string, unknown>[];
   }
 
@@ -183,4 +202,3 @@ export class NotificationsRepository {
 }
 
 export const notificationsRepository = new NotificationsRepository();
-

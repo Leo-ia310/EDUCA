@@ -31,7 +31,7 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSession> signIn({
+  Future<SignInResult> signIn({
     Institution? institution,
     required String emailOrUsername,
     required String password,
@@ -88,10 +88,21 @@ class SupabaseAuthRepository implements AuthRepository {
         roles: roles,
         activeRole: roles.first,
       );
-      return AuthSession(user: user, institution: institution);
+      return SignInResult.session(
+        AuthSession(user: user, institution: institution),
+      );
     } on sb.AuthException catch (e) {
       throw AuthFailure(e.message, cause: e);
     }
+  }
+
+  @override
+  Future<AuthSession> verifyTwoFactorLogin({
+    required String challengeId,
+    String? code,
+    String? recoveryCode,
+  }) async {
+    throw const AuthFailure('2FA requiere el backend institucional.');
   }
 
   @override
@@ -146,7 +157,36 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> sendPasswordReset(String email) async {
+  Future<void> sendPasswordReset(
+    String email, {
+    Institution? institution,
+  }) async {
     await _client.auth.resetPasswordForEmail(email);
+  }
+
+  @override
+  Future<TwoFactorStatus> twoFactorStatus() async {
+    return const TwoFactorStatus(
+      enabled: false,
+      required: false,
+      method: 'email',
+      hasAuthenticator: false,
+      recoveryCodesRemaining: 0,
+    );
+  }
+
+  @override
+  Future<TwoFactorSetup> setupTwoFactor() async {
+    throw const AuthFailure('2FA requiere el backend institucional.');
+  }
+
+  @override
+  Future<TwoFactorEnableResult> enableTwoFactor(String code) async {
+    throw const AuthFailure('2FA requiere el backend institucional.');
+  }
+
+  @override
+  Future<void> disableTwoFactor({String? code, String? recoveryCode}) async {
+    throw const AuthFailure('2FA requiere el backend institucional.');
   }
 }
