@@ -428,7 +428,7 @@ export class AuthFlowService {
       institutionId: Number(appUser.institution_id),
       method,
       codeHash: code == null ? null : this.hashSecret(code),
-      sessionPayload: this.sessionPayload(asRecord(data.session)),
+      sessionPayload: asRecord(data.session),
       authUserPayload: { id: data.user.id, email: data.user.email ?? null },
       expiresAt,
     });
