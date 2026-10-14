@@ -81,12 +81,11 @@ cd EDUCA\frontend
 
 El proyecto necesita conectarse a Supabase. Las credenciales se guardan en un archivo `.env`.
 
-1. Dentro de la carpeta del proyecto, copia el archivo de ejemplo:
-   ```powershell
-   Copy-Item .env.example .env
-   ```
+1. Las credenciales se centralizan en `backend/.env` (el script `run_dev.ps1` las lee de ahí). Si
+   no existe, créalo; no hay archivo de ejemplo, así que se escribe a mano. Como alternativa
+   puedes crear un `.env` dentro de `frontend/`.
 
-2. Abre el archivo `.env` con cualquier editor de texto (Bloc de Notas, VS Code, etc.) y rellena los valores reales:
+2. Abre el archivo con cualquier editor de texto (Bloc de Notas, VS Code, etc.) y escribe los valores reales:
    ```
    SUPABASE_URL=https://tu-proyecto.supabase.co
    SUPABASE_ANON_KEY=sb_publishable_...
@@ -187,7 +186,6 @@ EDUCA/
 │   ├── assets/            # Imágenes e iconos
 │   ├── web/               # Configuración web (index.html, manifest)
 │   ├── .env               # ⚠️ Credenciales (NO subir a Git)
-│   ├── .env.example       # Plantilla del .env
 │   ├── run_dev.ps1        # Script para arrancar fácilmente
 │   └── pubspec.yaml       # Dependencias del proyecto
 └── backend/

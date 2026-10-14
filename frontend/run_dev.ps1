@@ -7,7 +7,7 @@
 #   .\run_dev.ps1 -Device chrome
 #   .\run_dev.ps1 -Device web-server # ejecuta en http://localhost:8080
 #
-# Lee las credenciales centralizadas en `backend/.env` (copia de backend/.env.example)
+# Lee las credenciales centralizadas en `backend/.env` (se crea a mano; no hay .env.example)
 # y arma los `--dart-define` que la app espera. Las claves viven en el backend;
 # el frontend solo las recibe en tiempo de build.
 # -----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ if (-not (Test-Path $envPath)) {
     if (Test-Path ".env") {
         $envPath = ".env"
     } else {
-        Write-Error "Falta backend/.env. Copia backend/.env.example a backend/.env y complétalo."
+        Write-Error "Falta backend/.env. Créalo con SUPABASE_URL, SUPABASE_ANON_KEY y el resto de variables (ver backend/README.md)."
         exit 1
     }
 }

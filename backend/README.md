@@ -23,7 +23,7 @@ backend/
 ├─ scripts/            Migraciones, seed y smoke tests conectados
 ├─ package.json
 ├─ tsconfig.json
-└─ .env.example
+└─ .env                (local, no se versiona)
 
 ../supabase/
 ├─ config.toml
@@ -48,8 +48,10 @@ operaciones.
 
 ## Variables De Entorno
 
-Copia `backend/.env.example` a `backend/.env` y completa los secretos reales.
-No subas `.env` al repo.
+Ya no hay plantilla `.env.example`: crea `backend/.env` a mano con las variables de
+la tabla de abajo (como mínimo `SUPABASE_URL`, `SUPABASE_ANON_KEY` y, para los
+scripts, `SUPABASE_SERVICE_ROLE_KEY` y `SUPABASE_DB_*`; los valores los da el dueño
+del proyecto o el panel de Supabase). No subas `.env` al repo.
 
 | Variable | Uso |
 | --- | --- |

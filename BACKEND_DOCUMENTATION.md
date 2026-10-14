@@ -131,12 +131,9 @@ npm install
 
 Configuración:
 
-```bash
-cd backend
-copy .env.example .env
-```
-
-Completar `backend/.env` con valores reales. No subir `.env` al repositorio.
+Crear `backend/.env` con las variables de la tabla de "Variables de entorno" (ya no existe
+`.env.example`; los valores los entrega el dueño del proyecto o salen del panel de Supabase).
+No subir `.env` al repositorio.
 
 Desarrollo:
 
