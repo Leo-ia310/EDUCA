@@ -217,6 +217,7 @@ create table users (
   full_name           varchar(200) not null,
   avatar_url          text,
   email_verified      boolean default false,
+  email_notifications_enabled boolean not null default true,
   phone_verified      boolean default false,
   two_factor          boolean default false,
   last_sign_in        timestamptz,

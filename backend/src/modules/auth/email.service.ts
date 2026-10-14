@@ -79,6 +79,27 @@ export class EmailService {
     });
   }
 
+  async sendAnnouncement(
+    to: string,
+    fullName: string,
+    title: string,
+    message: string,
+  ) {
+    const safeTitle = this.escape(title);
+    const safeMessage = this.escape(message).replace(/\n/g, "<br>");
+    return this.send({
+      to,
+      subject: `Nuevo anuncio: ${title}`,
+      html: [
+        `<p>Hola ${this.escape(fullName || "usuario")},</p>`,
+        `<p><strong>${safeTitle}</strong></p>`,
+        `<p>${safeMessage}</p>`,
+        "<p>También puedes ver este aviso dentro de Nivra.</p>",
+      ].join(""),
+      text: `Nuevo anuncio: ${title}\n\n${message}`,
+    });
+  }
+
   private escape(value: string) {
     return value
       .replace(/&/g, "&amp;")

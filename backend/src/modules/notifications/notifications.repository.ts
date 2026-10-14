@@ -7,7 +7,7 @@ export class NotificationsRepository {
   async listUsersByRoleCodes(institutionId: number, roleCodes: string[]) {
     const { data, error } = await db
       .from("users")
-      .select("id, user_roles(roles(code))")
+      .select("id, email, full_name, email_notifications_enabled, user_roles(roles(code))")
       .eq("institution_id", institutionId)
       .eq("active", true)
       .is("deleted_at", null);
@@ -26,6 +26,33 @@ export class NotificationsRepository {
       db.from("notifications").insert(payload).select("id").single(),
       "No se pudo crear la notificación.",
     );
+  }
+
+  async insertDelivery(payload: Record<string, unknown>) {
+    return expectSingle<Record<string, unknown>>(
+      db.from("notification_deliveries").insert(payload).select("id").single(),
+      "No se pudo registrar la entrega de la notificación.",
+    );
+  }
+
+  async findNotificationTypeId(code: string) {
+    const { data, error } = await db
+      .from("catalog_notification_types")
+      .select("id")
+      .eq("code", code)
+      .maybeSingle();
+    if (error) throw error;
+    return data == null ? null : Number(data.id);
+  }
+
+  async findChannelId(code: string) {
+    const { data, error } = await db
+      .from("catalog_notification_channels")
+      .select("id")
+      .eq("code", code)
+      .maybeSingle();
+    if (error) throw error;
+    return data == null ? null : Number(data.id);
   }
 
   async listForUser(userId: number, institutionId: number, limit = 100) {
@@ -82,6 +109,35 @@ export class NotificationsRepository {
 
   async updateDevice(id: unknown, payload: Record<string, unknown>) {
     return db.from("devices").update(payload).eq("id", id);
+  }
+
+  async getPreferences(userId: number, institutionId: number) {
+    return expectSingle<Record<string, unknown>>(
+      db
+        .from("users")
+        .select("email_notifications_enabled")
+        .eq("id", userId)
+        .eq("institution_id", institutionId)
+        .single(),
+      "No se pudieron cargar las preferencias de notificación.",
+    );
+  }
+
+  async updatePreferences(
+    userId: number,
+    institutionId: number,
+    payload: Record<string, unknown>,
+  ) {
+    return expectSingle<Record<string, unknown>>(
+      db
+        .from("users")
+        .update(payload)
+        .eq("id", userId)
+        .eq("institution_id", institutionId)
+        .select("email_notifications_enabled")
+        .single(),
+      "No se pudieron actualizar las preferencias de notificación.",
+    );
   }
 }
 

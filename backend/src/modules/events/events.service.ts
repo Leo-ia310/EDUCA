@@ -25,22 +25,40 @@ export class EventsService {
       2000,
     );
     const date = requiredDate(payload.date, "Fecha");
-    const audience = requiredString(payload.audience, "Audiencia", 50);
+    const audience = normalizeAudience(
+      requiredString(payload.audience, "Audiencia", 50),
+    );
     const row = await this.repository.insertEvent({
       institution_id: ctx.institutionId,
       title,
       description,
       start_at: date.toISOString(),
       audience,
-      type: "event",
+      type: "announcement",
       created_by: ctx.userId,
     });
-    await notificationsService.notifyAudience(
+    const announcement = await this.repository.insertAnnouncement({
+      institution_id: ctx.institutionId,
+      title,
+      content: description,
+      kind: "general",
+      audience,
+      published: true,
+      published_at: new Date().toISOString(),
+      created_by: ctx.userId,
+    });
+    const notifications = await notificationsService.notifyAudience(
       ctx,
       audience,
       title,
       description,
-      { module: "events", eventId: row.id, date: date.toISOString() },
+      {
+        module: "announcements",
+        eventId: row.id,
+        announcementId: announcement.id,
+        date: date.toISOString(),
+        deepLink: "/announcements",
+      },
     );
     return {
       event: {
@@ -50,9 +68,48 @@ export class EventsService {
         date: String(row.start_at ?? date.toISOString()),
         audience: String(row.audience ?? ""),
       },
+      announcement: {
+        id: String(announcement.id),
+        title: String(announcement.title ?? ""),
+        content: String(announcement.content ?? ""),
+        audience: String(announcement.audience ?? ""),
+      },
+      notifications,
     };
   }
 }
 
 export const eventsService = new EventsService();
+
+function normalizeAudience(value: string) {
+  const key = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+  switch (key) {
+    case "all":
+    case "toda la institucion":
+      return "all";
+    case "parents":
+    case "parent":
+    case "padres":
+    case "padres y tutores":
+      return "parents";
+    case "students":
+    case "student":
+    case "estudiantes":
+      return "students";
+    case "teachers":
+    case "teacher":
+    case "docentes":
+      return "teachers";
+    case "admins":
+    case "staff":
+    case "administracion":
+      return "staff";
+    default:
+      return value;
+  }
+}
 

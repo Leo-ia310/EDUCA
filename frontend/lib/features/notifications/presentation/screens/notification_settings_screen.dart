@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/backend_api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 
-/// Preferencias de notificaciones por canal. En modo demo el estado vive en la
-/// pantalla; con backend real persistiría en `institution_settings`/perfil.
-class NotificationSettingsScreen extends StatefulWidget {
+/// Preferencias de notificaciones por canal.
+class NotificationSettingsScreen extends ConsumerStatefulWidget {
   const NotificationSettingsScreen({super.key});
 
   @override
-  State<NotificationSettingsScreen> createState() =>
+  ConsumerState<NotificationSettingsScreen> createState() =>
       _NotificationSettingsScreenState();
 }
 
 class _NotificationSettingsScreenState
-    extends State<NotificationSettingsScreen> {
+    extends ConsumerState<NotificationSettingsScreen> {
   final Map<String, bool> _channels = {
     'Mensajes': true,
     'Tareas': true,
@@ -27,6 +28,7 @@ class _NotificationSettingsScreenState
   };
   bool _pushEnabled = true;
   bool _emailEnabled = false;
+  bool _savingEmail = false;
 
   static const Map<String, IconData> _icons = {
     'Mensajes': Icons.chat_bubble_outline,
@@ -36,6 +38,54 @@ class _NotificationSettingsScreenState
     'Anuncios': Icons.campaign_rounded,
     'Pagos': Icons.payments_rounded,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPreferences());
+  }
+
+  Future<void> _loadPreferences() async {
+    final api = ref.read(backendApiClientProvider);
+    if (api == null) return;
+    try {
+      final data = await api.get('/notifications/preferences');
+      if (!mounted || data is! Map) return;
+      setState(() {
+        _emailEnabled = data['emailEnabled'] == true;
+      });
+    } catch (_) {
+      // En demo o sin conexión, la pantalla conserva el estado local.
+    }
+  }
+
+  Future<void> _setEmailEnabled(bool value) async {
+    final previous = _emailEnabled;
+    setState(() {
+      _emailEnabled = value;
+      _savingEmail = true;
+    });
+    final api = ref.read(backendApiClientProvider);
+    if (api != null) {
+      try {
+        final data = await api.patch(
+          '/notifications/preferences',
+          data: {'emailEnabled': value},
+        );
+        if (mounted && data is Map) {
+          setState(() => _emailEnabled = data['emailEnabled'] == true);
+        }
+      } catch (error) {
+        if (mounted) {
+          setState(() => _emailEnabled = previous);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No se pudo guardar: $error')),
+          );
+        }
+      }
+    }
+    if (mounted) setState(() => _savingEmail = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +113,7 @@ class _NotificationSettingsScreenState
                 ),
                 SwitchListTile.adaptive(
                   value: _emailEnabled,
-                  onChanged: (v) => setState(() => _emailEnabled = v),
+                  onChanged: _savingEmail ? null : _setEmailEnabled,
                   activeThumbColor: palette.accentDeep,
                   secondary: const Icon(Icons.mail_outline),
                   title: const Text('Correo electrónico'),
@@ -97,8 +147,8 @@ class _NotificationSettingsScreenState
           Text(
             'Puedes silenciar por completo un tipo de aviso o desactivar el push '
             'para no recibir nada en el dispositivo.',
-            style: context.textTheme.bodySmall
-                ?.copyWith(color: palette.textMuted),
+            style:
+                context.textTheme.bodySmall?.copyWith(color: palette.textMuted),
           ),
           const SizedBox(height: 24),
         ],
