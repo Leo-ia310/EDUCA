@@ -125,17 +125,29 @@ export class NotificationsService {
     payload: Record<string, unknown>,
   ) {
     const update: Record<string, unknown> = {};
-    if (payload.emailEnabled != null) {
-      if (typeof payload.emailEnabled !== "boolean") {
+    // Acepta el nombre canónico y sus equivalentes para no ignorar en silencio
+    // un valor mandado con otro nombre.
+    const email = payload.emailEnabled ??
+      payload.emailNotifications ??
+      payload.email_notifications_enabled ??
+      payload.email;
+    if (email != null) {
+      if (typeof email !== "boolean") {
         throw new HttpError(
           400,
-          "Preferencia de correo inválida.",
+          "Preferencia de correo inválida: debe ser true o false.",
           "validation_error",
         );
       }
-      update.email_notifications_enabled = payload.emailEnabled;
+      update.email_notifications_enabled = email;
     }
-    if (Object.keys(update).length === 0) return this.getPreferences(ctx);
+    if (Object.keys(update).length === 0) {
+      throw new HttpError(
+        400,
+        "Indica la preferencia a guardar (emailEnabled: true/false).",
+        "validation_error",
+      );
+    }
     const row = await this.repository.updatePreferences(
       ctx.userId,
       ctx.institutionId,

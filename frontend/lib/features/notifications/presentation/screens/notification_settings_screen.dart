@@ -27,7 +27,11 @@ class _NotificationSettingsScreenState
     'Pagos': true,
   };
   bool _pushEnabled = true;
-  bool _emailEnabled = false;
+  /// `null` = todavía no se conoce el valor guardado (cargando o falló la
+  /// carga): nunca se muestra "desactivado" por defecto.
+  bool? _emailEnabled;
+  bool _loadingEmail = true;
+  bool _emailLoadFailed = false;
   bool _savingEmail = false;
 
   static const Map<String, IconData> _icons = {
@@ -47,15 +51,34 @@ class _NotificationSettingsScreenState
 
   Future<void> _loadPreferences() async {
     final api = ref.read(backendApiClientProvider);
-    if (api == null) return;
+    if (api == null) {
+      // Demo: sin servidor, la preferencia vive solo en la pantalla.
+      setState(() {
+        _emailEnabled = false;
+        _loadingEmail = false;
+      });
+      return;
+    }
+    setState(() {
+      _loadingEmail = true;
+      _emailLoadFailed = false;
+    });
     try {
       final data = await api.get('/notifications/preferences');
-      if (!mounted || data is! Map) return;
+      if (!mounted) return;
+      if (data is! Map || data['emailEnabled'] is! bool) {
+        throw StateError('Respuesta inesperada');
+      }
       setState(() {
-        _emailEnabled = data['emailEnabled'] == true;
+        _emailEnabled = data['emailEnabled'] as bool;
+        _loadingEmail = false;
       });
     } catch (_) {
-      // En demo o sin conexión, la pantalla conserva el estado local.
+      if (!mounted) return;
+      setState(() {
+        _loadingEmail = false;
+        _emailLoadFailed = true;
+      });
     }
   }
 
@@ -72,8 +95,8 @@ class _NotificationSettingsScreenState
           '/notifications/preferences',
           data: {'emailEnabled': value},
         );
-        if (mounted && data is Map) {
-          setState(() => _emailEnabled = data['emailEnabled'] == true);
+        if (mounted && data is Map && data['emailEnabled'] is bool) {
+          setState(() => _emailEnabled = data['emailEnabled'] as bool);
         }
       } catch (error) {
         if (mounted) {
@@ -112,13 +135,32 @@ class _NotificationSettingsScreenState
                   subtitle: const Text('Avisos en este dispositivo'),
                 ),
                 SwitchListTile.adaptive(
-                  value: _emailEnabled,
-                  onChanged: _savingEmail ? null : _setEmailEnabled,
+                  value: _emailEnabled ?? false,
+                  onChanged: _savingEmail || _emailEnabled == null
+                      ? null
+                      : _setEmailEnabled,
                   activeThumbColor: palette.accentDeep,
                   secondary: const Icon(Icons.mail_outline),
                   title: const Text('Correo electrónico'),
-                  subtitle: const Text('Resumen por email'),
+                  subtitle: Text(
+                    _loadingEmail
+                        ? 'Cargando…'
+                        : _emailLoadFailed
+                            ? 'No se pudo cargar tu preferencia'
+                            : _savingEmail
+                                ? 'Guardando…'
+                                : 'Resumen por email',
+                  ),
                 ),
+                if (_emailLoadFailed)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _loadPreferences,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Reintentar'),
+                    ),
+                  ),
               ],
             ),
           ),
