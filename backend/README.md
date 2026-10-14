@@ -73,7 +73,7 @@ del proyecto o el panel de Supabase). No subas `.env` al repo.
 | `SUPABASE_ANON_KEY` | Clave publica para Flutter y smoke tests. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta opcional para tareas server-side/admin. Nunca va al frontend. |
 | `SUPABASE_DB_*` | Conexion directa para `backend/scripts`. |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Web Push; la privada solo va en Supabase secrets. |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web Push (VAPID) enviado directo desde este backend, sin Edge Function: llega al navegador aunque la app esté cerrada. La pública también va al frontend (`frontend/.env`, misma clave). La privada nunca va al cliente. Generar el par con `npx web-push generate-vapid-keys`; si se cambia, los navegadores se vuelven a suscribir solos en su próximo inicio de sesión. |
 | `INTERNAL_API_SECRET` | Secreto servidor a servidor para funciones sensibles como `send-push`. |
 
 La API Node centraliza Supabase en `src/lib/supabase.ts`. Cada request usa un

@@ -64,4 +64,8 @@ export const env = {
   supabaseServiceRoleKey: optional("SUPABASE_SERVICE_ROLE_KEY"),
   internalApiSecret: optional("INTERNAL_API_SECRET"),
   sendPushUrl: optional("SEND_PUSH_URL"),
+  // Web Push (VAPID) enviado directo desde este backend (sin Edge Function).
+  vapidPublicKey: optional("VAPID_PUBLIC_KEY"),
+  vapidPrivateKey: optional("VAPID_PRIVATE_KEY"),
+  vapidSubject: optional("VAPID_SUBJECT", "mailto:soporte@nivramop.com"),
 };

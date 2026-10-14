@@ -36,6 +36,8 @@ class WebPushService implements PushService {
   final BackendApiClient api;
   final String? userId;
 
+  static const _vapidStorageKey = 'nivra_vapid_public_key';
+
   final _fallback = DemoPushService();
   String? _endpoint;
 
@@ -55,6 +57,14 @@ class WebPushService implements PushService {
 
       var subscription =
           await registration.pushManager.getSubscription().toDart;
+      // Si la clave VAPID cambió, una suscripción hecha con la anterior ya no
+      // sirve (el servicio de push rechaza el envío): se renueva.
+      final storage = web.window.localStorage;
+      if (subscription != null &&
+          storage.getItem(_vapidStorageKey) != Env.vapidPublicKey) {
+        await subscription.unsubscribe().toDart;
+        subscription = null;
+      }
       subscription ??= await registration.pushManager
           .subscribe(
             web.PushSubscriptionOptionsInit(
@@ -64,6 +74,7 @@ class WebPushService implements PushService {
           )
           .toDart;
 
+      storage.setItem(_vapidStorageKey, Env.vapidPublicKey);
       _endpoint = subscription.endpoint;
       await _saveSubscription(subscription);
     } catch (_) {

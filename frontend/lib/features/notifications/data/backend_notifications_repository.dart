@@ -1,42 +1,114 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/network/backend_api_client.dart';
 import '../domain/entities.dart';
 import '../domain/notifications_repository.dart';
 
 /// Feed real: lee las notificaciones del usuario autenticado desde el backend
-/// (`/notifications`, filtradas por cuenta e institución) y las mantiene
-/// frescas con un sondeo ligero. Nunca siembra datos de ejemplo.
-class BackendNotificationsRepository implements NotificationsRepository {
+/// (`/notifications`, filtradas por cuenta e institución). Nunca siembra datos
+/// de ejemplo.
+///
+/// Se mantiene al día de tres formas:
+/// - **Tiempo real**: suscripción de Supabase Realtime a la tabla
+///   `notifications` del usuario (llega al instante, p. ej. un mensaje de chat).
+/// - **Al volver a la app** (resume) y al abrir la pantalla de alertas.
+/// - **Sondeo** cada 20 s como respaldo si el canal realtime se cae.
+class BackendNotificationsRepository
+    with WidgetsBindingObserver
+    implements NotificationsRepository {
   BackendNotificationsRepository(
     this._api, {
-    Duration pollEvery = const Duration(seconds: 45),
+    SupabaseClient? realtime,
+    String? userId,
+    Duration pollEvery = const Duration(seconds: 20),
   }) {
+    WidgetsBinding.instance.addObserver(this);
     _timer = Timer.periodic(pollEvery, (_) => refresh());
+    if (realtime != null && userId != null) _listenRealtime(realtime, userId);
     refresh();
   }
 
   final BackendApiClient _api;
   Timer? _timer;
+  SupabaseClient? _client;
+  RealtimeChannel? _channel;
   final _ctrl = StreamController<List<AppNotification>>.broadcast();
+  final _arrivals = StreamController<AppNotification>.broadcast();
   List<AppNotification> _items = const [];
+  final _known = <String>{};
   bool _loaded = false;
 
-  void dispose() {
-    _timer?.cancel();
-    _ctrl.close();
+  /// Notificaciones que llegan **después** de la primera carga (para mostrar
+  /// un aviso local mientras la app está abierta).
+  Stream<AppNotification> get arrivals => _arrivals.stream;
+
+  void _listenRealtime(SupabaseClient client, String userId) {
+    try {
+      _client = client;
+      _channel = client
+          .channel('notifications:$userId')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'notifications',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'user_id',
+              value: userId,
+            ),
+            callback: (_) => refresh(),
+          )
+          .subscribe();
+    } catch (_) {
+      // Sin realtime queda el sondeo y el refresco al volver a la app.
+    }
   }
 
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    final channel = _channel;
+    if (channel != null) _client?.removeChannel(channel);
+    _ctrl.close();
+    _arrivals.close();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) refresh();
+  }
+
+  bool _refreshing = false;
+
+  @override
   Future<void> refresh() async {
+    if (_refreshing) return;
+    _refreshing = true;
     try {
       final raw = await _api.get('/notifications');
       final list = raw is List ? raw : const [];
-      _items = [
+      final items = [
         for (final e in list)
           if (e is Map) _parse(Map<String, dynamic>.from(e)),
       ];
+      if (_loaded) {
+        for (final n in items) {
+          if (!n.read && !_known.contains(n.id) && !_arrivals.isClosed) {
+            _arrivals.add(n);
+          }
+        }
+      }
+      _known
+        ..clear()
+        ..addAll(items.map((n) => n.id));
+      _items = items;
     } catch (_) {
       // Sin red o sin sesión: se conserva lo último cargado (vacío al inicio).
+    } finally {
+      _refreshing = false;
     }
     _loaded = true;
     _emit();
@@ -47,14 +119,17 @@ class BackendNotificationsRepository implements NotificationsRepository {
         ? Map<String, dynamic>.from(m['data'] as Map)
         : <String, dynamic>{};
     final link = data['deepLink'] ?? data['deep_link'] ?? data['route'];
+    final channel = NotificationChannel.fromCode(m['channel'] as String?);
     return AppNotification(
       id: '${m['id']}',
-      channel: NotificationChannel.fromCode(m['channel'] as String?),
+      channel: channel,
       title: '${m['title'] ?? ''}',
       body: '${m['body'] ?? ''}',
       receivedAt:
           DateTime.tryParse('${m['receivedAt']}')?.toLocal() ?? DateTime.now(),
-      priority: NotificationPriority.normal,
+      priority: channel == NotificationChannel.message
+          ? NotificationPriority.high
+          : NotificationPriority.normal,
       read: m['read'] == true,
       data: data,
       deepLink: link is String && link.isNotEmpty ? link : null,

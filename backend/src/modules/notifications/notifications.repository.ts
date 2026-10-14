@@ -45,6 +45,32 @@ export class NotificationsRepository {
     return data == null ? null : Number(data.id);
   }
 
+  async findNotification(id: number) {
+    const { data, error } = await db
+      .from("notifications")
+      .select("id, user_id, title, message, data")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data as Record<string, unknown> | null;
+  }
+
+  /** Suscripciones Web Push activas del usuario (devices.push_token = JSON). */
+  async listActiveWebDevices(userId: number) {
+    const { data, error } = await db
+      .from("devices")
+      .select("id, push_token")
+      .eq("user_id", userId)
+      .eq("platform", "web")
+      .eq("active", true);
+    if (error) throw error;
+    return (data ?? []) as Array<{ id: number; push_token: string }>;
+  }
+
+  async deactivateDevice(id: number) {
+    return db.from("devices").update({ active: false }).eq("id", id);
+  }
+
   async findChannelId(code: string) {
     const { data, error } = await db
       .from("catalog_notification_channels")
@@ -78,6 +104,21 @@ export class NotificationsRepository {
       .eq("read", false);
     if (id != null) query = query.eq("id", id);
     return query;
+  }
+
+  /** Marca como leídas las notificaciones de chat de una conversación. */
+  async markConversationRead(
+    userId: number,
+    institutionId: number,
+    conversationId: number,
+  ) {
+    return db
+      .from("notifications")
+      .update({ read: true, read_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("institution_id", institutionId)
+      .eq("read", false)
+      .filter("data->>conversationId", "eq", String(conversationId));
   }
 
   async deleteForUser(userId: number, institutionId: number, id?: number) {

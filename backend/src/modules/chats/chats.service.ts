@@ -14,6 +14,7 @@ import {
   ChatsRepository,
 } from "./chats.repository";
 import type { AppContext } from "../../types/app-context";
+import { notificationsService } from "../notifications/notifications.service";
 
 export class ChatsService {
   constructor(private readonly repository: ChatsRepository = chatsRepository) {}
@@ -42,7 +43,48 @@ export class ChatsService {
       content,
       file_id: fileId,
     });
+    await this.notifyRecipients(ctx, conversationId, Number(row.id), content);
     return { message: await this.hydrateMessage(ctx, Number(row.id)) };
+  }
+
+  /** Notificación real (y push) para los demás participantes del chat. */
+  private async notifyRecipients(
+    ctx: AppContext,
+    conversationId: number,
+    messageId: number,
+    content: string | null,
+  ) {
+    try {
+      const recipients = await this.repository.otherParticipantIds(
+        conversationId,
+        ctx.userId,
+      );
+      const preview = content == null || content.trim() === ""
+        ? "Te envió un adjunto"
+        : content.trim().length > 140
+        ? `${content.trim().slice(0, 137)}...`
+        : content.trim();
+      await notificationsService.notifyUsers(ctx, recipients, {
+        typeCode: "MSG",
+        title: ctx.fullName || "Nuevo mensaje",
+        message: preview,
+        data: {
+          module: "chat",
+          conversationId,
+          messageId,
+          deepLink: `/chat/${conversationId}`,
+        },
+      });
+    } catch (error) {
+      // El mensaje ya se guardó: no se pierde por un fallo de notificación.
+      console.error({
+        level: "warn",
+        event: "chat_notification_failed",
+        conversationId,
+        messageId,
+        error,
+      });
+    }
   }
 
   async markConversationAsRead(
@@ -63,6 +105,10 @@ export class ChatsService {
     if (rows.length > 0) {
       await this.repository.upsertMessageReads(rows);
     }
+    // La notificación de esos mensajes deja de estar pendiente.
+    await notificationsService.markConversationRead(ctx, conversationId).catch(
+      () => undefined,
+    );
     return { ok: true };
   }
 

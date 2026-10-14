@@ -39,6 +39,19 @@ export class ChatsRepository {
     );
   }
 
+  /** Usuarios de la conversación distintos de [userId]. */
+  async otherParticipantIds(conversationId: number, userId: number) {
+    const { data, error } = await db
+      .from("conversation_participants")
+      .select("user_id")
+      .eq("conversation_id", conversationId)
+      .neq("user_id", userId);
+    assertNoDbError(error);
+    return ((data ?? []) as Array<Record<string, unknown>>).map((row) =>
+      Number(row.user_id)
+    );
+  }
+
   async findInstitutionFile(institutionId: number, fileId: number) {
     return expectSingle(
       db

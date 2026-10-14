@@ -1,3 +1,7 @@
+import { createHash } from "node:crypto";
+
+import webpush from "web-push";
+
 import { assertNoDbError } from "../../lib/db";
 import { env } from "../../lib/env";
 import { HttpError } from "../../lib/errors";
@@ -21,11 +25,14 @@ export class NotificationsService {
   ) {
     const endpoint = requiredString(payload.endpoint, "Endpoint push", 2000);
     const pushToken = requiredString(payload.pushToken, "Token push", 5000);
-    const existing = await this.repository.findDevice(ctx.userId, endpoint);
+    // Los endpoints de push superan los 150 caracteres de `device_uuid`: se
+    // guarda su huella SHA-256 como identificador del dispositivo.
+    const deviceKey = createHash("sha256").update(endpoint).digest("hex");
+    const existing = await this.repository.findDevice(ctx.userId, deviceKey);
     if (existing == null) {
       await this.repository.insertDevice({
         user_id: ctx.userId,
-        device_uuid: endpoint,
+        device_uuid: deviceKey,
         platform: "web",
         push_token: pushToken,
         active: true,
@@ -137,6 +144,52 @@ export class NotificationsService {
     return {
       emailEnabled: row.email_notifications_enabled !== false,
     };
+  }
+
+  /**
+   * Crea una notificación real para cada usuario indicado (y envía el push si
+   * está configurado). Un fallo aquí nunca debe romper la acción que la origina.
+   */
+  async notifyUsers(
+    ctx: AppContext,
+    userIds: number[],
+    notification: {
+      typeCode: string;
+      title: string;
+      message: string;
+      data?: Record<string, unknown>;
+    },
+  ) {
+    if (userIds.length === 0) return { created: 0, pushed: 0 };
+    const notificationTypeId = await this.repository.findNotificationTypeId(
+      notification.typeCode,
+    );
+    let created = 0;
+    let pushed = 0;
+    for (const userId of userIds) {
+      const row = await this.repository.insertNotification({
+        institution_id: ctx.institutionId,
+        user_id: userId,
+        notification_type_id: notificationTypeId,
+        title: notification.title,
+        message: notification.message,
+        data: notification.data ?? {},
+        read: false,
+      });
+      created += 1;
+      if (await this.sendPush(Number(row.id))) pushed += 1;
+    }
+    return { created, pushed };
+  }
+
+  /** Marca como leídas las notificaciones de una conversación de chat. */
+  async markConversationRead(ctx: AppContext, conversationId: number) {
+    const { error } = await this.repository.markConversationRead(
+      ctx.userId,
+      ctx.institutionId,
+      conversationId,
+    );
+    assertNoDbError(error);
   }
 
   async notifyAudience(
@@ -266,7 +319,90 @@ export class NotificationsService {
     }
   }
 
+  private webPushReady = false;
+
+  private webPushConfigured() {
+    return Boolean(env.vapidPublicKey && env.vapidPrivateKey);
+  }
+
+  /**
+   * Web Push estándar (VAPID) directo desde el backend: llega al navegador
+   * aunque la app esté cerrada. Desactiva las suscripciones que el servicio de
+   * push reporta como vencidas (404/410) y registra cada entrega.
+   */
+  private async sendWebPush(notificationId: number) {
+    if (!this.webPushReady) {
+      webpush.setVapidDetails(
+        env.vapidSubject,
+        env.vapidPublicKey,
+        env.vapidPrivateKey,
+      );
+      this.webPushReady = true;
+    }
+    const notification = await this.repository.findNotification(notificationId);
+    if (notification == null) return false;
+    const devices = await this.repository.listActiveWebDevices(
+      Number(notification.user_id),
+    );
+    if (devices.length === 0) return false;
+
+    const data = (notification.data ?? {}) as Record<string, unknown>;
+    const payload = JSON.stringify({
+      title: notification.title ?? "Nivra",
+      body: notification.message ?? "",
+      deepLink: data.deepLink ?? "/",
+      // Un mismo chat reemplaza su aviso anterior en lugar de apilarse.
+      tag: data.conversationId != null
+        ? `chat-${data.conversationId}`
+        : `notification-${notificationId}`,
+    });
+    const channelId = await this.repository.findChannelId("PUSH");
+
+    let delivered = 0;
+    for (const device of devices) {
+      let status = "sent";
+      let failure: string | null = null;
+      try {
+        await webpush.sendNotification(JSON.parse(device.push_token), payload, {
+          TTL: 60 * 60,
+          urgency: "high",
+        });
+        delivered += 1;
+      } catch (error) {
+        status = "failed";
+        const code = (error as { statusCode?: number }).statusCode;
+        failure = String((error as Error).message ?? error).slice(0, 300);
+        if (code === 404 || code === 410) {
+          await this.repository.deactivateDevice(device.id);
+        }
+      }
+      await this.recordDelivery({
+        notification_id: notificationId,
+        channel_id: channelId,
+        destination: String(device.id),
+        status,
+        provider: "webpush",
+        error: failure,
+        sent_at: new Date().toISOString(),
+      });
+    }
+    return delivered > 0;
+  }
+
   private async sendPush(notificationId: number) {
+    if (this.webPushConfigured()) {
+      try {
+        return await this.sendWebPush(notificationId);
+      } catch (error) {
+        console.error({
+          level: "warn",
+          event: "send_web_push_failed",
+          notificationId,
+          error,
+        });
+        return false;
+      }
+    }
     if (!env.internalApiSecret) return false;
     const url = env.sendPushUrl ||
       `${env.supabaseUrl.replace(/\/$/, "")}/functions/v1/send-push`;

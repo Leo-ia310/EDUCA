@@ -27,6 +27,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   NotificationChannel? _filter;
 
   @override
+  void initState() {
+    super.initState();
+    // Al entrar se consulta de nuevo: nunca se queda con datos viejos.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(notificationsRepositoryProvider).refresh();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final feed = ref.watch(notificationsFeedProvider);
@@ -80,8 +89,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   }
                   return RefreshIndicator(
                     color: palette.accentDeep,
-                    onRefresh: () async =>
-                        ref.invalidate(notificationsFeedProvider),
+                    onRefresh: () =>
+                        ref.read(notificationsRepositoryProvider).refresh(),
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       itemCount: filtered.length,

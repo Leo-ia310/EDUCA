@@ -8,7 +8,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/utils/date_utils.dart';
-import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../schedule/data/schedule_mock.dart';
 import '../../../schedule/providers.dart';
@@ -30,8 +29,8 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
   /// Hoy dentro de los días mostrados (si no, el lunes).
   int get _todayIdx => _realToday < _dayCount ? _realToday : 0;
   int get _realToday => DateTime.now().weekday - 1;
-  late int _selected = _todayIdx;
-  late PageController _controller = _controllerFor(_selected);
+  late int _selected;
+  late PageController _controller;
 
   /// Horario real (o de ejemplo en demo); vacío mientras carga.
   Map<int, List<ClassSlot>> get _byDay =>
@@ -80,6 +79,13 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
       _controller = _controllerFor(day);
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = _todayIdx;
+    _controller = _controllerFor(_selected);
   }
 
   @override
@@ -139,10 +145,31 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
         SizedBox(
           height: _cardHeight,
           child: slots.isEmpty
-              ? const EmptyState(
-                  icon: Icons.event_available_rounded,
-                  title: 'Sin clases para este día',
-                  subtitle: 'No hay clases programadas para este día.',
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.event_available_rounded,
+                        size: 40,
+                        color: context.palette.textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sin clases para este día',
+                        style: context.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'No hay clases programadas para este día.',
+                        textAlign: TextAlign.center,
+                        style: context.textTheme.bodySmall
+                            ?.copyWith(color: context.palette.textMuted),
+                      ),
+                    ],
+                  ),
                 )
               : Stack(
                   children: [

@@ -7,6 +7,9 @@ abstract class NotificationsRepository {
   Stream<List<AppNotification>> watchAll();
   Stream<int> watchUnread();
 
+  /// Vuelve a consultar el feed (no-op para el feed local de demo).
+  Future<void> refresh();
+
   Future<void> add(AppNotification notification);
   Future<void> markRead(String id);
   Future<void> markAllRead();

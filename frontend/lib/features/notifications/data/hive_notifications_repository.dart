@@ -87,6 +87,9 @@ class HiveNotificationsRepository implements NotificationsRepository {
   }
 
   @override
+  Future<void> refresh() async {}
+
+  @override
   Future<void> seedIfEmpty(List<AppNotification> seeds) async {
     if (_box.isNotEmpty) return;
     for (final s in seeds) {

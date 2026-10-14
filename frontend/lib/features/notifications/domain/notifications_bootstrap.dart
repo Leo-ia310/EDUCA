@@ -6,8 +6,11 @@ import 'package:uuid/uuid.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/services/local_notifications_service.dart';
 import '../../../core/constants/env.dart';
+import '../data/backend_notifications_repository.dart';
 import '../data/demo_push_service.dart';
 import '../providers.dart';
+import 'notifications_repository.dart';
+import 'push_service.dart';
 import 'entities.dart';
 
 const _uuid = Uuid();
@@ -32,25 +35,60 @@ class NotificationsBootstrap {
   final _subs = <StreamSubscription<dynamic>>[];
 
   bool _handled = false;
+  ProviderSubscription<PushService>? _pushSub;
+  StreamSubscription<AppNotification>? _pushIncomingSub;
+  StreamSubscription<AppNotification>? _pushTapSub;
+
+  Future<void> _attachPush(PushService push) async {
+    await _pushIncomingSub?.cancel();
+    await _pushTapSub?.cancel();
+    // Notificaciones entrantes → feed + banner; tap (background/terminada).
+    _pushIncomingSub = push.incoming.listen(_onIncoming);
+    _pushTapSub = push.onTap.listen(_onTap);
+    try {
+      await push.init();
+    } catch (_) {
+      // Sin soporte de push en esta plataforma: la app sigue funcionando.
+    }
+  }
+  ProviderSubscription<NotificationsRepository>? _repoSub;
+  StreamSubscription<AppNotification>? _arrivalSub;
+
+  void _attachArrivals(NotificationsRepository repo) {
+    _arrivalSub?.cancel();
+    _arrivalSub =
+        repo is BackendNotificationsRepository ? repo.arrivals.listen(_onArrival) : null;
+  }
 
   Future<void> _wire() async {
     if (_handled) return;
     _handled = true;
 
-    await _localNotifications.init();
-    await _localNotifications.requestPermission();
-
-    final push = _ref.read(pushServiceProvider);
-    await push.init();
-
-    // Nuevas notificaciones entrantes → feed + banner.
-    _subs.add(push.incoming.listen(_onIncoming));
-
-    // Tap desde FCM (background/terminated).
-    _subs.add(push.onTap.listen(_onTap));
+    // Notificaciones locales (móvil/escritorio). En web no existen: un fallo
+    // aquí nunca debe impedir que se registre el push.
+    try {
+      await _localNotifications.init();
+      await _localNotifications.requestPermission();
+    } catch (_) {}
 
     // Tap desde notificación local (foreground).
     _subs.add(_localNotifications.onTap.listen(_onTap));
+
+    // El servicio de push cambia al iniciar sesión (demo/sin sesión → Web Push
+    // real con el usuario): se vuelve a enlazar y registrar cada vez.
+    _pushSub = _ref.listen<PushService>(
+      pushServiceProvider,
+      (_, next) => _attachPush(next),
+      fireImmediately: true,
+    );
+
+    // Real: aviso local cuando llega una notificación con la app abierta.
+    // (El repositorio cambia al iniciar/cerrar sesión: se vuelve a enlazar.)
+    _repoSub = _ref.listen<NotificationsRepository>(
+      notificationsRepositoryProvider,
+      (_, next) => _attachArrivals(next),
+      fireImmediately: true,
+    );
 
     // Semillas iniciales del feed para el modo demo.
     await _seedDemoIfEmpty();
@@ -61,7 +99,26 @@ class NotificationsBootstrap {
     await _ref.read(notificationsRepositoryProvider).add(n);
     // Heads-up local (solo cuando estamos en foreground — FCM ya lo hace
     // en background/terminated).
-    await _localNotifications.show(n);
+    try {
+      await _localNotifications.show(n);
+    } catch (_) {}
+  }
+
+  /// Aviso (heads-up) de una notificación real que llegó con la app abierta.
+  /// No se muestra si el usuario ya está viendo esa misma pantalla (p. ej. la
+  /// conversación del chat abierta).
+  Future<void> _onArrival(AppNotification n) async {
+    final link = n.deepLink;
+    if (link != null) {
+      final current =
+          _ref.read(goRouterProvider).routerDelegate.currentConfiguration.uri;
+      if (current.path == link) return;
+    }
+    try {
+      await _localNotifications.show(n);
+    } catch (_) {
+      // Plataformas sin notificaciones locales (web): la bandeja ya se actualizó.
+    }
   }
 
   Future<void> _onTap(AppNotification n) async {
@@ -121,6 +178,11 @@ class NotificationsBootstrap {
   }
 
   void dispose() {
+    _pushSub?.close();
+    _pushIncomingSub?.cancel();
+    _pushTapSub?.cancel();
+    _repoSub?.close();
+    _arrivalSub?.cancel();
     for (final s in _subs) {
       s.cancel();
     }

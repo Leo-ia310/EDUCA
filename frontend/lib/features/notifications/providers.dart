@@ -37,7 +37,11 @@ final notificationsRepositoryProvider =
   final api = ref.watch(backendApiClientProvider);
   final userId = ref.watch(authControllerProvider.select((a) => a.user?.id));
   if (!Env.isDemoMode && api != null && userId != null) {
-    final repo = BackendNotificationsRepository(api);
+    final repo = BackendNotificationsRepository(
+      api,
+      realtime: ref.watch(supabaseClientProvider),
+      userId: userId,
+    );
     ref.onDispose(repo.dispose);
     return repo;
   }
