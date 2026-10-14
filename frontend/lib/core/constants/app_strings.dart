@@ -2,7 +2,7 @@
 class AppStrings {
   AppStrings._();
 
-  static const appName = 'Educa360';
+  static const appName = 'Nivra';
 
   // Login
   static const emailHint = 'Correo o usuario';

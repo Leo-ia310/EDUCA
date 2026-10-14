@@ -68,10 +68,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const SizedBox(height: 48),
                 Center(
-                  child: Image.asset(
-                    'assets/images/nivra_logo.png',
-                    height: 132,
-                    fit: BoxFit.contain,
+                  // El logo tiene fondo blanco: en modo oscuro se muestra como
+                  // una tarjeta blanca redondeada en lugar de un cuadro suelto.
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(Radii.lg),
+                    child: ColoredBox(
+                      color: Colors.white,
+                      child: Image.asset(
+                        'assets/images/nivra_logo.png',
+                        height: 132,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),

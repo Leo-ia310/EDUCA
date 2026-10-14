@@ -31,7 +31,7 @@ class _Educa360AppState extends ConsumerState<Educa360App> {
     final router = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
-      title: 'Educa360',
+      title: 'Nivra',
       debugShowCheckedModeBanner: false,
       themeMode: mode,
       theme: AppTheme.lightTheme,
