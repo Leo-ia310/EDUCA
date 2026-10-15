@@ -7,9 +7,11 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../notifications/providers.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/chat_controller.dart';
+import '../controllers/conversation_read_tracker.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/conversation_avatar.dart';
 import '../widgets/message_bubble.dart';
@@ -26,11 +28,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     with WidgetsBindingObserver {
   final _scrollCtrl = ScrollController();
   int _lastCount = 0;
+  String? _lastReadSignature;
+  late final ConversationReadTracker _readTracker;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _readTracker = ConversationReadTracker(
+      markRead: () =>
+          ref.read(chatRepositoryProvider).markAsRead(widget.conversationId),
+      refreshAlerts: () async {
+        if (mounted) await ref.read(notificationsRepositoryProvider).refresh();
+      },
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _readVisibleMessages());
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.conversationId != widget.conversationId) {
+      _lastReadSignature = null;
+      _lastCount = 0;
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _readVisibleMessages());
+    }
   }
 
   @override
@@ -43,8 +66,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
+    _lastReadSignature = null;
     ref.invalidate(messagesStreamProvider(widget.conversationId));
     ref.invalidate(conversationsStreamProvider);
+  }
+
+  Future<void> _readVisibleMessages() async {
+    if (!mounted || ModalRoute.of(context)?.isCurrent == false) return;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
+    final messages =
+        ref.read(messagesStreamProvider(widget.conversationId)).valueOrNull;
+    if (messages == null) return;
+    final meId = ref.read(authControllerProvider).user?.id;
+    final incomingIds = messages
+        .where((m) => m.senderId != meId)
+        .map((m) => m.id)
+        .toList()
+      ..sort();
+    final signature = incomingIds.join(',');
+    if (signature == _lastReadSignature) return;
+    _lastReadSignature = signature;
+    try {
+      await _readTracker.read();
+    } catch (_) {
+      _lastReadSignature = null;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              const Text('No se pudo confirmar la lectura de los mensajes.'),
+          action: SnackBarAction(
+            label: 'Reintentar',
+            onPressed: _readVisibleMessages,
+          ),
+        ),
+      );
+    }
   }
 
   void _scrollToBottom() {
@@ -63,6 +121,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   Widget build(BuildContext context) {
     final me = ref.watch(authControllerProvider).user;
     final messages = ref.watch(messagesStreamProvider(widget.conversationId));
+    ref.listen(messagesStreamProvider(widget.conversationId), (_, next) {
+      if (next.hasValue && !next.isLoading) {
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _readVisibleMessages());
+      }
+    });
     final composer = ref.watch(chatComposerProvider(widget.conversationId));
     final composerCtrl =
         ref.read(chatComposerProvider(widget.conversationId).notifier);

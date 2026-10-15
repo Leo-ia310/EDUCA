@@ -6,6 +6,7 @@ export type SendEmailPayload = {
   subject: string;
   html: string;
   text?: string;
+  idempotencyKey?: string;
 };
 
 export class EmailService {
@@ -30,7 +31,9 @@ export class EmailService {
       headers: {
         authorization: `Bearer ${env.resendApiKey}`,
         "content-type": "application/json",
+        ...(payload.idempotencyKey ? { "Idempotency-Key": payload.idempotencyKey } : {}),
       },
+      signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
         from: env.resendFromEmail,
         to: [payload.to],
@@ -98,12 +101,14 @@ export class EmailService {
     fullName: string,
     title: string,
     message: string,
+    idempotencyKey?: string,
   ) {
     const safeTitle = this.escape(title);
     const safeMessage = this.escape(message).replace(/\n/g, "<br>");
     return this.send({
       to,
       subject: `Nuevo anuncio: ${title}`,
+      idempotencyKey,
       html: [
         `<p>Hola ${this.escape(fullName || "usuario")},</p>`,
         `<p><strong>${safeTitle}</strong></p>`,

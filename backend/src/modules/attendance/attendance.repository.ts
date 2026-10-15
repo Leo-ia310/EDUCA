@@ -4,6 +4,9 @@ import { supabaseAdmin } from "../../lib/supabase";
 const db = supabaseAdmin as any;
 
 export class AttendanceRepository {
+  async ensureClassSession(classId: number, date: string) {
+    return expectSingle<number>(db.rpc("ensure_collaborative_class_session", { p_class_id: classId, p_date: date }), "No se pudo crear la sesión de clase.");
+  }
   async findClassSession(
     institutionId: number,
     classId: number,

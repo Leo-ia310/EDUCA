@@ -137,10 +137,18 @@ class AttendanceLine {
 
 class TeacherClass {
   const TeacherClass({
+    this.classId,
+    this.isOwner = true,
+    this.permissions,
     required this.name,
     required this.room,
     required this.icon,
   });
+  final int? classId;
+  final bool isOwner;
+  final Set<String>? permissions;
+  bool can(String permission) =>
+      permissions?.contains(permission) ?? classId == null;
   final String name;
   final String room;
   final IconData icon;
@@ -292,12 +300,21 @@ class ParentMockData {
       average: 92,
       attendance: 98,
       subjects: [
-        ParentSubject('Matemáticas Avanzadas', 'Prof. Ricardo Méndez',
-            teacherUserId: 'u-teacher-ricardo',),
-        ParentSubject('Biología Celular', 'Prof. Elena Santís',
-            teacherUserId: 'u-teacher-elena',),
-        ParentSubject('Historia Universal', 'Prof. Marta Vega',
-            teacherUserId: 'u-teacher-marta',),
+        ParentSubject(
+          'Matemáticas Avanzadas',
+          'Prof. Ricardo Méndez',
+          teacherUserId: 'u-teacher-ricardo',
+        ),
+        ParentSubject(
+          'Biología Celular',
+          'Prof. Elena Santís',
+          teacherUserId: 'u-teacher-elena',
+        ),
+        ParentSubject(
+          'Historia Universal',
+          'Prof. Marta Vega',
+          teacherUserId: 'u-teacher-marta',
+        ),
       ],
     ),
     ChildBrief(
@@ -307,12 +324,21 @@ class ParentMockData {
       average: 95,
       attendance: 96,
       subjects: [
-        ParentSubject('Lengua y Literatura', 'Prof. Andrés Paz',
-            teacherUserId: 'u-teacher-andres',),
-        ParentSubject('Ciencias Naturales', 'Prof. Laura Díaz',
-            teacherUserId: 'u-teacher-laura',),
-        ParentSubject('Arte', 'Prof. Sara Núñez',
-            teacherUserId: 'u-teacher-sara',),
+        ParentSubject(
+          'Lengua y Literatura',
+          'Prof. Andrés Paz',
+          teacherUserId: 'u-teacher-andres',
+        ),
+        ParentSubject(
+          'Ciencias Naturales',
+          'Prof. Laura Díaz',
+          teacherUserId: 'u-teacher-laura',
+        ),
+        ParentSubject(
+          'Arte',
+          'Prof. Sara Núñez',
+          teacherUserId: 'u-teacher-sara',
+        ),
       ],
     ),
   ];

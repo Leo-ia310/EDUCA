@@ -4,6 +4,30 @@ import { supabaseAdmin } from "../../lib/supabase";
 const db = supabaseAdmin as any;
 
 export class GradesRepository {
+  constructor(private readonly client: any = db) {}
+
+  async findActiveScales(institutionId: number) {
+    const { data, error } = await this.client
+      .from("grading_scales")
+      .select("id, name, scale_type, min_value, max_value, pass_value, decimals, active, grading_scale_ranges(label, range_min, range_max, description, passed, color)")
+      .eq("institution_id", institutionId)
+      .eq("active", true)
+      .order("id");
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async findDefaultScaleSetting(institutionId: number) {
+    const { data, error } = await this.client
+      .from("institution_settings")
+      .select("value")
+      .eq("institution_id", institutionId)
+      .eq("key", "default_grading_scale_id")
+      .maybeSingle();
+    assertNoDbError(error);
+    return data?.value == null ? null : String(data.value);
+  }
+
   async insertScale(payload: Record<string, unknown>) {
     return expectSingle<Record<string, unknown>>(
       db.from("grading_scales").insert(payload).select("id").single(),

@@ -67,12 +67,18 @@ class SupabaseDashboardDatasource {
 
   // ------------------------------------------------------------------ Docente
   Future<TeacherDashboardData> teacherData(int teacherId) async {
-    final classRows = await _c
-        .from('classes')
-        .select('id, group_id, subjects(name), groups(name)')
-        .eq('teacher_id', teacherId)
-        .eq('institution_id', institutionId);
-    final classes = (classRows as List).cast<Map<String, dynamic>>();
+    final workspace = Map<String, dynamic>.from(
+        await _c.rpc('collaboration_workspace') as Map,);
+    final classes = (workspace['classes'] as List)
+        .map((c) => <String, dynamic>{
+              'id': c['classId'],
+              'group_id': c['groupId'],
+              'subjects': {'name': c['subjectName']},
+              'groups': {'name': c['groupName']},
+              'isOwner': c['isOwner'],
+              'permissions': c['permissions'],
+            },)
+        .toList();
     if (classes.isEmpty) return TeacherDashboardData.empty();
 
     final classIds = classes.map((c) => (c['id'] as num).toInt()).toList();
@@ -93,6 +99,9 @@ class SupabaseDashboardDatasource {
     final myClasses = classes
         .map(
           (c) => TeacherClass(
+            classId: c['id'] as int,
+            isOwner: c['isOwner'] == true,
+            permissions: Set<String>.from(c['permissions'] as List),
             name: (c['subjects'] as Map?)?['name'] as String? ?? 'Clase',
             room: (c['groups'] as Map?)?['name'] as String? ?? '',
             icon: iconForSubject(

@@ -2030,6 +2030,92 @@
         }
       }
     },
+    "/api/collaborations": {
+      "get": {
+        "tags": [
+          "collaborations"
+        ],
+        "summary": "Clases propias, colaborativas, invitaciones y profesores disponibles",
+        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nNotas: RPC collaboration_workspace. Pendientes no conceden acceso; solo titulares/admin pueden gestionar. El catalogo de permisos esta limitado por clase.\n\nFuente: backend/src/modules/collaborations/collaborations.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ classes: [{classId,groupId,subjectName,groupName,isOwner,permissions}], invitations: [{id,classId,teacherUserId,teacherName,inviterName,status,permissions,incoming,canManage}], teachers: [{userId,name}] }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "collaborations"
+        ],
+        "summary": "Invita en varias clases o acepta/rechaza/edita/revoca una colaboracion",
+        "description": "Auth: titular/admin para invite/update/revoke; destinatario para accept/decline.\n\nNotas: Migracion 0025, RPC manage_class_collaboration atomico. Permisos: class.view,students.view,assignments.create,assignments.review,assignments.grade,grades.write,attendance.write. Dependencias minimas automaticas, sin delegar collaborators.manage. Notificacion in-app por invitacion; auditoria por actor autentico; revocacion efectiva en RLS y API. grade_submission verifica assignments.grade; grades.setGrade exige grades.write; asistencia exige attendance.write.\n\nFuente: backend/src/modules/collaborations/collaborations.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{action:invite|accept|decline|update|revoke,classIds?:number[],teacherUserId?:number,permissions?:string[],invitationId?:number}"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "workspace actualizado como GET /api/collaborations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/assignments/{wildcard}": {
       "post": {
         "tags": [
@@ -2208,7 +2294,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ title, description, date, audience }"
+                  "value": "{ title, description, date, audience, requestId?: UUID }"
                 }
               }
             }
@@ -2216,7 +2302,131 @@
         },
         "responses": {
           "200": {
-            "description": "{ event, announcement, notifications }",
+            "description": "{ event, announcement, notifications, notificationWarning }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/events/announcements": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Lista anuncios publicados de la institucion y audiencia del usuario",
+        "description": "Auth: usuario autenticado.\n\nNotas: Consulta announcements publicados, incluidos eventos pasados. Admin ve los anuncios institucionales; otros usuarios ven sus publicaciones y las dirigidas a sus roles/grupos. Propaga errores de BD; lista vacia solo en consultas exitosas sin resultados.\n\nFuente: backend/src/modules/events/events.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ announcements: [{ id, requestId, title, content, description, date, audience, publishedAt, createdBy, groupId, delivery: { status, phase, total, processed, notified, emailed, emailFailed, emailSkipped, pushFailed, error, completedAt } | null }] }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/events/announcements/{id}/retry-delivery": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Reintenta entregas fallidas de un anuncio guardado",
+        "description": "Auth: autor teacher o administrador de la institucion.\n\nNotas: Comprueba institucion y autor/admin antes de usar service role. Preserva correos enviados, reintenta fallidos y emite nueva notificacion final. Trabajos activos o completos no se duplican.\n\nFuente: backend/src/modules/events/events.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "id de anuncio; sin cuerpo"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "HTTP 202 { ok: true, data: { delivery } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/grades/scales/default": {
+      "get": {
+        "tags": [
+          "grades"
+        ],
+        "summary": "Resuelve escala activa institucional para todos los periodos",
+        "description": "Auth: usuario autenticado.\n\nNotas: Sin filtro de periodo. Usa la escala predeterminada activa de la institucion o la primera activa por id; sin escalas devuelve HTTP 200 con scale null.\n\nFuente: backend/src/modules/grades/grades.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { scale: object | null, status: configured | not_configured } }",
             "content": {
               "application/json": {
                 "schema": {

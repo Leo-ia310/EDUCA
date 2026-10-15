@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../collaborations/class_students_screen.dart';
 
 import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -49,6 +50,11 @@ class ClassDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   Text(
+                      teacherClass.isOwner
+                          ? 'Clase propia'
+                          : 'Clase colaborativa',
+                      style: context.textTheme.labelLarge,),
+                  Text(
                     teacherClass.name,
                     style: context.textTheme.titleLarge
                         ?.copyWith(fontWeight: FontWeight.w800),
@@ -56,11 +62,16 @@ class ClassDetailScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.meeting_room_rounded,
-                          size: 16, color: context.palette.textMuted,),
+                      Icon(
+                        Icons.meeting_room_rounded,
+                        size: 16,
+                        color: context.palette.textMuted,
+                      ),
                       const SizedBox(width: 6),
-                      Text(teacherClass.room,
-                          style: context.textTheme.bodyMedium,),
+                      Text(
+                        teacherClass.room,
+                        style: context.textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 ],
@@ -68,23 +79,37 @@ class ClassDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
+          if (teacherClass.isOwner) ...[
+            _Action(
+                icon: Icons.group_add_rounded,
+                label: 'Invitar profesor colaborador',
+                accent: accent,
+                ink: ink,
+                onTap: () => context.push(Routes.collaborations),),
+            const SizedBox(height: 12),
+          ],
           const SectionHeader(title: 'Acciones'),
+          if (teacherClass.can('students.view') && teacherClass.classId != null)
+            _Action(icon: Icons.groups_rounded, label: 'Ver estudiantes', accent: accent, ink: ink,
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ClassStudentsScreen(classId: teacherClass.classId!))),),
           const SizedBox(height: 8),
-          _Action(
-            icon: Icons.how_to_reg_rounded,
-            label: 'Tomar asistencia',
-            accent: accent,
-            ink: ink,
-            onTap: () => context.push(Routes.attendance),
-          ),
+          if (teacherClass.can('attendance.write'))
+            _Action(
+              icon: Icons.how_to_reg_rounded,
+              label: 'Tomar asistencia',
+              accent: accent,
+              ink: ink,
+              onTap: () => context.push(Routes.attendance),
+            ),
           const SizedBox(height: 10),
-          _Action(
-            icon: Icons.grid_view_rounded,
-            label: 'Libro de notas',
-            accent: accent,
-            ink: ink,
-            onTap: () => context.push(Routes.gradebook),
-          ),
+          if (teacherClass.can('students.view'))
+            _Action(
+              icon: Icons.grid_view_rounded,
+              label: 'Libro de notas',
+              accent: accent,
+              ink: ink,
+              onTap: () => context.push(Routes.gradebook),
+            ),
           const SizedBox(height: 10),
           _Action(
             icon: Icons.assignment_rounded,
@@ -139,8 +164,11 @@ class _Action extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
-          Icon(Icons.chevron_right_rounded,
-              color: context.palette.textMuted, size: 20,),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.palette.textMuted,
+            size: 20,
+          ),
         ],
       ),
     );

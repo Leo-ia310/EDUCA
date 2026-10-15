@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
-import '../../../notifications/providers.dart';
+import '../../../../core/routing/route_paths.dart';
 import '../../providers.dart';
 
 /// Formulario para crear un evento/anuncio institucional.
@@ -49,32 +49,20 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
     if (picked != null) setState(() => _date = picked);
   }
 
-  Future<void> _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+  void _submit() {
+    if (_loading || !(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
-    setState(() => _loading = true);
-    try {
-      await ref.read(eventsRepositoryProvider).create(
-            title: _titleCtrl.text.trim(),
-            description: _descCtrl.text.trim(),
-            date: _date,
-            audience: _audience,
-          );
-      ref.invalidate(upcomingEventsViewProvider);
-      ref.invalidate(notificationsFeedProvider);
-      ref.invalidate(notificationsUnreadProvider);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Anuncio publicado correctamente.')),
-      );
+    _loading = true;
+    ref.read(announcementPublisherProvider.notifier).submit(
+          title: _titleCtrl.text.trim(),
+          description: _descCtrl.text.trim(),
+          date: _date,
+          audience: _audience,
+        );
+    if (context.canPop()) {
       context.pop();
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo publicar: $error')),
-      );
-    } finally {
-      if (mounted) setState(() => _loading = false);
+    } else {
+      context.go(Routes.announcements);
     }
   }
 

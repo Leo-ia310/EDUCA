@@ -1,3 +1,4 @@
+import '../../../collaborations/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -39,7 +40,9 @@ class _TeacherGradebookScreenState
     // Periodos sin ids repetidos; el seleccionado debe existir en la lista
     // (si no, se usa el vigente o el primero) para no romper el dropdown.
     final periods = _uniquePeriods(periodsAsync.valueOrNull ?? const []);
-    final classes = classesAsync.valueOrNull ?? const [];
+    final classes = (classesAsync.valueOrNull ?? const <ClassSessionBrief>[])
+        .where((c) => c.can('students.view'))
+        .toList();
     final selectedClassId = classes.any((c) => c.classId == _classId)
         ? _classId
         : classes.isEmpty
@@ -56,7 +59,7 @@ class _TeacherGradebookScreenState
         ? null
         : GradebookArgs(classId: selectedClassId, periodId: selectedPeriodId);
     final data = args == null ? null : ref.watch(gradebookProvider(args));
-    final scaleAsync = ref.watch(defaultScaleProvider);
+    final scaleAsync = ref.watch(gradebookScaleProvider);
 
     return StudentDetailScaffold(
       title: 'Libro de notas',
@@ -179,7 +182,7 @@ class _Filters extends StatelessWidget {
   }
 }
 
-class _GradebookBody extends StatelessWidget {
+class _GradebookBody extends ConsumerWidget {
   const _GradebookBody({
     required this.classesLoading,
     required this.periodsLoading,
@@ -195,11 +198,11 @@ class _GradebookBody extends StatelessWidget {
   final bool hasClasses;
   final bool hasPeriods;
   final AsyncValue<GradebookMatrix>? data;
-  final AsyncValue<GradingScale> scaleAsync;
+  final AsyncValue<GradingScale?> scaleAsync;
   final GradebookArgs? args;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (classesLoading || periodsLoading) return const SkeletonList();
     if (!hasClasses) {
       return const EmptyState(
@@ -220,7 +223,10 @@ class _GradebookBody extends StatelessWidget {
     if (data == null || args == null) return const SkeletonList();
     return data.when(
       loading: () => const SkeletonList(),
-      error: (e, _) => ErrorStateView(message: '$e'),
+      error: (e, _) => ErrorStateView(
+        message: 'No se pudo cargar el libro de notas. Intenta nuevamente.',
+        onRetry: () => ref.invalidate(gradebookProvider(args)),
+      ),
       data: (matrix) {
         if (matrix.evaluations.isEmpty) {
           return const EmptyState(
@@ -231,12 +237,23 @@ class _GradebookBody extends StatelessWidget {
         }
         return scaleAsync.when(
           loading: () => const SkeletonList(),
-          error: (e, _) => ErrorStateView(message: '$e'),
-          data: (scale) => _Matrix(
-            matrix: matrix,
-            scale: scale,
-            args: args,
+          error: (e, _) => ErrorStateView(
+            message:
+                'No se pudo cargar la escala de calificación. Intenta nuevamente.',
+            onRetry: () => ref.invalidate(gradebookScaleProvider),
           ),
+          data: (scale) => scale == null
+              ? const EmptyState(
+                  icon: Icons.assessment_outlined,
+                  title: 'Sin escala de calificación',
+                  subtitle:
+                      'Solicita a la administración configurar una escala para tu institución. Se aplicará a todos los períodos.',
+                )
+              : _Matrix(
+                  matrix: matrix,
+                  scale: scale,
+                  args: args,
+                ),
         );
       },
     );
@@ -319,13 +336,17 @@ class _Matrix extends ConsumerWidget {
                             evaluation: e,
                             score: matrix.grades[s.studentId]?[e.id],
                             scale: scale,
-                            onTap: () => _openEditor(
-                              context: context,
-                              ref: ref,
-                              evaluation: e,
-                              studentId: s.studentId,
-                              existing: matrix.grades[s.studentId]?[e.id],
-                            ),
+                            onTap: ref.watch(classPermissionProvider(
+                                    (args.classId, 'grades.write'),),)
+                                ? () => _openEditor(
+                                      context: context,
+                                      ref: ref,
+                                      evaluation: e,
+                                      studentId: s.studentId,
+                                      existing: matrix.grades[s.studentId]
+                                          ?[e.id],
+                                    )
+                                : null,
                           ),
                       ],
                     ),
@@ -507,7 +528,7 @@ class _EvaluationCell extends StatelessWidget {
   final Evaluation evaluation;
   final double? score;
   final GradingScale scale;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

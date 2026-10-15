@@ -87,10 +87,14 @@ class BackendNotificationsRepository
   }
 
   bool _refreshing = false;
+  bool _refreshAgain = false;
 
   @override
   Future<void> refresh() async {
-    if (_refreshing) return;
+    if (_refreshing) {
+      _refreshAgain = true;
+      return;
+    }
     _refreshing = true;
     await _refreshTwoFactorStatus();
     try {
@@ -120,6 +124,10 @@ class BackendNotificationsRepository
     }
     _loaded = true;
     _emit();
+    if (_refreshAgain && !_ctrl.isClosed) {
+      _refreshAgain = false;
+      await refresh();
+    }
   }
 
   /// Consulta si el 2FA ya está activo (máx. una vez por minuto). Si falla,

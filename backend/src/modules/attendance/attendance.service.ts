@@ -35,29 +35,11 @@ export class AttendanceService {
         "forbidden",
       );
     }
-    const cls = await this.permissions.assertTeacherCanUseClass(ctx, classId);
+    await this.permissions.assertTeacherCanUseClass(ctx, classId, "attendance.write");
     const date = dateOnly(sessionDate);
 
-    const existing = await this.repository.findClassSession(
-      ctx.institutionId,
-      classId,
-      date,
-      teacherId,
-    );
-    const row = existing == null
-      ? await this.repository.insertClassSession({
-        institution_id: ctx.institutionId,
-        class_id: classId,
-        group_id: cls.group_id,
-        date,
-        recorded_by: teacherId,
-        synced: true,
-      })
-      : await this.repository.updateClassSession(ctx.institutionId, existing.id, {
-        group_id: cls.group_id,
-        synced: true,
-      });
-    return { id: Number(row.id) };
+    const id = await this.repository.ensureClassSession(classId, date);
+    return { id: Number(id) };
   }
 
   async upsertAttendance(ctx: AppContext, payload: Record<string, unknown>) {
@@ -68,7 +50,7 @@ export class AttendanceService {
     const statusId = requiredId(payload.statusId, "Estado de asistencia");
     const recordedAt = requiredDate(payload.recordedAtMs, "Fecha de marcado");
     const classSessionId = requiredId(payload.classSessionId, "Sesión de clase");
-    await this.permissions.assertTeacherCanUseClass(ctx, classId);
+    await this.permissions.assertTeacherCanUseClass(ctx, classId, "attendance.write");
 
     const session = await this.repository.findClassSessionById(
       ctx.institutionId,

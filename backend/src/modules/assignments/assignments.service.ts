@@ -1,3 +1,4 @@
+import { collaborationService } from "../collaborations/collaborations.service";
 import { assertNoDbError } from "../../lib/db";
 import { HttpError } from "../../lib/errors";
 import { mapAttachment } from "../../lib/files";
@@ -35,6 +36,8 @@ export class AssignmentsService {
       if (teacherId == null) return [];
     }
 
+    const workspace = await collaborationService.workspace(ctx);
+    const access = new Map<number, any>((workspace.classes ?? []).map((item: any) => [Number(item.classId), item]));
     const { data, error } = await this.repository.teacherClassRows(
       ctx.institutionId,
       teacherId,
@@ -64,6 +67,8 @@ export class AssignmentsService {
       const groupId = Number(row.group_id);
       return {
         classId: Number(row.id),
+        isOwner: access.get(Number(row.id))?.isOwner ?? false,
+        permissions: access.get(Number(row.id))?.permissions ?? [],
         groupId,
         subjectName: String(
           (row.subjects as Record<string, unknown> | null)?.name ?? "Materia",
@@ -94,6 +99,7 @@ export class AssignmentsService {
     const classRow = await this.permissions.assertTeacherCanUseClass(
       ctx,
       classId,
+      "assignments.create",
     );
     const assignmentId = optionalId(payload.assignmentId);
     if (assignmentId != null) {
@@ -117,7 +123,7 @@ export class AssignmentsService {
       allow_late: Boolean(payload.allowLate),
       published: payload.published == null ? true : Boolean(payload.published),
       assigned_at: now,
-      created_by: teacherId,
+      ...(assignmentId == null ? { created_by: teacherId } : {}),
       updated_at: now,
     };
 
@@ -236,7 +242,7 @@ export class AssignmentsService {
     const classId = Number(
       (submission.assignments as Record<string, unknown> | null)?.class_id,
     );
-    await this.permissions.assertTeacherCanUseClass(ctx, classId);
+    await this.permissions.assertTeacherCanUseClass(ctx, classId, "assignments.grade");
     const { error } = await this.repository.gradeSubmissionRpc(
       submissionId,
       score,

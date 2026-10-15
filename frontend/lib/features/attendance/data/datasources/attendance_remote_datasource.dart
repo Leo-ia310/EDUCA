@@ -24,6 +24,7 @@ class AttendanceRemoteDataSource {
     final response = await _api.call('assignments.teacherClasses');
     return ((response as List?) ?? const [])
         .map((row) => _classFromMap(Map<String, dynamic>.from(row as Map)))
+        .where((c) => c.can('attendance.write'))
         .toList();
   }
 
@@ -109,6 +110,8 @@ class AttendanceRemoteDataSource {
 
   ClassSessionBrief _classFromMap(Map<String, dynamic> row) {
     return ClassSessionBrief(
+      isOwner: row['isOwner'] == true,
+      permissions: Set<String>.from(row['permissions'] as List? ?? []),
       classId: (row['classId'] as num).toInt(),
       groupId: (row['groupId'] as num).toInt(),
       subjectName: row['subjectName'] as String? ?? 'Materia',

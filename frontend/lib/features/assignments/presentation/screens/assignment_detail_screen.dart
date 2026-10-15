@@ -1,3 +1,4 @@
+import '../../../collaborations/providers.dart';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -51,7 +52,12 @@ class AssignmentDetailScreen extends ConsumerWidget {
         ),
         title: const Text('Detalle de tarea'),
         actions: [
-          if (role == AppRole.teacher)
+          if (role == AppRole.teacher &&
+              assignmentAsync.valueOrNull != null &&
+              ref.watch(classPermissionProvider((
+                assignmentAsync.valueOrNull!.classId,
+                'assignments.create'
+              ),),))
             IconButton(
               icon: const Icon(Icons.edit_rounded),
               tooltip: 'Editar',
@@ -68,7 +74,9 @@ class AssignmentDetailScreen extends ConsumerWidget {
         data: (a) {
           if (a == null) {
             return const EmptyState(
-                icon: Icons.error_outline, title: 'No encontrada',);
+              icon: Icons.error_outline,
+              title: 'No encontrada',
+            );
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,22 +86,28 @@ class AssignmentDetailScreen extends ConsumerWidget {
               if (a.description != null && a.description!.isNotEmpty) ...[
                 const SectionHeader(title: 'Descripción'),
                 const SizedBox(height: 8),
-                DepthCard(brutal: true, 
+                DepthCard(
+                  brutal: true,
                   soft: true,
                   padding: const EdgeInsets.all(16),
-                  child: Text(a.description!,
-                      style: context.textTheme.bodyMedium,),
+                  child: Text(
+                    a.description!,
+                    style: context.textTheme.bodyMedium,
+                  ),
                 ),
                 const SizedBox(height: 16),
               ],
               if (a.instructions != null && a.instructions!.isNotEmpty) ...[
                 const SectionHeader(title: 'Instrucciones'),
                 const SizedBox(height: 8),
-                DepthCard(brutal: true, 
+                DepthCard(
+                  brutal: true,
                   soft: true,
                   padding: const EdgeInsets.all(16),
-                  child: Text(a.instructions!,
-                      style: context.textTheme.bodyMedium,),
+                  child: Text(
+                    a.instructions!,
+                    style: context.textTheme.bodyMedium,
+                  ),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -104,7 +118,8 @@ class AssignmentDetailScreen extends ConsumerWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    for (final at in a.attachments) AttachmentPill(attachment: at),
+                    for (final at in a.attachments)
+                      AttachmentPill(attachment: at),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -192,7 +207,8 @@ class _Header extends StatelessWidget {
                     ),
                     const Spacer(),
                     _HeroChip(
-                        label: '${assignment.maxScore.toStringAsFixed(0)} pts',),
+                      label: '${assignment.maxScore.toStringAsFixed(0)} pts',
+                    ),
                   ],
                 ),
               ],
@@ -228,18 +244,24 @@ class _HeroChip extends StatelessWidget {
   }
 }
 
-class _TeacherActions extends StatelessWidget {
+class _TeacherActions extends ConsumerWidget {
   const _TeacherActions({required this.assignment});
   final Assignment assignment;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final canReview = ref.watch(
+        classPermissionProvider((assignment.classId, 'assignments.review')),);
+    final canGrade = ref.watch(
+        classPermissionProvider((assignment.classId, 'assignments.grade')),);
+    if (!canReview) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SectionHeader(title: 'Entregas'),
         const SizedBox(height: 8),
-        DepthCard(brutal: true, 
+        DepthCard(
+          brutal: true,
           soft: true,
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -272,7 +294,7 @@ class _TeacherActions extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
                     icon: const Icon(Icons.fact_check_rounded),
-                    label: const Text('Calificar'),
+                    label: Text(canGrade ? 'Calificar' : 'Revisar entregas'),
                   ),
                 ],
               ),
@@ -321,10 +343,8 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
 
   @override
   Widget build(BuildContext context) {
-    final args = (
-      assignmentId: widget.assignment.id,
-      studentId: widget.studentId
-    );
+    final args =
+        (assignmentId: widget.assignment.id, studentId: widget.studentId);
     final mine = ref.watch(mySubmissionProvider(args));
     final state = ref.watch(submissionControllerProvider);
     final controller = ref.read(submissionControllerProvider.notifier);
@@ -352,22 +372,26 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
         const SectionHeader(title: 'Mi entrega'),
         const SizedBox(height: 8),
         mine.when(
-          loading: () => const DepthCard(brutal: true, 
+          loading: () => const DepthCard(
+            brutal: true,
             soft: true,
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (e, _) => DepthCard(brutal: true, 
+          error: (e, _) => DepthCard(
+            brutal: true,
             soft: true,
             padding: const EdgeInsets.all(16),
             child: Text('$e'),
           ),
           data: (existing) {
             if (existing?.status == SubmissionStatus.graded) {
-              return _GradedView(submission: existing!, assignment: widget.assignment);
+              return _GradedView(
+                  submission: existing!, assignment: widget.assignment,);
             }
             if (isParent) {
-              return DepthCard(brutal: true, 
+              return DepthCard(
+                brutal: true,
                 soft: true,
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -396,7 +420,8 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                 ),
               );
             }
-            return DepthCard(brutal: true, 
+            return DepthCard(
+              brutal: true,
               soft: true,
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -493,8 +518,10 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                   ),
                   if (state.error != null) ...[
                     const SizedBox(height: 8),
-                    Text(state.error!,
-                        style: TextStyle(color: palette.danger),),
+                    Text(
+                      state.error!,
+                      style: TextStyle(color: palette.danger),
+                    ),
                   ],
                 ],
               ),
@@ -528,8 +555,11 @@ class _GradedView extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.workspace_premium_rounded,
-                  color: Colors.white, size: 28,),
+              const Icon(
+                Icons.workspace_premium_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Calificada',
@@ -560,8 +590,8 @@ class _GradedView extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               submission.feedback!,
-              style: context.textTheme.bodyMedium
-                  ?.copyWith(color: Colors.white),
+              style:
+                  context.textTheme.bodyMedium?.copyWith(color: Colors.white),
             ),
           ],
           if (submission.attachments.isNotEmpty) ...[
@@ -570,7 +600,8 @@ class _GradedView extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                for (final a in submission.attachments) AttachmentPill(attachment: a),
+                for (final a in submission.attachments)
+                  AttachmentPill(attachment: a),
               ],
             ),
           ],

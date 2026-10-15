@@ -42,8 +42,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (_hydrated) return;
       _hydrated = true;
-      final controller =
-          ref.read(assignmentFormControllerProvider.notifier);
+      final controller = ref.read(assignmentFormControllerProvider.notifier);
       if (widget.assignmentId != null) {
         final a = await ref
             .read(assignmentRepositoryProvider)
@@ -62,9 +61,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
     for (final f in result.files) {
       if (f.path != null) files.add(File(f.path!));
     }
-    await ref
-        .read(assignmentFormControllerProvider.notifier)
-        .addFiles(files);
+    await ref.read(assignmentFormControllerProvider.notifier).addFiles(files);
   }
 
   Future<void> _pickDate(BuildContext context, DateTime current) async {
@@ -81,8 +78,13 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
     );
     if (time == null) return;
     ref.read(assignmentFormControllerProvider.notifier).setDueAt(
-          DateTime(picked.year, picked.month, picked.day, time.hour,
-              time.minute,),
+          DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            time.hour,
+            time.minute,
+          ),
         );
   }
 
@@ -110,36 +112,36 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                   decoration: const InputDecoration(labelText: 'Título'),
                   controller: TextEditingController(text: state.title)
                     ..selection = TextSelection.fromPosition(
-                        TextPosition(offset: state.title.length),),
+                      TextPosition(offset: state.title.length),
+                    ),
                   onChanged: controller.setTitle,
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  decoration:
-                      const InputDecoration(labelText: 'Descripción'),
+                  decoration: const InputDecoration(labelText: 'Descripción'),
                   minLines: 2,
                   maxLines: 4,
                   controller: TextEditingController(text: state.description)
                     ..selection = TextSelection.fromPosition(
-                        TextPosition(offset: state.description.length),),
+                      TextPosition(offset: state.description.length),
+                    ),
                   onChanged: controller.setDescription,
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  decoration:
-                      const InputDecoration(labelText: 'Instrucciones'),
+                  decoration: const InputDecoration(labelText: 'Instrucciones'),
                   minLines: 2,
                   maxLines: 6,
                   controller: TextEditingController(text: state.instructions)
                     ..selection = TextSelection.fromPosition(
-                        TextPosition(offset: state.instructions.length),),
+                      TextPosition(offset: state.instructions.length),
+                    ),
                   onChanged: controller.setInstructions,
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-
           const SectionHeader(title: 'Configuración'),
           const SizedBox(height: 8),
           DepthCard(
@@ -153,18 +155,20 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                       child: DropdownButtonFormField<int>(
                         isExpanded: true,
                         initialValue: state.classId,
-                        decoration:
-                            const InputDecoration(labelText: 'Clase'),
+                        decoration: const InputDecoration(labelText: 'Clase'),
                         items: [
                           for (final c in ref
                                   .watch(teacherClassesProvider)
                                   .valueOrNull ??
                               const <ClassSessionBrief>[])
-                            DropdownMenuItem(
-                              value: c.classId,
-                              child: Text('${c.subjectName} · ${c.groupName}',
-                                  overflow: TextOverflow.ellipsis,),
-                            ),
+                            if (c.can('assignments.create'))
+                              DropdownMenuItem(
+                                value: c.classId,
+                                child: Text(
+                                  '${c.subjectName} · ${c.groupName}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                         ],
                         onChanged: (v) {
                           if (v != null) controller.setClass(v);
@@ -180,8 +184,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                       child: DropdownButtonFormField<AssignmentKind>(
                         isExpanded: true,
                         initialValue: state.kind,
-                        decoration:
-                            const InputDecoration(labelText: 'Tipo'),
+                        decoration: const InputDecoration(labelText: 'Tipo'),
                         items: [
                           for (final k in AssignmentKind.values)
                             DropdownMenuItem(value: k, child: Text(k.label)),
@@ -198,7 +201,8 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                             const InputDecoration(labelText: 'Puntaje máximo'),
                         keyboardType: TextInputType.number,
                         controller: TextEditingController(
-                            text: state.maxScore.toStringAsFixed(0),),
+                          text: state.maxScore.toStringAsFixed(0),
+                        ),
                         onChanged: (v) {
                           final n = double.tryParse(v);
                           if (n != null && n > 0) controller.setMaxScore(n);
@@ -210,8 +214,10 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                 const SizedBox(height: 12),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.calendar_today_rounded,
-                      color: palette.accentDeep,),
+                  leading: Icon(
+                    Icons.calendar_today_rounded,
+                    color: palette.accentDeep,
+                  ),
                   title: const Text('Fecha de entrega'),
                   subtitle: Text(fmt.format(state.dueAt)),
                   onTap: () => _pickDate(context, state.dueAt),
@@ -227,8 +233,7 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                 SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Publicar inmediatamente'),
-                  subtitle:
-                      const Text('Si lo apagas, queda como borrador.'),
+                  subtitle: const Text('Si lo apagas, queda como borrador.'),
                   value: state.published,
                   activeThumbColor: palette.accentDeep,
                   onChanged: controller.setPublished,
@@ -237,7 +242,6 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
           const SectionHeader(title: 'Archivos'),
           const SizedBox(height: 8),
           DepthCard(
@@ -289,7 +293,6 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
           if (state.error != null) ...[
             Text(
               state.error!,
@@ -297,9 +300,13 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
             ),
             const SizedBox(height: 12),
           ],
-
           FilledButton.icon(
-            onPressed: state.saving
+            onPressed: (state.saving ||
+                    !(ref.watch(teacherClassesProvider).valueOrNull ??
+                            <ClassSessionBrief>[])
+                        .any((c) =>
+                            c.classId == state.classId &&
+                            c.can('assignments.create'),))
                 ? null
                 : () async {
                     final result = await ref
@@ -310,11 +317,13 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                     context.pop();
                   },
             icon: const Icon(Icons.check_rounded),
-            label: Text(state.saving
-                ? 'Guardando…'
-                : (state.assignmentId == null
-                    ? 'Crear tarea'
-                    : 'Guardar cambios'),),
+            label: Text(
+              state.saving
+                  ? 'Guardando…'
+                  : (state.assignmentId == null
+                      ? 'Crear tarea'
+                      : 'Guardar cambios'),
+            ),
           ),
         ],
       ),

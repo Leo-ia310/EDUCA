@@ -30,10 +30,15 @@ final gradesCalculatorProvider =
 
 /// Escalas configuradas por el colegio.
 final scalesProvider = FutureProvider<List<GradingScale>>(
-    (ref) async => ref.watch(gradesRepositoryProvider).scales(),);
+  (ref) async => ref.watch(gradesRepositoryProvider).scales(),
+);
 
 final defaultScaleProvider = FutureProvider<GradingScale>(
   (ref) async => ref.watch(gradesRepositoryProvider).defaultScale(),
+);
+
+final gradebookScaleProvider = FutureProvider.autoDispose<GradingScale?>(
+  (ref) => ref.watch(gradesRepositoryProvider).findDefaultScale(),
 );
 
 final periodsProvider = FutureProvider<List<AcademicPeriod>>((ref) async {

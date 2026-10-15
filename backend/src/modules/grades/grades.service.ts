@@ -24,6 +24,17 @@ export class GradesService {
     private readonly permissions: PermissionsService = permissionsService,
   ) {}
 
+  async getDefaultScale(ctx: AppContext) {
+    // Scales belong to the institution, not to an academic period.
+    const scales = await this.repository.findActiveScales(ctx.institutionId);
+    if (scales.length === 0) {
+      return { scale: null, status: "not_configured" };
+    }
+    const defaultId = await this.repository.findDefaultScaleSetting(ctx.institutionId);
+    const scale = scales.find((item) => String(item.id) === defaultId) ?? scales[0];
+    return { scale, status: "configured" };
+  }
+
   async upsertScale(ctx: AppContext, payload: Record<string, unknown>) {
     if (!this.permissions.isAdmin(ctx)) {
       throw new HttpError(
@@ -141,6 +152,7 @@ export class GradesService {
     const cls = await this.permissions.assertTeacherCanUseClass(
       ctx,
       Number(evaluation.class_id),
+      "grades.write",
     );
     await this.permissions.assertStudentEnrolledInClass(
       ctx.institutionId,

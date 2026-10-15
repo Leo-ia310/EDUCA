@@ -8,6 +8,7 @@ class Routes {
 
   static const studentDashboard = '/student/dashboard';
   static const teacherDashboard = '/teacher/dashboard';
+  static const collaborations = '/teacher/collaborations';
   static const myClasses = '/teacher/classes';
   static const parentTeachers = '/parent/teachers';
   static const parentSchedule = '/parent/schedule';

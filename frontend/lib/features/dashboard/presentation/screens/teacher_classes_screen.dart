@@ -1,3 +1,7 @@
+import 'package:go_router/go_router.dart';
+import '../../../../core/routing/route_paths.dart';
+import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,7 +11,6 @@ import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/open_card.dart';
-import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/student_chrome.dart';
@@ -19,41 +22,56 @@ class TeacherClassesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(teacherDashboardProvider).valueOrNull ??
-        TeacherDashboardData.mock();
-    final classes = data.myClasses;
+    final result = ref.watch(teacherDashboardProvider);
+    final classes = result.valueOrNull?.myClasses ?? <TeacherClass>[];
 
     return StudentDetailScaffold(
       title: 'Mis clases',
       scrollable: false,
       bodyPadding: EdgeInsets.zero,
+      onRefresh: () async {
+        ref.invalidate(teacherDashboardProvider);
+        await ref.read(teacherDashboardProvider.future);
+      },
+      fab: FloatingActionButton.extended(
+          onPressed: () => context.push(Routes.collaborations),
+          icon: const Icon(Icons.group_add_rounded),
+          label: const Text('Colaboradores'),),
       child: SafeArea(
         bottom: false,
-        child: classes.isEmpty
-            ? const EmptyState(
-                icon: Icons.class_rounded,
-                title: 'Sin clases asignadas',
-                subtitle: 'Aún no tienes clases asignadas.',
-              )
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
-                children: [
-                  for (final (i, c) in classes.indexed)
-                    entranceItem(
-                      context,
-                      i,
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: OpenCard(
-                          borderRadius: Radii.lg,
-                          open: (context) => ClassDetailScreen(teacherClass: c),
-                          closed: (context, open) =>
-                              _ClassTile(teacherClass: c, onTap: open),
-                        ),
+        child: result.isLoading
+            ? const SkeletonList()
+            : result.hasError
+                ? ErrorStateView(
+                    message: 'No se pudieron cargar tus clases.',
+                    onRetry: () => ref.invalidate(teacherDashboardProvider),)
+                : classes.isEmpty
+                    ? const EmptyState(
+                        icon: Icons.class_rounded,
+                        title: 'Sin clases asignadas',
+                        subtitle:
+                            'Aquí aparecerán tus clases propias y las colaboraciones aceptadas.',
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
+                        children: [
+                          for (final (i, c) in classes.indexed)
+                            entranceItem(
+                              context,
+                              i,
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: OpenCard(
+                                  borderRadius: Radii.lg,
+                                  open: (context) =>
+                                      ClassDetailScreen(teacherClass: c),
+                                  closed: (context, open) =>
+                                      _ClassTile(teacherClass: c, onTap: open),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                    ),
-                ],
-              ),
       ),
     );
   }
@@ -113,6 +131,12 @@ class _ClassTile extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
+                      Text(
+                          teacherClass.isOwner
+                              ? 'Clase propia'
+                              : 'Clase colaborativa',
+                          style: context.textTheme.labelSmall
+                              ?.copyWith(color: s.vivid),),
                       const SizedBox(height: 3),
                       Text(
                         teacherClass.room,

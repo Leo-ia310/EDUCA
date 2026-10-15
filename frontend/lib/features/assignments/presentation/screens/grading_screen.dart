@@ -1,3 +1,4 @@
+import '../../../collaborations/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -41,12 +42,15 @@ class GradingScreen extends ConsumerWidget {
           data: (a) {
             if (a == null) {
               return const EmptyState(
-                  icon: Icons.error_outline, title: 'No encontrada',);
+                icon: Icons.error_outline,
+                title: 'No encontrada',
+              );
             }
             return submissionsAsync.when(
               loading: () => const SkeletonList(),
               error: (e, _) => Center(child: Text('$e')),
-              data: (subs) => _SubmissionsList(assignment: a, submissions: subs),
+              data: (subs) =>
+                  _SubmissionsList(assignment: a, submissions: subs),
             );
           },
         ),
@@ -89,7 +93,8 @@ class _SubmissionsList extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       AssignmentStatusChip(
-                          status: assignment.statusForNow(DateTime.now()),),
+                        status: assignment.statusForNow(DateTime.now()),
+                      ),
                     ],
                   ),
                 ),
@@ -139,12 +144,16 @@ class _CounterPill extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(value,
-              style: context.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w800, color: Colors.white),),
-          Text(label,
-              style: context.textTheme.labelSmall
-                  ?.copyWith(color: Colors.white.withValues(alpha: 0.85)),),
+          Text(
+            value,
+            style: context.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+          Text(
+            label,
+            style: context.textTheme.labelSmall
+                ?.copyWith(color: Colors.white.withValues(alpha: 0.85)),
+          ),
         ],
       ),
     );
@@ -185,8 +194,10 @@ class _SubmissionRow extends ConsumerWidget {
                         style: context.textTheme.bodySmall,
                       )
                     else
-                      Text('Sin entregar',
-                          style: context.textTheme.bodySmall,),
+                      Text(
+                        'Sin entregar',
+                        style: context.textTheme.bodySmall,
+                      ),
                   ],
                 ),
               ),
@@ -241,7 +252,8 @@ class _SubmissionRow extends ConsumerWidget {
                   style: context.textTheme.labelSmall
                       ?.copyWith(color: palette.textMuted),
                 )
-              else
+              else if (ref.watch(classPermissionProvider(
+                  (assignment.classId, 'assignments.grade'),),))
                 FilledButton.tonal(
                   onPressed: () => _openGradeSheet(context, ref),
                   style: FilledButton.styleFrom(
@@ -251,9 +263,9 @@ class _SubmissionRow extends ConsumerWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   ),
-                  child: Text(submission.hasGrade
-                      ? 'Ajustar nota'
-                      : 'Calificar',),
+                  child: Text(
+                    submission.hasGrade ? 'Ajustar nota' : 'Calificar',
+                  ),
                 ),
             ],
           ),
@@ -264,9 +276,9 @@ class _SubmissionRow extends ConsumerWidget {
 
   void _openGradeSheet(BuildContext context, WidgetRef ref) {
     final scoreCtrl = TextEditingController(
-        text: submission.score?.toStringAsFixed(1) ?? '',);
-    final feedbackCtrl =
-        TextEditingController(text: submission.feedback ?? '');
+      text: submission.score?.toStringAsFixed(1) ?? '',
+    );
+    final feedbackCtrl = TextEditingController(text: submission.feedback ?? '');
     final palette = context.palette;
 
     showModalBottomSheet<void>(
@@ -308,7 +320,8 @@ class _SubmissionRow extends ConsumerWidget {
                 TextField(
                   controller: scoreCtrl,
                   keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,),
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText:
                         'Puntaje (max ${assignment.maxScore.toStringAsFixed(0)})',

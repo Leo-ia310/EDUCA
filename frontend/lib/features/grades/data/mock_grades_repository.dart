@@ -33,6 +33,9 @@ class MockGradesRepository implements GradesRepository {
       _scales.firstWhere((s) => s.id == _defaultScaleId);
 
   @override
+  Future<GradingScale?> findDefaultScale() => defaultScale();
+
+  @override
   Future<GradingScale> upsertScale(GradingScale scale) async {
     final idx = _scales.indexWhere((s) => s.id == scale.id);
     if (idx >= 0) {
