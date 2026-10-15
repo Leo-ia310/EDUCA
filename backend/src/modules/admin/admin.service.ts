@@ -289,7 +289,7 @@ export class AdminService {
       group: await this.repository.updateGroup(institutionId, requiredId(idValue, "Salón"), this.clean({
         name: this.optionalText(payload.name, 80),
         classroom_id: classroom === null ? undefined : classroom.id,
-        guide_teacher_id: this.optionalIdValue(payload.guideTeacherId ?? payload.guide_teacher_id),
+        guide_teacher_id: this.optionalIdValue(this.presentField(payload, "guideTeacherId", "guide_teacher_id")),
         max_capacity: this.optionalNumber(payload.maxCapacity ?? payload.max_capacity),
         active: this.optionalBoolean(payload.active),
       })),
@@ -351,7 +351,7 @@ export class AdminService {
       class: await this.repository.updateClass(institutionId, requiredId(idValue, "Clase"), this.clean({
         group_id: groupId,
         subject_id: subject?.id,
-        teacher_id: this.optionalIdValue(payload.teacherId ?? payload.teacher_id),
+        teacher_id: this.optionalIdValue(this.presentField(payload, "teacherId", "teacher_id")),
         active: this.optionalBoolean(payload.active),
       })),
     };
@@ -845,6 +845,14 @@ export class AdminService {
   private optionalUpper(value: unknown, max: number) {
     const text = this.optionalText(value, max);
     return text == null ? text : text.toUpperCase();
+  }
+
+  /** Valor de la primera clave presente en el payload; un `null` explícito cuenta (sirve para desasignar). */
+  private presentField(payload: Record<string, unknown>, ...keys: string[]) {
+    for (const key of keys) {
+      if (key in payload) return payload[key];
+    }
+    return undefined;
   }
 
   private optionalIdValue(value: unknown) {
