@@ -166,6 +166,34 @@ export class AuthFlowService {
     };
   }
 
+  /** Cambia la contrasena de quien tiene la sesion: exige la actual y una nueva distinta (min. 8). */
+  async changePassword(userId: number, payload: Record<string, unknown>) {
+    const current = requiredString(payload.currentPassword ?? payload.current_password, "Contrasena actual", 200);
+    const next = requiredString(payload.newPassword ?? payload.new_password, "Contrasena nueva", 200);
+    if (next.length < 8) {
+      throw new HttpError(400, "La contrasena nueva debe tener al menos 8 caracteres.", "validation_error");
+    }
+    if (next === current) {
+      throw new HttpError(400, "La contrasena nueva debe ser distinta de la actual.", "validation_error");
+    }
+    const user = await this.repository.findUserForTwoFactor(userId);
+    const authUserId = String(user.auth_user_id ?? "");
+    const email = String(user.email ?? "");
+    if (!authUserId || !email) {
+      throw new HttpError(400, "La cuenta no tiene acceso por contrasena.", "validation_error");
+    }
+    const { error } = await supabasePublic.auth.signInWithPassword({ email, password: current });
+    if (error) {
+      throw new HttpError(400, "La contrasena actual no es correcta.", "invalid_credentials");
+    }
+    const admin = requireSupabaseServiceRole();
+    const { error: updateError } = await admin.auth.admin.updateUserById(authUserId, { password: next });
+    if (updateError) {
+      throw new HttpError(400, updateError.message || "No se pudo cambiar la contrasena.", "password_change_failed");
+    }
+    return { ok: true };
+  }
+
   async twoFactorStatus(userId: number) {
     const user = await this.repository.findUserForTwoFactor(userId);
     const recoveryCodes = asList(user.two_factor_recovery_codes);

@@ -57,3 +57,8 @@ export async function logout(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function changePassword(req: AppRequest, res: Response) {
+  const ctx = requireAppContext(req);
+  const data = await authFlowService.changePassword(ctx.userId, asRecord(req.body));
+  return res.json({ ok: true, data });
+}

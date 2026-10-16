@@ -37,6 +37,18 @@ export const apiManifest: ApiManifestEntry[] = [
   api({
     module: "auth",
     method: "POST",
+    path: "/api/auth/change-password",
+    summary: "Cambia la contrasena de la cuenta autenticada",
+    auth: "usuario autenticado",
+    frontendStatus: "pending",
+    request: "{ currentPassword, newPassword }",
+    response: "{ ok: true, data: { ok: true } }",
+    source: "backend/src/modules/auth/auth.routes.ts",
+    notes: "Verifica la contrasena actual con Supabase Auth y exige una nueva de 8+ caracteres distinta de la actual. La pantalla de la app aun no la usa (hoy es un simulacro).",
+  }),
+  api({
+    module: "auth",
+    method: "POST",
     path: "/api/auth/2fa/verify-login",
     summary: "Completa login pendiente de 2FA con codigo temporal o recuperacion",
     auth: "publico con challenge vigente",

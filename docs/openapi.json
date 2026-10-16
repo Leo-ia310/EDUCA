@@ -68,6 +68,58 @@
         }
       }
     },
+    "/api/auth/change-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Cambia la contrasena de la cuenta autenticada",
+        "description": "Auth: usuario autenticado.\n\nNotas: Verifica la contrasena actual con Supabase Auth y exige una nueva de 8+ caracteres distinta de la actual. La pantalla de la app aun no la usa (hoy es un simulacro).\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ currentPassword, newPassword }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { ok: true } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/auth/2fa/verify-login": {
       "post": {
         "tags": [
