@@ -3652,6 +3652,252 @@
         }
       }
     },
+    "/api/payments/summary": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Resumen de recaudacion y mora",
+        "description": "Auth: admin, coordinator, director, super_admin con payments.view.\n\nNotas: Panel web. Mora = cargos abiertos con vencimiento anterior a hoy.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { currencyCode, collectedThisMonth, expectedThisMonth, overdueAmount, overdueCount, pendingAmount, chargesByStatus } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/payments/concepts": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Conceptos de cobro activos",
+        "description": "Auth: admin, coordinator, director, super_admin con payments.view.\n\nNotas: Para crear cargos desde el panel web.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { concepts: [{ id, name, description, baseAmount, recurring, currencyCode }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/payments/charges": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Lista cargos con alumno, pagado y saldo",
+        "description": "Auth: admin, coordinator, director, super_admin con payments.view.\n\nNotas: status incluye overdue (derivado: abierto y vencido).\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { charges: [{ id, studentId, studentName, conceptName, description, total, paid, balance, dueAt, status, storedStatus, currencyCode }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Crea cargos para varios alumnos o un salon",
+        "description": "Auth: admin con payments.create.\n\nNotas: amount por defecto = monto base del concepto. total = amount - discount. Estado inicial pending.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ conceptId, studentIds?, groupId?, amount?, discount?, dueAt, description? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { created, chargeIds } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/payments/charges/:chargeId": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Detalle de un cargo con su historial de pagos",
+        "description": "Auth: admin, coordinator, director, super_admin con payments.view.\n\nNotas: Solo pagos con estado paid.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { charge, payments: [{ id, amount, method, receiptNumber, reference, paidAt }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/payments/charges/:chargeId/payments": {
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Registra un pago recibido por la administracion (p. ej. caja)",
+        "description": "Auth: admin con payments.create.\n\nNotas: Misma logica que /register (padre): valida saldo, genera recibo y actualiza el estado del cargo.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ method: cash|transfer|card|wallet, amount, reference?, idempotencyKey? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { payment } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/payments/{wildcard}": {
       "post": {
         "tags": [
