@@ -5,9 +5,7 @@ import '../domain/events_repository.dart';
 
 const _uuid = Uuid();
 
-/// Espejo en memoria de la semilla de `EventsStore`, para completar el par
-/// mock/Supabase de [EventsRepository] (hoy sin consumidor — ver la nota en
-/// `domain/events_repository.dart`).
+/// In-memory announcements used only in explicit demo mode.
 class MockEventsRepository implements EventsRepository {
   final List<SchoolEvent> _events = [
     SchoolEvent(
@@ -21,7 +19,8 @@ class MockEventsRepository implements EventsRepository {
     SchoolEvent(
       id: _uuid.v4(),
       title: 'Feria de Ciencias 2026',
-      description: 'Convocatoria abierta a estudiantes para presentar proyectos.',
+      description:
+          'Convocatoria abierta a estudiantes para presentar proyectos.',
       date: DateTime.now().add(const Duration(days: 12)),
       audience: 'Toda la institución',
     ),
@@ -36,7 +35,7 @@ class MockEventsRepository implements EventsRepository {
   ];
 
   @override
-  Future<List<SchoolEvent>> upcoming() async => List.unmodifiable(_events);
+  Future<List<SchoolEvent>> published() async => List.unmodifiable(_events);
 
   @override
   Future<SchoolEvent> create({
@@ -44,6 +43,7 @@ class MockEventsRepository implements EventsRepository {
     required String description,
     required DateTime date,
     required String audience,
+    String? requestId,
   }) async {
     final event = SchoolEvent(
       id: _uuid.v4(),
@@ -51,8 +51,12 @@ class MockEventsRepository implements EventsRepository {
       description: description,
       date: date,
       audience: audience,
+      requestId: requestId,
     );
     _events.insert(0, event);
     return event;
   }
+
+  @override
+  Future<void> retryDelivery(String announcementId) async {}
 }

@@ -31,15 +31,16 @@ class AttendanceTakeState {
 
   int get total => rows.length;
   int get present => rows
-      .where((r) =>
-          r.status == AttendanceStatus.present ||
-          r.status == AttendanceStatus.excused ||
-          r.status == AttendanceStatus.permission,)
+      .where(
+        (r) =>
+            r.status == AttendanceStatus.present ||
+            r.status == AttendanceStatus.excused ||
+            r.status == AttendanceStatus.permission,
+      )
       .length;
   int get absent =>
       rows.where((r) => r.status == AttendanceStatus.absent).length;
-  int get late =>
-      rows.where((r) => r.status == AttendanceStatus.late).length;
+  int get late => rows.where((r) => r.status == AttendanceStatus.late).length;
   int get pendingSync => rows.where((r) => !r.persisted).length;
 
   AttendanceTakeState copyWith({
@@ -93,6 +94,11 @@ class AttendanceTakeController extends StateNotifier<AttendanceTakeState> {
     DateTime? date,
   }) async {
     final d = date ?? DateTime.now();
+    if (!brief.can('attendance.write')) {
+      state =
+          state.copyWith(error: 'No tienes permiso para registrar asistencia.');
+      return;
+    }
     state = state.copyWith(loading: true, clearError: true);
     try {
       final roster = await repo.classRoster(classId: brief.classId, date: d);

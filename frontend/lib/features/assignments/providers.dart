@@ -44,6 +44,8 @@ final teacherClassesProvider =
   return rows.map((r) {
     final m = Map<String, dynamic>.from(r as Map);
     return ClassSessionBrief(
+      isOwner: m['isOwner'] == true,
+      permissions: Set<String>.from(m['permissions'] as List? ?? []),
       classId: (m['classId'] as num).toInt(),
       groupId: (m['groupId'] as num?)?.toInt() ?? 0,
       subjectName: m['subjectName'] as String? ?? 'Materia',

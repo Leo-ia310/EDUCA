@@ -1,3 +1,4 @@
+import '../../features/collaborations/collaborations_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -548,6 +549,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // ----- Anuncios / Eventos -----
+      GoRoute(
+        path: Routes.collaborations,
+        builder: (_, __) => const RoleGuard(allowed: {
+          AppRole.teacher,
+          AppRole.admin,
+          AppRole.coordinator,
+          AppRole.director,
+        }, child: CollaborationsScreen(),),
+      ),
       GoRoute(
         path: Routes.announcements,
         builder: (_, __) => const AnnouncementsScreen(),

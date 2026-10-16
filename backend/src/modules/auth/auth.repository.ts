@@ -1,9 +1,14 @@
-import { expectSingle } from "../../lib/db";
+import { assertNoDbError, expectSingle } from "../../lib/db";
 import { supabaseAdmin } from "../../lib/supabase";
 
 const db = supabaseAdmin as any;
 
 export class AuthRepository {
+  async classPermission(classId: number, permission: string) {
+    const { data, error } = await db.rpc("class_permission", { p_class_id: classId, p_permission: permission });
+    assertNoDbError(error);
+    return data === true;
+  }
   async getAuthUser(token: string) {
     return db.auth.getUser(token);
   }

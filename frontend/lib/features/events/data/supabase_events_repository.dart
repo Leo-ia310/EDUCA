@@ -1,37 +1,21 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../../core/network/backend_api_client.dart';
 import '../domain/entities.dart';
 import '../domain/events_repository.dart';
 
-/// Implementación real contra Supabase. Tabla usada (ver
-/// `supabase/migrations/0001_init_core.sql`): `calendar_events`.
+/// Published announcements are read and written through the authenticated API.
+/// The backend resolves the institution, author and audience from the session.
 class SupabaseEventsRepository implements EventsRepository {
-  SupabaseEventsRepository({
-    required SupabaseClient client,
-    required BackendApiClient api,
-    required this.institutionId,
-  })  : _c = client,
-        _api = api;
+  SupabaseEventsRepository({required BackendApiClient api}) : _api = api;
 
-  final SupabaseClient _c;
   final BackendApiClient _api;
-  final int institutionId;
-
-  static const _select = 'id, title, description, start_at, audience';
 
   @override
-  Future<List<SchoolEvent>> upcoming() async {
-    final rows = await _c
-        .from('calendar_events')
-        .select(_select)
-        .eq('institution_id', institutionId)
-        .gte(
-          'start_at',
-          DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
-        )
-        .order('start_at');
-    return (rows as List).cast<Map<String, dynamic>>().map(_fromRow).toList();
+  Future<List<SchoolEvent>> published() async {
+    final response = await _api.get('/events/announcements');
+    final data = Map<String, dynamic>.from(response as Map);
+    return (data['announcements'] as List)
+        .map((row) => _fromApi(Map<String, dynamic>.from(row as Map)))
+        .toList();
   }
 
   @override
@@ -40,57 +24,49 @@ class SupabaseEventsRepository implements EventsRepository {
     required String description,
     required DateTime date,
     required String audience,
+    String? requestId,
   }) async {
     final response = await _api.call('events.create', {
       'title': title,
       'description': description,
-      'date': date.toIso8601String(),
+      'date': date.toUtc().toIso8601String(),
       'audience': _audienceCode(audience),
+      if (requestId != null) 'requestId': requestId,
     });
     final data = Map<String, dynamic>.from(response as Map);
-    return _fromApi(Map<String, dynamic>.from(data['event'] as Map));
+    final announcement = Map<String, dynamic>.from(data['announcement'] as Map);
+    return _fromApi({
+      ...announcement,
+      'notificationWarning': data['notificationWarning'],
+    });
   }
-
-  SchoolEvent _fromRow(Map<String, dynamic> row) => SchoolEvent(
-        id: row['id'].toString(),
-        title: row['title'] as String? ?? '',
-        description: row['description'] as String? ?? '',
-        date: DateTime.tryParse(row['start_at'] as String? ?? '') ??
-            DateTime.now(),
-        audience: _audienceLabel(row['audience'] as String?),
-      );
 
   SchoolEvent _fromApi(Map<String, dynamic> row) => SchoolEvent(
         id: row['id'].toString(),
-        title: row['title'] as String? ?? '',
-        description: row['description'] as String? ?? '',
-        date: DateTime.tryParse(row['date'] as String? ?? '') ?? DateTime.now(),
-        audience: _audienceLabel(row['audience'] as String?),
+        title: row['title'] as String,
+        description: row['description'] as String,
+        date: DateTime.parse(row['date'] as String).toLocal(),
+        audience: row['audience'] as String,
+        notificationWarning: row['notificationWarning'] as String?,
+        requestId: row['requestId'] as String?,
+        delivery: row['delivery'] == null
+            ? null
+            : AnnouncementDelivery.fromJson(
+                Map<String, dynamic>.from(row['delivery'] as Map),
+              ),
       );
 
-  String _audienceCode(String label) {
-    switch (label) {
-      case 'Padres y tutores':
-        return 'parents';
-      case 'Estudiantes':
-        return 'students';
-      case 'Docentes':
-        return 'teachers';
-      default:
-        return 'all';
-    }
+  @override
+  Future<void> retryDelivery(String announcementId) async {
+    await _api.post('/events/announcements/$announcementId/retry-delivery');
   }
 
-  String _audienceLabel(String? code) {
-    switch (code) {
-      case 'parents':
-        return 'Padres y tutores';
-      case 'students':
-        return 'Estudiantes';
-      case 'teachers':
-        return 'Docentes';
-      default:
-        return 'Toda la institución';
-    }
-  }
+  String _audienceCode(String label) => switch (label) {
+        'Toda la institución' => 'all',
+        'Padres y tutores' => 'parents',
+        'Estudiantes' => 'students',
+        'Docentes' => 'teachers',
+        'Administración' => 'staff',
+        _ => label,
+      };
 }

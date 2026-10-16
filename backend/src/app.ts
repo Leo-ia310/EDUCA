@@ -7,6 +7,7 @@ import { attendanceRoutes } from "./modules/attendance/attendance.routes";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { businessApiRoutes } from "./modules/business-api/business-api.routes";
 import { chatsRoutes } from "./modules/chats/chats.routes";
+import { collaborationRoutes } from "./modules/collaborations/collaborations.routes";
 import { developerRoutes } from "./modules/developer/developer.routes";
 import { eventsRoutes } from "./modules/events/events.routes";
 import { filesRoutes } from "./modules/files/files.routes";
@@ -53,6 +54,7 @@ export function createApp() {
   app.use("/api/assignments", authenticatedRateLimit, assignmentsRoutes);
   app.use("/api/attendance", authenticatedRateLimit, attendanceRoutes);
   app.use("/api/chats", authenticatedRateLimit, chatsRoutes);
+  app.use("/api/collaborations", authenticatedRateLimit, collaborationRoutes);
   app.use("/api/developer", authenticatedRateLimit, developerRoutes);
   app.use("/api/events", authenticatedRateLimit, eventsRoutes);
   app.use("/api/files", authenticatedRateLimit, filesRoutes);

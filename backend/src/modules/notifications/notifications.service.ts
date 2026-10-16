@@ -195,11 +195,12 @@ export class NotificationsService {
   }
 
   /** Marca como leídas las notificaciones de una conversación de chat. */
-  async markConversationRead(ctx: AppContext, conversationId: number) {
+  async markConversationRead(ctx: AppContext, conversationId: number, readAt = new Date().toISOString()) {
     const { error } = await this.repository.markConversationRead(
       ctx.userId,
       ctx.institutionId,
       conversationId,
+      readAt,
     );
     assertNoDbError(error);
   }
@@ -378,6 +379,7 @@ export class NotificationsService {
         await webpush.sendNotification(JSON.parse(device.push_token), payload, {
           TTL: 60 * 60,
           urgency: "high",
+          timeout: 10000,
         });
         delivered += 1;
       } catch (error) {
@@ -401,6 +403,10 @@ export class NotificationsService {
     return delivered > 0;
   }
 
+  async sendStoredPush(notificationId: number) {
+    return this.sendPush(notificationId);
+  }
+
   private async sendPush(notificationId: number) {
     if (this.webPushConfigured()) {
       try {
@@ -420,6 +426,7 @@ export class NotificationsService {
       `${env.supabaseUrl.replace(/\/$/, "")}/functions/v1/send-push`;
     try {
       const response = await fetch(url, {
+        signal: AbortSignal.timeout(10000),
         method: "POST",
         headers: {
           "content-type": "application/json",

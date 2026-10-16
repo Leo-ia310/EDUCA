@@ -14,8 +14,7 @@ enum AttendanceStatus {
   final String label;
   final String code;
 
-  static AttendanceStatus fromId(int id) =>
-      AttendanceStatus.values.firstWhere(
+  static AttendanceStatus fromId(int id) => AttendanceStatus.values.firstWhere(
         (e) => e.id == id,
         orElse: () => AttendanceStatus.present,
       );
@@ -48,6 +47,8 @@ class ClassSessionBrief extends Equatable {
     required this.endTime,
     required this.studentCount,
     this.classroom,
+    this.isOwner = true,
+    this.permissions,
   });
 
   final int classId;
@@ -58,6 +59,9 @@ class ClassSessionBrief extends Equatable {
   final String endTime;
   final int studentCount;
   final String? classroom;
+  final bool isOwner;
+  final Set<String>? permissions;
+  bool can(String permission) => permissions?.contains(permission) ?? true;
 
   @override
   List<Object?> get props => [classId, groupId, subjectName, startTime];

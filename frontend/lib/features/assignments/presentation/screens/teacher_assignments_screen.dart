@@ -1,3 +1,5 @@
+import '../../../collaborations/providers.dart';
+import '../../../../core/constants/env.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,7 +35,7 @@ List<Assignment> _byCreation(Iterable<Assignment> items) =>
 /// en sus tareas si aún no tiene clases cargadas).
 List<TeacherClass> _teacherSubjects(WidgetRef ref, List<Assignment> all) {
   final classes = (ref.watch(teacherDashboardProvider).valueOrNull ??
-          TeacherDashboardData.mock())
+          TeacherDashboardData.empty())
       .myClasses;
   if (classes.isNotEmpty) return classes;
   final names = {for (final a in all) a.subjectName};
@@ -61,6 +63,12 @@ class _TeacherAssignmentsScreenState
   Widget build(BuildContext context) {
     final list = ref.watch(teacherAssignmentsProvider);
     final palette = context.palette;
+    final canCreate = Env.isDemoMode ||
+        ((ref.watch(collaborationWorkspaceProvider).valueOrNull?['classes']
+                    as List?) ??
+                [])
+            .any((c) =>
+                (c['permissions'] as List).contains('assignments.create'),);
 
     return StudentDetailScaffold(
       title: 'Tareas y Exámenes',
@@ -121,9 +129,10 @@ class _TeacherAssignmentsScreenState
                         icon: Icons.assignment_rounded,
                         title: 'Sin tareas aún',
                         subtitle: 'Crea tu primera tarea o examen.',
-                        actionLabel: 'Crear tarea',
-                        onAction: () =>
-                            context.push('${Routes.assignments}/new'),
+                        actionLabel: canCreate ? 'Crear tarea' : null,
+                        onAction: canCreate
+                            ? () => context.push('${Routes.assignments}/new')
+                            : null,
                       );
                     }
                     return RefreshIndicator(
@@ -134,16 +143,17 @@ class _TeacherAssignmentsScreenState
                         key: ValueKey(_bySubject),
                         padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: BrutalButton(
-                              expand: true,
-                              onTap: () =>
-                                  context.push('${Routes.assignments}/new'),
-                              icon: Icons.add,
-                              label: 'Nueva tarea o examen',
+                          if (canCreate)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: BrutalButton(
+                                expand: true,
+                                onTap: () =>
+                                    context.push('${Routes.assignments}/new'),
+                                icon: Icons.add,
+                                label: 'Nueva tarea o examen',
+                              ),
                             ),
-                          ),
                           if (_bySubject)
                             ..._subjectCards(context, subjects, mine)
                           else
@@ -200,6 +210,7 @@ class TeacherSubjectAssignmentsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(teacherAssignmentsProvider);
+    final canCreate = Env.isDemoMode || ((ref.watch(collaborationWorkspaceProvider).valueOrNull?['classes'] as List?) ?? []).any((c) => _sameSubject(c['subjectName'] as String, subject) && (c['permissions'] as List).contains('assignments.create'));
     return StudentDetailScaffold(
       title: subject,
       scrollable: false,
@@ -217,7 +228,7 @@ class TeacherSubjectAssignmentsScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
               children: [
-                Padding(
+                if (canCreate) Padding(
                   padding: const EdgeInsets.only(bottom: 14),
                   child: BrutalButton(
                     expand: true,

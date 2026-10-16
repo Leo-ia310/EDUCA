@@ -40,10 +40,7 @@ class ComposerState {
 
 class ChatComposerController extends StateNotifier<ComposerState> {
   ChatComposerController(this._ref, this.conversationId)
-      : super(const ComposerState()) {
-    // Marcar como leído al abrir la conversación.
-    _ref.read(chatRepositoryProvider).markAsRead(conversationId);
-  }
+      : super(const ComposerState());
 
   final Ref _ref;
   final String conversationId;

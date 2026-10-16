@@ -4,6 +4,8 @@ import { supabaseAdmin } from "../../lib/supabase";
 const db = supabaseAdmin as any;
 
 export class NotificationsRepository {
+  constructor(private readonly client: any = db) {}
+
   private isOptionalNotificationsSchemaError(error: unknown) {
     if (error == null || typeof error !== "object") return false;
     const record = error as Record<string, unknown>;
@@ -19,7 +21,7 @@ export class NotificationsRepository {
   }
 
   async listUsersByRoleCodes(institutionId: number, roleCodes: string[]) {
-    const { data, error } = await db
+    const { data, error } = await this.client
       .from("users")
       .select(
         "id, email, full_name, email_notifications_enabled, user_roles(roles(code))",
@@ -39,20 +41,20 @@ export class NotificationsRepository {
 
   async insertNotification(payload: Record<string, unknown>) {
     return expectSingle<Record<string, unknown>>(
-      db.from("notifications").insert(payload).select("id").single(),
+      this.client.from("notifications").insert(payload).select("id").single(),
       "No se pudo crear la notificación.",
     );
   }
 
   async insertDelivery(payload: Record<string, unknown>) {
     return expectSingle<Record<string, unknown>>(
-      db.from("notification_deliveries").insert(payload).select("id").single(),
+      this.client.from("notification_deliveries").insert(payload).select("id").single(),
       "No se pudo registrar la entrega de la notificación.",
     );
   }
 
   async findNotificationTypeId(code: string) {
-    const { data, error } = await db
+    const { data, error } = await this.client
       .from("catalog_notification_types")
       .select("id")
       .eq("code", code)
@@ -62,7 +64,7 @@ export class NotificationsRepository {
   }
 
   async findNotification(id: number) {
-    const { data, error } = await db
+    const { data, error } = await this.client
       .from("notifications")
       .select("id, user_id, title, message, data")
       .eq("id", id)
@@ -73,7 +75,7 @@ export class NotificationsRepository {
 
   /** Suscripciones Web Push activas del usuario (devices.push_token = JSON). */
   async listActiveWebDevices(userId: number) {
-    const { data, error } = await db
+    const { data, error } = await this.client
       .from("devices")
       .select("id, push_token")
       .eq("user_id", userId)
@@ -84,11 +86,11 @@ export class NotificationsRepository {
   }
 
   async deactivateDevice(id: number) {
-    return db.from("devices").update({ active: false }).eq("id", id);
+    return this.client.from("devices").update({ active: false }).eq("id", id);
   }
 
   async findChannelId(code: string) {
-    const { data, error } = await db
+    const { data, error } = await this.client
       .from("catalog_notification_channels")
       .select("id")
       .eq("code", code)
@@ -98,7 +100,7 @@ export class NotificationsRepository {
   }
 
   async listForUser(userId: number, institutionId: number, limit = 100) {
-    const { data, error } = await db
+    const { data, error } = await this.client
       .from("notifications")
       .select(
         "id, title, message, data, read, read_at, created_at, catalog_notification_types(code)",
@@ -115,7 +117,7 @@ export class NotificationsRepository {
   }
 
   async markRead(userId: number, institutionId: number, id?: number) {
-    let query = db
+    let query = this.client
       .from("notifications")
       .update({ read: true, read_at: new Date().toISOString() })
       .eq("user_id", userId)
@@ -130,18 +132,20 @@ export class NotificationsRepository {
     userId: number,
     institutionId: number,
     conversationId: number,
+    readAt: string,
   ) {
-    return db
+    return this.client
       .from("notifications")
-      .update({ read: true, read_at: new Date().toISOString() })
+      .update({ read: true, read_at: readAt })
       .eq("user_id", userId)
       .eq("institution_id", institutionId)
       .eq("read", false)
-      .filter("data->>conversationId", "eq", String(conversationId));
+      .filter("data->>conversationId", "eq", String(conversationId))
+      .lte("created_at", readAt);
   }
 
   async deleteForUser(userId: number, institutionId: number, id?: number) {
-    let query = db
+    let query = this.client
       .from("notifications")
       .delete()
       .eq("user_id", userId)
@@ -151,7 +155,7 @@ export class NotificationsRepository {
   }
 
   async findDevice(userId: number, endpoint: string) {
-    const { data } = await db
+    const { data } = await this.client
       .from("devices")
       .select("id")
       .eq("user_id", userId)
@@ -162,18 +166,18 @@ export class NotificationsRepository {
 
   async insertDevice(payload: Record<string, unknown>) {
     return expectSingle(
-      db.from("devices").insert(payload).select("id").single(),
+      this.client.from("devices").insert(payload).select("id").single(),
       "No se pudo guardar el dispositivo.",
     );
   }
 
   async updateDevice(id: unknown, payload: Record<string, unknown>) {
-    return db.from("devices").update(payload).eq("id", id);
+    return this.client.from("devices").update(payload).eq("id", id);
   }
 
   async getPreferences(userId: number, institutionId: number) {
     return expectSingle<Record<string, unknown>>(
-      db
+      this.client
         .from("users")
         .select("email_notifications_enabled")
         .eq("id", userId)
@@ -189,7 +193,7 @@ export class NotificationsRepository {
     payload: Record<string, unknown>,
   ) {
     return expectSingle<Record<string, unknown>>(
-      db
+      this.client
         .from("users")
         .update(payload)
         .eq("id", userId)

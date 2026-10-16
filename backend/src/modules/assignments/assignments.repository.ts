@@ -146,9 +146,7 @@ export class AssignmentsRepository {
       .select("id, group_id, subjects(name), groups(name)")
       .eq("institution_id", institutionId)
       .eq("active", true);
-    if (teacherId != null) {
-      query = query.eq("teacher_id", teacherId);
-    }
+    // RLS includes owned classes and accepted class-scoped collaborations.
     return query.order("id");
   }
 

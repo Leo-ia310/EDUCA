@@ -5,6 +5,11 @@ import { gradesService } from "./grades.service";
 import type { AppRequest } from "../../types/app-context";
 import { asRecord } from "../../validators/common.validators";
 
+export async function getDefaultScale(req: AppRequest, res: Response) {
+  const data = await gradesService.getDefaultScale(requireAppContext(req));
+  return res.json({ ok: true, data });
+}
+
 export async function upsertScale(req: AppRequest, res: Response) {
   const data = await gradesService.upsertScale(
     requireAppContext(req),

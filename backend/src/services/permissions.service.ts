@@ -97,7 +97,7 @@ export class PermissionsService {
     );
   }
 
-  async assertTeacherCanUseClass(ctx: AppContext, classId: number) {
+  async assertTeacherCanUseClass(ctx: AppContext, classId: number, permission = "collaborators.manage") {
     const row = await this.repository.findClassForPermission(
       ctx.institutionId,
       classId,
@@ -107,17 +107,17 @@ export class PermissionsService {
 
     this.requireRole(ctx, ["teacher"]);
     const teacherId = await this.currentTeacherId(ctx);
-    if (teacherId == null || Number(row.teacher_id) !== teacherId) {
+    if (teacherId == null || (Number(row.teacher_id) !== teacherId && !await this.repository.classPermission(classId, permission))) {
       throw new HttpError(
         403,
-        "No puedes modificar una clase que no impartes.",
+        "No tienes el permiso necesario en esta clase.",
         "forbidden",
       );
     }
     return row;
   }
 
-  async assertTeacherCanUseAssignment(ctx: AppContext, assignmentId: number) {
+  async assertTeacherCanUseAssignment(ctx: AppContext, assignmentId: number, permission = "assignments.create") {
     const row = await this.repository.findAssignmentForPermission(
       ctx.institutionId,
       assignmentId,
@@ -127,7 +127,7 @@ export class PermissionsService {
 
     this.requireRole(ctx, ["teacher"]);
     const teacherId = await this.currentTeacherId(ctx);
-    if (teacherId == null || Number(cls?.teacher_id) !== teacherId) {
+    if (teacherId == null || (Number(cls?.teacher_id) !== teacherId && !await this.repository.classPermission(Number(row.class_id), permission))) {
       throw new HttpError(
         403,
         "No puedes modificar una tarea de otra clase.",

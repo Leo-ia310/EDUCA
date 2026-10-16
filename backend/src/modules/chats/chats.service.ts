@@ -14,10 +14,13 @@ import {
   ChatsRepository,
 } from "./chats.repository";
 import type { AppContext } from "../../types/app-context";
-import { notificationsService } from "../notifications/notifications.service";
+import { notificationsService, NotificationsService } from "../notifications/notifications.service";
 
 export class ChatsService {
-  constructor(private readonly repository: ChatsRepository = chatsRepository) {}
+  constructor(
+    private readonly repository: ChatsRepository = chatsRepository,
+    private readonly notifications: NotificationsService = notificationsService,
+  ) {}
 
   async sendMessage(ctx: AppContext, payload: Record<string, unknown>) {
     const conversationId = requiredId(payload.conversationId, "Conversación");
@@ -93,23 +96,24 @@ export class ChatsService {
   ) {
     const conversationId = requiredId(payload.conversationId, "Conversación");
     await this.assertConversationParticipant(ctx, conversationId);
+    const readAt = new Date().toISOString();
     const { data: messages, error } = await this.repository.unreadMessageIds(
       conversationId,
       ctx.userId,
+      readAt,
     );
     if (error) throw new HttpError(400, error.message, "db_error");
     const rows = (messages ?? []).map((message: Record<string, unknown>) => ({
       message_id: Number(message.id),
       user_id: ctx.userId,
+      read_at: readAt,
     }));
     if (rows.length > 0) {
       await this.repository.upsertMessageReads(rows);
     }
     // La notificación de esos mensajes deja de estar pendiente.
-    await notificationsService.markConversationRead(ctx, conversationId).catch(
-      () => undefined,
-    );
-    return { ok: true };
+    await this.notifications.markConversationRead(ctx, conversationId, readAt);
+    return { ok: true, conversationId: String(conversationId), readAt };
   }
 
   async ensureIndividualConversation(

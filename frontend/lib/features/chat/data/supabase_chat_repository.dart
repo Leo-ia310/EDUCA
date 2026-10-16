@@ -47,6 +47,16 @@ class SupabaseChatRepository implements ChatRepository {
   final _messagePollTimers = <String, Timer>{};
   List<Conversation> _conversationCache = const [];
   Timer? _conversationPollTimer;
+  Timer? _conversationEventsTimer;
+  int _conversationRevision = 0;
+
+  void _scheduleConversationSnapshot() {
+    _conversationEventsTimer?.cancel();
+    _conversationEventsTimer = Timer(
+      const Duration(milliseconds: 100),
+      () => unawaited(_emitConversationSnapshotSafely()),
+    );
+  }
 
   void _ensureConversationsChannel() {
     _channels.putIfAbsent('conversations', () {
@@ -55,10 +65,22 @@ class SupabaseChatRepository implements ChatRepository {
         event: PostgresChangeEvent.insert,
         schema: 'public',
         table: 'messages',
-        callback: (_) async {
-          final convos = await _fetchConversations();
-          _conversationsCtrl.add(convos);
-          _unreadCtrl.add(convos.fold<int>(0, (s, c) => s + c.unreadCount));
+        callback: (_) {
+          _scheduleConversationSnapshot();
+        },
+      );
+      ch.onPostgresChanges(
+        event: PostgresChangeEvent.insert,
+        schema: 'public',
+        table: 'message_reads',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'user_id',
+          value: meUserId,
+        ),
+        callback: (_) {
+          _conversationRevision++;
+          _scheduleConversationSnapshot();
         },
       );
       ch.subscribe();
@@ -101,6 +123,7 @@ class SupabaseChatRepository implements ChatRepository {
   }
 
   Future<List<Conversation>> _fetchConversations() async {
+    final revision = _conversationRevision;
     final rows = await _client
         .from('conversation_participants')
         .select(
@@ -114,12 +137,17 @@ class SupabaseChatRepository implements ChatRepository {
       if (conv == null) continue;
       baseById[conv['id'].toString()] = conv;
     }
-    if (baseById.isEmpty) return const [];
+    if (baseById.isEmpty) {
+      _conversationCache = const [];
+      return _conversationCache;
+    }
 
     final result = await Future.wait(
       baseById.entries.map((e) => _hydrateConversation(e.key, e.value)),
     );
     result.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    // A snapshot started before a confirmed read must not restore its badge.
+    if (revision != _conversationRevision) return _fetchConversations();
     _conversationCache = List.unmodifiable(result);
     return _conversationCache;
   }
@@ -470,7 +498,18 @@ class SupabaseChatRepository implements ChatRepository {
   @override
   Future<void> markAsRead(String conversationId) async {
     await _api.call('chat.markAsRead', {'conversationId': conversationId});
-    await _emitConversationSnapshot();
+    _conversationRevision++;
+    _conversationCache = List.unmodifiable([
+      for (final conversation in _conversationCache)
+        if (conversation.id == conversationId)
+          conversation.copyWith(unreadCount: 0)
+        else
+          conversation,
+    ]);
+    _conversationsCtrl.add(_conversationCache);
+    _unreadCtrl
+        .add(_conversationCache.fold<int>(0, (sum, c) => sum + c.unreadCount));
+    await _emitConversationSnapshotSafely();
   }
 
   @override
@@ -537,6 +576,7 @@ class SupabaseChatRepository implements ChatRepository {
       _client.removeChannel(ch);
     }
     _conversationPollTimer?.cancel();
+    _conversationEventsTimer?.cancel();
     for (final timer in _messagePollTimers.values) {
       timer.cancel();
     }

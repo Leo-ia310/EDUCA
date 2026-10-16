@@ -29,7 +29,6 @@ class SupabaseGradesRepository implements GradesRepository {
   final int institutionId;
   final _calc = const GradesCalculator();
 
-  static const _defaultScaleKey = 'default_grading_scale_id';
   static const _scaleSelect =
       'id, name, scale_type, min_value, max_value, pass_value, decimals, '
       'active, grading_scale_ranges(label, range_min, range_max, description, passed, color)';
@@ -50,18 +49,21 @@ class SupabaseGradesRepository implements GradesRepository {
 
   @override
   Future<GradingScale> defaultScale() async {
-    final all = await scales();
-    if (all.isEmpty) {
+    final scale = await findDefaultScale();
+    if (scale == null) {
       throw StateError('No hay escalas de calificación configuradas');
     }
-    final setting = await _c
-        .from('institution_settings')
-        .select('value')
-        .eq('institution_id', institutionId)
-        .eq('key', _defaultScaleKey)
-        .maybeSingle();
-    final defaultId = setting?['value'] as String?;
-    return all.firstWhere((s) => s.id == defaultId, orElse: () => all.first);
+    return scale;
+  }
+
+  @override
+  Future<GradingScale?> findDefaultScale() async {
+    final response = await _api.get('/grades/scales/default');
+    final data = Map<String, dynamic>.from(response as Map);
+    final row = data['scale'];
+    return row == null
+        ? null
+        : _scaleFromRow(Map<String, dynamic>.from(row as Map));
   }
 
   @override

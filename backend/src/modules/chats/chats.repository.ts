@@ -17,12 +17,13 @@ export class ChatsRepository {
   }
 
   async participantExists(conversationId: number, userId: number) {
-    const { data } = await db
+    const { data, error } = await db
       .from("conversation_participants")
       .select("id")
       .eq("conversation_id", conversationId)
       .eq("user_id", userId)
       .limit(1);
+    assertNoDbError(error);
     return Array.isArray(data) && data.length > 0;
   }
 
@@ -72,12 +73,13 @@ export class ChatsRepository {
     );
   }
 
-  async unreadMessageIds(conversationId: number, userId: number) {
+  async unreadMessageIds(conversationId: number, userId: number, readAt: string) {
     return db
       .from("messages")
       .select("id")
       .eq("conversation_id", conversationId)
-      .neq("sender_id", userId);
+      .neq("sender_id", userId)
+      .lte("created_at", readAt);
   }
 
   async upsertMessageReads(rows: Array<Record<string, unknown>>) {

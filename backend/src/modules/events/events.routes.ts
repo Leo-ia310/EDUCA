@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { createEvent } from "./events.controller";
+import { createEvent, listAnnouncements, retryDelivery } from "./events.controller";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { asyncHandler } from "../../middleware/error.middleware";
 import { requireRoles } from "../../middleware/permissions.middleware";
@@ -8,5 +8,8 @@ import { requireRoles } from "../../middleware/permissions.middleware";
 export const eventsRoutes = Router();
 
 eventsRoutes.use(authMiddleware);
+eventsRoutes.get("/announcements", asyncHandler(listAnnouncements));
 eventsRoutes.post("/", requireRoles(["teacher"]), asyncHandler(createEvent));
 
+
+eventsRoutes.post("/announcements/:id/retry-delivery", requireRoles(["teacher"]), asyncHandler(retryDelivery));

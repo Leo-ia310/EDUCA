@@ -5,6 +5,9 @@ abstract class GradesRepository {
   // ---------- Escalas ----------
   Future<List<GradingScale>> scales();
   Future<GradingScale> defaultScale();
+
+  /// Institutional scale shared by all terms; null means configuration missing.
+  Future<GradingScale?> findDefaultScale() => defaultScale();
   Future<GradingScale> upsertScale(GradingScale scale);
   Future<void> setDefaultScale(String id);
 
