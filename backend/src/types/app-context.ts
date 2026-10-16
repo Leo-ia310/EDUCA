@@ -2,6 +2,7 @@ import type { Request } from "express";
 
 export type AppContext = {
   authUserId: string;
+  sessionId?: string | null;
   userId: number;
   institutionId: number;
   personId: number | null;

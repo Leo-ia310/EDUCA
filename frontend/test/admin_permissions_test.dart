@@ -44,6 +44,7 @@ void main() {
     );
     expect(permissionForAdminRoute(Routes.adminClasses), Perm.classesView);
     expect(permissionForAdminRoute(Routes.adminRoles), Perm.rolesView);
+    expect(permissionForAdminRoute(Routes.adminAccess), 'roles.edit');
     expect(
       permissionForAdminRoute(Routes.adminSchedules),
       Perm.schedulesView,

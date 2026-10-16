@@ -1,3 +1,5 @@
+import 'package:go_router/go_router.dart';
+import '../../../../core/routing/route_paths.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -105,6 +107,13 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (canEdit) ...[
+            FilledButton.icon(
+                onPressed: () => context.push(Routes.adminAccess),
+                icon: const Icon(Icons.lock_person_rounded),
+                label: const Text('Accesos de padres, alumnos y notas'),),
+            const SizedBox(height: 16),
+          ],
           if (canCreate) ...[
             BrutalButton(
               expand: true,

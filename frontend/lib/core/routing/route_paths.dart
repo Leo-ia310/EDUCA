@@ -36,6 +36,7 @@ class Routes {
   static const adminGroups = '/admin/groups';
   static const adminClasses = '/admin/classes';
   static const adminSchedules = '/admin/schedules';
+  static const adminAccess = '/admin/access';
   static const adminRoles = '/admin/roles';
   static const adminReportCards = '/admin/report-cards';
   static const developer = '/developer';

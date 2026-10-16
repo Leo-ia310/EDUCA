@@ -108,6 +108,7 @@ const adminProfileRoles = <(String code, String label)>[
 
 /// Permiso de lectura que exige cada ruta del panel admin (null = libre).
 String? permissionForAdminRoute(String path) {
+  if (path.startsWith(Routes.adminAccess)) return 'roles.edit';
   if (path.startsWith(Routes.manageTeachers)) return Perm.teachersView;
   if (path.startsWith(Routes.adminStudents) ||
       path.startsWith(Routes.adminParents)) {

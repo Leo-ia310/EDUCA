@@ -1,3 +1,4 @@
+import '../portal_access/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/backend_api_client.dart';
@@ -13,6 +14,7 @@ import 'domain/payments_repository.dart';
 /// En demo, singleton en memoria para que los pagos hechos durante la sesión
 /// persistan entre navegaciones (no hay backend detrás).
 final paymentsRepositoryProvider = Provider<PaymentsRepository>((ref) {
+  ref.watch(portalFingerprintProvider);
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);

@@ -1,3 +1,5 @@
+import '../../../portal_access/providers.dart';
+import '../../../portal_access/access_widgets.dart';
 import '../../../collaborations/providers.dart';
 import 'dart:io';
 
@@ -54,10 +56,11 @@ class AssignmentDetailScreen extends ConsumerWidget {
         actions: [
           if (role == AppRole.teacher &&
               assignmentAsync.valueOrNull != null &&
-              ref.watch(classPermissionProvider((
-                assignmentAsync.valueOrNull!.classId,
-                'assignments.create'
-              ),),))
+              ref.watch(
+                classPermissionProvider(
+                  (assignmentAsync.valueOrNull!.classId, 'assignments.create'),
+                ),
+              ))
             IconButton(
               icon: const Icon(Icons.edit_rounded),
               tooltip: 'Editar',
@@ -111,7 +114,8 @@ class AssignmentDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
               ],
-              if (a.attachments.isNotEmpty) ...[
+              if (a.attachments.isNotEmpty &&
+                  ref.watch(portalCanProvider('materials.view'))) ...[
                 const SectionHeader(title: 'Archivos adjuntos'),
                 const SizedBox(height: 8),
                 Wrap(
@@ -251,9 +255,11 @@ class _TeacherActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final canReview = ref.watch(
-        classPermissionProvider((assignment.classId, 'assignments.review')),);
+      classPermissionProvider((assignment.classId, 'assignments.review')),
+    );
     final canGrade = ref.watch(
-        classPermissionProvider((assignment.classId, 'assignments.grade')),);
+      classPermissionProvider((assignment.classId, 'assignments.grade')),
+    );
     if (!canReview) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -365,6 +371,9 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
 
     final user = ref.read(authControllerProvider).user;
     final isParent = user?.activeRole == AppRole.parent;
+    final canSubmit = ref.watch(portalCanProvider('assignments.submit'));
+    final gradesVisible =
+        ref.watch(portalResolvedAccessProvider)?.annualGradesVisible ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -385,11 +394,18 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
             child: Text('$e'),
           ),
           data: (existing) {
+            if (existing?.status == SubmissionStatus.graded && !gradesVisible) {
+              return const PortalRestriction(
+                message: 'Las calificaciones están ocultas por tu institución.',
+              );
+            }
             if (existing?.status == SubmissionStatus.graded) {
               return _GradedView(
-                  submission: existing!, assignment: widget.assignment,);
+                submission: existing!,
+                assignment: widget.assignment,
+              );
             }
-            if (isParent) {
+            if (isParent || !canSubmit) {
               return DepthCard(
                 brutal: true,
                 soft: true,
@@ -405,7 +421,8 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                       style: context.textTheme.titleSmall
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
-                    if (existing?.attachments.isNotEmpty == true) ...[
+                    if (existing?.attachments.isNotEmpty == true &&
+                        ref.watch(portalCanProvider('materials.view'))) ...[
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 6,
@@ -533,13 +550,13 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
   }
 }
 
-class _GradedView extends StatelessWidget {
+class _GradedView extends ConsumerWidget {
   const _GradedView({required this.submission, required this.assignment});
   final Submission submission;
   final Assignment assignment;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -570,7 +587,7 @@ class _GradedView extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '${submission.score!.toStringAsFixed(1)} / ${assignment.maxScore.toStringAsFixed(0)}',
+                '${submission.score?.toStringAsFixed(1) ?? '—'} / ${assignment.maxScore.toStringAsFixed(0)}',
                 style: context.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -594,7 +611,8 @@ class _GradedView extends StatelessWidget {
                   context.textTheme.bodyMedium?.copyWith(color: Colors.white),
             ),
           ],
-          if (submission.attachments.isNotEmpty) ...[
+          if (submission.attachments.isNotEmpty &&
+              ref.watch(portalCanProvider('materials.view'))) ...[
             const SizedBox(height: 10),
             Wrap(
               spacing: 6,

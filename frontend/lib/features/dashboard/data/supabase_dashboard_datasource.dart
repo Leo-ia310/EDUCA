@@ -14,7 +14,8 @@ class SupabaseDashboardDatasource {
   final int institutionId;
 
   // ---------------------------------------------------------------- Estudiante
-  Future<StudentDashboardData> studentData(int studentId) async {
+  Future<StudentDashboardData> studentData(int studentId,
+      {bool showGrades = true,}) async {
     final classIds = await _classIdsForStudent(studentId);
     if (classIds.isEmpty) return StudentDashboardData.empty();
 
@@ -22,8 +23,8 @@ class SupabaseDashboardDatasource {
       _classesInfo(classIds),
       _todaySchedule(classIds),
       _studentAssignments(classIds, studentId),
-      _studentGrades(studentId),
-      _weightedAverage(studentId),
+      showGrades ? _studentGrades(studentId) : Future.value(<GradeBrief>[]),
+      showGrades ? _weightedAverage(studentId) : Future.value(0.0),
       _classmates(studentId),
       _studentGradeGroup(studentId),
       _attendancePct(studentId: studentId),
@@ -68,16 +69,19 @@ class SupabaseDashboardDatasource {
   // ------------------------------------------------------------------ Docente
   Future<TeacherDashboardData> teacherData(int teacherId) async {
     final workspace = Map<String, dynamic>.from(
-        await _c.rpc('collaboration_workspace') as Map,);
+      await _c.rpc('collaboration_workspace') as Map,
+    );
     final classes = (workspace['classes'] as List)
-        .map((c) => <String, dynamic>{
-              'id': c['classId'],
-              'group_id': c['groupId'],
-              'subjects': {'name': c['subjectName']},
-              'groups': {'name': c['groupName']},
-              'isOwner': c['isOwner'],
-              'permissions': c['permissions'],
-            },)
+        .map(
+          (c) => <String, dynamic>{
+            'id': c['classId'],
+            'group_id': c['groupId'],
+            'subjects': {'name': c['subjectName']},
+            'groups': {'name': c['groupName']},
+            'isOwner': c['isOwner'],
+            'permissions': c['permissions'],
+          },
+        )
         .toList();
     if (classes.isEmpty) return TeacherDashboardData.empty();
 
@@ -256,7 +260,8 @@ class SupabaseDashboardDatasource {
   }
 
   // ------------------------------------------------------------------- Padre
-  Future<ParentDashboardData> parentData(int parentId) async {
+  Future<ParentDashboardData> parentData(int parentId,
+      {bool showGrades = true,}) async {
     final psRows = await _c
         .from('parent_students')
         .select('student_id, students(persons(first_name, last_name))')
@@ -281,7 +286,9 @@ class SupabaseDashboardDatasource {
 
     final results = await Future.wait([
       _classesInfo(classIds),
-      _childRecentActivity(childId),
+      showGrades
+          ? _childRecentActivity(childId)
+          : Future.value(<ParentActivity>[]),
       _publishedAnnouncementsCount(),
       _attendancePct(studentId: childId),
       _eventsThisMonth(),

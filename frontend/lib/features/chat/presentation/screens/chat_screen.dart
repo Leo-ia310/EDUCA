@@ -1,3 +1,5 @@
+import '../../../portal_access/providers.dart';
+import '../../../portal_access/access_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -219,7 +221,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               },
             ),
           ),
-          ChatInput(
+          if (!ref.watch(portalCanProvider('messages.send'))) const PortalRestriction(message:'Tu institución ha deshabilitado el envío de mensajes. Puedes seguir leyendo la conversación.')
+          else ChatInput(
             onSend: composerCtrl.send,
             onPickAttachment: composerCtrl.pickAttachment,
             pendingAttachment: composer.attachment,

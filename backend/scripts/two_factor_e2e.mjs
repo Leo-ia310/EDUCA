@@ -52,17 +52,26 @@ try {
   const l3 = await login();
   check('código de recuperación es de un solo uso', (await call('POST', '/auth/2fa/verify-login', { challengeId: l3.j.data.challenge.id, recoveryCode: rec[0] })).s === 401);
 
-  const l4 = await login(); let last;
-  for (let i = 0; i < 6; i++) last = await call('POST', '/auth/2fa/verify-login', { challengeId: l4.j.data.challenge.id, code: '000000' });
-  check('5 intentos fallidos bloquean el reto (423)', last.s === 423);
-  check('bloqueado aunque luego el código sea bueno', (await call('POST', '/auth/2fa/verify-login', { challengeId: l4.j.data.challenge.id, code: totp(secret) })).s === 423);
-
+  // desactivar con TOTP (antes del bloqueo: tras 5 fallos el USUARIO queda bloqueado 15 min)
   const tAuth = v.j.data.session.accessToken;
   check('disable sin código -> error', (await call('POST', '/auth/2fa/disable', {}, tAuth)).s >= 400);
   const d = await call('POST', '/auth/2fa/disable', { code: totp(secret) }, tAuth);
-  check('disable con TOTP correcto', d.s === 200 && d.j.data?.enabled === false);
+  check('disable con TOTP correcto', d.s === 200 && d.j.data?.enabled === false, `status=${d.s} ${d.j.error?.code ?? ''} ${d.j.error?.message ?? ''}`);
   const l5 = await login();
   check('tras desactivar, login normal', l5.s === 200 && !!l5.j.data?.session?.accessToken && !l5.j.data?.twoFactorRequired);
+
+  // volver a activar y probar el bloqueo
+  const t1 = l5.j.data.session.accessToken;
+  const setup2 = await call('POST', '/auth/2fa/setup', { method: 'totp' }, t1);
+  const secret2 = setup2.j.data?.secret;
+  const en2 = await call('POST', '/auth/2fa/enable', { code: totp(secret2) }, t1);
+  check('se puede reactivar el 2FA', en2.s === 200 && en2.j.data?.enabled === true);
+  const l4 = await login(); let last;
+  for (let i = 0; i < 6; i++) last = await call('POST', '/auth/2fa/verify-login', { challengeId: l4.j.data.challenge.id, code: '000000' });
+  check('5 intentos fallidos bloquean la verificación (423)', last.s === 423, `status=${last.s}`);
+  check('bloqueado aunque luego el código sea bueno', (await call('POST', '/auth/2fa/verify-login', { challengeId: l4.j.data.challenge.id, code: totp(secret2) })).s === 423);
+  const l6 = await login();
+  check('el bloqueo es del usuario: un login nuevo tampoco entrega sesión', !l6.j.data?.session?.accessToken);
 } finally {
   if (stId) await call('DELETE', `/admin/students/${stId}`, null, admin);
 }

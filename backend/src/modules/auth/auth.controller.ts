@@ -39,7 +39,7 @@ export async function setupTwoFactor(req: AppRequest, res: Response) {
 
 export async function enableTwoFactor(req: AppRequest, res: Response) {
   const ctx = requireAppContext(req);
-  const data = await authFlowService.enableTwoFactor(ctx.userId, asRecord(req.body));
+  const data = await authFlowService.enableTwoFactor(ctx.userId, asRecord(req.body), ctx.sessionId);
   return res.json({ ok: true, data });
 }
 
@@ -61,4 +61,13 @@ export async function changePassword(req: AppRequest, res: Response) {
   const ctx = requireAppContext(req);
   const data = await authFlowService.changePassword(ctx.userId, asRecord(req.body));
   return res.json({ ok: true, data });
+}
+
+export async function sendTwoFactorEmailCode(req: AppRequest,res: Response) {
+ const data=await authFlowService.sendTwoFactorEmailCode(requireAppContext(req).userId,asRecord(req.body));
+ return res.json({ok:true,data});
+}
+export async function resendTwoFactorLogin(req: AppRequest,res: Response) {
+ const data=await authFlowService.resendTwoFactorLogin(asRecord(req.body));
+ return res.json({ok:true,data});
 }

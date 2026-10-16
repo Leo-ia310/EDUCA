@@ -1,3 +1,4 @@
+import '../../../portal_access/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,7 +29,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user!;
     final data = ref.watch(parentDashboardProvider).valueOrNull ??
-        ParentDashboardData.mock();
+        ParentDashboardData.empty();
 
     return AppScaffold(
       padding: EdgeInsets.zero,
@@ -74,10 +75,20 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     color: context.palette.accent,
                     route: Routes.parentChildren as String?,
                     art: const ArtCluster([
-                      ArtItem.icon(Icons.face_rounded,
-                          size: 64, top: 4, right: 40, angle: 0.2,),
-                      ArtItem.icon(Icons.face_3_rounded,
-                          size: 48, top: 50, right: 0, angle: -0.3,),
+                      ArtItem.icon(
+                        Icons.face_rounded,
+                        size: 64,
+                        top: 4,
+                        right: 40,
+                        angle: 0.2,
+                      ),
+                      ArtItem.icon(
+                        Icons.face_3_rounded,
+                        size: 48,
+                        top: 50,
+                        right: 0,
+                        angle: -0.3,
+                      ),
                     ]),
                   ),
                   (
@@ -87,10 +98,20 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     color: context.palette.sun,
                     route: Routes.parentSchedule as String?,
                     art: const ArtCluster([
-                      ArtItem.icon(Icons.access_time_filled_rounded,
-                          size: 64, top: 4, right: 40, angle: 0.2,),
-                      ArtItem.icon(Icons.free_breakfast_rounded,
-                          size: 48, top: 50, right: 0, angle: -0.3,),
+                      ArtItem.icon(
+                        Icons.access_time_filled_rounded,
+                        size: 64,
+                        top: 4,
+                        right: 40,
+                        angle: 0.2,
+                      ),
+                      ArtItem.icon(
+                        Icons.free_breakfast_rounded,
+                        size: 48,
+                        top: 50,
+                        right: 0,
+                        angle: -0.3,
+                      ),
                     ]),
                   ),
                   (
@@ -100,10 +121,31 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     color: context.palette.success,
                     route: Routes.payments as String?,
                     art: const ArtCluster([
-                      ArtItem.icon(Icons.payments_rounded,
-                          size: 64, top: 4, right: 40, angle: 0.2,),
-                      ArtItem.icon(Icons.receipt_long_rounded,
-                          size: 48, top: 50, right: 0, angle: -0.3,),
+                      ArtItem.icon(
+                        Icons.payments_rounded,
+                        size: 64,
+                        top: 4,
+                        right: 40,
+                        angle: 0.2,
+                      ),
+                      ArtItem.icon(
+                        Icons.receipt_long_rounded,
+                        size: 48,
+                        top: 50,
+                        right: 0,
+                        angle: -0.3,
+                      ),
+                    ]),
+                  ),
+                  (
+                    icon: Icons.assessment_rounded,
+                    title: 'Notas',
+                    subtitle: 'Calificaciones por periodo',
+                    color: context.palette.accent,
+                    route: Routes.grades as String?,
+                    art: const ArtCluster([
+                      ArtItem.icon(Icons.assessment_rounded,
+                          size: 64, top: 4, right: 40,),
                     ]),
                   ),
                   (
@@ -113,26 +155,35 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                     color: context.palette.coral,
                     route: Routes.reports as String?,
                     art: const ArtCluster([
-                      ArtItem.text('A+', size: 56, top: 6, right: 30, angle: -0.2),
-                      ArtItem.icon(Icons.description_rounded,
-                          size: 44, top: 56, right: 0, angle: 0.2,),
+                      ArtItem.text('A+',
+                          size: 56, top: 6, right: 30, angle: -0.2,),
+                      ArtItem.icon(
+                        Icons.description_rounded,
+                        size: 44,
+                        top: 56,
+                        right: 0,
+                        angle: 0.2,
+                      ),
                     ]),
                   ),
                 ])
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: HomeOptionCard(
-                      icon: t.icon,
-                      title: t.title,
-                      subtitle: t.subtitle,
-                      color: t.color,
-                      art: t.art,
-                      onTap: () {
-                        final r = t.route;
-                        if (r != null) context.push(r);
-                      },
+                  if (portalPermissionForPath(t.route ?? '') == null ||
+                      ref.watch(portalCanProvider(
+                          portalPermissionForPath(t.route ?? '')!,),))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: HomeOptionCard(
+                        icon: t.icon,
+                        title: t.title,
+                        subtitle: t.subtitle,
+                        color: t.color,
+                        art: t.art,
+                        onTap: () {
+                          final r = t.route;
+                          if (r != null) context.push(r);
+                        },
+                      ),
                     ),
-                  ),
               ],
             ),
           ),

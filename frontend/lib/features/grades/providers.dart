@@ -1,3 +1,4 @@
+import '../portal_access/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/backend_api_client.dart';
@@ -12,6 +13,7 @@ import 'domain/grades_repository.dart';
 /// En demo, singleton para que las escalas y notas registradas desde
 /// admin/docente persistan durante toda la sesión (no hay backend detrás).
 final gradesRepositoryProvider = Provider<GradesRepository>((ref) {
+  ref.watch(portalFingerprintProvider);
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);

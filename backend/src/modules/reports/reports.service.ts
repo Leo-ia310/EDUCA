@@ -1,4 +1,5 @@
 import { HttpError } from "../../lib/errors";
+import { portalAccessService } from "../portal-access/portal-access.service";
 import type { AppContext } from "../../types/app-context";
 import { optionalId, requiredId, optionalString } from "../../validators/common.validators";
 import {
@@ -116,6 +117,8 @@ export class ReportsService {
     const id = requiredId(idValue, "Boletín");
     const card = await this.repository.findReportCard(ctx.institutionId, id);
     await this.permissions.normalizeStudentId(ctx, card.student_id, "estudiante");
+    await portalAccessService.require(ctx,"reports.download");
+    await portalAccessService.requireGrades(ctx,Number(card.student_id),card.academic_period_id == null ? null : Number(card.academic_period_id));
     return { reportCard: card };
   }
 
@@ -124,6 +127,8 @@ export class ReportsService {
     studentId: number,
     academicPeriodId: number,
   ) {
+    await portalAccessService.require(ctx,"reports.view");
+    await portalAccessService.requireGrades(ctx,studentId,academicPeriodId);
     const [student, grades] = await Promise.all([
       this.repository.findStudent(ctx.institutionId, studentId),
       this.repository.listPeriodGrades(ctx.institutionId, studentId, academicPeriodId),

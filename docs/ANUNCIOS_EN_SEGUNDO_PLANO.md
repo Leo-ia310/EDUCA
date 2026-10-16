@@ -9,6 +9,11 @@ petición cuyo resultado se perdió sin crear otro anuncio.
 El formulario se cierra al enviar. Un controlador de sesión conserva la tarjeta
 optimista durante la navegación y muestra errores de guardado con un reintento.
 El listado consulta el progreso cada dos segundos mientras haya trabajos activos.
+Al entrar en la pantalla o recuperar actividad invalida la lista; sin trabajos
+activos vuelve a consultar cada 20 segundos. Así detecta publicaciones hechas
+desde otras sesiones aunque antes hubiera mostrado «Sin anuncios». Los cambios
+de permisos también invalidan el repositorio. Los errores de API siguen mostrando
+el estado de error y reintento, sin presentarlos como una lista vacía.
 Los anuncios anteriores a esta migración se consideran publicados y no se reenvían.
 
 ## Procesamiento

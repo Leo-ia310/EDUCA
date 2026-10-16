@@ -75,7 +75,7 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<TwoFactorSetup> setupTwoFactor() async {
+  Future<TwoFactorSetup> setupTwoFactor({String method = 'totp'}) async {
     return const TwoFactorSetup(
       secret: 'JBSWY3DPEHPK3PXP',
       otpauthUrl: 'otpauth://totp/Nivra:test?secret=JBSWY3DPEHPK3PXP',
@@ -85,7 +85,8 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<TwoFactorEnableResult> enableTwoFactor(String code) async {
+  Future<TwoFactorEnableResult> enableTwoFactor(String code,
+      {String? challengeId,}) async {
     return const TwoFactorEnableResult(
       enabled: true,
       method: 'totp',
@@ -94,7 +95,14 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> disableTwoFactor({String? code, String? recoveryCode}) async {}
+  Future<void> disableTwoFactor(
+      {String? code, String? recoveryCode, String? challengeId,}) async {}
+  @override
+  Future<TwoFactorSetup> sendTwoFactorEmailCode() async =>
+      throw UnimplementedError('2FA por correo requiere el backend.');
+  @override
+  Future<TwoFactorChallenge> resendTwoFactorLogin(String challengeId) async =>
+      throw UnimplementedError('2FA por correo requiere el backend.');
 }
 
 void main() {

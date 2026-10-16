@@ -1,3 +1,4 @@
+import '../../../portal_access/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -77,7 +78,8 @@ class StudentDashboardScreen extends ConsumerWidget {
               child: StaggeredEntrance(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const HomeScheduleSection(),
+                  if (ref.watch(portalCanProvider('schedule.view')))
+                    const HomeScheduleSection(),
                   const SizedBox(height: 24),
                   if (data.todaySchedule.isEmpty &&
                       data.subjects.isEmpty &&
@@ -96,6 +98,12 @@ class StudentDashboardScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   // Mi Espacio: tarjetas horizontales apiladas.
                   for (final t in [
+                    _TileData(
+                        icon: Icons.assessment_rounded,
+                        title: 'Notas',
+                        subtitle: 'Calificaciones por periodo',
+                        color: context.palette.accent,
+                        onTap: () => context.push(Routes.grades),),
                     _TileData(
                       icon: Icons.note_alt_rounded,
                       title: 'Tareas',
@@ -215,17 +223,18 @@ class StudentDashboardScreen extends ConsumerWidget {
                         ),
                       ]),
                     ),
-                  ]) ...[
-                    HomeOptionCard(
-                      icon: t.icon,
-                      title: t.title,
-                      subtitle: t.subtitle,
-                      color: t.color,
-                      art: t.art,
-                      onTap: t.onTap,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+                  ])
+                    if (_canShowTile(ref, t.title)) ...[
+                      HomeOptionCard(
+                        icon: t.icon,
+                        title: t.title,
+                        subtitle: t.subtitle,
+                        color: t.color,
+                        art: t.art,
+                        onTap: t.onTap,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                 ],
               ),
             ),
@@ -253,4 +262,16 @@ class _TileData {
   final Color color;
   final Widget? art;
   final VoidCallback? onTap;
+}
+
+bool _canShowTile(WidgetRef ref, String title) {
+  final permission = switch (title) {
+    'Tareas' || 'Pruebas' => 'assignments.view',
+    'Horario' => 'schedule.view',
+    'Asistencia' => 'attendance.view',
+    'Anuncios' => 'announcements.view',
+    'Notas' => 'grades.view',
+    _ => null
+  };
+  return permission == null || ref.watch(portalCanProvider(permission));
 }

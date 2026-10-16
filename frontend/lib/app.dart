@@ -1,3 +1,7 @@
+import 'features/portal_access/access_widgets.dart';
+import 'core/routing/route_paths.dart';
+import 'features/auth/presentation/auth_controller.dart';
+import 'shared/models/app_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +41,18 @@ class _Educa360AppState extends ConsumerState<Educa360App> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       routerConfig: router,
+      builder: (context, child) => ValueListenableBuilder(
+        valueListenable: router.routeInformationProvider,
+        builder: (context, info, _) => PortalRouteGate(
+          path: info.uri.path,
+          child: child ?? const SizedBox.shrink(),
+          onHome: () => router.go(
+            ref.read(authControllerProvider).user?.activeRole == AppRole.parent
+                ? Routes.parentDashboard
+                : Routes.studentDashboard,
+          ),
+        ),
+      ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

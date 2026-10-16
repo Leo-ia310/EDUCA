@@ -101,6 +101,42 @@ Widget _app(_Events repository, GoRouter router) => ProviderScope(
 void main() {
   setUpAll(() => initializeDateFormatting('es'));
   testWidgets(
+      'refreshes a cached empty list on return and polls external publications',
+      (tester) async {
+    final repo = _Events();
+    final router = _router();
+    await tester.pumpWidget(_app(repo, router));
+    await tester.pumpAndSettle();
+    expect(find.text('Sin anuncios'), findsOneWidget);
+    router.push('/events/new');
+    await tester.pumpAndSettle();
+    repo.rows.add(SchoolEvent(
+        id: '10',
+        title: 'Publicado desde otra sesión',
+        description: 'Guardado real',
+        date: DateTime(2026),
+        audience: 'all',),);
+    router.pop();
+    await tester.pumpAndSettle();
+    // This route can remain mounted under the form, so polling also refreshes it.
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pumpAndSettle();
+    expect(find.text('Publicado desde otra sesión'), findsOneWidget);
+    expect(find.text('Sin anuncios'), findsNothing);
+    repo.rows.add(SchoolEvent(
+        id: '11',
+        title: 'Segundo aviso externo',
+        description: 'Otro aviso',
+        date: DateTime(2026),
+        audience: 'all',),);
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pumpAndSettle();
+    expect(find.text('Segundo aviso externo'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    router.dispose();
+  });
+  testWidgets(
       'listing failure shows an error and retry, with no mock or empty fallback',
       (tester) async {
     final repo = _Events()..listFails = true;

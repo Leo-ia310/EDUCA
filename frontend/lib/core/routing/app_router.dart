@@ -1,3 +1,5 @@
+import '../../features/portal_access/admin_access_screen.dart';
+import '../../features/portal_access/portal_grades_screen.dart';
 import '../../features/collaborations/collaborations_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -417,8 +419,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: Routes.reports,
         builder: (context, state) {
           final raw = state.uri.queryParameters['studentId'];
-          final studentId = int.tryParse(raw ?? '') ?? 1001;
-          return ReportCardScreen(studentId: studentId);
+          final studentId = int.tryParse(raw ?? '');
+          if (studentId != null) return ReportCardScreen(studentId: studentId);
+          return Consumer(
+            builder: (context, ref, _) => _StudentAssignmentsResolved(
+              idProvider: ref.watch(authControllerProvider).user?.activeRole ==
+                      AppRole.parent
+                  ? parentChildStudentIdProvider
+                  : currentStudentIdProvider,
+              builder: ({Key? key, required int studentId}) =>
+                  ReportCardScreen(key: key, studentId: studentId),
+            ),
+          );
         },
       ),
 
@@ -551,12 +563,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ----- Anuncios / Eventos -----
       GoRoute(
         path: Routes.collaborations,
-        builder: (_, __) => const RoleGuard(allowed: {
-          AppRole.teacher,
-          AppRole.admin,
-          AppRole.coordinator,
-          AppRole.director,
-        }, child: CollaborationsScreen(),),
+        builder: (_, __) => const RoleGuard(
+          allowed: {
+            AppRole.teacher,
+            AppRole.admin,
+            AppRole.coordinator,
+            AppRole.director,
+          },
+          child: CollaborationsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: Routes.adminAccess,
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminAccessScreen(),
+        ),
       ),
       GoRoute(
         path: Routes.announcements,
@@ -778,10 +800,7 @@ class _GradesRoleSplit extends ConsumerWidget {
         return const TeacherGradebookScreen();
       case AppRole.student:
       case AppRole.parent:
-        return const RoleGuard(
-          allowed: {AppRole.teacher},
-          child: TeacherGradebookScreen(),
-        );
+        return const PortalGradesScreen();
     }
   }
 }
