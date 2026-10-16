@@ -878,6 +878,18 @@ export const apiManifest: ApiManifestEntry[] = [
   api({
     module: "reports",
     method: "GET",
+    path: "/api/reports/report-cards",
+    summary: "Lista boletines emitidos (el mas reciente por alumno y periodo)",
+    auth: "admin, coordinator, director, super_admin con reports.view",
+    frontendStatus: "pending",
+    request: "query: academicPeriodId?, groupId?, studentId?",
+    response: "{ ok: true, data: { reportCards: [{ id, studentId, studentName, academicPeriodId, periodName, overallAverage, status, generatedAt, generalNotes }] } }",
+    source: "backend/src/modules/reports/reports.routes.ts",
+    notes: "Lo usa el panel web. groupId filtra por alumnos activos inscritos en el salon.",
+  }),
+  api({
+    module: "reports",
+    method: "GET",
     path: "/api/reports/report-cards/preview",
     summary: "Previsualiza boletin calculado desde period_grades",
     auth: "admin/teacher o estudiante/padre propio",

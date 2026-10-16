@@ -49,6 +49,37 @@ export class ReportsRepository {
     return data ?? [];
   }
 
+  /** Boletines de la institución, del más reciente al más antiguo; filtra por periodo y/o alumnos. */
+  async listReportCards(
+    institutionId: number,
+    filters: { academicPeriodId?: number | null; studentIds?: number[] | null },
+  ) {
+    if (filters.studentIds != null && filters.studentIds.length === 0) return [];
+    let query = db
+      .from("report_cards")
+      .select("id, student_id, academic_period_id, overall_average, general_notes, status, generated_at, students(persons(first_name, last_name)), academic_periods(name)")
+      .eq("institution_id", institutionId)
+      .order("generated_at", { ascending: false })
+      .order("id", { ascending: false });
+    if (filters.academicPeriodId != null) query = query.eq("academic_period_id", filters.academicPeriodId);
+    if (filters.studentIds != null) query = query.in("student_id", filters.studentIds);
+    const { data, error } = await query;
+    assertNoDbError(error);
+    return (data ?? []) as Record<string, unknown>[];
+  }
+
+  /** Alumnos activos inscritos en un salón. */
+  async activeStudentIdsOfGroup(institutionId: number, groupId: number) {
+    const { data, error } = await db
+      .from("enrollments")
+      .select("student_id, students!inner(active)")
+      .eq("institution_id", institutionId)
+      .eq("group_id", groupId)
+      .eq("students.active", true);
+    assertNoDbError(error);
+    return ((data ?? []) as Record<string, unknown>[]).map((row) => Number(row.student_id));
+  }
+
   async findReportCard(institutionId: number, id: number) {
     return expectSingle<Record<string, unknown>>(
       db

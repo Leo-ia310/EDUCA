@@ -2712,13 +2712,13 @@
         }
       }
     },
-    "/api/reports/report-cards/preview": {
+    "/api/reports/report-cards": {
       "get": {
         "tags": [
           "reports"
         ],
-        "summary": "Previsualiza boletin calculado desde period_grades",
-        "description": "Auth: admin/teacher o estudiante/padre propio.\n\nNotas: Calculo oficial MVP: promedio aritmetico simple de period_grades.final_score.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
+        "summary": "Lista boletines emitidos (el mas reciente por alumno y periodo)",
+        "description": "Auth: admin, coordinator, director, super_admin con reports.view.\n\nNotas: Lo usa el panel web. groupId filtra por alumnos activos inscritos en el salon.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2726,7 +2726,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ student, academicPeriodId, calculation, overallAverage, lines }",
+            "description": "{ ok: true, data: { reportCards: [{ id, studentId, studentName, academicPeriodId, periodName, overallAverage, status, generatedAt, generalNotes }] } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2746,9 +2746,7 @@
             "description": "Permisos insuficientes."
           }
         }
-      }
-    },
-    "/api/reports/report-cards": {
+      },
       "post": {
         "tags": [
           "reports"
@@ -2779,6 +2777,42 @@
         "responses": {
           "200": {
             "description": "{ reportCard }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/reports/report-cards/preview": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Previsualiza boletin calculado desde period_grades",
+        "description": "Auth: admin/teacher o estudiante/padre propio.\n\nNotas: Calculo oficial MVP: promedio aritmetico simple de period_grades.final_score.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ student, academicPeriodId, calculation, overallAverage, lines }",
             "content": {
               "application/json": {
                 "schema": {

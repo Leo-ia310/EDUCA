@@ -19,3 +19,8 @@ export async function getReportCard(req: AppRequest, res: Response) {
   const data = await reportsService.getReportCard(requireAppContext(req), req.params.id);
   return res.json({ ok: true, data });
 }
+
+export async function listReportCards(req: AppRequest, res: Response) {
+  const data = await reportsService.listReportCards(requireAppContext(req), asRecord(req.query));
+  return res.json({ ok: true, data });
+}

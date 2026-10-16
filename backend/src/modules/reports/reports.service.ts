@@ -1,6 +1,6 @@
 import { HttpError } from "../../lib/errors";
 import type { AppContext } from "../../types/app-context";
-import { requiredId, optionalString } from "../../validators/common.validators";
+import { optionalId, requiredId, optionalString } from "../../validators/common.validators";
 import {
   permissionsService,
   PermissionsService,
@@ -15,6 +15,45 @@ export class ReportsService {
     private readonly repository: ReportsRepository = reportsRepository,
     private readonly permissions: PermissionsService = permissionsService,
   ) {}
+
+  /** Lista de boletines emitidos (el más reciente por alumno y periodo). Solo administración con `reports.view`. */
+  async listReportCards(ctx: AppContext, query: Record<string, unknown>) {
+    if (!this.permissions.isAdmin(ctx)) {
+      throw new HttpError(403, "Solo administración puede listar boletines.", "forbidden");
+    }
+    this.permissions.requireAdminPermission(ctx, "reports.view");
+    const academicPeriodId = optionalId(query.academicPeriodId ?? query.academic_period_id);
+    const groupId = optionalId(query.groupId ?? query.group_id);
+    const studentId = optionalId(query.studentId ?? query.student_id);
+
+    let studentIds: number[] | null = studentId == null ? null : [studentId];
+    if (groupId != null) {
+      const inGroup = await this.repository.activeStudentIdsOfGroup(ctx.institutionId, groupId);
+      studentIds = studentIds == null ? inGroup : inGroup.filter((id) => id === studentId);
+    }
+    const rows = await this.repository.listReportCards(ctx.institutionId, { academicPeriodId, studentIds });
+
+    const seen = new Set<string>();
+    const reportCards = [];
+    for (const row of rows as any[]) {
+      const key = `${row.student_id}:${row.academic_period_id}`;
+      if (seen.has(key)) continue; // ya viene ordenado: el primero es el más reciente
+      seen.add(key);
+      const person = row.students?.persons;
+      reportCards.push({
+        id: String(row.id),
+        studentId: String(row.student_id),
+        studentName: `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim(),
+        academicPeriodId: String(row.academic_period_id),
+        periodName: row.academic_periods?.name ?? null,
+        overallAverage: row.overall_average == null ? null : Number(row.overall_average),
+        status: String(row.status ?? "generated"),
+        generatedAt: row.generated_at ?? null,
+        generalNotes: row.general_notes ?? null,
+      });
+    }
+    return { reportCards };
+  }
 
   async previewReportCard(ctx: AppContext, query: Record<string, unknown>) {
     this.permissions.enforceAdminPermission(ctx, "reports.view", ["teacher", "student", "parent"]);
