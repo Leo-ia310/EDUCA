@@ -1,4 +1,4 @@
-import { expectSingle } from "../../lib/db";
+import { assertNoDbError, expectSingle } from "../../lib/db";
 import { supabaseAdmin } from "../../lib/supabase";
 
 const db = supabaseAdmin as any;
@@ -110,6 +110,63 @@ export class AttendanceRepository {
         .single(),
       "No se pudo actualizar la asistencia.",
     );
+  }
+
+  async statuses() {
+    const { data, error } = await db
+      .from("catalog_attendance_statuses")
+      .select("id, name, code, counts_as_absent, color")
+      .eq("active", true)
+      .order("id");
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async sessionsInRange(institutionId: number, from: string, to: string, groupId?: number) {
+    let query = db
+      .from("class_sessions")
+      .select("id, class_id, group_id, date, topic, classes(subjects(name))")
+      .eq("institution_id", institutionId)
+      .gte("date", from)
+      .lte("date", to)
+      .order("date", { ascending: false });
+    if (groupId != null) query = query.eq("group_id", groupId);
+    const { data, error } = await query;
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async marksOfSessions(institutionId: number, sessionIds: number[]) {
+    const rows: Array<Record<string, unknown>> = [];
+    for (let i = 0; i < sessionIds.length; i += 150) {
+      const { data, error } = await db
+        .from("attendances")
+        .select("class_session_id, student_id, attendance_status_id")
+        .eq("institution_id", institutionId)
+        .in("class_session_id", sessionIds.slice(i, i + 150));
+      assertNoDbError(error);
+      rows.push(...((data ?? []) as Array<Record<string, unknown>>));
+    }
+    return rows;
+  }
+
+  async groupNames(institutionId: number, groupId?: number) {
+    let query = db.from("groups").select("id, name").eq("institution_id", institutionId).eq("active", true);
+    if (groupId != null) query = query.eq("id", groupId);
+    const { data, error } = await query;
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async enrolledStudents(institutionId: number, groupId: number) {
+    const { data, error } = await db
+      .from("enrollments")
+      .select("student_id, students!inner(id, active, persons(first_name, last_name))")
+      .eq("institution_id", institutionId)
+      .eq("group_id", groupId)
+      .eq("students.active", true);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
   }
 }
 

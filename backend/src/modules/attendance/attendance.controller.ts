@@ -13,6 +13,16 @@ export async function upsertClassSession(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function getSummary(req: AppRequest, res: Response) {
+  const data = await attendanceService.summary(requireAppContext(req), asRecord(req.query));
+  return res.json({ ok: true, data });
+}
+
+export async function getGroupDetail(req: AppRequest, res: Response) {
+  const data = await attendanceService.groupDetail(requireAppContext(req), req.params.groupId, asRecord(req.query));
+  return res.json({ ok: true, data });
+}
+
 export async function upsertAttendance(req: AppRequest, res: Response) {
   const data = await attendanceService.upsertAttendance(
     requireAppContext(req),
