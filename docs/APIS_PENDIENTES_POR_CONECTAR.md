@@ -12,14 +12,22 @@ Cuando se agregue, quite o cambie una API, actualiza `backend/src/lib/api-manife
 
 ## Resumen
 
-- Total pendiente de conectar: 10
-- Modulos con trabajo pendiente: 4
+- Total pendiente de conectar: 13
+- Modulos con trabajo pendiente: 5
 
 ## Auth
 
 | Metodo | Ruta | Resumen | Auth | Request | Response | Fuente | Notas |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `POST` | `/api/auth/change-password` | Cambia la contrasena de la cuenta autenticada | usuario autenticado | { currentPassword, newPassword } | { ok: true, data: { ok: true } } | `backend/src/modules/auth/auth.routes.ts` | Verifica la contrasena actual con Supabase Auth y exige una nueva de 8+ caracteres distinta de la actual. La pantalla de la app aun no la usa (hoy es un simulacro). |
+
+## Chat
+
+| Metodo | Ruta | Resumen | Auth | Request | Response | Fuente | Notas |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `GET` | `/api/chats/conversations` | Lista las conversaciones del usuario | usuario autenticado (participante de la conversacion) | sin parametros | { ok: true, data: { conversations: [{ id, kind, title, participants[], lastMessage, unreadCount, updatedAt }] } } | `backend/src/modules/chats/chats.routes.ts` | Panel web (la app las lee directo de Supabase). unreadCount = mensajes ajenos sin registro en message_reads. |
+| `GET` | `/api/chats/conversations/:conversationId/messages` | Mensajes de una conversacion | usuario autenticado (participante de la conversacion) | query: limit? (100, max 300) | { ok: true, data: { messages: [{ id, uuid, conversationId, senderId, senderName, sentAt, content, attachment, read }] } } | `backend/src/modules/chats/chats.routes.ts` | Los ultimos N en orden cronologico. read = algun otro participante lo leyo. |
+| `GET` | `/api/chats/contacts` | Personas con las que se puede iniciar una conversacion | usuario autenticado (participante de la conversacion) | query: q? (nombre o rol) | { ok: true, data: { contacts: [{ userId, name, email, role, avatarUrl }] } } | `backend/src/modules/chats/chats.routes.ts` | Usuarios activos de la institucion, maximo 40. |
 
 ## Grades
 

@@ -153,6 +153,98 @@ export class ChatsRepository {
     const { error } = await db.from("conversation_participants").insert(rows);
     assertNoDbError(error);
   }
+
+  // ---------- Lectura (panel web) ----------
+
+  /** Conversaciones del usuario de la institución, con su tipo y título. */
+  async conversationsOfUser(institutionId: number, userId: number) {
+    const { data, error } = await db
+      .from("conversation_participants")
+      .select("conversation_id, conversations!inner(id, kind, title, created_at, institution_id)")
+      .eq("user_id", userId)
+      .eq("conversations.institution_id", institutionId);
+    assertNoDbError(error);
+    return ((data ?? []) as Array<Record<string, any>>).map((r) => r.conversations as Record<string, unknown>);
+  }
+
+  async participantsOf(conversationIds: number[]) {
+    if (conversationIds.length === 0) return [] as Array<Record<string, unknown>>;
+    const { data, error } = await db
+      .from("conversation_participants")
+      .select("conversation_id, user_id, users(id, full_name, avatar_url, user_roles(roles(code)))")
+      .in("conversation_id", conversationIds);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async lastMessageOf(conversationId: number) {
+    const { data, error } = await db
+      .from("messages")
+      .select("id, conversation_id, sender_id, content, file_id, created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    assertNoDbError(error);
+    return ((data ?? [])[0] ?? null) as Record<string, unknown> | null;
+  }
+
+  /** Mensajes ajenos de varias conversaciones (para contar no leídos). */
+  async incomingMessageIds(conversationIds: number[], userId: number) {
+    if (conversationIds.length === 0) return [] as Array<Record<string, unknown>>;
+    const { data, error } = await db
+      .from("messages")
+      .select("id, conversation_id")
+      .in("conversation_id", conversationIds)
+      .neq("sender_id", userId);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async readMessageIds(userId: number, messageIds: number[]) {
+    if (messageIds.length === 0) return new Set<number>();
+    const { data, error } = await db
+      .from("message_reads")
+      .select("message_id")
+      .eq("user_id", userId)
+      .in("message_id", messageIds);
+    assertNoDbError(error);
+    return new Set(((data ?? []) as Array<Record<string, unknown>>).map((r) => Number(r.message_id)));
+  }
+
+  async messagesOf(conversationId: number, limit: number) {
+    const { data, error } = await db
+      .from("messages")
+      .select("id, uuid, conversation_id, sender_id, content, created_at, files(id, original_name, url, size_bytes, mime_type)")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    assertNoDbError(error);
+    return ((data ?? []) as Array<Record<string, unknown>>).reverse();
+  }
+
+  async messageReadsOf(messageIds: number[]) {
+    if (messageIds.length === 0) return [] as Array<Record<string, unknown>>;
+    const { data, error } = await db
+      .from("message_reads")
+      .select("message_id, user_id")
+      .in("message_id", messageIds);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async searchContacts(institutionId: number, userId: number) {
+    const { data, error } = await db
+      .from("users")
+      .select("id, full_name, email, avatar_url, user_roles(roles(code))")
+      .eq("institution_id", institutionId)
+      .eq("active", true)
+      .is("deleted_at", null)
+      .neq("id", userId)
+      .order("full_name")
+      .limit(300);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
 }
 
 export const chatsRepository = new ChatsRepository();

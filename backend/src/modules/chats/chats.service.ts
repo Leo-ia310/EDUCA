@@ -164,6 +164,123 @@ export class ChatsService {
     return { conversationId: String(conversationId) };
   }
 
+  // ---------- Lectura (panel web) ----------
+
+  private roleOfUser(u: any) {
+    const codes = ((u?.user_roles ?? []) as any[]).map((r) => r?.roles?.code).filter(Boolean) as string[];
+    return codes[0] ?? "student";
+  }
+
+  /** Conversaciones del usuario con participantes, último mensaje y no leídos. */
+  async listConversations(ctx: AppContext) {
+    const convs = await this.repository.conversationsOfUser(ctx.institutionId, ctx.userId);
+    const ids = convs.map((c: any) => Number(c.id));
+    const [participants, incoming, lastRows] = await Promise.all([
+      this.repository.participantsOf(ids),
+      this.repository.incomingMessageIds(ids, ctx.userId),
+      Promise.all(ids.map((id) => this.repository.lastMessageOf(id))),
+    ]);
+    const readSet = await this.repository.readMessageIds(ctx.userId, incoming.map((m) => Number(m.id)));
+    const unread = new Map<number, number>();
+    for (const m of incoming) {
+      if (!readSet.has(Number(m.id))) unread.set(Number(m.conversation_id), (unread.get(Number(m.conversation_id)) ?? 0) + 1);
+    }
+    const lastById = new Map<number, Record<string, unknown>>();
+    for (const row of lastRows) if (row) lastById.set(Number(row.conversation_id), row);
+
+    const conversations = convs.map((c: any) => {
+      const id = Number(c.id);
+      const people = (participants as any[])
+        .filter((p) => Number(p.conversation_id) === id)
+        .map((p) => ({
+          userId: String(p.user_id),
+          name: String(p.users?.full_name ?? "—"),
+          role: this.roleOfUser(p.users),
+          avatarUrl: p.users?.avatar_url ?? null,
+          isMe: Number(p.user_id) === ctx.userId,
+        }));
+      const last = lastById.get(id) as any;
+      const title = c.title && String(c.title).length > 0
+        ? String(c.title)
+        : people.filter((p) => !p.isMe).map((p) => p.name).join(", ");
+      return {
+        id: String(id),
+        kind: c.kind === "group" ? "group" : "individual",
+        title,
+        participants: people,
+        lastMessage: last
+          ? {
+            id: String(last.id),
+            senderId: String(last.sender_id),
+            senderName: people.find((p) => p.userId === String(last.sender_id))?.name ?? "Usuario",
+            content: last.content ?? null,
+            hasAttachment: last.file_id != null,
+            sentAt: String(last.created_at),
+          }
+          : null,
+        unreadCount: unread.get(id) ?? 0,
+        updatedAt: String(last?.created_at ?? c.created_at),
+      };
+    });
+    conversations.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return { conversations };
+  }
+
+  /** Mensajes de una conversación (los últimos `limit`), con nombre del remitente y quién los leyó. */
+  async listMessages(ctx: AppContext, conversationIdValue: unknown, query: Record<string, unknown>) {
+    const conversationId = requiredId(conversationIdValue, "Conversación");
+    await this.assertConversationParticipant(ctx, conversationId);
+    const limit = Math.min(Math.max(Number(query.limit ?? 100) || 100, 1), 300);
+    const [rows, participants] = await Promise.all([
+      this.repository.messagesOf(conversationId, limit),
+      this.repository.participantsOf([conversationId]),
+    ]);
+    const names = new Map<string, string>();
+    for (const p of participants as any[]) names.set(String(p.user_id), String(p.users?.full_name ?? "Usuario"));
+    const reads = await this.repository.messageReadsOf(rows.map((r) => Number(r.id)));
+    const readers = new Map<number, Set<string>>();
+    for (const r of reads) {
+      const set = readers.get(Number(r.message_id)) ?? new Set<string>();
+      set.add(String(r.user_id));
+      readers.set(Number(r.message_id), set);
+    }
+    return {
+      messages: (rows as any[]).map((row) => {
+        const sender = String(row.sender_id);
+        const seenBy = [...(readers.get(Number(row.id)) ?? [])].filter((u) => u !== sender);
+        return {
+          id: String(row.id),
+          uuid: String(row.uuid),
+          conversationId: String(row.conversation_id),
+          senderId: sender,
+          senderName: names.get(sender) ?? "Usuario",
+          sentAt: String(row.created_at ?? ""),
+          content: row.content ?? null,
+          attachment: row.files == null ? null : mapAttachment(row.files),
+          /** Otro participante ya lo leyó. */
+          read: seenBy.length > 0,
+        };
+      }),
+    };
+  }
+
+  /** Personas de la institución con las que se puede iniciar una conversación. */
+  async listContacts(ctx: AppContext, query: Record<string, unknown>) {
+    const needle = (optionalString(query.q ?? query.query, 80) ?? "").toLowerCase();
+    const rows = await this.repository.searchContacts(ctx.institutionId, ctx.userId);
+    const contacts = (rows as any[])
+      .map((u) => ({
+        userId: String(u.id),
+        name: String(u.full_name ?? "—"),
+        email: u.email ?? null,
+        role: this.roleOfUser(u),
+        avatarUrl: u.avatar_url ?? null,
+      }))
+      .filter((c) => !needle || c.name.toLowerCase().includes(needle) || c.role.toLowerCase().includes(needle))
+      .slice(0, 40);
+    return { contacts };
+  }
+
   private async assertConversationParticipant(
     ctx: AppContext,
     conversationId: number,

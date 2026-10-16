@@ -36,3 +36,21 @@ export async function ensureIndividualConversation(
   return res.json({ ok: true, data });
 }
 
+export async function listConversations(req: AppRequest, res: Response) {
+  const data = await chatsService.listConversations(requireAppContext(req));
+  return res.json({ ok: true, data });
+}
+
+export async function listMessages(req: AppRequest, res: Response) {
+  const data = await chatsService.listMessages(
+    requireAppContext(req),
+    req.params.conversationId,
+    asRecord(req.query),
+  );
+  return res.json({ ok: true, data });
+}
+
+export async function listContacts(req: AppRequest, res: Response) {
+  const data = await chatsService.listContacts(requireAppContext(req), asRecord(req.query));
+  return res.json({ ok: true, data });
+}

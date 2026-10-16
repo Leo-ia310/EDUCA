@@ -2,6 +2,9 @@ import { Router } from "express";
 
 import {
   ensureIndividualConversation,
+  listContacts,
+  listConversations,
+  listMessages,
   markConversationAsRead,
   sendMessage,
 } from "./chats.controller";
@@ -17,5 +20,8 @@ chatsRoutes.patch(
   "/conversations/:conversationId/read",
   asyncHandler(markConversationAsRead),
 );
+chatsRoutes.get("/conversations", asyncHandler(listConversations));
+chatsRoutes.get("/conversations/:conversationId/messages", asyncHandler(listMessages));
+chatsRoutes.get("/contacts", asyncHandler(listContacts));
 chatsRoutes.post("/individual", asyncHandler(ensureIndividualConversation));
 

@@ -2272,6 +2272,114 @@
         }
       }
     },
+    "/api/chats/conversations": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Lista las conversaciones del usuario",
+        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: Panel web (la app las lee directo de Supabase). unreadCount = mensajes ajenos sin registro en message_reads.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { conversations: [{ id, kind, title, participants[], lastMessage, unreadCount, updatedAt }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/chats/conversations/:conversationId/messages": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Mensajes de una conversacion",
+        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: Los ultimos N en orden cronologico. read = algun otro participante lo leyo.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { messages: [{ id, uuid, conversationId, senderId, senderName, sentAt, content, attachment, read }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/chats/contacts": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Personas con las que se puede iniciar una conversacion",
+        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: Usuarios activos de la institucion, maximo 40.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { contacts: [{ userId, name, email, role, avatarUrl }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/chats/{wildcard}": {
       "post": {
         "tags": [
