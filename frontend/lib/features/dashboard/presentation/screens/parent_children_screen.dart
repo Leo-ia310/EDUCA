@@ -1,3 +1,4 @@
+import '../../../portal_access/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -60,7 +61,7 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
   @override
   Widget build(BuildContext context) {
     final data = ref.watch(parentDashboardProvider).valueOrNull ??
-        ParentDashboardData.mock();
+        ParentDashboardData.empty();
     final kids = data.children;
     final selected =
         ref.watch(selectedChildIndexProvider).clamp(0, kids.length - 1);
@@ -94,6 +95,12 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
                         child: kids[i],
                         color: _childColor(context, i),
                         selected: i == selected,
+                        showGrades: ref
+                                .watch(portalResolvedAccessProvider)
+                                ?.annualGradesVisible ??
+                            false,
+                        showAttendance:
+                            ref.watch(portalCanProvider('attendance.view')),
                       ),
                     ),
                   ),
@@ -150,92 +157,113 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
             key: ValueKey(selected),
             children: [
               const SectionHeader(
-                  title: 'Promedio de asistencias', accent: false,),
+                title: 'Promedio de asistencias',
+                accent: false,
+              ),
+              const SizedBox(height: 12),
+              if (ref.watch(portalCanProvider('attendance.view')))
+                HomeOptionCard(
+                  icon: Icons.event_available_rounded,
+                  title: 'Promedio de asistencias',
+                  subtitle:
+                      '${(child.attendance ?? data.attendancePercent).round()}% · ${child.name}',
+                  color: context.palette.success,
+                  art: const ArtCluster([
+                    ArtItem.icon(
+                      Icons.check_circle_rounded,
+                      size: 64,
+                      top: 4,
+                      right: 40,
+                      angle: 0.2,
+                    ),
+                    ArtItem.icon(
+                      Icons.calendar_month_rounded,
+                      size: 48,
+                      top: 50,
+                      right: 0,
+                      angle: -0.3,
+                    ),
+                  ]),
+                  onTap: () => context.push(Routes.parentAttendance),
+                ),
+              const SizedBox(height: 20),
+              const SectionHeader(title: 'Docentes por materia', accent: false),
               const SizedBox(height: 12),
               HomeOptionCard(
-                icon: Icons.event_available_rounded,
-                title: 'Promedio de asistencias',
-                subtitle:
-                    '${(child.attendance ?? data.attendancePercent).round()}% · ${child.name}',
-                color: context.palette.success,
+                icon: Icons.menu_book_rounded,
+                title: 'Maestros',
+                subtitle: 'Maestros y materias',
+                color: context.palette.grape,
                 art: const ArtCluster([
                   ArtItem.icon(
-                    Icons.check_circle_rounded,
+                    Icons.school_rounded,
                     size: 64,
                     top: 4,
                     right: 40,
-                    angle: 0.2,
+                    angle: 0.25,
                   ),
                   ArtItem.icon(
-                    Icons.calendar_month_rounded,
+                    Icons.edit_note_rounded,
                     size: 48,
                     top: 50,
                     right: 0,
                     angle: -0.3,
                   ),
                 ]),
-                onTap: () => context.push(Routes.parentAttendance),
+                onTap: () => context.push(Routes.parentTeachers),
               ),
               const SizedBox(height: 20),
-              const SectionHeader(title: 'Docentes por materia', accent: false),
-          const SizedBox(height: 12),
-          HomeOptionCard(
-            icon: Icons.menu_book_rounded,
-            title: 'Maestros',
-            subtitle: 'Maestros y materias',
-            color: context.palette.grape,
-            art: const ArtCluster([
-              ArtItem.icon(Icons.school_rounded,
-                  size: 64, top: 4, right: 40, angle: 0.25,),
-              ArtItem.icon(Icons.edit_note_rounded,
-                  size: 48, top: 50, right: 0, angle: -0.3,),
-            ]),
-            onTap: () => context.push(Routes.parentTeachers),
-          ),
-          const SizedBox(height: 20),
-          const SectionHeader(title: 'Tareas y Exámenes', accent: false),
+              const SectionHeader(title: 'Tareas y Exámenes', accent: false),
               const SizedBox(height: 12),
-              HomeOptionCard(
-                icon: Icons.note_alt_rounded,
-                title: 'Tareas',
-                subtitle: 'Pendientes y entregadas de ${child.name}',
-                color: context.palette.sun,
-                art: const ArtCluster([
-                  ArtItem.icon(
-                    Icons.edit_rounded,
-                    size: 64,
-                    top: 4,
-                    right: 40,
-                    angle: 0.35,
-                  ),
-                  ArtItem.icon(
-                    Icons.edit_rounded,
-                    size: 48,
-                    top: 50,
-                    right: 0,
-                    angle: -0.5,
-                  ),
-                ]),
-                onTap: () => context.push(Routes.assignments),
-              ),
+              if (ref.watch(portalCanProvider('assignments.view')))
+                HomeOptionCard(
+                  icon: Icons.note_alt_rounded,
+                  title: 'Tareas',
+                  subtitle: 'Pendientes y entregadas de ${child.name}',
+                  color: context.palette.sun,
+                  art: const ArtCluster([
+                    ArtItem.icon(
+                      Icons.edit_rounded,
+                      size: 64,
+                      top: 4,
+                      right: 40,
+                      angle: 0.35,
+                    ),
+                    ArtItem.icon(
+                      Icons.edit_rounded,
+                      size: 48,
+                      top: 50,
+                      right: 0,
+                      angle: -0.5,
+                    ),
+                  ]),
+                  onTap: () => context.push(Routes.assignments),
+                ),
               const SizedBox(height: 4),
-              HomeOptionCard(
-                icon: Icons.school_rounded,
-                title: 'Exámenes',
-                subtitle: 'Pruebas y exámenes de ${child.name}',
-                color: context.palette.coral,
-                art: const ArtCluster([
-                  ArtItem.text('A+', size: 56, top: 6, right: 30, angle: -0.2),
-                  ArtItem.icon(
-                    Icons.check_circle_rounded,
-                    size: 44,
-                    top: 56,
-                    right: 0,
-                    angle: 0.2,
-                  ),
-                ]),
-                onTap: () => context.push(Routes.exams),
-              ),
+              if (ref.watch(portalCanProvider('assignments.view')))
+                HomeOptionCard(
+                  icon: Icons.school_rounded,
+                  title: 'Exámenes',
+                  subtitle: 'Pruebas y exámenes de ${child.name}',
+                  color: context.palette.coral,
+                  art: const ArtCluster([
+                    ArtItem.text(
+                      'A+',
+                      size: 56,
+                      top: 6,
+                      right: 30,
+                      angle: -0.2,
+                    ),
+                    ArtItem.icon(
+                      Icons.check_circle_rounded,
+                      size: 44,
+                      top: 56,
+                      right: 0,
+                      angle: 0.2,
+                    ),
+                  ]),
+                  onTap: () => context.push(Routes.exams),
+                ),
             ],
           ),
         ],
@@ -250,11 +278,14 @@ class _ChildCard extends StatelessWidget {
     required this.child,
     required this.color,
     required this.selected,
+    this.showGrades = true,
+    this.showAttendance = true,
   });
 
   final ChildBrief child;
   final Color color;
   final bool selected;
+  final bool showGrades, showAttendance;
 
   @override
   Widget build(BuildContext context) {
@@ -348,18 +379,20 @@ class _ChildCard extends StatelessWidget {
                 Row(
                   children: [
                     stat('Edad', child.age == null ? '—' : '${child.age} años'),
-                    stat(
-                      'Promedio',
-                      child.average == null
-                          ? '—'
-                          : child.average!.toStringAsFixed(0),
-                    ),
-                    stat(
-                      'Asistencia',
-                      child.attendance == null
-                          ? '—'
-                          : '${child.attendance!.round()}%',
-                    ),
+                    if (showGrades)
+                      stat(
+                        'Promedio',
+                        child.average == null
+                            ? '—'
+                            : child.average!.toStringAsFixed(0),
+                      ),
+                    if (showAttendance)
+                      stat(
+                        'Asistencia',
+                        child.attendance == null
+                            ? '—'
+                            : '${child.attendance!.round()}%',
+                      ),
                   ],
                 ),
               ],
@@ -378,7 +411,7 @@ class ParentAttendanceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(parentDashboardProvider).valueOrNull ??
-        ParentDashboardData.mock();
+        ParentDashboardData.empty();
     final kids = data.children;
     final child =
         kids[ref.watch(selectedChildIndexProvider).clamp(0, kids.length - 1)];

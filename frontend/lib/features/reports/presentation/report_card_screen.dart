@@ -1,3 +1,5 @@
+import '../../portal_access/providers.dart';
+import '../../portal_access/access_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -33,90 +35,125 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
     final palette = context.palette;
     // Alumnos y padres no tienen lista de permisos (can == true).
     final canDownload =
-        ref.watch(authControllerProvider).user?.can('reports.download') ?? false;
+        (ref.watch(authControllerProvider).user?.can('reports.download') ??
+                false) &&
+            ref.watch(portalCanProvider('reports.download'));
     final periodsAsync = ref.watch(periodsProvider);
     final scaleAsync = ref.watch(defaultScaleProvider);
-    final card = ref.watch(reportCardProvider(
-      StudentGradesArgs(studentId: widget.studentId, periodId: _periodId),
-    ),);
+    final card = ref.watch(
+      reportCardProvider(
+        StudentGradesArgs(studentId: widget.studentId, periodId: _periodId),
+      ),
+    );
 
     return StudentDetailScaffold(
       title: 'Boletín',
       bottomNav: false,
-      child: card.when(
-        loading: () => const SkeletonList(),
-        error: (e, _) => ErrorStateView(message: '$e'),
-        data: (data) => scaleAsync.when(
-          loading: () => const SkeletonList(),
-          error: (e, _) => ErrorStateView(message: '$e'),
-          data: (scale) => periodsAsync.when(
-            loading: () => const SkeletonList(),
-            error: (e, _) => ErrorStateView(message: '$e'),
-            data: (periods) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _PeriodSelector(
-                  periods: periods,
-                  selected: _periodId,
-                  onChanged: (v) => setState(() => _periodId = v),
-                ),
-                const SizedBox(height: 16),
-                _Header(card: data, scale: scale),
-                const SizedBox(height: 16),
-                const SectionHeader(title: 'Materias', accent: false),
-                const SizedBox(height: 8),
-                DepthCard(
-                  soft: true,
-                  padding: EdgeInsets.zero,
-                  child: Column(
+      child: Column(
+        children: [
+          periodsAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (periods) => _PeriodSelector(
+              periods: periods,
+              selected: _periodId,
+              onChanged: (v) => setState(() => _periodId = v),
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (!(ref
+                  .watch(portalResolvedAccessProvider)
+                  ?.gradeVisible(widget.studentId, _periodId) ??
+              false))
+            const PortalRestriction(
+              message:
+                  'Las notas de este periodo están ocultas. Selecciona otro periodo habilitado.',
+            )
+          else
+            card.when(
+              loading: () => const SkeletonList(),
+              error: (e, _) => ErrorStateView(message: '$e'),
+              data: (data) => scaleAsync.when(
+                loading: () => const SkeletonList(),
+                error: (e, _) => ErrorStateView(message: '$e'),
+                data: (scale) => periodsAsync.when(
+                  loading: () => const SkeletonList(),
+                  error: (e, _) => ErrorStateView(message: '$e'),
+                  data: (periods) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (final line in data.lines) ...[
-                        _SubjectLine(line: line, scale: scale),
-                        if (line != data.lines.last)
-                          Divider(
-                              height: 1,
-                              color: Theme.of(context)
-                                  .dividerColor
-                                  .withValues(alpha: 0.5),),
+                      _Header(card: data, scale: scale),
+                      const SizedBox(height: 16),
+                      const SectionHeader(title: 'Materias', accent: false),
+                      const SizedBox(height: 8),
+                      DepthCard(
+                        soft: true,
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          children: [
+                            for (final line in data.lines) ...[
+                              _SubjectLine(line: line, scale: scale),
+                              if (line != data.lines.last)
+                                Divider(
+                                  height: 1,
+                                  color: Theme.of(context)
+                                      .dividerColor
+                                      .withValues(alpha: 0.5),
+                                ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (canDownload) ...[
+                        const SizedBox(height: 16),
+                        BrutalButton(
+                          expand: true,
+                          onTap: () => _openPdf(data),
+                          icon: Icons.picture_as_pdf_rounded,
+                          label: 'Ver / Descargar boletín en PDF',
+                        ),
+                        const SizedBox(height: 10),
+                        BrutalButton(
+                          expand: true,
+                          onTap: () => _sharePdf(data),
+                          icon: Icons.ios_share_rounded,
+                          label: 'Compartir boletín',
+                          color: context.palette.cardElevated,
+                          foreground: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ],
+                      const SizedBox(height: 12),
+                      Center(
+                        child: Text(
+                          'Promedio con escala "${scale.name}"',
+                          style: context.textTheme.labelSmall
+                              ?.copyWith(color: palette.textMuted),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                if (canDownload) ...[
-                  const SizedBox(height: 16),
-                  BrutalButton(
-                    expand: true,
-                    onTap: () => _openPdf(data),
-                    icon: Icons.picture_as_pdf_rounded,
-                    label: 'Ver / Descargar boletín en PDF',
-                  ),
-                  const SizedBox(height: 10),
-                  BrutalButton(
-                    expand: true,
-                    onTap: () => _sharePdf(data),
-                    icon: Icons.ios_share_rounded,
-                    label: 'Compartir boletín',
-                    color: context.palette.cardElevated,
-                    foreground: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    'Promedio con escala "${scale.name}"',
-                    style: context.textTheme.labelSmall
-                        ?.copyWith(color: palette.textMuted),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+        ],
       ),
     );
   }
 
   Future<void> _openPdf(ReportCard card) async {
+    final access = await ref.refresh(portalAccessProvider.future);
+    if (!access.can('reports.view') ||
+        !access.can('reports.download') ||
+        !access.gradeVisible(widget.studentId, _periodId)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('La descarga de este boletín está restringida.'),
+          ),
+        );
+      }
+      return;
+    }
     final pdfService = ref.read(reportPdfServiceProvider);
     await Printing.layoutPdf(
       onLayout: (_) => pdfService.buildReportCard(card),
@@ -125,12 +162,25 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
   }
 
   Future<void> _sharePdf(ReportCard card) async {
+    final access = await ref.refresh(portalAccessProvider.future);
+    if (!access.can('reports.view') ||
+        !access.can('reports.download') ||
+        !access.gradeVisible(widget.studentId, _periodId)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('La descarga de este boletín está restringida.'),
+          ),
+        );
+      }
+      return;
+    }
     final pdfService = ref.read(reportPdfServiceProvider);
     final bytes = await pdfService.buildReportCard(card);
     await Printing.sharePdf(
       bytes: bytes,
-      filename:
-          'Boletin_${card.studentName}_${card.periodName}.pdf'.replaceAll(' ', '_'),
+      filename: 'Boletin_${card.studentName}_${card.periodName}.pdf'
+          .replaceAll(' ', '_'),
     );
   }
 }
@@ -201,14 +251,19 @@ class _Header extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(card.studentName,
-                        style: context.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),),
-                    Text('${card.gradeLevel} · ${card.institutionName}',
-                        style: context.textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7),),),
+                    Text(
+                      card.studentName,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      '${card.gradeLevel} · ${card.institutionName}',
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -255,17 +310,21 @@ class _HeaderStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: context.textTheme.labelSmall?.copyWith(
-                color: Colors.white.withValues(alpha: 0.55),
-                fontWeight: FontWeight.w600,
-              ),),
+          Text(
+            label,
+            style: context.textTheme.labelSmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.55),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(value,
-              style: context.textTheme.titleSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),),
+          Text(
+            value,
+            style: context.textTheme.titleSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ],
       ),
     );
@@ -295,17 +354,22 @@ class _SubjectLine extends StatelessWidget {
                 width: Brutal.border,
               ),
             ),
-            child: Icon(Icons.menu_book_rounded,
-                color: palette.accentDeep, size: 18,),
+            child: Icon(
+              Icons.menu_book_rounded,
+              color: palette.accentDeep,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(line.subjectName,
-                    style: context.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w800),),
+                Text(
+                  line.subjectName,
+                  style: context.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
                 Text(line.teacherName, style: context.textTheme.bodySmall),
               ],
             ),

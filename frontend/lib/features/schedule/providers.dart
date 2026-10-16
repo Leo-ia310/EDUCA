@@ -1,3 +1,4 @@
+import '../portal_access/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,6 +18,7 @@ import 'domain/schedule_repository.dart';
 /// comentario en `domain/schedule_repository.dart`. Hoy nada consume este
 /// provider todavía.
 final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
+  ref.watch(portalFingerprintProvider);
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
   if (client == null || auth.institution == null) {

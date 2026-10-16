@@ -1,3 +1,4 @@
+import '../portal_access/providers.dart';
 import 'dart:async';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,7 @@ import 'domain/events_repository.dart';
 /// Repositorio de anuncios/eventos. En modo conectado persiste en backend;
 /// en demo mantiene estado en memoria durante la sesión.
 final eventsRepositoryProvider = Provider<EventsRepository>((ref) {
+  ref.watch(portalFingerprintProvider);
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);

@@ -13,6 +13,7 @@ class TwoFactorChallenge {
     required this.id,
     required this.method,
     this.expiresAt,
+    this.resendAt,
     this.emailHint,
     this.debugCode,
     this.requiredByRole = false,
@@ -21,6 +22,7 @@ class TwoFactorChallenge {
   final String id;
   final String method;
   final DateTime? expiresAt;
+  final DateTime? resendAt;
   final String? emailHint;
   final String? debugCode;
   final bool requiredByRole;
@@ -43,6 +45,8 @@ class TwoFactorStatus {
     required this.method,
     required this.hasAuthenticator,
     required this.recoveryCodesRemaining,
+    this.emailHint,
+    this.verifiedAt,
   });
 
   final bool enabled;
@@ -50,16 +54,28 @@ class TwoFactorStatus {
   final String method;
   final bool hasAuthenticator;
   final int recoveryCodesRemaining;
+  final String? emailHint;
+  final DateTime? verifiedAt;
 }
 
 class TwoFactorSetup {
   const TwoFactorSetup({
-    required this.secret,
-    required this.otpauthUrl,
+    this.id,
+    this.method = 'totp',
+    this.emailHint,
+    this.expiresAt,
+    this.resendAt,
+    this.secret = '',
+    this.otpauthUrl = '',
     required this.accountName,
     required this.issuer,
   });
 
+  final String? id;
+  final String method;
+  final String? emailHint;
+  final DateTime? expiresAt;
+  final DateTime? resendAt;
   final String secret;
   final String otpauthUrl;
   final String accountName;
@@ -101,9 +117,15 @@ abstract class AuthRepository {
 
   Future<TwoFactorStatus> twoFactorStatus();
 
-  Future<TwoFactorSetup> setupTwoFactor();
+  Future<TwoFactorSetup> setupTwoFactor({String method = 'totp'});
 
-  Future<TwoFactorEnableResult> enableTwoFactor(String code);
+  Future<TwoFactorSetup> sendTwoFactorEmailCode();
 
-  Future<void> disableTwoFactor({String? code, String? recoveryCode});
+  Future<TwoFactorChallenge> resendTwoFactorLogin(String challengeId);
+
+  Future<TwoFactorEnableResult> enableTwoFactor(String code,
+      {String? challengeId,});
+
+  Future<void> disableTwoFactor(
+      {String? code, String? recoveryCode, String? challengeId,});
 }

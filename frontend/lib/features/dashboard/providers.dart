@@ -1,3 +1,4 @@
+import '../portal_access/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/supabase_client.dart';
@@ -10,6 +11,7 @@ import 'data/supabase_dashboard_datasource.dart';
 /// (respetando RLS); en demo usa el mock. El frontend solo lee.
 final studentDashboardProvider =
     FutureProvider<StudentDashboardData>((ref) async {
+  ref.watch(portalFingerprintProvider);
   final client = ref.watch(supabaseClientProvider);
   final auth = ref.watch(authControllerProvider);
   if (client == null || auth.institution == null) {
@@ -17,8 +19,11 @@ final studentDashboardProvider =
   }
   final studentId = await ref.watch(currentStudentIdProvider.future);
   if (studentId == null) return StudentDashboardData.empty();
-  return SupabaseDashboardDatasource(client, auth.institution!.id)
-      .studentData(studentId);
+  return SupabaseDashboardDatasource(client, auth.institution!.id).studentData(
+    studentId,
+    showGrades:
+        ref.watch(portalResolvedAccessProvider)?.annualGradesVisible ?? false,
+  );
 });
 
 /// Datos del dashboard del docente (clases, tareas, calificaciones recientes).
@@ -38,6 +43,7 @@ final teacherDashboardProvider =
 /// Datos del dashboard del padre/madre (hijo, asistencia, materias, actividad).
 final parentDashboardProvider =
     FutureProvider<ParentDashboardData>((ref) async {
+  ref.watch(portalFingerprintProvider);
   final client = ref.watch(supabaseClientProvider);
   final auth = ref.watch(authControllerProvider);
   if (client == null || auth.institution == null) {
@@ -45,8 +51,11 @@ final parentDashboardProvider =
   }
   final parentId = await ref.watch(currentParentIdProvider.future);
   if (parentId == null) return ParentDashboardData.empty();
-  return SupabaseDashboardDatasource(client, auth.institution!.id)
-      .parentData(parentId);
+  return SupabaseDashboardDatasource(client, auth.institution!.id).parentData(
+    parentId,
+    showGrades:
+        ref.watch(portalResolvedAccessProvider)?.annualGradesVisible ?? false,
+  );
 });
 
 /// Datos del dashboard del administrador (a nivel institución).

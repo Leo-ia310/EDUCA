@@ -10,6 +10,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../portal_access/providers.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../providers.dart';
 import '../widgets/conversation_tile.dart';
@@ -42,10 +43,12 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       showBack: false,
       scrollable: false,
       bodyPadding: EdgeInsets.zero,
-      fab: EducaFab(
-        icon: Icons.chat_bubble_outline,
-        onPressed: () => context.push(Routes.chatNew),
-      ),
+      fab: ref.watch(portalCanProvider('messages.send'))
+          ? EducaFab(
+              icon: Icons.chat_bubble_outline,
+              onPressed: () => context.push(Routes.chatNew),
+            )
+          : null,
       child: SafeArea(
         bottom: false,
         child: Column(
@@ -54,7 +57,8 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
               child: TextField(
                 controller: _searchCtrl,
-                onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+                onChanged: (v) =>
+                    setState(() => _query = v.trim().toLowerCase()),
                 decoration: InputDecoration(
                   hintText: 'Buscar conversación…',
                   prefixIcon: const Icon(Icons.search_rounded),
@@ -85,12 +89,16 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                 data: (list) {
                   final filtered = _query.isEmpty
                       ? list
-                      : list.where((c) =>
-                          c.title.toLowerCase().contains(_query) ||
-                          (c.lastMessage?.content
-                                  ?.toLowerCase()
-                                  .contains(_query) ??
-                              false),).toList();
+                      : list
+                          .where(
+                            (c) =>
+                                c.title.toLowerCase().contains(_query) ||
+                                (c.lastMessage?.content
+                                        ?.toLowerCase()
+                                        .contains(_query) ??
+                                    false),
+                          )
+                          .toList();
                   if (filtered.isEmpty) {
                     return EmptyState(
                       icon: Icons.forum_rounded,

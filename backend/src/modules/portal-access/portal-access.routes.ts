@@ -1,0 +1,11 @@
+import {Router} from "express";
+import {authMiddleware,requireAppContext} from "../../middleware/auth.middleware";
+import {asyncHandler} from "../../middleware/error.middleware";
+import {asRecord} from "../../validators/common.validators";
+import {portalAccessService} from "./portal-access.service";
+export const portalAccessRoutes=Router();
+portalAccessRoutes.use(authMiddleware);
+portalAccessRoutes.get("/me",asyncHandler(async(_req,res)=>{res.json({ok:true,data:await portalAccessService.me()});}));
+portalAccessRoutes.get("/config",asyncHandler(async(_req,res)=>{res.json({ok:true,data:await portalAccessService.config()});}));
+portalAccessRoutes.post("/config",asyncHandler(async(req,res)=>{res.json({ok:true,data:await portalAccessService.manage(asRecord(req.body))});}));
+portalAccessRoutes.get("/grades",asyncHandler(async(req,res)=>{res.json({ok:true,data:await portalAccessService.grades(requireAppContext(req),req.query)});}));

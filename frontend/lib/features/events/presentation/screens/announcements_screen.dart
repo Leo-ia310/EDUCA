@@ -55,6 +55,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
     super.initState();
 
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) { if(mounted) ref.invalidate(announcementsProvider); });
 
     _poll = Timer.periodic(const Duration(seconds: 2), (_) {
       final saved = ref.read(announcementsProvider);
@@ -63,7 +64,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
 
       if (_active &&
           !saved.isLoading &&
-          [...?saved.valueOrNull, ...drafts].any((e) => e.isPublishing)) {
+          ([...?saved.valueOrNull, ...drafts].any((e) => e.isPublishing) || _poll!.tick % 10 == 0)) {
         ref.invalidate(announcementsProvider);
       }
     });

@@ -1,3 +1,4 @@
+import '../portal_access/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/env.dart';
@@ -34,6 +35,7 @@ final pushServiceProvider = Provider<PushService>((ref) {
 /// datos entre roles).
 final notificationsRepositoryProvider =
     Provider<NotificationsRepository>((ref) {
+  ref.watch(portalFingerprintProvider);
   final api = ref.watch(backendApiClientProvider);
   final userId = ref.watch(authControllerProvider.select((a) => a.user?.id));
   if (!Env.isDemoMode && api != null && userId != null) {

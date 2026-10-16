@@ -172,6 +172,31 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> resendTwoFactor() async {
+    final pending = state.pendingTwoFactor;
+    if (pending == null || pending.method != 'email') return false;
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final challenge = await _repo.resendTwoFactorLogin(pending.id);
+      state = state.copyWith(
+        pendingTwoFactor: challenge,
+        loading: false,
+        clearError: true,
+      );
+      return true;
+    } catch (error) {
+      state = state.copyWith(
+        loading: false,
+        error: error is Failure
+            ? error.message
+            : error is StateError
+                ? error.message.toString()
+                : 'No se pudo reenviar el código.',
+      );
+      return false;
+    }
+  }
+
   Future<bool> sendPasswordReset(String email) async {
     state = state.copyWith(loading: true, clearError: true);
     try {
@@ -191,8 +216,13 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
-    await _repo.signOut();
-    state = const AuthState();
+    try {
+      await _repo.signOut();
+    } catch (_) {
+      // A failed remote logout must not keep the UI authenticated.
+    } finally {
+      state = const AuthState();
+    }
   }
 
   void setActiveRole(AppRole role) {

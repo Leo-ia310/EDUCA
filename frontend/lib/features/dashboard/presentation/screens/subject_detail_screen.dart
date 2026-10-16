@@ -1,3 +1,5 @@
+import '../../../portal_access/providers.dart';
+import '../../../portal_access/access_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,10 +32,12 @@ class SubjectDetailScreen extends ConsumerWidget {
 
     final assignmentsAsync = ref.watch(studentAssignmentsProvider);
     final tasks = assignmentsAsync.valueOrNull
-            ?.where((a) =>
-                a.subjectName == subject.name &&
-                a.kind != AssignmentKind.exam &&
-                a.kind != AssignmentKind.quiz,)
+            ?.where(
+              (a) =>
+                  a.subjectName == subject.name &&
+                  a.kind != AssignmentKind.exam &&
+                  a.kind != AssignmentKind.quiz,
+            )
             .toList() ??
         const <Assignment>[];
 
@@ -111,63 +115,72 @@ class SubjectDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          SectionHeader(
-            title: 'Tareas',
-            action: 'Ver todas',
-            onActionTap: () => context.push(Routes.assignments),
-          ),
-          const SizedBox(height: 8),
-          if (tasks.isEmpty)
-            const EmptyState(
-              icon: Icons.task_alt_rounded,
-              title: 'Sin tareas',
-              subtitle: 'No hay tareas asignadas en esta materia por ahora.',
-            )
-          else
-            for (final a in tasks) ...[
-              AssignmentCard(
-                assignment: a,
-                pastel: true,
-                showProgress: false,
-                onTap: () => context.push('${Routes.assignments}/${a.id}'),
-              ),
-              const SizedBox(height: 10),
-            ],
-          const SizedBox(height: 12),
-
-          const SectionHeader(title: 'Calificaciones'),
-          const SizedBox(height: 8),
-          DepthCard(brutal: true, 
-            color: s.surface,
-            accent: s.vivid,
-            soft: true,
-            borderRadius: Radii.md,
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Text(
-                  avg == null ? '—' : avg.toStringAsFixed(1),
-                  style: context.textTheme.headlineSmall
-                      ?.copyWith(color: s.ink, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Promedio de la materia',
-                    style: context.textTheme.bodySmall
-                        ?.copyWith(color: s.inkMuted),
-                  ),
-                ),
-              ],
+          if (ref.watch(portalCanProvider('assignments.view'))) ...[
+            SectionHeader(
+              title: 'Tareas',
+              action: 'Ver todas',
+              onActionTap: () => context.push(Routes.assignments),
             ),
-          ),
-          if (subjectGrades.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            for (final g in subjectGrades) ...[
-              _GradeRow(surface: s, grade: g),
-              const SizedBox(height: 8),
-            ],
+            const SizedBox(height: 8),
+            if (tasks.isEmpty)
+              const EmptyState(
+                icon: Icons.task_alt_rounded,
+                title: 'Sin tareas',
+                subtitle: 'No hay tareas asignadas en esta materia por ahora.',
+              )
+            else
+              for (final a in tasks) ...[
+                AssignmentCard(
+                  assignment: a,
+                  pastel: true,
+                  showProgress: false,
+                  onTap: () => context.push('${Routes.assignments}/${a.id}'),
+                ),
+                const SizedBox(height: 10),
+              ],
+            const SizedBox(height: 12),
           ],
+          if (ref.watch(portalResolvedAccessProvider)?.annualGradesVisible ??
+              false) ...[
+            const SectionHeader(title: 'Calificaciones'),
+            const SizedBox(height: 8),
+            DepthCard(
+              brutal: true,
+              color: s.surface,
+              accent: s.vivid,
+              soft: true,
+              borderRadius: Radii.md,
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Text(
+                    avg == null ? '—' : avg.toStringAsFixed(1),
+                    style: context.textTheme.headlineSmall
+                        ?.copyWith(color: s.ink, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Promedio de la materia',
+                      style: context.textTheme.bodySmall
+                          ?.copyWith(color: s.inkMuted),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (subjectGrades.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              for (final g in subjectGrades) ...[
+                _GradeRow(surface: s, grade: g),
+                const SizedBox(height: 8),
+              ],
+            ],
+          ] else
+            const PortalRestriction(
+              message:
+                  'Las notas anuales incluyen periodos ocultos. Consulta los periodos habilitados en Notas.',
+            ),
         ],
       ),
     );
@@ -191,7 +204,8 @@ class _PastelRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DepthCard(brutal: true, 
+    return DepthCard(
+      brutal: true,
       color: surface.surface,
       accent: surface.vivid,
       soft: true,
@@ -236,7 +250,8 @@ class _GradeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DepthCard(brutal: true, 
+    return DepthCard(
+      brutal: true,
       color: surface.surface,
       soft: true,
       borderRadius: Radii.md,

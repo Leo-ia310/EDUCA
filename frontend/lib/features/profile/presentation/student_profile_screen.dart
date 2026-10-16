@@ -1,3 +1,7 @@
+import 'package:go_router/go_router.dart';
+import '../../../core/routing/route_paths.dart';
+import '../../portal_access/providers.dart';
+import '../../portal_access/access_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,7 +27,7 @@ class StudentProfileScreen extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user;
     final institution = ref.watch(authControllerProvider).institution;
     final data = ref.watch(studentDashboardProvider).valueOrNull ??
-        StudentDashboardData.mock();
+        StudentDashboardData.empty();
 
     return AppScaffold(
       padding: const EdgeInsets.only(bottom: 24),
@@ -49,13 +53,30 @@ class StudentProfileScreen extends ConsumerWidget {
                 const AccountSettingsList(),
                 const SizedBox(height: 24),
 
+                if (ref.watch(portalCanProvider('grades.view'))) ...[
+                  FilledButton.icon(
+                    onPressed: () => context.push(Routes.grades),
+                    icon: const Icon(Icons.assessment_rounded),
+                    label: const Text('Ver notas por periodo'),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 // Notas
-                const SectionHeader(title: 'Mis Notas', accent: false),
-                const SizedBox(height: 8),
-                GradesBlock(
-                  grades: data.grades,
-                  average: data.averageScore,
-                ),
+                if (ref
+                        .watch(portalResolvedAccessProvider)
+                        ?.annualGradesVisible ??
+                    false) ...[
+                  const SectionHeader(title: 'Mis Notas', accent: false),
+                  const SizedBox(height: 8),
+                  GradesBlock(
+                    grades: data.grades,
+                    average: data.averageScore,
+                  ),
+                ] else
+                  const PortalRestriction(
+                    message:
+                        'Las notas están restringidas o incluyen periodos ocultos. Revisa los periodos habilitados en Notas.',
+                  ),
                 const SizedBox(height: 24),
               ],
             ),

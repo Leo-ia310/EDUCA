@@ -7,9 +7,6 @@ const loginSelect =
 
 const loginSelectWithInstitution = `${loginSelect}, institutions(id, code, name, commercial_name, active)`;
 
-const twoFactorSelect =
-  "id, auth_user_id, institution_id, person_id, username, email, full_name, admin_permissions, active, locked_until, two_factor, two_factor_method, two_factor_secret, two_factor_pending_secret, two_factor_pending_method, two_factor_recovery_codes, two_factor_locked_until, user_roles(roles(code, name)), institutions(id, code, name, commercial_name, active)";
-
 export class AuthFlowRepository {
   async findInstitutionByCode(code: string) {
     const db = requireSupabaseServiceRole();
@@ -70,215 +67,60 @@ export class AuthFlowRepository {
     assertNoDbError(error);
   }
 
-  async findLoginTwoFactorSettings(
-    userId: number,
-  ): Promise<Record<string, unknown> | null> {
-    const db = requireSupabaseServiceRole();
-    const { data, error } = await db
-      .from("users")
-      .select(
-        "two_factor, two_factor_method, two_factor_secret, two_factor_locked_until",
-      )
-      .eq("id", userId)
-      .maybeSingle();
-    if (error) {
-      if (this.isMissingTwoFactorSchema(error.message)) return null;
-      assertNoDbError(error);
-    }
-    return data == null ? null : (data as Record<string, unknown>);
+  async findLoginTwoFactorSettings(userId: number): Promise<Record<string, unknown>> {
+    const user = await this.findUserForTwoFactor(userId);
+    return user;
   }
 
   async findUserForTwoFactor(userId: number): Promise<Record<string, unknown>> {
     const db = requireSupabaseServiceRole();
-    const { data, error } = await db
-      .from("users")
-      .select(twoFactorSelect)
-      .eq("id", userId)
-      .is("deleted_at", null)
-      .single();
-    if (error) {
-      if (this.isMissingTwoFactorSchema(error.message)) {
-        const base = await expectSingle<Record<string, unknown>>(
-          db
-            .from("users")
-            .select(loginSelectWithInstitution)
-            .eq("id", userId)
-            .is("deleted_at", null)
-            .single(),
-          "Usuario no encontrado.",
-        );
-        return {
-          ...base,
-          two_factor: false,
-          two_factor_method: "email",
-          two_factor_secret: null,
-          two_factor_pending_secret: null,
-          two_factor_pending_method: null,
-          two_factor_recovery_codes: [],
-          two_factor_locked_until: null,
-          two_factor_schema_available: false,
-        };
-      }
-      assertNoDbError(error);
-    }
-    return {
-      ...(data as Record<string, unknown>),
-      two_factor_schema_available: true,
-    };
-  }
-
-  async savePendingTotpSecret(userId: number, secret: string) {
-    const db = requireSupabaseServiceRole();
-    const { error } = await db
-      .from("users")
-      .update({
-        two_factor_pending_method: "totp",
-        two_factor_pending_secret: secret,
-      })
-      .eq("id", userId);
-    this.assertTwoFactorSchemaError(error?.message);
+    const user = await expectSingle<Record<string, unknown>>(db.from("users")
+      .select(loginSelectWithInstitution).eq("id", userId).eq("active", true).is("deleted_at", null).single(), "Usuario no disponible.");
+    const {data,error}=await db.from("auth_two_factor_settings").select("*").eq("user_id",userId).maybeSingle();
     assertNoDbError(error);
+    const settings=data ?? {};
+    return {...user,two_factor:settings.enabled === true,two_factor_method:settings.method ?? "email",
+      two_factor_secret:settings.secret,two_factor_pending_method:settings.pending_method,
+      two_factor_pending_secret:settings.pending_secret,two_factor_recovery_codes:settings.recovery_codes ?? [],
+      two_factor_locked_until:settings.locked_until,two_factor_verified_at:settings.verified_at};
   }
 
-  async enableTwoFactor(
-    userId: number,
-    method: "email" | "totp",
-    secret: string | null,
-    recoveryCodeHashes: string[],
-  ) {
-    const db = requireSupabaseServiceRole();
-    const { error } = await db
-      .from("users")
-      .update({
-        two_factor: true,
-        two_factor_method: method,
-        two_factor_secret: secret,
-        two_factor_pending_method: null,
-        two_factor_pending_secret: null,
-        two_factor_recovery_codes: recoveryCodeHashes,
-        two_factor_failed_attempts: 0,
-        two_factor_locked_until: null,
-      })
-      .eq("id", userId);
-    this.assertTwoFactorSchemaError(error?.message);
-    assertNoDbError(error);
+  async beginTwoFactor(args: Record<string,unknown>) {
+    return this.factorResult(await requireSupabaseServiceRole().rpc("auth_2fa_begin",args));
   }
-
-  async disableTwoFactor(userId: number) {
-    const db = requireSupabaseServiceRole();
-    const { error } = await db
-      .from("users")
-      .update({
-        two_factor: false,
-        two_factor_method: "email",
-        two_factor_secret: null,
-        two_factor_pending_method: null,
-        two_factor_pending_secret: null,
-        two_factor_recovery_codes: [],
-        two_factor_failed_attempts: 0,
-        two_factor_locked_until: null,
-      })
-      .eq("id", userId);
-    this.assertTwoFactorSchemaError(error?.message);
-    assertNoDbError(error);
+  async verifyTwoFactor(args: Record<string,unknown>) {
+    return this.factorResult(await requireSupabaseServiceRole().rpc("auth_2fa_verify",args));
   }
-
-  async replaceRecoveryCodes(userId: number, hashes: string[]) {
-    const db = requireSupabaseServiceRole();
-    const { error } = await db
-      .from("users")
-      .update({ two_factor_recovery_codes: hashes })
-      .eq("id", userId);
-    this.assertTwoFactorSchemaError(error?.message);
-    assertNoDbError(error);
-  }
-
-  async createTwoFactorChallenge(payload: {
-    userId: number;
-    institutionId: number;
-    method: "email" | "totp";
-    codeHash: string | null;
-    sessionPayload: Record<string, unknown>;
-    authUserPayload: Record<string, unknown>;
-    expiresAt: string;
-  }) {
-    const db = requireSupabaseServiceRole();
-    const { data, error } = await db
-      .from("auth_two_factor_challenges")
-      .insert({
-        user_id: payload.userId,
-        institution_id: payload.institutionId,
-        method: payload.method,
-        code_hash: payload.codeHash,
-        session_payload: payload.sessionPayload,
-        auth_user_payload: payload.authUserPayload,
-        expires_at: payload.expiresAt,
-      })
-      .select("id, method, expires_at, created_at")
-      .single();
-    this.assertTwoFactorSchemaError(error?.message);
-    assertNoDbError(error);
-    return data as Record<string, unknown>;
-  }
-
   async findTwoFactorChallenge(id: string) {
-    const db = requireSupabaseServiceRole();
-    const { data, error } = await db
-      .from("auth_two_factor_challenges")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
-    this.assertTwoFactorSchemaError(error?.message);
-    assertNoDbError(error);
-    return data == null ? null : (data as Record<string, unknown>);
+    const {data,error}=await requireSupabaseServiceRole().from("auth_two_factor_challenges").select("*").eq("id",id).maybeSingle();
+    assertNoDbError(error);return data as Record<string,unknown> | null;
   }
-
-  async incrementTwoFactorChallengeAttempts(id: string) {
-    const db = requireSupabaseServiceRole();
-    const challenge = await expectSingle<Record<string, unknown>>(
-      db
-        .from("auth_two_factor_challenges")
-        .select("failed_attempts, user_id")
-        .eq("id", id)
-        .single(),
-      "Verificación no encontrada.",
-    );
-    const failedAttempts = Number(challenge.failed_attempts ?? 0) + 1;
-    const { error } = await db
-      .from("auth_two_factor_challenges")
-      .update({ failed_attempts: failedAttempts })
-      .eq("id", id);
-    this.assertTwoFactorSchemaError(error?.message);
-    assertNoDbError(error);
-    if (failedAttempts >= 5) {
-      await this.lockTwoFactorUser(Number(challenge.user_id));
-    }
-    return failedAttempts;
+  async latestTwoFactorChallenge(userId: number,purpose: string) {
+    const {data,error}=await requireSupabaseServiceRole().from("auth_two_factor_challenges").select("*")
+      .eq("user_id",userId).eq("purpose",purpose).is("consumed_at",null).order("created_at",{ascending:false}).limit(1).maybeSingle();
+    assertNoDbError(error);return data as Record<string,unknown> | null;
   }
-
-  async consumeTwoFactorChallenge(id: string) {
-    const db = requireSupabaseServiceRole();
-    const { error } = await db
-      .from("auth_two_factor_challenges")
-      .update({ consumed_at: new Date().toISOString() })
-      .eq("id", id);
-    this.assertTwoFactorSchemaError(error?.message);
+  async finishTwoFactorDelivery(id: string,success: boolean) {
+    const {error}=await requireSupabaseServiceRole().from("auth_two_factor_challenges")
+      .update(success ? {delivery_status:"sent"} : {delivery_status:"failed",consumed_at:new Date().toISOString(),session_payload:{},auth_user_payload:{}})
+      .eq("id",id).is("consumed_at",null);
     assertNoDbError(error);
   }
-
-  private async lockTwoFactorUser(userId: number) {
-    const db = requireSupabaseServiceRole();
-    const { error } = await db
-      .from("users")
-      .update({
-        two_factor_failed_attempts: 5,
-        two_factor_locked_until: new Date(
-          Date.now() + 15 * 60 * 1000,
-        ).toISOString(),
-      })
-      .eq("id", userId);
-    this.assertTwoFactorSchemaError(error?.message);
-    assertNoDbError(error);
+  private factorResult(result: {data: any;error: {message:string} | null}) {
+    assertNoDbError(result.error);
+    const data=result.data as Record<string,unknown>;
+    if(data?.ok === true) return data;
+    const errors: Record<string,[number,string]>={
+      cooldown:[429,"Espera 60 segundos antes de solicitar otro código."],send_limit:[429,"Alcanzaste el límite de 5 correos por hora. Intenta más tarde."],
+      locked:[423,"Demasiados intentos. La verificación está bloqueada durante 15 minutos."],
+      expired:[401,"El código ha expirado. Solicita uno nuevo."],used:[401,"Este código ya fue utilizado. Solicita uno nuevo."],
+      incorrect:[401,"El código es incorrecto. Revisa los 6 dígitos e inténtalo otra vez."],
+      already_enabled:[409,"Desactiva el método actual antes de activar otro."],method_changed:[409,"La configuración cambió. Inicia la verificación nuevamente."],
+      not_sent:[409,"El código no se ha enviado correctamente. Solicita uno nuevo."],account_unavailable:[403,"La cuenta no está disponible."],
+      invalid:[401,"La verificación no es válida. Iníciala nuevamente."],
+    };
+    const code=String(data?.error ?? "invalid");const [status,message]=errors[code] ?? errors.invalid;
+    throw new HttpError(status,message,`two_factor_${code}`);
   }
 
   async incrementFailedAttempts(userId: number) {
@@ -300,21 +142,6 @@ export class AuthFlowRepository {
     assertNoDbError(error);
   }
 
-  private assertTwoFactorSchemaError(message: string | undefined) {
-    if (!message || !this.isMissingTwoFactorSchema(message)) return;
-    throw new HttpError(
-      503,
-      "2FA todavía no está preparado en la base de datos. Aplica la migración 0018_two_factor_auth.sql.",
-      "two_factor_schema_missing",
-    );
-  }
-
-  private isMissingTwoFactorSchema(message: string) {
-    return (
-      message.includes("two_factor_") ||
-      message.includes("auth_two_factor_challenges")
-    );
-  }
 }
 
 export const authFlowRepository = new AuthFlowRepository();

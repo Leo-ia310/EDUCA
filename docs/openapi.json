@@ -20,6 +20,164 @@
     }
   },
   "paths": {
+    "/api/portal-access/me": {
+      "get": {
+        "tags": [
+          "portal-access"
+        ],
+        "summary": "Permisos efectivos y visibilidad de notas de la sesión",
+        "description": "Auth: usuario autenticado.\n\nNotas: Migraciones 0026 y 0027. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ permissions, students: [{ studentId, name, annualVisible, periods }], staff }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/portal-access/config": {
+      "get": {
+        "tags": [
+          "portal-access"
+        ],
+        "summary": "Reglas institucionales y destinos disponibles",
+        "description": "Auth: admin, director o coordinator con roles.edit.\n\nNotas: Migraciones 0026 y 0027. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ permissionRules, visibilityRules, users, groups, students, periods }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "portal-access"
+        ],
+        "summary": "Guardar o quitar reglas de módulos y visibilidad de notas",
+        "description": "Auth: admin, director o coordinator con roles.edit.\n\nNotas: Migraciones 0026 y 0027. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ action: save_permission | delete_permission | save_visibility | delete_visibility, scope?, role?, userId?, groupId?, studentId?, periodId?, permission?, allowed?, id? }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "configuración actualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/portal-access/grades": {
+      "get": {
+        "tags": [
+          "portal-access"
+        ],
+        "summary": "Notas propias o de hijos vinculados por periodo",
+        "description": "Auth: student o parent; personal conserva sus permisos académicos.\n\nNotas: Migraciones 0026 y 0027. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ grades, studentId, periodId } o HTTP 403 grades_hidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": [
@@ -74,7 +232,7 @@
           "auth"
         ],
         "summary": "Completa login pendiente de 2FA con codigo temporal o recuperacion",
-        "description": "Auth: publico con challenge vigente.\n\nNotas: Consume el challenge, registra intentos fallidos, invalida codigos usados y desbloquea la entrega de sesion.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "description": "Auth: publico con challenge vigente.\n\nNotas: Migración 0028: consumo atómico, 5 intentos y bloqueo de 15 minutos. Retiene tokens hasta verificar. Registra la sesión verificada para API/RLS, admite TOTP, correo o recuperación y no devuelve códigos de desarrollo.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -310,7 +468,7 @@
           "auth"
         ],
         "summary": "Inicia configuracion 2FA con app autenticadora",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Migración 0028. TOTP devuelve URI para QR local y clave manual; email envía código por Resend. Caduca en 5 minutos. Un método activo debe desactivarse con verificación antes de cambiarlo. Secretos y retos son privados al backend.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -326,7 +484,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ method: 'totp' }"
+                  "value": "{ method: 'totp' | 'email' }"
                 }
               }
             }
@@ -334,7 +492,7 @@
         },
         "responses": {
           "200": {
-            "description": "{ method, secret, otpauthUrl, accountName, issuer }",
+            "description": "{ id, method, secret?, otpauthUrl?, accountName, issuer, emailHint, expiresAt, resendAt }",
             "content": {
               "application/json": {
                 "schema": {
@@ -362,7 +520,7 @@
           "auth"
         ],
         "summary": "Activa 2FA y genera codigos de recuperacion",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Confirma el reto del usuario, consume el código de forma atómica y guarda el método verificado. Emite 10 códigos de recuperación. Habilita la sesión Supabase actual tras verificar el segundo factor.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -378,7 +536,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ code }"
+                  "value": "{ code, challengeId }"
                 }
               }
             }
@@ -430,7 +588,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ code? | recoveryCode? }"
+                  "value": "{ code? | recoveryCode?, challengeId? }"
                 }
               }
             }
@@ -439,6 +597,110 @@
         "responses": {
           "200": {
             "description": "{ enabled: false }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/auth/2fa/email-code": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Envía un código para desactivar 2FA por correo",
+        "description": "Auth: usuario autenticado con 2FA verificado.\n\nNotas: Resend; código de un uso, 5 minutos, 60 segundos entre solicitudes y máximo 5 envíos por usuario/hora. Un reto de activación o login no permite desactivar.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ purpose: 'disable' }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ id, method, emailHint, expiresAt, resendAt }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/auth/2fa/resend-login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Reenvía el código de un login por correo pendiente",
+        "description": "Auth: reto vigente emitido después de validar contraseña.\n\nNotas: Invalida el reto anterior y mantiene la sesión retenida. Comparte límites de correo y no permite reiniciar intentos fallidos ni desbloquear la cuenta.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ challengeId }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ challenge: { id, method, emailHint, expiresAt, resendAt } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2330,7 +2592,7 @@
           "events"
         ],
         "summary": "Lista anuncios publicados de la institucion y audiencia del usuario",
-        "description": "Auth: usuario autenticado.\n\nNotas: Consulta announcements publicados, incluidos eventos pasados. Admin ve los anuncios institucionales; otros usuarios ven sus publicaciones y las dirigidas a sus roles/grupos. Propaga errores de BD; lista vacia solo en consultas exitosas sin resultados.\n\nFuente: backend/src/modules/events/events.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Consulta announcements publicados, incluidos eventos pasados. Admin ve los anuncios institucionales; otros usuarios ven sus publicaciones y las dirigidas a sus roles/grupos. Propaga errores de BD; lista vacia solo en consultas exitosas sin resultados. Flutter invalida la lista al abrir y al recuperar actividad, y consulta cada 20 segundos sin trabajos activos para detectar anuncios de otras sesiones.\n\nFuente: backend/src/modules/events/events.routes.ts.",
         "security": [
           {
             "bearerAuth": []

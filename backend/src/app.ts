@@ -1,4 +1,5 @@
 import express from "express";
+import { portalAccessRoutes } from "./modules/portal-access/portal-access.routes";
 
 import { env } from "./lib/env";
 import { adminRoutes } from "./modules/admin/admin.routes";
@@ -48,6 +49,7 @@ export function createApp() {
   });
 
   app.use("/api/auth", authenticatedRateLimit, authRoutes);
+  app.use("/api/portal-access", authenticatedRateLimit, portalAccessRoutes);
   app.use("/api/admin", authenticatedRateLimit, adminRoutes);
   app.use("/api/business-api", authenticatedRateLimit, businessApiRoutes);
   app.use("/functions/v1/business-api", authenticatedRateLimit, businessApiRoutes);

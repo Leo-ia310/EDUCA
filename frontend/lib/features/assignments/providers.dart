@@ -1,3 +1,4 @@
+import '../portal_access/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/backend_api_client.dart';
@@ -15,6 +16,7 @@ import 'domain/file_upload_service.dart';
 /// entre navegaciones (las tareas creadas en el form deben verse al
 /// volver al feed).
 final assignmentRepositoryProvider = Provider<AssignmentRepository>((ref) {
+  ref.watch(portalFingerprintProvider);
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);

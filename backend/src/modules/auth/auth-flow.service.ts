@@ -12,12 +12,13 @@ import { requireSupabaseServiceRole, supabasePublic } from "../../lib/supabase";
 import { emailService } from "./email.service";
 import { authFlowRepository, AuthFlowRepository } from "./auth-flow.repository";
 
-const challengeTtlMs = 5 * 60 * 1000;
 const base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 export class AuthFlowService {
   constructor(
     private readonly repository: AuthFlowRepository = authFlowRepository,
+    private readonly emails: typeof emailService = emailService,
+    private readonly auth: typeof supabasePublic.auth = supabasePublic.auth,
   ) {}
 
   async login(payload: Record<string, unknown>) {
@@ -52,7 +53,7 @@ export class AuthFlowService {
       );
     }
 
-    const { data, error } = await supabasePublic.auth.signInWithPassword({
+    const { data, error } = await this.auth.signInWithPassword({
       email: String(appUser.email),
       password,
     });
@@ -95,7 +96,7 @@ export class AuthFlowService {
       "Refresh token",
       4000,
     );
-    const { data, error } = await supabasePublic.auth.refreshSession({
+    const { data, error } = await this.auth.refreshSession({
       refresh_token: refreshToken,
     });
     if (error || data.session == null || data.user == null) {
@@ -151,7 +152,7 @@ export class AuthFlowService {
       const actionLink =
         data?.properties?.action_link ?? data?.properties?.email_otp ?? null;
       if (typeof actionLink === "string") {
-        await emailService.sendPasswordRecovery(
+        await this.emails.sendPasswordRecovery(
           String(appUser.email),
           String(appUser.full_name ?? username),
           actionLink,
@@ -167,172 +168,85 @@ export class AuthFlowService {
   }
 
   async twoFactorStatus(userId: number) {
-    const user = await this.repository.findUserForTwoFactor(userId);
-    const recoveryCodes = asList(user.two_factor_recovery_codes);
-    return {
-      enabled: user.two_factor === true,
-      required: false,
-      method:
-        user.two_factor === true
-          ? String(user.two_factor_method ?? "email")
-          : "email",
-      hasAuthenticator:
-        typeof user.two_factor_secret === "string" &&
-        user.two_factor_secret.length > 0,
-      recoveryCodesRemaining: recoveryCodes.length,
-    };
+    const user=await this.repository.findUserForTwoFactor(userId);
+    return {enabled:user.two_factor === true,required:false,method:user.two_factor_method ?? "email",
+      hasAuthenticator:!!user.two_factor_secret,recoveryCodesRemaining:asList(user.two_factor_recovery_codes).length,
+      verifiedAt:user.two_factor_verified_at ?? null,emailHint:this.maskEmail(String(user.email ?? "")),availableMethods:["totp","email"]};
   }
 
-  async setupTwoFactor(userId: number, payload: Record<string, unknown>) {
-    const method = optionalString(payload.method, 20) ?? "totp";
-    if (method !== "totp") {
-      throw new HttpError(
-        400,
-        "Por ahora la activacion manual usa app autenticadora.",
-        "unsupported_two_factor_method",
-      );
-    }
-    const user = await this.repository.findUserForTwoFactor(userId);
-    if (user.two_factor_schema_available === false) {
-      throw new HttpError(
-        503,
-        "2FA todavía no está preparado en la base de datos. Aplica la migración 0018_two_factor_auth.sql.",
-        "two_factor_schema_missing",
-      );
-    }
-    const secret = this.generateBase32Secret();
-    await this.repository.savePendingTotpSecret(userId, secret);
-    const issuer = "Nivra";
-    const label = `${issuer}:${String(user.email ?? user.username ?? user.id)}`;
-    const otpauthUrl =
-      `otpauth://totp/${encodeURIComponent(label)}?secret=${secret}` +
-      `&issuer=${encodeURIComponent(issuer)}&digits=6&period=30`;
-    return {
-      method: "totp",
-      secret,
-      otpauthUrl,
-      accountName: String(user.email ?? user.username ?? "usuario"),
-      issuer,
-    };
+  async setupTwoFactor(userId: number,payload: Record<string,unknown>) {
+    const method=optionalString(payload.method,20) ?? "totp";
+    if(method !== "totp" && method !== "email") throw new HttpError(400,"Elige app autenticadora o correo electrónico.","unsupported_two_factor_method");
+    const user=await this.repository.findUserForTwoFactor(userId);
+    const secret=method === "totp" ? this.generateBase32Secret() : null;
+    const challenge=await this.beginChallenge(user,method,"setup",secret);
+    const issuer="Nivra", accountName=String(user.email ?? user.username ?? user.id);
+    return {...challenge,secret,accountName,issuer,
+      otpauthUrl:secret == null ? null : `otpauth://totp/${encodeURIComponent(`${issuer}:${accountName}`)}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`};
   }
 
-  async enableTwoFactor(userId: number, payload: Record<string, unknown>) {
-    const code = requiredString(payload.code, "Codigo", 20);
-    const user = await this.repository.findUserForTwoFactor(userId);
-    const secret = optionalString(user.two_factor_pending_secret, 200);
-    if (secret == null || user.two_factor_pending_method !== "totp") {
-      throw new HttpError(
-        400,
-        "Primero inicia la configuracion de 2FA.",
-        "two_factor_setup_required",
-      );
-    }
-    if (!this.verifyTotp(secret, code)) {
-      throw new HttpError(
-        401,
-        "El codigo 2FA es incorrecto o vencio.",
-        "invalid_two_factor_code",
-      );
-    }
-    const recoveryCodes = this.generateRecoveryCodes();
-    await this.repository.enableTwoFactor(
-      userId,
-      "totp",
-      secret,
-      recoveryCodes.map((value) => this.hashSecret(value)),
-    );
-    return { enabled: true, method: "totp", recoveryCodes };
+  async sendTwoFactorEmailCode(userId: number,payload: Record<string,unknown>) {
+    if(payload.purpose !== "disable") throw new HttpError(400,"Verificación no válida.","validation_error");
+    const user=await this.repository.findUserForTwoFactor(userId);
+    if(user.two_factor !== true || user.two_factor_method !== "email") throw new HttpError(409,"La cuenta no tiene 2FA por correo activo.","two_factor_method_changed");
+    return this.beginChallenge(user,"email","disable",null);
   }
 
-  async disableTwoFactor(userId: number, payload: Record<string, unknown>) {
-    const user = await this.repository.findUserForTwoFactor(userId);
-    if (user.two_factor !== true) {
-      return { enabled: false };
-    }
-    await this.assertTwoFactorCode(user, payload);
-    await this.repository.disableTwoFactor(userId);
-    return { enabled: false };
+  async enableTwoFactor(userId: number,payload: Record<string,unknown>,sessionId?: string | null) {
+    const recoveryCodes=this.generateRecoveryCodes();
+    const result=await this.verifyChallenge(payload,"setup",userId,recoveryCodes,sessionId);
+    return {enabled:true,method:result.method,recoveryCodes};
   }
 
-  async verifyTwoFactorLogin(payload: Record<string, unknown>) {
-    const challengeId = requiredString(
-      payload.challengeId ?? payload.challenge_id,
-      "Verificacion",
-      80,
-    );
-    const code = optionalString(payload.code, 40);
-    const recoveryCode = optionalString(
-      payload.recoveryCode ?? payload.recovery_code,
-      80,
-    );
-    if (code == null && recoveryCode == null) {
-      throw new HttpError(
-        400,
-        "Ingresa el codigo 2FA o un codigo de recuperacion.",
-        "validation_error",
-      );
+  async disableTwoFactor(userId: number,payload: Record<string,unknown>) {
+    const user=await this.repository.findUserForTwoFactor(userId);
+    if(user.two_factor !== true) return {enabled:false};
+    // TOTP and recovery confirmations need no email. Email codes use an explicit challenge.
+    if(payload.challengeId == null && (user.two_factor_method === "totp" || payload.recoveryCode != null)) {
+      const challenge=await this.beginChallenge(user,String(user.two_factor_method) as "email"|"totp","disable",
+        optionalString(user.two_factor_secret,200),{},null,true);
+      payload={...payload,challengeId:challenge.id};
     }
-    const challenge = await this.repository.findTwoFactorChallenge(challengeId);
-    if (challenge == null || challenge.consumed_at != null) {
-      throw new HttpError(
-        401,
-        "La verificacion 2FA no existe o ya fue usada.",
-        "invalid_two_factor_challenge",
-      );
-    }
-    if (new Date(String(challenge.expires_at)).getTime() <= Date.now()) {
-      throw new HttpError(
-        401,
-        "El codigo 2FA vencio. Inicia sesion nuevamente.",
-        "two_factor_challenge_expired",
-      );
-    }
-    if (Number(challenge.failed_attempts ?? 0) >= 5) {
-      throw new HttpError(
-        423,
-        "Demasiados intentos 2FA. Intenta mas tarde.",
-        "two_factor_locked",
-      );
-    }
-    const user = await this.repository.findUserForTwoFactor(
-      Number(challenge.user_id),
-    );
-    let ok = false;
-    if (recoveryCode != null) {
-      ok = await this.consumeRecoveryCode(user, recoveryCode);
-    } else if (challenge.method === "totp") {
-      ok = this.verifyTotp(String(user.two_factor_secret ?? ""), String(code));
-    } else {
-      ok = this.hashSecret(String(code)) === challenge.code_hash;
-    }
-    if (!ok) {
-      await this.repository.incrementTwoFactorChallengeAttempts(challengeId);
-      throw new HttpError(
-        401,
-        "El codigo 2FA es incorrecto o vencio.",
-        "invalid_two_factor_code",
-      );
-    }
-    await this.repository.consumeTwoFactorChallenge(challengeId);
-    await this.repository.updateLastSignIn(Number(user.id));
-    return this.authResponse(
-      {
-        session: asRecord(challenge.session_payload),
-        user: {
-          id: String(
-            asRecord(challenge.auth_user_payload).id ?? user.auth_user_id,
-          ),
-          email: optionalString(
-            asRecord(challenge.auth_user_payload).email,
-            200,
-          ),
-        },
-      },
-      user,
-      asRecord(user.institutions),
-    );
+    await this.verifyChallenge(payload,"disable",userId);
+    return {enabled:false};
   }
 
+  async verifyTwoFactorLogin(payload: Record<string,unknown>) {
+    const result=await this.verifyChallenge(payload,"login",null);
+    const user=await this.repository.findUserForTwoFactor(Number(result.userId));
+    return this.authResponse({session:result.session,user:{id:String(asRecord(result.authUser).id),email:optionalString(asRecord(result.authUser).email,200)}},user,asRecord(user.institutions));
+  }
+
+  async resendTwoFactorLogin(payload: Record<string,unknown>) {
+    const id=this.challengeId(payload.challengeId);
+    const old=await this.repository.findTwoFactorChallenge(id);
+    if(old == null || old.purpose !== "login" || old.method !== "email" || old.consumed_at != null || Date.parse(String(old.expires_at))<=Date.now()) {
+      throw new HttpError(401,"La verificación expiró. Inicia sesión nuevamente.","two_factor_expired");
+    }
+    const user=await this.repository.findUserForTwoFactor(Number(old.user_id));
+    return {challenge:await this.beginChallenge(user,"email","login",null,asRecord(old.session_payload),id)};
+  }
+
+  private challengeId(value: unknown) {
+    const id=requiredString(value,"Verificación",80);
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new HttpError(401,"Verificación no válida.","two_factor_invalid");
+    return id.toLowerCase();
+  }
+  private async verifyChallenge(payload: Record<string,unknown>,purpose:string,userId:number|null,recoveryCodes:string[]=[],sessionId?:string|null) {
+    const recovery=optionalString(payload.recoveryCode,80);
+    const code=optionalString(payload.code,40)?.replace(/\s/g,"");
+    if(recovery == null && (code == null || !/^\d{6}$/.test(code))) throw new HttpError(400,"Ingresa un código de 6 dígitos.","validation_error");
+    const latest=payload.challengeId == null && userId != null ? await this.repository.latestTwoFactorChallenge(userId,purpose) : null;
+    const id=this.challengeId(payload.challengeId ?? latest?.id);
+    const challenge=latest ?? await this.repository.findTwoFactorChallenge(id);
+    if(challenge == null || challenge.purpose !== purpose || (userId != null && Number(challenge.user_id)!==userId)) throw new HttpError(401,"Verificación no válida.","two_factor_invalid");
+    const secret=optionalString(challenge.secret_snapshot,200);
+    return this.repository.verifyTwoFactor({p_id:id,p_user_id:userId,p_purpose:purpose,
+      p_hash:code == null ? null : this.hashEmailCode(id,code),
+      p_totp_valid:secret != null && code != null && this.verifyTotp(secret,code),p_secret:secret,
+      p_recovery_hash:recovery == null ? null : this.hashSecret(recovery.toUpperCase().replace(/\s/g,"")),
+      p_recovery_codes:recoveryCodes.map(c=>this.hashSecret(c)),p_session_id:sessionId ?? null});
+  }
   async logout(accessToken: string) {
     const response = await fetch(`${env.supabaseUrl}/auth/v1/logout`, {
       method: "POST",
@@ -405,98 +319,37 @@ export class AuthFlowService {
     };
   }
 
-  private async createTwoFactorLoginChallenge(
-    data: { session: unknown; user: { id: string; email?: string | null } },
-    appUser: Record<string, unknown>,
-  ) {
-    if (this.isLocked(appUser.two_factor_locked_until)) {
-      throw new HttpError(
-        423,
-        "2FA bloqueado temporalmente. Intenta mas tarde.",
-        "two_factor_locked",
-      );
-    }
-    const hasTotp =
-      appUser.two_factor === true &&
-      typeof appUser.two_factor_secret === "string" &&
-      appUser.two_factor_secret.length > 0;
-    const method: "email" | "totp" = hasTotp ? "totp" : "email";
-    const code = method === "email" ? this.generateEmailCode() : null;
-    const expiresAt = new Date(Date.now() + challengeTtlMs).toISOString();
-    const challenge = await this.repository.createTwoFactorChallenge({
-      userId: Number(appUser.id),
-      institutionId: Number(appUser.institution_id),
-      method,
-      codeHash: code == null ? null : this.hashSecret(code),
-      sessionPayload: asRecord(data.session),
-      authUserPayload: { id: data.user.id, email: data.user.email ?? null },
-      expiresAt,
-    });
-    let debugCode: string | null = null;
-    if (code != null) {
+  private async createTwoFactorLoginChallenge(data: {session:unknown;user:{id:string;email?:string|null}},appUser:Record<string,unknown>) {
+    const method=appUser.two_factor_method === "totp" ? "totp" : "email";
+    const raw=asRecord(data.session);
+    const session={...raw,session_id:sessionIdFromToken(String(raw.access_token ?? ""))};
+    return {twoFactorRequired:true,challenge:await this.beginChallenge(appUser,method,"login",optionalString(appUser.two_factor_secret,200),session)};
+  }
+
+  private async beginChallenge(user:Record<string,unknown>,method:"email"|"totp",purpose:string,secret:string|null,
+    session:Record<string,unknown>={},replaceId:string|null=null,recoveryOnly=false) {
+    const id=crypto.randomUUID();
+    const code=method === "email" && !recoveryOnly ? this.generateEmailCode() : null;
+    const result=await this.repository.beginTwoFactor({p_id:id,p_user_id:Number(user.id),p_method:method,p_purpose:purpose,p_secret:secret,
+      p_code_hash:code == null ? null : this.hashEmailCode(id,code),p_session:session,
+      p_auth:{id:user.auth_user_id,email:user.email},p_replace:replaceId});
+    if(code != null) {
       try {
-        await emailService.sendTwoFactorCode(
-          String(appUser.email),
-          String(appUser.full_name ?? appUser.username ?? "usuario"),
-          code,
-        );
-      } catch (error) {
-        if (env.isProduction) throw error;
-        debugCode = code;
+        await this.emails.sendTwoFactorCode(String(user.email),String(user.full_name ?? "usuario"),code,purpose,id);
+        await this.repository.finishTwoFactorDelivery(id,true);
+      } catch {
+        await this.repository.finishTwoFactorDelivery(id,false);
+        throw new HttpError(502,"No se pudo enviar el código por correo. Intenta nuevamente en un minuto.","email_send_failed");
       }
+    } else if(recoveryOnly && method === "email") {
+      await this.repository.finishTwoFactorDelivery(id,true);
     }
-    return {
-      twoFactorRequired: true,
-      challenge: {
-        id: String(challenge.id),
-        method,
-        expiresAt,
-        emailHint: this.maskEmail(String(appUser.email ?? "")),
-        requiredByRole: false,
-        ...(debugCode == null ? {} : { debugCode }),
-      },
-    };
+    return {...result,id,method,emailHint:this.maskEmail(String(user.email ?? ""))};
   }
 
-  private async assertTwoFactorCode(
-    user: Record<string, unknown>,
-    payload: Record<string, unknown>,
-  ) {
-    const code = optionalString(payload.code, 40);
-    const recoveryCode = optionalString(
-      payload.recoveryCode ?? payload.recovery_code,
-      80,
-    );
-    if (recoveryCode != null) {
-      if (await this.consumeRecoveryCode(user, recoveryCode)) return;
-    } else if (
-      code != null &&
-      typeof user.two_factor_secret === "string" &&
-      this.verifyTotp(user.two_factor_secret, code)
-    ) {
-      return;
-    }
-    throw new HttpError(
-      401,
-      "El codigo 2FA es incorrecto o vencio.",
-      "invalid_two_factor_code",
-    );
-  }
-
-  private async consumeRecoveryCode(
-    user: Record<string, unknown>,
-    recoveryCode: string,
-  ) {
-    const hashes = asList(user.two_factor_recovery_codes).filter(
-      (entry): entry is string => typeof entry === "string",
-    );
-    const hash = this.hashSecret(recoveryCode.toUpperCase().replace(/\s/g, ""));
-    if (!hashes.includes(hash)) return false;
-    await this.repository.replaceRecoveryCodes(
-      Number(user.id),
-      hashes.filter((entry) => entry !== hash),
-    );
-    return true;
+  private hashEmailCode(id:string,code:string) {
+    if(!env.supabaseServiceRoleKey) throw new HttpError(503,"2FA no está configurado en el servidor.","two_factor_unavailable");
+    return crypto.createHmac("sha256",env.supabaseServiceRoleKey).update(`2fa:${id}:${code}`).digest("hex");
   }
 
   private requiresTwoFactor(settings: Record<string, unknown> | null) {
@@ -531,21 +384,18 @@ export class AuthFlowService {
 
   private generateRecoveryCodes() {
     return Array.from({ length: 10 }, () => {
-      const raw = crypto.randomBytes(5).toString("hex").toUpperCase();
-      return `${raw.slice(0, 5)}-${raw.slice(5, 10)}`;
+      const raw = crypto.randomBytes(8).toString("hex").toUpperCase();
+      return raw.match(/.{4}/g)!.join("-");
     });
   }
 
   private generateBase32Secret() {
-    const bytes = crypto.randomBytes(20);
-    let value = "";
-    for (const byte of bytes) {
-      value += base32Alphabet[byte % base32Alphabet.length];
-    }
-    return value;
+    const bits=[...crypto.randomBytes(20)].map(byte=>byte.toString(2).padStart(8,"0")).join("");
+    return Array.from({length:32},(_,index)=>base32Alphabet[parseInt(bits.slice(index*5,index*5+5),2)]).join("");
   }
 
   private verifyTotp(secret: string, code: string) {
+    if(!/^[A-Z2-7]{16,128}$/i.test(secret)) return false;
     const normalized = code.replace(/\s/g, "");
     if (!/^\d{6}$/.test(normalized)) return false;
     const step = Math.floor(Date.now() / 30000);
@@ -593,4 +443,7 @@ export class AuthFlowService {
   }
 }
 
+export function sessionIdFromToken(token:string):string|null {
+  try {const id=JSON.parse(Buffer.from(token.split(".")[1],"base64url").toString()).session_id;return typeof id === "string" ? id : null;} catch {return null;}
+}
 export const authFlowService = new AuthFlowService();

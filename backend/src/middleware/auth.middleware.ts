@@ -1,9 +1,11 @@
+import { sessionIdFromToken } from "../modules/auth/auth-flow.service";
 import type { NextFunction, Response } from "express";
+import { portalAccessService } from "../modules/portal-access/portal-access.service";
 
 import { authRepository } from "../modules/auth/auth.repository";
 import type { AppContext, AppRequest } from "../types/app-context";
 import { HttpError } from "../lib/errors";
-import { withRequestSupabase } from "../lib/supabase";
+import { currentSupabaseClient, withRequestSupabase } from "../lib/supabase";
 import { asList } from "../validators/common.validators";
 
 export async function authMiddleware(
@@ -15,6 +17,7 @@ export async function authMiddleware(
     const token = bearerToken(req);
     await withRequestSupabase(token, async () => {
       req.appContext = await loadContextFromToken(token);
+      await portalAccessService.enforceRequest(req.appContext, req.originalUrl, req.method, (req.body ?? {}) as Record<string,unknown>);
       next();
     });
   } catch (error) {
@@ -45,9 +48,14 @@ async function loadContextFromToken(token: string): Promise<AppContext> {
     throw new HttpError(401, "Sesión inválida o expirada.", "unauthorized");
   }
 
-  const appUser = await authRepository.findAppUserByAuthUserId(
-    authData.user.id,
-  );
+  let appUser;
+  try {
+    appUser = await authRepository.findAppUserByAuthUserId(authData.user.id);
+  } catch (error) {
+    const {data} = await currentSupabaseClient().rpc("auth_2fa_session_allowed");
+    if (data === false) throw new HttpError(403,"Completa la verificación de seguridad e inicia sesión nuevamente.","two_factor_required");
+    throw error;
+  }
   const roles = new Set(
     asList(appUser.user_roles)
       .map((entry) =>
@@ -63,6 +71,7 @@ async function loadContextFromToken(token: string): Promise<AppContext> {
 
   return {
     authUserId: authData.user.id,
+    sessionId: sessionIdFromToken(token),
     userId: Number(appUser.id),
     institutionId: Number(appUser.institution_id),
     personId: appUser.person_id == null ? null : Number(appUser.person_id),

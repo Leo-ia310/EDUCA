@@ -176,17 +176,26 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<TwoFactorSetup> setupTwoFactor() async {
+  Future<TwoFactorSetup> setupTwoFactor({String method = 'totp'}) async {
     throw const AuthFailure('2FA requiere el backend institucional.');
   }
 
   @override
-  Future<TwoFactorEnableResult> enableTwoFactor(String code) async {
+  Future<TwoFactorEnableResult> enableTwoFactor(String code,
+      {String? challengeId,}) async {
     throw const AuthFailure('2FA requiere el backend institucional.');
   }
 
   @override
-  Future<void> disableTwoFactor({String? code, String? recoveryCode}) async {
+  Future<void> disableTwoFactor(
+      {String? code, String? recoveryCode, String? challengeId,}) async {
     throw const AuthFailure('2FA requiere el backend institucional.');
   }
+
+  @override
+  Future<TwoFactorSetup> sendTwoFactorEmailCode() async =>
+      throw UnimplementedError('2FA por correo requiere el backend.');
+  @override
+  Future<TwoFactorChallenge> resendTwoFactorLogin(String challengeId) async =>
+      throw UnimplementedError('2FA por correo requiere el backend.');
 }

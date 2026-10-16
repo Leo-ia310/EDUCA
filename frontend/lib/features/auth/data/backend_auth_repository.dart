@@ -70,7 +70,8 @@ class BackendAuthRepository implements AuthRepository {
               challenge['expiresAt']?.toString() ?? '',
             ),
             emailHint: challenge['emailHint']?.toString(),
-            debugCode: challenge['debugCode']?.toString(),
+            resendAt:
+                DateTime.tryParse(challenge['resendAt']?.toString() ?? ''),
             requiredByRole: challenge['requiredByRole'] == true,
           ),
         );
@@ -137,6 +138,8 @@ class BackendAuthRepository implements AuthRepository {
       if (_supabase.auth.currentSession != null) {
         await _api.post('/auth/logout');
       }
+    } catch (_) {
+      // Local logout must still work for an expired or unverified session.
     } finally {
       await _clearPersistedSession();
       await _supabase.auth.signOut();
@@ -228,19 +231,26 @@ class BackendAuthRepository implements AuthRepository {
       required: map['required'] == true,
       method: map['method']?.toString() ?? 'email',
       hasAuthenticator: map['hasAuthenticator'] == true,
+      emailHint: map['emailHint']?.toString(),
+      verifiedAt: DateTime.tryParse(map['verifiedAt']?.toString() ?? ''),
       recoveryCodesRemaining:
           int.tryParse('${map['recoveryCodesRemaining']}') ?? 0,
     );
   }
 
   @override
-  Future<TwoFactorSetup> setupTwoFactor() async {
+  Future<TwoFactorSetup> setupTwoFactor({String method = 'totp'}) async {
     final data = await _api.post(
       '/auth/2fa/setup',
-      data: const {'method': 'totp'},
+      data: {'method': method},
     );
     final map = (data as Map).cast<String, dynamic>();
     return TwoFactorSetup(
+      id: map['id']?.toString(),
+      method: map['method']?.toString() ?? 'totp',
+      emailHint: map['emailHint']?.toString(),
+      expiresAt: DateTime.tryParse(map['expiresAt']?.toString() ?? ''),
+      resendAt: DateTime.tryParse(map['resendAt']?.toString() ?? ''),
       secret: map['secret']?.toString() ?? '',
       otpauthUrl: map['otpauthUrl']?.toString() ?? '',
       accountName: map['accountName']?.toString() ?? '',
@@ -249,10 +259,16 @@ class BackendAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<TwoFactorEnableResult> enableTwoFactor(String code) async {
+  Future<TwoFactorEnableResult> enableTwoFactor(
+    String code, {
+    String? challengeId,
+  }) async {
     final data = await _api.post(
       '/auth/2fa/enable',
-      data: {'code': code.trim()},
+      data: {
+        'code': code.trim(),
+        if (challengeId != null) 'challengeId': challengeId,
+      },
     );
     final map = (data as Map).cast<String, dynamic>();
     return TwoFactorEnableResult(
@@ -265,14 +281,55 @@ class BackendAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> disableTwoFactor({String? code, String? recoveryCode}) async {
+  Future<void> disableTwoFactor({
+    String? code,
+    String? recoveryCode,
+    String? challengeId,
+  }) async {
     await _api.post(
       '/auth/2fa/disable',
       data: {
+        if (challengeId != null) 'challengeId': challengeId,
         if (code != null && code.trim().isNotEmpty) 'code': code.trim(),
         if (recoveryCode != null && recoveryCode.trim().isNotEmpty)
           'recoveryCode': recoveryCode.trim(),
       },
+    );
+  }
+
+  @override
+  Future<TwoFactorSetup> sendTwoFactorEmailCode() async {
+    final data = Map<String, dynamic>.from(
+      await _api.post('/auth/2fa/email-code', data: {'purpose': 'disable'})
+          as Map,
+    );
+    return TwoFactorSetup(
+      id: data['id'].toString(),
+      method: 'email',
+      emailHint: data['emailHint']?.toString(),
+      expiresAt: DateTime.tryParse('${data['expiresAt']}'),
+      resendAt: DateTime.tryParse('${data['resendAt']}'),
+      accountName: '',
+      issuer: 'Nivra',
+    );
+  }
+
+  @override
+  Future<TwoFactorChallenge> resendTwoFactorLogin(String challengeId) async {
+    final data = Map<String, dynamic>.from(
+      await _api.post(
+        '/auth/2fa/resend-login',
+        data: {'challengeId': challengeId},
+        authenticated: false,
+      ) as Map,
+    );
+    final c = Map<String, dynamic>.from(data['challenge'] as Map);
+    return TwoFactorChallenge(
+      id: c['id'].toString(),
+      method: 'email',
+      emailHint: c['emailHint']?.toString(),
+      expiresAt: DateTime.tryParse('${c['expiresAt']}'),
+      resendAt: DateTime.tryParse('${c['resendAt']}'),
     );
   }
 

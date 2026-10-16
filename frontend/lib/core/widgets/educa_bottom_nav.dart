@@ -1,3 +1,4 @@
+import '../../features/portal_access/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -112,7 +113,13 @@ class EducaBottomNav extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final role =
         ref.watch(authControllerProvider).user?.activeRole ?? AppRole.student;
-    final tabs = navTabsForRole(role);
+    final tabs = navTabsForRole(role)
+        .where(
+          (t) =>
+              portalPermissionForPath(t.route) == null ||
+              ref.watch(portalCanProvider(portalPermissionForPath(t.route)!)),
+        )
+        .toList();
     final unread = ref.watch(totalUnreadProvider).asData?.value ?? 0;
 
     // Pestaña activa por coincidencia con la ruta actual (-1 si ninguna).
