@@ -104,6 +104,59 @@ export class GradesRepository {
     assertNoDbError(error);
   }
 
+  async currentPeriods(institutionId: number) {
+    const year = await this.client
+      .from("academic_years")
+      .select("id")
+      .eq("institution_id", institutionId)
+      .eq("is_current", true)
+      .maybeSingle();
+    assertNoDbError(year.error);
+    if (year.data == null) return [] as Array<Record<string, unknown>>;
+    const { data, error } = await this.client
+      .from("academic_periods")
+      .select("id, name, start_date, end_date, weight, closed")
+      .eq("institution_id", institutionId)
+      .eq("academic_year_id", year.data.id)
+      .order("display_order");
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async gradebookEvaluations(institutionId: number, classId: number, periodId: number) {
+    const { data, error } = await this.client
+      .from("evaluations")
+      .select("id, title, date, max_score, weight, catalog_evaluation_types(code)")
+      .eq("institution_id", institutionId)
+      .eq("class_id", classId)
+      .eq("academic_period_id", periodId)
+      .order("date");
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async enrolledStudents(institutionId: number, groupId: number) {
+    const { data, error } = await this.client
+      .from("enrollments")
+      .select("student_id, students!inner(id, active, persons(first_name, last_name))")
+      .eq("institution_id", institutionId)
+      .eq("group_id", groupId)
+      .eq("students.active", true);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async gradesOfEvaluations(institutionId: number, evaluationIds: number[]) {
+    if (evaluationIds.length === 0) return [] as Array<Record<string, unknown>>;
+    const { data, error } = await this.client
+      .from("grades")
+      .select("evaluation_id, student_id, score")
+      .eq("institution_id", institutionId)
+      .in("evaluation_id", evaluationIds);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
   async findEvaluationForGrade(institutionId: number, evaluationId: number) {
     return expectSingle<Record<string, unknown>>(
       db

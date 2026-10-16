@@ -133,6 +133,74 @@ export class GradesService {
     return { ok: true };
   }
 
+  /** Periodos del año académico actual (para filtrar el libro de calificaciones). */
+  async periods(ctx: AppContext) {
+    this.requireGradebookAccess(ctx);
+    const rows = await this.repository.currentPeriods(ctx.institutionId);
+    return {
+      periods: rows.map((r) => ({
+        id: String(r.id),
+        name: String(r.name ?? ""),
+        startDate: r.start_date ?? null,
+        endDate: r.end_date ?? null,
+        weight: Number(r.weight ?? 0),
+        closed: r.closed === true,
+      })),
+    };
+  }
+
+  /** Libro de calificaciones de una clase en un periodo: evaluaciones, alumnos y notas crudas. */
+  async gradebook(ctx: AppContext, query: Record<string, unknown>) {
+    this.requireGradebookAccess(ctx);
+    const classId = requiredId(query.classId ?? query.class_id, "Clase");
+    const periodId = requiredId(query.periodId ?? query.period_id, "Periodo");
+    const cls = await this.permissions.assertTeacherCanUseClass(ctx, classId, "class.view");
+
+    const [evaluations, enrollments] = await Promise.all([
+      this.repository.gradebookEvaluations(ctx.institutionId, classId, periodId),
+      this.repository.enrolledStudents(ctx.institutionId, Number(cls.group_id)),
+    ]);
+    const gradeRows = await this.repository.gradesOfEvaluations(
+      ctx.institutionId,
+      evaluations.map((e) => Number(e.id)),
+    );
+
+    const students = enrollments.map((e: any) => {
+      const person = e.students?.persons;
+      const name = `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim();
+      return { studentId: String(e.student_id), name: name || "Estudiante" };
+    });
+    const grades: Record<string, Record<string, number | null>> = {};
+    for (const s of students) {
+      grades[s.studentId] = Object.fromEntries(evaluations.map((e) => [String(e.id), null]));
+    }
+    for (const g of gradeRows) {
+      const row = grades[String(g.student_id)];
+      if (row) row[String(g.evaluation_id)] = g.score == null ? null : Number(g.score);
+    }
+    return {
+      evaluations: evaluations.map((e: any) => ({
+        id: String(e.id),
+        title: String(e.title ?? ""),
+        date: e.date ?? null,
+        maxScore: Number(e.max_score ?? 100),
+        weight: Number(e.weight ?? 1),
+        kind: String(e.catalog_evaluation_types?.code ?? "homework").toLowerCase(),
+      })),
+      students: students.sort((a, b) => a.name.localeCompare(b.name, "es")),
+      grades,
+    };
+  }
+
+  /** Administración con `reports.view`, o maestro (el acceso a la clase se valida aparte). */
+  private requireGradebookAccess(ctx: AppContext) {
+    if (this.permissions.isAdmin(ctx)) {
+      this.permissions.requireAdminPermission(ctx, "reports.view");
+    } else {
+      this.permissions.requireRole(ctx, ["teacher"]);
+    }
+  }
+
   async setGrade(ctx: AppContext, payload: Record<string, unknown>) {
     this.permissions.requireRole(ctx, ["teacher"]);
     const evaluationId = requiredId(payload.evaluationId, "Evaluación");

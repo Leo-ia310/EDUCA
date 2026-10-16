@@ -2,6 +2,8 @@ import { Router } from "express";
 
 import {
   getDefaultScale,
+  getGradebook,
+  listPeriods,
   setDefaultScale,
   setGrade,
   upsertScale,
@@ -14,6 +16,8 @@ export const gradesRoutes = Router();
 
 gradesRoutes.use(authMiddleware);
 gradesRoutes.get("/scales/default", asyncHandler(getDefaultScale));
+gradesRoutes.get("/periods", asyncHandler(listPeriods));
+gradesRoutes.get("/gradebook", asyncHandler(getGradebook));
 gradesRoutes.post("/scales/upsert", requireAdmin, asyncHandler(upsertScale));
 gradesRoutes.post("/scales/default", requireAdmin, asyncHandler(setDefaultScale));
 gradesRoutes.patch("/scales/:id/default", requireAdmin, asyncHandler(setDefaultScale));

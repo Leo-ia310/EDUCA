@@ -32,3 +32,15 @@ export async function setGrade(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function listPeriods(req: AppRequest, res: Response) {
+  const data = await gradesService.periods(requireAppContext(req));
+  return res.json({ ok: true, data });
+}
+
+export async function getGradebook(req: AppRequest, res: Response) {
+  const data = await gradesService.gradebook(
+    requireAppContext(req),
+    asRecord(req.query),
+  );
+  return res.json({ ok: true, data });
+}
