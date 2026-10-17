@@ -65,3 +65,6 @@ Thumbs.db
 # IDE / registros de caída
 .vs/
 hs_err_pid*.log
+
+# Credenciales locales generadas por scripts (nunca al repo)
+backend/.super-admin.local
