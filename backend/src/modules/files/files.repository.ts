@@ -86,7 +86,7 @@ export class FilesRepository {
   async listFiles(institutionId: number, page: PageOptions) {
     const { data, error, count } = await db
       .from("files")
-      .select("id, institution_id, original_name, storage_path, url, size_bytes, mime_type, uploaded_by, created_at, updated_at", {
+      .select("id, institution_id, original_name, storage_path, url, size_bytes, mime_type, uploaded_by, created_at", {
         count: "exact",
       })
       .eq("institution_id", institutionId)

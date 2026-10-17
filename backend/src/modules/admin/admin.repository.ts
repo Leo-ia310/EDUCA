@@ -170,7 +170,7 @@ export class AdminRepository {
   async listRoles(institutionId: number | null, page: PageOptions) {
     let query = db
       .from("roles")
-      .select("id, institution_id, name, code, description, is_system, active, created_at, updated_at", {
+      .select("id, institution_id, name, code, description, is_system, active, created_at", {
         count: "exact",
       })
       .eq("active", true)

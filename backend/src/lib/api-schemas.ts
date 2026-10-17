@@ -25,6 +25,8 @@ const obj = (props: Record<string, Schema>, optional: string[] = []): Schema => 
   required: Object.keys(props).filter((key) => !optional.includes(key)),
   additionalProperties: false,
 });
+/** Objeto abierto: las propiedades listadas están tipadas y puede traer más (filas de BD con columnas extra). */
+const open = (props: Record<string, Schema>, optional: string[] = []): Schema => ({ ...obj(props, optional), additionalProperties: true });
 /** Copia de un objeto cerrado con propiedades obligatorias adicionales. */
 const extend = (base: Schema, props: Record<string, Schema>): Schema => {
   const b = base as { properties: Record<string, Schema>; required: string[] };
@@ -50,6 +52,12 @@ const charge = obj({
   id: str, studentId: str, studentName: str, conceptId: nullable(str), conceptName: str, description: str,
   amount: num, discount: num, lateFee: num, total: num, paid: num, balance: num, dueAt: nullable(str),
   status: enumOf("pending", "partial", "overdue", "paid", "cancelled"), storedStatus: str, currencyCode: str,
+});
+
+const schedule = obj({
+  id: str, kind: enumOf("class", "break"), weekdayId: int, weekdayIndex: int, startTime: str, endTime: str,
+  classId: nullable(str), subject: str, groupId: nullable(str), groupName: nullable(str),
+  teacher: nullable(str), teacherId: nullable(str), room: nullable(str), shift: nullable(str),
 });
 
 export const responseSchemas: Record<string, Schema> = {
@@ -117,4 +125,139 @@ export const responseSchemas: Record<string, Schema> = {
   "GET /api/developer/tasks": paged(row),
   "GET /api/developer/feature-flags": paged(row),
   "GET /api/developer/system-checks": paged(row),
+
+  // ───────── Notas ─────────
+  "GET /api/grades/periods": obj({
+    periods: arr(obj({ id: str, name: str, startDate: nullable(str), endDate: nullable(str), weight: num, closed: bool })),
+  }),
+  "GET /api/grades/scales/default": obj({
+    scale: nullable(open({
+      id: idish, name: str, scale_type: str, min_value: num, max_value: num, pass_value: num, decimals: int,
+      grading_scale_ranges: arr(open({ label: str, range_min: num, range_max: num, passed: bool, color: nullable(str) })),
+    }, ["grading_scale_ranges"])),
+    status: str,
+  }),
+  "GET /api/grades/gradebook": obj({
+    evaluations: arr(obj({ id: str, title: str, date: nullable(str), maxScore: num, weight: num, kind: str })),
+    students: arr(obj({ studentId: str, name: str })),
+    grades: rec(rec(nullable(num))),
+  }),
+
+  // ───────── Pagos (administración) ─────────
+  "GET /api/payments/summary": obj({
+    currencyCode: str, collectedThisMonth: num, expectedThisMonth: num, overdueAmount: num, overdueCount: int, pendingAmount: num,
+    chargesByStatus: rec(int),
+  }),
+  "GET /api/payments/concepts": obj({
+    concepts: arr(obj({ id: str, name: str, description: nullable(str), baseAmount: num, recurring: bool, currencyCode: str })),
+  }),
+  "GET /api/payments/charges": obj({ charges: arr(charge) }),
+  "GET /api/payments/charges/:chargeId": obj({
+    charge,
+    payments: arr(obj({ id: str, amount: num, method: str, receiptNumber: str, reference: nullable(str), paidAt: nullable(str) })),
+  }),
+  "POST /api/payments/charges": obj({ created: int, chargeIds: arr(str) }),
+
+  // ───────── Chat ─────────
+  "GET /api/chats/conversations": obj({
+    conversations: arr(obj({
+      id: str, kind: str, title: str, unreadCount: int, updatedAt: nullable(str),
+      participants: arr(obj({ userId: str, name: str, role: str, avatarUrl: nullable(str), isMe: bool })),
+      lastMessage: nullable(obj({ id: str, senderId: str, senderName: str, content: str, hasAttachment: bool, sentAt: str })),
+    })),
+  }),
+  "GET /api/chats/conversations/:conversationId/messages": obj({
+    messages: arr(obj({
+      id: str, uuid: str, conversationId: str, senderId: str, senderName: str, sentAt: str, content: str,
+      attachment: nullable(attachment), read: bool,
+    })),
+  }),
+  "GET /api/chats/contacts": obj({
+    contacts: arr(obj({ userId: str, name: str, email: str, role: str, avatarUrl: nullable(str) })),
+  }),
+
+  // ───────── Anuncios, alertas y horarios ─────────
+  "GET /api/events/announcements": obj({
+    announcements: arr(obj({
+      id: str, requestId: nullable(str), title: str, content: str, description: str, audience: str, date: str,
+      publishedAt: nullable(str), createdBy: nullable(str), groupId: nullable(str),
+      delivery: nullable(obj({
+        status: enumOf("queued", "processing", "completed", "completed_with_errors", "failed"), phase: nullable(str),
+        total: int, processed: int, notified: int, emailed: int, emailFailed: int, emailSkipped: int, pushFailed: int,
+        error: nullable(str), completedAt: nullable(str),
+      })),
+    })),
+  }),
+  "GET /api/notifications": arr(obj({
+    id: str, channel: str, title: str, body: str, read: bool, receivedAt: str,
+    data: open({ module: str, deepLink: str }, ["module", "deepLink"]),
+  })),
+  "GET /api/notifications/preferences": obj({ emailEnabled: bool }),
+  "GET /api/schedules": obj({ schedules: arr(schedule) }),
+  "GET /api/schedules/mine": obj({ schedules: arr(schedule) }),
+
+  // ───────── Boletines ─────────
+  "GET /api/reports/report-cards": obj({
+    reportCards: arr(obj({
+      id: str, studentId: str, studentName: str, academicPeriodId: str, periodName: nullable(str), overallAverage: nullable(num),
+      status: str, generatedAt: nullable(str), generalNotes: nullable(str),
+    })),
+  }),
+  "GET /api/reports/report-cards/preview": obj({
+    student: obj({ id: str, name: str }), academicPeriodId: str, calculation: str, overallAverage: nullable(num), pdfStatus: str,
+    lines: arr(obj({
+      subjectId: nullable(int), classId: nullable(int), teacherId: nullable(int), subjectName: str, finalScore: nullable(num),
+      qualitativeLabel: nullable(str), passed: nullable(bool), notes: nullable(str),
+    })),
+  }),
+  "GET /api/reports/report-cards/:id": obj({ reportCard: open({ id: idish, student_id: idish, academic_period_id: nullable(idish), overall_average: nullable(num), status: str }, []) }),
+  "GET /api/portal-access/grades": obj({ grades: arr(row), studentId: int, periodId: nullable(int) }),
+
+  // ───────── Administración (listas) ─────────
+  "GET /api/admin/directory": obj({
+    people: arr(open({
+      id: int, institution_id: int, person_id: int, role: str, group_id: nullable(int), class_ids: arr(str), child_ids: arr(str),
+      persons: open({ id: int, first_name: str, last_name: str, email: nullable(str), phone: nullable(str) }),
+      student_code: str, teacher_code: str, active: bool, is_emergency_contact: bool,
+    }, ["student_code", "teacher_code", "active", "is_emergency_contact"])),
+    groups: arr(open({ id: int, name: str, max_capacity: nullable(int), active: bool, classroom_id: nullable(int), guide_teacher_id: nullable(int), classrooms: nullable(row) })),
+    classes: arr(open({
+      id: int, group_id: int, teacher_id: nullable(int), active: bool,
+      subjects: open({ name: str }), groups: open({ name: str, classrooms: nullable(row) }),
+    })),
+  }),
+  "GET /api/admin/profiles": obj({
+    profiles: arr(obj({
+      id: str, fullName: str, email: str, phone: nullable(str), username: nullable(str), active: bool, roleCode: str,
+      customized: bool, permissions: arr(str),
+    })),
+  }),
+  "GET /api/admin/permissions/catalog": obj({
+    modules: arr(obj({ key: str, label: str, actions: arr(str) })), roles: arr(str), mine: arr(str),
+  }),
+  "GET /api/admin/institutions": paged(open({ id: int, code: str, name: str, commercial_name: nullable(str), subdomain: nullable(str), email: nullable(str), phone: nullable(str), timezone: nullable(str), active: bool })),
+  "GET /api/admin/roles": paged(open({ id: int, institution_id: nullable(int), name: str, code: str, description: nullable(str), is_system: bool, active: bool })),
+  "GET /api/admin/users": paged(open({
+    id: int, institution_id: int, email: str, full_name: str, active: bool, last_sign_in: nullable(str),
+    user_roles: arr(open({ roles: open({ id: int, code: str, name: str }) })),
+  })),
+  "GET /api/admin/students": paged(open({ id: int, person_id: int, student_code: nullable(str), active: bool, persons: open({ first_name: str, last_name: str, email: nullable(str), phone: nullable(str) }) })),
+  "GET /api/admin/teachers": paged(open({ id: int, person_id: int, teacher_code: nullable(str), specialty: nullable(str), active: bool, persons: open({ first_name: str, last_name: str, email: nullable(str), phone: nullable(str) }) })),
+  "GET /api/admin/parents": paged(open({ id: int, person_id: int, is_emergency_contact: bool, persons: open({ first_name: str, last_name: str, email: nullable(str), phone: nullable(str) }) })),
+  "GET /api/files": paged(attachment),
+
+  // ───────── Cuenta y accesos del portal ─────────
+  "GET /api/auth/2fa/status": obj({
+    enabled: bool, required: bool, method: str, hasAuthenticator: bool, recoveryCodesRemaining: int,
+    verifiedAt: nullable(str), emailHint: nullable(str), availableMethods: arr(str),
+  }),
+  "GET /api/portal-access/me": obj({ staff: bool, students: arr(row), permissions: rec(bool) }),
+  "GET /api/portal-access/config": obj({
+    users: arr(obj({ id: int, name: str, roles: arr(str) })),
+    groups: arr(obj({ id: int, name: str })),
+    periods: arr(obj({ id: int, name: str })),
+    students: arr(obj({ id: int, name: str })),
+    permissionRules: arr(row),
+    visibilityRules: arr(row),
+  }),
 };

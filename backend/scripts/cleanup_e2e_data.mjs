@@ -43,12 +43,14 @@ try {
     const cards = ids(await rows('select id from report_cards where student_id = any($1)', [students]));
     const charges = ids(await rows('select id from charges where student_id = any($1)', [students]));
 
-    // Archivos adjuntos de esas tareas y entregas (fila y objeto de almacenamiento).
+    // Archivos adjuntos de esas tareas y entregas, y los que subieron los usuarios de prueba aunque ya no
+    // estén enlazados (fila y objeto de almacenamiento). Los correos de prueba empiezan por «<prefijo>.».
     const files = await rows(
       `select distinct f.id, f.storage_path from files f
         where f.id in (select file_id from assignment_files where assignment_id = any($1))
-           or f.id in (select file_id from submission_files where submission_id = any($2))`,
-      [assignments, submissions],
+           or f.id in (select file_id from submission_files where submission_id = any($2))
+           or f.uploaded_by in (select id from users where lower(email) like $3)`,
+      [assignments, submissions, `${prefix.trim().toLowerCase()}.%`],
     );
     const fileIds = files.map((f) => Number(f.id));
 
