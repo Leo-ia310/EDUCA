@@ -14,6 +14,8 @@ import type {
   RegisterFileMetadataInput,
 } from "./files.schemas";
 import type { AppContext } from "../../types/app-context";
+import { requiredId } from "../../validators/common.validators";
+import { permissionsService } from "../../services/permissions.service";
 
 export class FilesService {
   constructor(
@@ -29,6 +31,43 @@ export class FilesService {
       ...page,
       items: page.items.map((row) => mapAttachment(row as Record<string, unknown>)),
     };
+  }
+
+  /**
+   * URL firmada y temporal para descargar un archivo (el almacenamiento es privado). Se concede a
+   * administración, a quien lo subió, al maestro que ve la tarea o la entrega a la que está adjunto,
+   * y al alumno o padre solo si es de una tarea publicada de su salón o de una entrega de su hijo.
+   */
+  async downloadUrl(ctx: AppContext, idRaw: unknown) {
+    const id = requiredId(idRaw, "Archivo");
+    const file = await this.repository.findFile(ctx.institutionId, id);
+    if (!file) throw new HttpError(404, "Archivo no encontrado.", "not_found");
+
+    let allowed = permissionsService.isAdmin(ctx) || Number(file.uploaded_by) === ctx.userId;
+    if (!allowed && ctx.roles.has("teacher")) {
+      const [a, s] = await Promise.all([this.repository.assignmentsOfFile(id), this.repository.submissionsOfFile(id)]);
+      allowed = a.length > 0 || s.length > 0;
+    }
+    if (!allowed && (ctx.roles.has("student") || ctx.roles.has("parent"))) {
+      let studentIds: number[] = [];
+      if (ctx.roles.has("parent")) {
+        const parentId = await permissionsService.currentParentId(ctx);
+        studentIds = parentId == null ? [] : await this.repository.childIdsOfParent(parentId);
+      } else {
+        const own = await permissionsService.currentStudentId(ctx);
+        studentIds = own == null ? [] : [own];
+      }
+      const groups = new Set(await this.repository.groupIdsOfStudents(ctx.institutionId, studentIds));
+      const [a, s] = await Promise.all([this.repository.assignmentsOfFile(id), this.repository.submissionsOfFile(id)]);
+      allowed =
+        a.some((r) => r.assignments?.published === true && r.assignments?.deleted_at == null && groups.has(Number(r.assignments?.classes?.group_id))) ||
+        s.some((r) => studentIds.includes(Number(r.submissions?.student_id)));
+    }
+    if (!allowed) throw new HttpError(403, "No tienes acceso a este archivo.", "forbidden");
+
+    const name = String(file.original_name ?? "archivo");
+    const url = await this.repository.createSignedDownloadUrl(String(file.storage_path), 120, name);
+    return { url, name, mimeType: file.mime_type ?? null, expiresInSeconds: 120 };
   }
 
   async prepareUpload(ctx: AppContext, payload: PrepareUploadInput) {

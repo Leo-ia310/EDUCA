@@ -17,6 +17,11 @@ export async function listFiles(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function downloadUrl(req: AppRequest, res: Response) {
+  const data = await filesService.downloadUrl(requireAppContext(req), req.params.id);
+  return res.json({ ok: true, data });
+}
+
 export async function prepareUpload(req: AppRequest, res: Response) {
   const data = await filesService.prepareUpload(
     requireAppContext(req),

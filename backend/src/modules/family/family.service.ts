@@ -1,6 +1,7 @@
 import { assertNoDbError } from "../../lib/db";
 import { HttpError } from "../../lib/errors";
 import { supabaseAdmin } from "../../lib/supabase";
+import { mapAttachment } from "../../lib/files";
 import { dateOnly } from "../../validators/common.validators";
 import type { AppContext } from "../../types/app-context";
 import { permissionsService } from "../../services/permissions.service";
@@ -124,13 +125,34 @@ export class FamilyService {
     if (ids.length === 0) return { studentId: String(studentId), assignments: [] };
 
     const [{ data: subs, error: e2 }, { data: statuses, error: e3 }, { data: evals, error: e4 }] = await Promise.all([
-      db.from("submissions").select("assignment_id, submitted_at, is_late, task_status_id").eq("institution_id", ctx.institutionId).eq("student_id", studentId).in("assignment_id", ids),
+      db.from("submissions").select("id, assignment_id, submitted_at, is_late, task_status_id").eq("institution_id", ctx.institutionId).eq("student_id", studentId).in("assignment_id", ids),
       db.from("catalog_task_statuses").select("id, code").eq("code", "CALI"),
       db.from("evaluations").select("id, assignment_id").eq("institution_id", ctx.institutionId).in("assignment_id", ids),
     ]);
     assertNoDbError(e2);
     assertNoDbError(e3);
     assertNoDbError(e4);
+    const subIds = ((subs ?? []) as any[]).map((s) => Number(s.id));
+    const [{ data: aFiles, error: e6 }, { data: sFiles, error: e7 }] = await Promise.all([
+      db.from("assignment_files").select("assignment_id, files(id, original_name, url, size_bytes, mime_type)").in("assignment_id", ids),
+      subIds.length
+        ? db.from("submission_files").select("submission_id, files(id, original_name, url, size_bytes, mime_type)").in("submission_id", subIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+    assertNoDbError(e6);
+    assertNoDbError(e7);
+    const filesBy = (rows: any[], key: string) => {
+      const map = new Map<number, ReturnType<typeof mapAttachment>[]>();
+      for (const r of rows) {
+        if (!r.files) continue;
+        const list = map.get(Number(r[key])) ?? [];
+        list.push(mapAttachment(r.files));
+        map.set(Number(r[key]), list);
+      }
+      return map;
+    };
+    const assignmentFiles = filesBy((aFiles ?? []) as any[], "assignment_id");
+    const submissionFiles = filesBy((sFiles ?? []) as any[], "submission_id");
     const gradedStatus = (statuses ?? [])[0]?.id == null ? null : Number((statuses as any[])[0].id);
     const evalOf = new Map(((evals ?? []) as any[]).map((e) => [Number(e.assignment_id), Number(e.id)]));
     const evalIds = [...evalOf.values()];
@@ -160,6 +182,8 @@ export class FamilyService {
           allowLate: Boolean(a.allow_late),
           status: !sub ? (overdue ? "overdue" : "pending") : isGraded ? "graded" : sub.is_late ? "late" : "submitted",
           submittedAt: sub?.submitted_at ?? null,
+          attachments: assignmentFiles.get(Number(a.id)) ?? [],
+          submissionAttachments: sub ? (submissionFiles.get(Number(sub.id)) ?? []) : [],
           score: grade?.score == null ? null : Number(grade.score),
           feedback: grade?.notes ?? null,
         };

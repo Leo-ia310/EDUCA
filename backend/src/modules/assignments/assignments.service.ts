@@ -137,8 +137,9 @@ export class AssignmentsService {
       submitted: subs.length,
       graded: graded == null ? 0 : subs.filter((s) => Number(s.task_status_id) === graded).length,
     }]]);
+    const assignmentFiles = await this.attachmentRows("assignment_files", "assignment_id", id);
     return {
-      assignment: mapListed(row, new Map([[groupId, students.length]]), counts),
+      assignment: { ...mapListed(row, new Map([[groupId, students.length]]), counts), attachments: assignmentFiles },
       students: students
         .map((e: any) => {
           const person = e.students?.persons;
