@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { assertNoDbError } from "../../lib/db";
 import { HttpError } from "../../lib/errors";
 import {
+  asRecord,
   dateOnly,
   optionalString,
   requiredDate,
@@ -91,6 +93,95 @@ export class AttendanceService {
       ? await this.repository.upsertAttendance(dbPayload)
       : await this.repository.updateAttendance(ctx.institutionId, existingByUuid.id, dbPayload);
     return { id: Number(row.id) };
+  }
+
+  /** Lista de la clase para una fecha: alumnos activos del salón con la marca ya guardada (si la hay). */
+  async classRoster(ctx: AppContext, classIdRaw: unknown, query: Record<string, unknown>) {
+    this.permissions.requireRole(ctx, ["teacher"]);
+    const classId = requiredId(classIdRaw, "Clase");
+    const date = singleDate(query.date);
+    await this.permissions.assertTeacherCanUseClass(ctx, classId, "attendance.write");
+    const cls = await this.repository.classLabel(ctx.institutionId, classId);
+    if (!cls) throw new HttpError(404, "Clase no encontrada.", "not_found");
+
+    const [statuses, enrollments, session] = await Promise.all([
+      this.repository.statuses(),
+      this.repository.enrolledStudents(ctx.institutionId, Number(cls.group_id)),
+      this.repository.findSessionOfClassDate(ctx.institutionId, classId, date),
+    ]);
+    const marks = session ? await this.repository.marksOfSession(ctx.institutionId, Number(session.id)) : [];
+    const byStudent = new Map(marks.map((m) => [Number(m.student_id), m]));
+    return {
+      class: { id: String(classId), subject: String(cls.subjects?.name ?? "Clase"), group: String(cls.groups?.name ?? "Salón") },
+      date,
+      sessionId: session ? String(session.id) : null,
+      statuses: statuses.map(mapStatus),
+      students: enrollments
+        .map((e: any) => {
+          const person = e.students?.persons;
+          const name = `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim();
+          const mark = byStudent.get(Number(e.student_id));
+          return {
+            studentId: String(e.student_id),
+            name: name || "Estudiante",
+            statusId: mark ? String(mark.attendance_status_id) : null,
+            notes: mark?.notes ? String(mark.notes) : "",
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, "es")),
+    };
+  }
+
+  /** Guarda de una vez la lista de asistencia de la clase en una fecha (crea la sesión si no existe). */
+  async saveClassAttendance(ctx: AppContext, classIdRaw: unknown, payload: Record<string, unknown>) {
+    this.permissions.requireRole(ctx, ["teacher"]);
+    const classId = requiredId(classIdRaw, "Clase");
+    const date = singleDate(payload.date);
+    const marks = Array.isArray(payload.marks) ? payload.marks : [];
+    if (marks.length === 0) throw new HttpError(400, "No hay marcas que guardar.", "validation_error");
+    if (marks.length > 300) throw new HttpError(400, "Demasiadas marcas en una sola solicitud.", "validation_error");
+    if (date > dateOnly(new Date(Date.now() + 86_400_000))) {
+      throw new HttpError(400, "No se puede registrar asistencia de una fecha futura.", "validation_error");
+    }
+    await this.permissions.assertTeacherCanUseClass(ctx, classId, "attendance.write");
+    const cls = await this.repository.classLabel(ctx.institutionId, classId);
+    if (!cls) throw new HttpError(404, "Clase no encontrada.", "not_found");
+
+    const [statuses, enrollments] = await Promise.all([
+      this.repository.statuses(),
+      this.repository.enrolledStudents(ctx.institutionId, Number(cls.group_id)),
+    ]);
+    const validStatus = new Set(statuses.map((s) => Number(s.id)));
+    const enrolled = new Set(enrollments.map((e: any) => Number(e.student_id)));
+
+    const clean = new Map<number, { statusId: number; notes: string | null }>();
+    for (const raw of marks) {
+      const m = asRecord(raw);
+      const studentId = requiredId(m.studentId, "Estudiante");
+      const statusId = requiredId(m.statusId, "Estado de asistencia");
+      if (!validStatus.has(statusId)) throw new HttpError(400, "Estado de asistencia inválido.", "validation_error");
+      if (!enrolled.has(studentId)) throw new HttpError(403, "El estudiante no pertenece a esta clase.", "forbidden");
+      clean.set(studentId, { statusId, notes: optionalString(m.notes, 500) ?? null });
+    }
+
+    const sessionId = Number(await this.repository.ensureClassSession(classId, date));
+    const existing = new Map((await this.repository.marksOfSession(ctx.institutionId, sessionId)).map((m) => [Number(m.student_id), m]));
+    const now = new Date().toISOString();
+    await this.repository.upsertMarks(
+      [...clean].map(([studentId, m]) => ({
+        uuid: existing.get(studentId)?.uuid ?? randomUUID(),
+        institution_id: ctx.institutionId,
+        class_session_id: sessionId,
+        student_id: studentId,
+        attendance_status_id: m.statusId,
+        recorded_at: now,
+        notes: m.notes,
+        recorded_by: ctx.userId,
+        source: "web",
+        updated_at: now,
+      })),
+    );
+    return { sessionId: String(sessionId), saved: clean.size };
   }
 
   /** Resumen de asistencia por salón en un rango de fechas (administración con `reports.view`). */
@@ -199,6 +290,15 @@ function stats(byStatus: Record<string, number>, absentIds: Set<string>) {
 
 function mapStatus(s: Record<string, unknown>) {
   return { id: String(s.id), name: String(s.name), code: String(s.code ?? ""), countsAsAbsent: Boolean(s.counts_as_absent), color: String(s.color ?? "#999999") };
+}
+
+/** Una fecha AAAA-MM-DD; por defecto hoy. */
+function singleDate(value: unknown) {
+  if (value == null || value === "") return dateOnly(new Date());
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(new Date(value).getTime())) {
+    throw new HttpError(400, "Fecha inválida (usa AAAA-MM-DD).", "validation_error");
+  }
+  return value;
 }
 
 /** Rango `from`/`to` (AAAA-MM-DD); por defecto los últimos 30 días. */

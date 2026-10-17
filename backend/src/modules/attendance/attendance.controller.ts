@@ -23,6 +23,16 @@ export async function getGroupDetail(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function getClassRoster(req: AppRequest, res: Response) {
+  const data = await attendanceService.classRoster(requireAppContext(req), req.params.classId, asRecord(req.query));
+  return res.json({ ok: true, data });
+}
+
+export async function saveClassAttendance(req: AppRequest, res: Response) {
+  const data = await attendanceService.saveClassAttendance(requireAppContext(req), req.params.classId, asRecord(req.body));
+  return res.json({ ok: true, data });
+}
+
 export async function upsertAttendance(req: AppRequest, res: Response) {
   const data = await attendanceService.upsertAttendance(
     requireAppContext(req),
