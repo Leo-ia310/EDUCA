@@ -24,12 +24,16 @@ if (!USER || !PASS) { console.error('Define CHECK_USER y CHECK_PASSWORD (una cue
 const spec = JSON.parse(readFileSync(join(BACKEND_DIR, '..', 'docs', 'openapi.json'), 'utf8'));
 const ajv = new Ajv({ strict: false, allErrors: false });
 
-/** key «MÉTODO /api/ruta/:param» -> esquema del cuerpo 200 */
+/** key «MÉTODO /api/ruta/:param» -> esquema del cuerpo 200 (respuesta) y del cuerpo de la petición */
 const typed = new Map();
+const typedRequest = new Map();
 for (const [path, ops] of Object.entries(spec.paths)) {
   for (const [method, op] of Object.entries(ops)) {
     const schema = op.responses?.['200']?.content?.['application/json']?.schema;
-    if (schema?.properties?.data) typed.set(`${method.toUpperCase()} ${path.replace(/\{(\w+)\}/g, ':$1')}`, schema);
+    const key = `${method.toUpperCase()} ${path.replace(/\{(\w+)\}/g, ':$1')}`;
+    if (schema?.properties?.data) typed.set(key, schema);
+    const reqSchema = op.requestBody?.content?.['application/json']?.schema;
+    if (reqSchema?.properties) typedRequest.set(key, reqSchema);
   }
 }
 
@@ -65,45 +69,66 @@ function validate(key, response, status = 200) {
   const e = check.errors?.[0];
   console.log(`FAIL ${key}: ${e?.instancePath || '/'} ${e?.message} ${JSON.stringify(e?.params ?? {}).slice(0, 120)}`);
 }
+const checkedRequests = new Set();
+/** Escritura: valida el cuerpo que se envía contra su esquema, hace la llamada y valida la respuesta. */
+async function write(role, key, path, body) {
+  const [method] = key.split(' ');
+  const reqSchema = typedRequest.get(key);
+  if (reqSchema) {
+    checkedRequests.add(key);
+    const check = ajv.compile(reqSchema);
+    if (check(body)) { results.ok++; console.log(`OK   petición ${key}`); }
+    else { results.fail++; const e = check.errors?.[0]; console.log(`FAIL petición ${key}: ${e?.instancePath || '/'} ${e?.message} ${JSON.stringify(e?.params ?? {}).slice(0, 120)}`); }
+  }
+  const r = await call(role, method, path, body);
+  if (typed.has(key)) validate(key, r.body, r.status);
+  else if (r.status >= 300) { results.fail++; console.log(`FAIL ${key}: respondió ${r.status} ${JSON.stringify(r.body?.error ?? r.body).slice(0, 160)}`); }
+  if (r.status >= 300) throw new Error(`${key} -> ${r.status}`);
+  return r.body?.data;
+}
 async function get(role, key, path) { const r = await call(role, 'GET', path); validate(key, r.body, r.status); return r.body?.data; }
 
 const tag = Date.now().toString(36);
 const PW = `Chk-${tag}-9xA`;
 let fx;
+let createdProfileId = null;
 try {
   await login('admin', USER, PASS);
   console.log('Creando la escuela temporal «CHK …»…');
-  const teacher = (await must('admin', 'POST', '/admin/teachers', { firstName: 'Prof', lastName: `CHK ${tag}`, phone: '', active: true, email: `chk.prof.${tag}@demo.test`, password: PW, teacherCode: `CHK-T-${tag}`, classIds: [] })).teacher;
-  const group = (await must('admin', 'POST', '/admin/groups', { name: `CHK ${tag}` })).group;
-  const klass = (await must('admin', 'POST', '/admin/classes', { subject: `CHK ${tag}`, groupId: Number(group.id), teacherId: Number(teacher.id) })).class;
+  const teacher = (await write('admin', 'POST /api/admin/teachers', '/admin/teachers', { firstName: 'Prof', lastName: `CHK ${tag}`, phone: '', active: true, email: `chk.prof.${tag}@demo.test`, password: PW, teacherCode: `CHK-T-${tag}`, classIds: [] })).teacher;
+  const group = (await write('admin', 'POST /api/admin/groups', '/admin/groups', { name: `CHK ${tag}` })).group;
+  const klass = (await write('admin', 'POST /api/admin/classes', '/admin/classes', { subject: `CHK ${tag}`, groupId: Number(group.id), teacherId: Number(teacher.id) })).class;
   const students = [];
   for (const [i, n] of ['Ana', 'Beto'].entries()) {
-    students.push((await must('admin', 'POST', '/admin/students', { firstName: n, lastName: `CHK ${tag}`, phone: '', active: true, email: `chk.al${i}.${tag}@demo.test`, password: PW, studentCode: `CHK-S${i}-${tag}`, groupId: Number(group.id), classIds: [Number(klass.id)] })).student);
+    students.push((await write('admin', 'POST /api/admin/students', '/admin/students', { firstName: n, lastName: `CHK ${tag}`, phone: '', active: true, email: `chk.al${i}.${tag}@demo.test`, password: PW, studentCode: `CHK-S${i}-${tag}`, groupId: Number(group.id), classIds: [Number(klass.id)] })).student);
   }
-  await must('admin', 'POST', '/admin/parents', { firstName: 'Padre', lastName: `CHK ${tag}`, phone: '', active: true, email: `chk.pa.${tag}@demo.test`, password: PW, childIds: [Number(students[0].id)], isEmergencyContact: true });
+  const parentRow = (await write('admin', 'POST /api/admin/parents', '/admin/parents', { firstName: 'Padre', lastName: `CHK ${tag}`, phone: '', active: true, email: `chk.pa.${tag}@demo.test`, password: PW, childIds: [Number(students[0].id)], isEmergencyContact: true })).parent;
   await login('teacher', `chk.prof.${tag}@demo.test`, PW);
   await login('student', `chk.al0.${tag}@demo.test`, PW);
   await login('parent', `chk.pa.${tag}@demo.test`, PW);
 
-  await must('admin', 'POST', '/schedules', { kind: 'class', startTime: '07:00', endTime: '08:00', shift: 'morning', classId: Number(klass.id), room: `Aula ${tag}`, weekdayIds: [1, 2] });
+  await write('admin', 'POST /api/schedules', '/schedules', { kind: 'class', startTime: '07:00', endTime: '08:00', shift: 'morning', classId: Number(klass.id), room: `Aula ${tag}`, weekdayIds: [1, 2] });
   const concepts = await must('admin', 'GET', '/payments/concepts');
-  const created = await call('admin', 'POST', '/payments/charges', { conceptId: Number(concepts.concepts[0].id), studentIds: [Number(students[0].id)], amount: 25, dueAt: new Date(Date.now() + 9 * 864e5).toISOString().slice(0, 10), description: 'Cargo CHK' });
-  validate('POST /api/payments/charges', created.body, created.status);
+  const created = await write('admin', 'POST /api/payments/charges', '/payments/charges', { conceptId: Number(concepts.concepts[0].id), studentIds: [Number(students[0].id)], amount: 25, dueAt: new Date(Date.now() + 9 * 864e5).toISOString().slice(0, 10), description: 'Cargo CHK' });
+  void created;
   // archivo adjunto a la tarea
-  const prep = await must('teacher', 'POST', '/files/prepare-upload', { originalName: 'chk.txt', mimeType: 'text/plain', sizeBytes: 3, folder: 'assignments' });
+  const prep = await write('teacher', 'POST /api/files/prepare-upload', '/files/prepare-upload', { originalName: 'chk.txt', mimeType: 'text/plain', sizeBytes: 3, folder: 'assignments' });
   const form = new FormData(); form.append('cacheControl', '3600'); form.append('', new Blob(['chk'], { type: 'text/plain' }), 'chk.txt');
   const put = await fetch(prep.signedUpload.signedUrl, { method: 'PUT', body: form, headers: { 'x-upsert': 'false' } });
   if (!put.ok) throw new Error(`Subida a almacenamiento: ${put.status}`);
-  const file = (await must('teacher', 'POST', '/files/metadata', { originalName: 'chk.txt', storagePath: prep.storagePath, mimeType: 'text/plain', sizeBytes: 3, url: null })).file;
+  const file = (await write('teacher', 'POST /api/files/metadata', '/files/metadata', { originalName: 'chk.txt', storagePath: prep.storagePath, mimeType: 'text/plain', sizeBytes: 3, url: null })).file;
   const due = new Date(Date.now() + 3 * 3600e3).toISOString();
-  const asg = (await must('teacher', 'POST', '/assignments/upsert', { classId: Number(klass.id), title: 'Tarea CHK', dueAt: due, maxScore: 20, allowLate: true, published: true, attachments: [{ id: Number(file.id) }] })).assignment;
-  await must('student', 'POST', '/assignments/submit', { assignmentId: Number(asg.id), notes: 'chk' });
+  const asg = (await write('teacher', 'POST /api/assignments/upsert', '/assignments/upsert', { classId: Number(klass.id), title: 'Tarea CHK', dueAt: due, maxScore: 20, allowLate: true, published: true, attachments: [{ id: Number(file.id) }] })).assignment;
+  const submitted = await write('student', 'POST /api/assignments/submit', '/assignments/submit', { assignmentId: Number(asg.id), notes: 'chk' });
   const today = new Date().toLocaleDateString('en-CA');
-  const att = await call('teacher', 'POST', `/attendance/class/${klass.id}`, { date: today, marks: students.map((s, i) => ({ studentId: Number(s.id), statusId: i === 0 ? 2 : 1 })) });
-  validate('POST /api/attendance/class/:classId', att.body, att.status);
+  await write('teacher', 'POST /api/attendance/class/:classId', `/attendance/class/${klass.id}`, { date: today, marks: students.map((s, i) => ({ studentId: Number(s.id), statusId: i === 0 ? 2 : 1 })) });
+  // calificar la entrega crea la evaluación; luego se corrige otra nota con set-grade y se oculta/publica la tarea
+  await write('teacher', 'PATCH /api/assignments/submissions/:submissionId/grade', `/assignments/submissions/${submitted.submission.id}/grade`, { score: 15, feedback: 'ok' });
+  await write('teacher', 'PATCH /api/assignments/:id/publish', `/assignments/${asg.id}/publish`, { published: false });
+  await write('teacher', 'PATCH /api/assignments/:id/publish', `/assignments/${asg.id}/publish`, { published: true });
   const periods = (await must('admin', 'GET', '/grades/periods')).periods;
   const period = periods.find((p) => p.startDate <= today && today <= p.endDate) ?? periods[0];
-  const card = (await must('admin', 'POST', '/reports/report-cards', { studentId: Number(students[0].id), academicPeriodId: Number(period.id) })).reportCard;
+  const card = (await write('admin', 'POST /api/reports/report-cards', '/reports/report-cards', { studentId: Number(students[0].id), academicPeriodId: Number(period.id), generalNotes: 'CHK' })).reportCard;
   fx = { teacher, group, klass, students, asg, file, period, card, today };
 
   const s0 = students[0].id;
@@ -135,6 +160,24 @@ try {
   const convs = (await call('admin', 'GET', '/chats/conversations')).body?.data?.conversations ?? [];
   if (convs[0]) await get('admin', 'GET /api/chats/conversations/:conversationId/messages', `/chats/conversations/${convs[0].id}/messages`);
   else results.skipped.push('GET /api/chats/conversations/:conversationId/messages (el administrador no tiene conversaciones)');
+  // Escrituras de segundo nivel
+  const book = (await call('teacher', 'GET', `/grades/gradebook?classId=${klass.id}&periodId=${period.id}`)).body?.data;
+  if (book?.evaluations?.[0]) await write('teacher', 'POST /api/grades/set-grade', '/grades/set-grade', { evaluationId: Number(book.evaluations[0].id), studentId: Number(students[1].id), rawScore: 12 });
+  if (chargeId) await write('admin', 'POST /api/payments/charges/:chargeId/payments', `/payments/charges/${chargeId}/payments`, { method: 'cash', amount: 5, idempotencyKey: crypto.randomUUID() });
+  await write('admin', 'PATCH /api/admin/groups/:id', `/admin/groups/${group.id}`, { name: `CHK ${tag} b` });
+  await write('admin', 'PATCH /api/admin/classes/:id', `/admin/classes/${klass.id}`, { teacherId: Number(teacher.id) });
+  await write('admin', 'PATCH /api/admin/teachers/:id', `/admin/teachers/${teacher.id}`, { phone: '555' });
+  await write('admin', 'PATCH /api/admin/students/:id', `/admin/students/${students[1].id}`, { phone: '555' });
+  await write('admin', 'PATCH /api/admin/parents/:id', `/admin/parents/${parentRow.id}`, { phone: '555', childIds: [Number(students[0].id)] });
+  // perfil administrativo temporal (se archiva al final)
+  const prof = (await write('admin', 'POST /api/admin/profiles', '/admin/profiles', { fullName: `Perfil CHK ${tag}`, email: `chk.perfil.${tag}@demo.test`, password: PW, roleCode: 'coordinator', permissions: ['dashboard.view'] })).profile;
+  await write('admin', 'PATCH /api/admin/profiles/:id', `/admin/profiles/${prof.id}`, { permissions: ['dashboard.view', 'reports.view'], phone: '555' });
+  createdProfileId = prof.id;
+  const schedules = (await call('admin', 'GET', '/schedules')).body?.data?.schedules ?? [];
+  const mine = schedules.find((x) => x.classId === String(klass.id));
+  if (mine) await write('admin', 'PATCH /api/schedules/:id', `/schedules/${mine.id}`, { room: `Aula ${tag}b` });
+  // Preferencias de la cuenta temporal del maestro (sin efectos sobre otros usuarios)
+  await write('teacher', 'PATCH /api/notifications/preferences', '/notifications/preferences', { emailEnabled: false });
   // Maestro
   await get('teacher', 'GET /api/collaborations', '/collaborations');
   await get('teacher', 'GET /api/schedules/mine', '/schedules/mine');
@@ -151,6 +194,8 @@ try {
     await get(role, 'GET /api/family/assignments', `/family/assignments${q}`);
     await get(role, 'GET /api/payments/mine', `/payments/mine${q}`);
   }
+  // Al final: archivar la tarea (así familia conserva datos no vacíos durante las comprobaciones anteriores)
+  const delTask = await call('teacher', 'DELETE', `/assignments/${asg.id}`); validate('DELETE /api/assignments/:id', delTask.body, delTask.status);
 } catch (e) {
   results.fail++;
   console.error('\nERROR:', e.message);
@@ -165,12 +210,17 @@ try {
         if (email.startsWith('chk.')) await call('admin', 'DELETE', `/admin/${kind}/${row.id}`);
       }
     }
+    if (createdProfileId) await call('admin', 'DELETE', `/admin/users/${createdProfileId}`);
     if (fx) { await call('admin', 'DELETE', `/admin/classes/${fx.klass.id}`); await call('admin', 'DELETE', `/admin/groups/${fx.group.id}`); }
     console.log(execFileSync('node', [join(BACKEND_DIR, 'scripts', 'cleanup_e2e_data.mjs'), 'CHK '], { encoding: 'utf8' }).trim());
   } catch (e) { console.error('Limpieza incompleta:', e.message); }
 }
 
-const untested = [...typed.keys()].filter((k) => !checked.has(k));
+// Con efectos secundarios sobre datos reales (conversaciones/lecturas de chat): se validan a mano.
+const SKIP = new Set(['POST /api/chats/individual', 'PATCH /api/chats/conversations/:conversationId/read']);
+const untested = [...typed.keys()].filter((k) => !checked.has(k) && !SKIP.has(k));
+const unrequested = [...typedRequest.keys()].filter((k) => !checkedRequests.has(k));
+if (unrequested.length) { console.log('Cuerpos tipados que este verificador NO envía (efectos secundarios: avisos, correos, cuentas…):'); unrequested.forEach((k) => console.log('  ·', k)); }
 console.log(`\nResultado: ${results.ok} correctos, ${results.fail} con diferencias.`);
 if (untested.length) { console.log('Endpoints con esquema SIN caso de prueba en este verificador:'); untested.forEach((k) => console.log('  -', k)); }
 process.exit(results.fail > 0 || untested.length > 0 ? 1 : 0);

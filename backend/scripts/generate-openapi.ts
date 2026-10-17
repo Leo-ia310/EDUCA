@@ -2,13 +2,13 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { apiManifest } from "../src/lib/api-manifest";
-import { responseSchemas } from "../src/lib/api-schemas";
+import { requestSchemas, responseSchemas } from "../src/lib/api-schemas";
 
 const paths: Record<string, Record<string, unknown>> = {};
 
 // Cada esquema tipado debe corresponder a una entrada del manifiesto (evita que se desincronicen).
 const known = new Set(apiManifest.map((e) => `${e.method} ${e.path}`));
-for (const key of Object.keys(responseSchemas)) {
+for (const key of [...Object.keys(responseSchemas), ...Object.keys(requestSchemas)]) {
   if (!known.has(key)) throw new Error(`api-schemas.ts: «${key}» no existe en api-manifest.ts`);
 }
 
@@ -17,6 +17,7 @@ for (const entry of apiManifest) {
   const path = entry.path.replace(/\*/g, "{wildcard}").replace(/:([A-Za-z]+)/g, "{$1}");
   const pathParams = [...path.matchAll(/\{([A-Za-z]+)\}/g)].map((m) => m[1]);
   const typed = responseSchemas[`${entry.method} ${entry.path}`];
+  const typedRequest = requestSchemas[`${entry.method} ${entry.path}`];
   const method = entry.method.toLowerCase();
   paths[path] ??= {};
   paths[path][method] = {
@@ -33,10 +34,10 @@ for (const entry of apiManifest) {
       : undefined,
     requestBody: ["POST", "PUT", "PATCH"].includes(entry.method)
       ? {
-        required: false,
+        required: typedRequest ? true : false,
         content: {
           "application/json": {
-            schema: { type: "object", additionalProperties: true },
+            schema: typedRequest ?? { type: "object", additionalProperties: true },
             examples: {
               manifest: { value: entry.request },
             },

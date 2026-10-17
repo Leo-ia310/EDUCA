@@ -60,6 +60,13 @@ const schedule = obj({
   teacher: nullable(str), teacherId: nullable(str), room: nullable(str), shift: nullable(str),
 });
 
+const submissionView = obj({
+  id: str, assignmentId: str, studentId: int, studentName: str, status: enumOf("submitted", "late", "graded"),
+  submittedAt: nullable(str), studentNotes: nullable(str), attachments: arr(attachment), score: nullable(num), feedback: nullable(str),
+});
+const okOnly = obj({ ok: bool });
+const fileRef = obj({ id: idish });
+
 export const responseSchemas: Record<string, Schema> = {
   "GET /api/attendance/summary": obj({
     from: str, to: str, statuses: arr(attendanceStatus),
@@ -260,4 +267,86 @@ export const responseSchemas: Record<string, Schema> = {
     permissionRules: arr(row),
     visibilityRules: arr(row),
   }),
+  // ───────── Escrituras (respuestas que la web lee) ─────────
+  "POST /api/assignments/upsert": obj({
+    assignment: obj({
+      id: str, classId: int, subjectName: str, groupName: str, title: str, description: nullable(str), instructions: nullable(str),
+      assignedAt: str, dueAt: str, kind: str, maxScore: num, allowLate: bool, published: bool, attachments: arr(attachment),
+      teacherName: nullable(str), totalStudents: int, submittedCount: int, gradedCount: int,
+    }),
+  }),
+  "DELETE /api/assignments/:id": okOnly,
+  "PATCH /api/assignments/:id/publish": okOnly,
+  "PATCH /api/assignments/submissions/:submissionId/grade": obj({ submission: submissionView }),
+  "POST /api/assignments/submit": obj({ submission: submissionView }),
+  "POST /api/grades/set-grade": okOnly,
+  "POST /api/chats/individual": obj({ conversationId: str }),
+  "PATCH /api/chats/conversations/:conversationId/read": obj({ ok: bool, conversationId: str, readAt: str }),
+
+};
+
+/**
+ * Esquemas de los CUERPOS de petición de las escrituras que usa la web (misma clave «MÉTODO ruta»).
+ * Son estrictos con los nombres de campo (para atrapar errores de escritura) pero aceptan ids como texto o número.
+ */
+export const requestSchemas: Record<string, Schema> = {
+  "POST /api/assignments/upsert": obj({
+    assignmentId: idish, classId: idish, title: str, description: str, instructions: str, dueAt: str, maxScore: num,
+    allowLate: bool, published: bool, attachments: arr(fileRef),
+  }, ["assignmentId", "description", "instructions", "allowLate", "published", "attachments"]),
+  "PATCH /api/assignments/:id/publish": obj({ published: bool }),
+  "PATCH /api/assignments/submissions/:submissionId/grade": obj({ score: num, feedback: str }, ["feedback"]),
+  "POST /api/assignments/submit": obj({ assignmentId: idish, studentId: idish, notes: str, attachments: arr(fileRef) }, ["studentId", "notes", "attachments"]),
+  "POST /api/grades/set-grade": obj({ evaluationId: idish, studentId: idish, rawScore: num, notes: str }, ["notes"]),
+  "POST /api/attendance/class/:classId": obj({
+    date: str, marks: arr(obj({ studentId: idish, statusId: idish, notes: str }, ["notes"])),
+  }, ["date"]),
+  "POST /api/events": obj({ title: str, description: str, date: str, audience: str, requestId: str }, ["requestId"]),
+  "POST /api/reports/report-cards": obj({ studentId: idish, academicPeriodId: idish, generalNotes: str }, ["generalNotes"]),
+  "POST /api/payments/charges": obj({
+    conceptId: idish, studentIds: arr(idish), groupId: idish, amount: num, discount: num, dueAt: str, description: str,
+  }, ["studentIds", "groupId", "amount", "discount", "description"]),
+  "POST /api/payments/charges/:chargeId/payments": obj({
+    method: enumOf("cash", "transfer", "card", "wallet"), amount: num, reference: str, idempotencyKey: str,
+  }, ["reference", "idempotencyKey"]),
+  "POST /api/chats/messages": obj({ conversationId: idish, content: str, attachment: fileRef }, ["content", "attachment"]),
+  "POST /api/chats/individual": obj({ otherUserId: idish }),
+  "PATCH /api/notifications/preferences": obj({ emailEnabled: bool }, ["emailEnabled"]),
+  "POST /api/schedules": obj({
+    kind: enumOf("class", "break"), classId: idish, groupId: idish, label: str, room: str, weekdayIds: arr(int),
+    startTime: str, endTime: str, shift: str,
+  }, ["classId", "groupId", "label", "room", "shift"]),
+  "PATCH /api/schedules/:id": obj({
+    kind: enumOf("class", "break"), classId: idish, groupId: idish, label: str, room: str, weekdayId: int,
+    startTime: str, endTime: str, shift: str,
+  }, ["kind", "classId", "groupId", "label", "room", "weekdayId", "startTime", "endTime", "shift"]),
+  "POST /api/files/prepare-upload": obj({ originalName: str, mimeType: str, sizeBytes: num, folder: str }, ["folder"]),
+  "POST /api/files/metadata": obj({ originalName: str, storagePath: str, mimeType: str, sizeBytes: num, url: nullable(str) }, ["url"]),
+  "POST /api/admin/groups": obj({ name: str, room: str, maxCapacity: num, guideTeacherId: nullable(idish) }, ["room", "maxCapacity", "guideTeacherId"]),
+  "PATCH /api/admin/groups/:id": obj({ name: str, room: str, maxCapacity: num, guideTeacherId: nullable(idish) }, ["name", "room", "maxCapacity", "guideTeacherId"]),
+  "POST /api/admin/classes": obj({ subject: str, groupId: idish, teacherId: nullable(idish), room: str }, ["teacherId", "room"]),
+  "PATCH /api/admin/classes/:id": obj({ subject: str, groupId: idish, teacherId: nullable(idish), room: str }, ["subject", "groupId", "teacherId", "room"]),
+  "POST /api/admin/profiles": obj({
+    fullName: str, email: str, password: str, roleCode: enumOf("admin", "coordinator", "director"), permissions: arr(str),
+    phone: str, username: str, active: bool,
+  }, ["phone", "username", "active"]),
+  "PATCH /api/admin/profiles/:id": obj({
+    roleCode: enumOf("admin", "coordinator", "director"), permissions: arr(str), fullName: str, phone: str, active: bool,
+  }, ["roleCode", "permissions", "fullName", "phone", "active"]),
+  "POST /api/admin/teachers": obj({
+    firstName: str, lastName: str, phone: str, active: bool, email: str, password: str, username: str, teacherCode: str, classIds: arr(idish),
+  }, ["phone", "active", "username", "teacherCode", "classIds"]),
+  "PATCH /api/admin/teachers/:id": obj({ firstName: str, lastName: str, phone: str, active: bool, classIds: arr(idish) }, ["firstName", "lastName", "phone", "active", "classIds"]),
+  "POST /api/admin/students": obj({
+    firstName: str, lastName: str, phone: str, active: bool, email: str, password: str, username: str, studentCode: str, groupId: nullable(idish), classIds: arr(idish),
+  }, ["phone", "active", "username", "studentCode", "groupId", "classIds"]),
+  "PATCH /api/admin/students/:id": obj({ firstName: str, lastName: str, phone: str, active: bool, groupId: nullable(idish), classIds: arr(idish) }, ["firstName", "lastName", "phone", "active", "groupId", "classIds"]),
+  "POST /api/admin/parents": obj({
+    firstName: str, lastName: str, phone: str, active: bool, email: str, password: str, username: str, childIds: arr(idish), isEmergencyContact: bool,
+  }, ["phone", "active", "username", "childIds", "isEmergencyContact"]),
+  "PATCH /api/admin/parents/:id": obj({ firstName: str, lastName: str, phone: str, active: bool, childIds: arr(idish) }, ["firstName", "lastName", "phone", "active", "childIds"]),
+  "POST /api/auth/change-password": obj({ currentPassword: str, newPassword: str }),
+  "POST /api/auth/2fa/setup": obj({ method: enumOf("totp", "email") }),
+  "POST /api/auth/2fa/enable": obj({ code: str, challengeId: str }, ["challengeId"]),
+  "POST /api/auth/2fa/disable": obj({ code: str, recoveryCode: str, challengeId: str }, ["code", "recoveryCode", "challengeId"]),
 };
