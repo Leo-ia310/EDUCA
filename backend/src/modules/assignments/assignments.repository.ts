@@ -1,4 +1,4 @@
-import { expectSingle } from "../../lib/db";
+import { assertNoDbError, expectSingle } from "../../lib/db";
 import { supabaseAdmin } from "../../lib/supabase";
 import { dateOnly } from "../../validators/common.validators";
 
@@ -180,6 +180,78 @@ export class AssignmentsRepository {
         .single(),
       "No se pudo actualizar la tarea.",
     );
+  }
+
+  async assignmentsForList(institutionId: number, classId: number | null) {
+    let query = db
+      .from("assignments")
+      .select(
+        "id, class_id, title, description, instructions, assigned_at, due_at, max_score, allow_late, published, created_at, " +
+          "classes(group_id, subjects(name), groups(name))",
+      )
+      .eq("institution_id", institutionId)
+      .is("deleted_at", null)
+      .order("due_at", { ascending: false })
+      .limit(300);
+    if (classId != null) query = query.eq("class_id", classId);
+    const { data, error } = await query;
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async submissionStatusByAssignmentIds(institutionId: number, assignmentIds: number[]) {
+    const rows: Array<Record<string, unknown>> = [];
+    for (let i = 0; i < assignmentIds.length; i += 100) {
+      const { data, error } = await db
+        .from("submissions")
+        .select("assignment_id, task_status_id")
+        .eq("institution_id", institutionId)
+        .in("assignment_id", assignmentIds.slice(i, i + 100));
+      assertNoDbError(error);
+      rows.push(...((data ?? []) as Array<Record<string, unknown>>));
+    }
+    return rows;
+  }
+
+  async submissionsOfAssignment(institutionId: number, assignmentId: number) {
+    const { data, error } = await db
+      .from("submissions")
+      .select("id, student_id, submitted_at, student_notes, is_late, task_status_id")
+      .eq("institution_id", institutionId)
+      .eq("assignment_id", assignmentId);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async activeStudentsOfGroup(institutionId: number, groupId: number) {
+    const { data, error } = await db
+      .from("enrollments")
+      .select("student_id, students!inner(id, active, persons(first_name, last_name))")
+      .eq("institution_id", institutionId)
+      .eq("group_id", groupId)
+      .eq("students.active", true);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async gradesOfEvaluation(institutionId: number, evaluationId: unknown) {
+    const { data, error } = await db
+      .from("grades")
+      .select("student_id, score, notes")
+      .eq("institution_id", institutionId)
+      .eq("evaluation_id", evaluationId);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async submissionAttachments(submissionIds: number[]) {
+    if (submissionIds.length === 0) return [] as Array<Record<string, unknown>>;
+    const { data, error } = await db
+      .from("submission_files")
+      .select("submission_id, files(id, original_name, url, size_bytes, mime_type)")
+      .in("submission_id", submissionIds);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
   }
 
   async softDeleteAssignment(

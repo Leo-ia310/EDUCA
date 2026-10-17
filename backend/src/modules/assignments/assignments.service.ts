@@ -83,6 +83,85 @@ export class AssignmentsService {
     });
   }
 
+  /** Tareas visibles para el maestro (RLS limita a sus clases y colaboraciones), con conteos de entregas. */
+  async listAssignments(ctx: AppContext, query: Record<string, unknown>) {
+    this.permissions.requireRole(ctx, ["teacher"]);
+    const classId = optionalId(query.classId ?? query.class_id);
+    const rows = await this.repository.assignmentsForList(ctx.institutionId, classId);
+    const groupIds = [...new Set(rows.map((r: any) => Number(r.classes?.group_id)).filter(Number.isFinite))];
+    const studentsByGroup = new Map<number, number>();
+    if (groupIds.length > 0) {
+      const { data } = await this.repository.enrollmentsByGroupIds(ctx.institutionId, groupIds);
+      for (const e of (data ?? []) as Array<Record<string, unknown>>) {
+        const g = Number(e.group_id);
+        studentsByGroup.set(g, (studentsByGroup.get(g) ?? 0) + 1);
+      }
+    }
+    const graded = await this.repository.taskStatusId("CALI").catch(() => null);
+    const subs = await this.repository.submissionStatusByAssignmentIds(ctx.institutionId, rows.map((r) => Number(r.id)));
+    const counts = new Map<number, { submitted: number; graded: number }>();
+    for (const s of subs) {
+      const c = counts.get(Number(s.assignment_id)) ?? { submitted: 0, graded: 0 };
+      c.submitted += 1;
+      if (graded != null && Number(s.task_status_id) === graded) c.graded += 1;
+      counts.set(Number(s.assignment_id), c);
+    }
+    return { assignments: rows.map((r: any) => mapListed(r, studentsByGroup, counts)) };
+  }
+
+  /** Alumnos del salón con el estado de su entrega, nota y comentarios (permiso `assignments.review`). */
+  async assignmentSubmissions(ctx: AppContext, idRaw: unknown) {
+    this.permissions.requireRole(ctx, ["teacher"]);
+    const id = requiredId(idRaw, "Tarea");
+    await this.permissions.assertTeacherCanUseAssignment(ctx, id, "assignments.review");
+    const row: any = await this.repository.findAssignmentForHydration(id, ctx.institutionId);
+    const groupId = Number(row.classes?.group_id);
+    const [students, subs, graded, evaluation] = await Promise.all([
+      this.repository.activeStudentsOfGroup(ctx.institutionId, groupId),
+      this.repository.submissionsOfAssignment(ctx.institutionId, id),
+      this.repository.taskStatusId("CALI").catch(() => null),
+      this.repository.findEvaluationByAssignmentId(ctx.institutionId, id),
+    ]);
+    const grades = evaluation ? await this.repository.gradesOfEvaluation(ctx.institutionId, evaluation.id) : [];
+    const gradeOf = new Map(grades.map((g) => [Number(g.student_id), g]));
+    const files = await this.repository.submissionAttachments(subs.map((s) => Number(s.id)));
+    const filesOf = new Map<number, ReturnType<typeof mapAttachment>[]>();
+    for (const f of files) {
+      if (!f.files) continue;
+      const list = filesOf.get(Number(f.submission_id)) ?? [];
+      list.push(mapAttachment(f.files as Record<string, unknown>));
+      filesOf.set(Number(f.submission_id), list);
+    }
+    const subOf = new Map(subs.map((s) => [Number(s.student_id), s]));
+    const counts = new Map([[id, {
+      submitted: subs.length,
+      graded: graded == null ? 0 : subs.filter((s) => Number(s.task_status_id) === graded).length,
+    }]]);
+    return {
+      assignment: mapListed(row, new Map([[groupId, students.length]]), counts),
+      students: students
+        .map((e: any) => {
+          const person = e.students?.persons;
+          const name = `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim() || "Estudiante";
+          const sub: any = subOf.get(Number(e.student_id));
+          const isGraded = !!sub && graded != null && Number(sub.task_status_id) === graded;
+          const grade = isGraded ? gradeOf.get(Number(e.student_id)) : undefined;
+          return {
+            studentId: String(e.student_id),
+            name,
+            submissionId: sub ? String(sub.id) : null,
+            status: !sub ? "pending" : isGraded ? "graded" : sub.is_late ? "late" : "submitted",
+            submittedAt: sub?.submitted_at ?? null,
+            notes: sub?.student_notes ?? null,
+            attachments: sub ? (filesOf.get(Number(sub.id)) ?? []) : [],
+            score: grade?.score == null ? null : Number(grade.score),
+            feedback: grade?.notes ?? null,
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, "es")),
+    };
+  }
+
   async upsertAssignment(ctx: AppContext, payload: Record<string, unknown>) {
     const classId = requiredId(payload.classId, "Clase");
     const title = requiredString(payload.title, "Título", 200);
@@ -429,4 +508,29 @@ export class AssignmentsService {
 }
 
 export const assignmentsService = new AssignmentsService();
+
+function mapListed(
+  r: any,
+  studentsByGroup: Map<number, number>,
+  counts: Map<number, { submitted: number; graded: number }>,
+) {
+  const c = counts.get(Number(r.id)) ?? { submitted: 0, graded: 0 };
+  return {
+    id: String(r.id),
+    classId: String(r.class_id),
+    subjectName: String(r.classes?.subjects?.name ?? "Materia"),
+    groupName: String(r.classes?.groups?.name ?? "Grupo"),
+    title: String(r.title ?? ""),
+    description: r.description ?? null,
+    instructions: r.instructions ?? null,
+    assignedAt: String(r.assigned_at ?? r.created_at ?? ""),
+    dueAt: String(r.due_at ?? ""),
+    maxScore: Number(r.max_score ?? 100),
+    allowLate: Boolean(r.allow_late),
+    published: r.published == null ? true : Boolean(r.published),
+    totalStudents: studentsByGroup.get(Number(r.classes?.group_id)) ?? 0,
+    submittedCount: c.submitted,
+    gradedCount: c.graded,
+  };
+}
 
