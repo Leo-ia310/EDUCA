@@ -43,6 +43,8 @@ export const env = {
   rateLimitWindowMs: optionalNumber("RATE_LIMIT_WINDOW_MS", 15 * 60 * 1000),
   rateLimitMax: optionalNumber("RATE_LIMIT_MAX", 300),
   authRateLimitMax: optionalNumber("AUTH_RATE_LIMIT_MAX", 120),
+  /** Solicitudes por usuario autenticado y ventana (la web consulta cada pocos segundos). */
+  userRateLimitMax: optionalNumber("USER_RATE_LIMIT_MAX", 1200),
   fileUploadMaxBytes: optionalNumber("FILE_UPLOAD_MAX_BYTES", 10 * 1024 * 1024),
   fileAllowedMimeTypes: optional("FILE_ALLOWED_MIME_TYPES", [
     "application/pdf",

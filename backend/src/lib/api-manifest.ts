@@ -80,7 +80,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "{ username, password, institutionCode? }",
     response: "{ session, authUser, user, institution } o { twoFactorRequired, challenge }",
     source: "backend/src/modules/auth/auth.routes.ts",
-    notes: "Resuelve institutions.code + users.username/users.email y autentica contra Supabase Auth; solo pide 2FA cuando el usuario lo activo. 2FA esta disponible para todos los usuarios desde Cuenta > Seguridad 2FA.",
+    notes: "Resuelve institutions.code + users.username/users.email y autentica contra Supabase Auth; solo pide 2FA cuando el usuario lo activo. 2FA esta disponible para todos los usuarios desde Cuenta > Seguridad 2FA. Los límites por IP contabilizan respuestas con error, no el uso exitoso. Las solicitudes autenticadas tienen un cupo separado por usuario validado (USER_RATE_LIMIT_MAX, 1200 por ventana por defecto); exceder ese cupo no consume el cupo por IP. Los contadores son locales a cada instancia del backend.",
   }),
   api({
     module: "auth",

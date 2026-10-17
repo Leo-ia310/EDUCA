@@ -7,16 +7,23 @@ import type { AppContext, AppRequest } from "../types/app-context";
 import { HttpError } from "../lib/errors";
 import { currentSupabaseClient, withRequestSupabase } from "../lib/supabase";
 import { asList } from "../validators/common.validators";
+import { consumeUserQuota } from "../lib/user-rate-limit";
 
 export async function authMiddleware(
   req: AppRequest,
-  _res: Response,
+  res: Response,
   next: NextFunction,
 ) {
   try {
     const token = bearerToken(req);
     await withRequestSupabase(token, async () => {
       req.appContext = await loadContextFromToken(token);
+      try {
+        consumeUserQuota(req.appContext.userId);
+      } catch (error) {
+        res.locals.userQuotaExceeded = true;
+        throw error;
+      }
       await portalAccessService.enforceRequest(req.appContext, req.originalUrl, req.method, (req.body ?? {}) as Record<string,unknown>);
       next();
     });
