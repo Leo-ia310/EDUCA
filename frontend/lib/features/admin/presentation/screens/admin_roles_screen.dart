@@ -118,7 +118,7 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
             BrutalButton(
               expand: true,
               onTap: () => connected
-                  ? showAdminProfileSheet(context)
+                  ? showNewProfileSheet(context)
                   : _openPersonSheet(context),
               icon: Icons.person_add_alt_1_rounded,
               label: 'Nuevo perfil',

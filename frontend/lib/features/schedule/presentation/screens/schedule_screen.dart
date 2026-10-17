@@ -104,9 +104,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         Text(
                           ScheduleMock.weekDays[i],
                           style: context.textTheme.labelMedium?.copyWith(
-                            color: selected
-                                ? palette.onAccent
-                                : palette.textMuted,
+                            color:
+                                selected ? palette.onAccent : palette.textMuted,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -156,15 +155,30 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           const SizedBox(height: 20),
           SectionHeader(title: ScheduleMock.weekDaysLong[selectedDay]),
           const SizedBox(height: 8),
-          if (weekly.isLoading && byDay.isEmpty)
+          if (weekly.isLoading)
             const Padding(
               padding: EdgeInsets.only(top: 24),
               child: SkeletonList(),
             )
-          else if (weekly.hasError && byDay.isEmpty)
+          else if (weekly.hasError)
             ErrorStateView(
-              message: '${weekly.error}',
-              onRetry: () => ref.invalidate(weeklySlotsProvider),
+              message: 'No se pudo cargar el horario. Intenta nuevamente.',
+              onRetry: () {
+                if (widget.forChild) {
+                  ref.invalidate(childWeeklySlotsProvider(widget.studentId));
+                } else {
+                  ref.invalidate(weeklySlotsProvider);
+                }
+              },
+            )
+          else if (byDay.values.every((day) => day.isEmpty))
+            const Padding(
+              padding: EdgeInsets.only(top: 40),
+              child: EmptyState(
+                icon: Icons.event_busy_outlined,
+                title: 'No tienes horario asignado',
+                subtitle: 'Tu colegio aún no ha asignado clases a tu horario.',
+              ),
             )
           else if (slots.isEmpty)
             const Padding(
@@ -192,7 +206,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
 /// Columna de timeline: hora de inicio, punto, línea punteada y hora de fin.
 class _Timeline extends StatelessWidget {
-  const _Timeline({required this.start, required this.end, required this.color});
+  const _Timeline(
+      {required this.start, required this.end, required this.color,});
 
   final String start;
   final String end;

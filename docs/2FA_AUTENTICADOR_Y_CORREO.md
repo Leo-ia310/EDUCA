@@ -23,6 +23,11 @@ guardan con HMAC ligado al reto y a una clave privada del servidor, nunca en
 texto claro. Rotar la service-role key invalida los códigos de correo pendientes.
 El backend no devuelve códigos de desarrollo cuando falla Resend.
 
+El remitente acepta `correo@dominio.com` o `Nivra <correo@dominio.com>`.
+Los delimitadores deben estar completos. Un remitente mal formado o un servicio
+sin configurar produce un error controlado 503 y no activa 2FA. El frontend
+conserva el mensaje de configuración para distinguirlo de un fallo temporal de envío.
+
 ## Persistencia y sesiones
 
 La migración 0028 traslada secretos y recuperaciones existentes a
@@ -63,6 +68,8 @@ Desde `backend`: `npm run typecheck`, `npm run docs:apis` y
 `npx tsx scripts/two_factor_methods_check.ts`. El último ejercita el servicio
 real y los RPC de Postgres con un transporte de correo inyectado; revierte
 usuarios, sesiones y retos en una transacción y no envía correos reales.
+`npx tsx scripts/email_delivery_check.ts` valida el remitente y la petición a
+Resend con HTTP interceptado; tampoco envía correos.
 También comprobar `portal_access_db_check.mjs`, `collaborations_db_check.mjs`
 y `announcement_queue_check.mjs` desde `backend/scripts` después de cambios RLS.
 

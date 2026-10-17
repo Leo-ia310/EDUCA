@@ -14,15 +14,28 @@ export class EmailService {
     if (env.emailProvider !== "resend") {
       throw new HttpError(
         503,
-        "Proveedor de correo no configurado.",
+        "El envío de correos no está habilitado. Contacta a la administración.",
         "email_provider_unavailable",
       );
     }
     if (!env.resendApiKey) {
       throw new HttpError(
         503,
-        "RESEND_API_KEY no está configurada.",
+        "El servicio de correo no está configurado. Contacta a la administración.",
         "email_provider_unavailable",
+      );
+    }
+
+    // Accept an email address or a complete display-name <address> pair.
+    // A missing angle bracket is rejected before calling the mail provider.
+    const sender = env.resendFromEmail.trim();
+    const address = /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/;
+    const named = sender.match(/^[^<>\r\n]+<([^<>\s]+)>$/);
+    if (!address.test(sender) && !(named && address.test(named[1]))) {
+      throw new HttpError(
+        503,
+        "El remitente de correo está mal configurado. Contacta a la administración.",
+        "email_sender_invalid",
       );
     }
 
@@ -35,7 +48,7 @@ export class EmailService {
       },
       signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
-        from: env.resendFromEmail,
+        from: sender,
         to: [payload.to],
         subject: payload.subject,
         html: payload.html,

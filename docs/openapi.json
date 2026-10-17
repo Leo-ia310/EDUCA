@@ -232,7 +232,7 @@
           "auth"
         ],
         "summary": "Cambia la contrasena de la cuenta autenticada",
-        "description": "Auth: usuario autenticado.\n\nNotas: Verifica la contrasena actual con Supabase Auth y exige una nueva de 8+ caracteres distinta de la actual. La pantalla de la app aun no la usa (hoy es un simulacro).\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: La pantalla Cambiar contraseña llama a este endpoint. Verifica la contraseña actual en un cliente Auth aislado y exige una nueva de 8+ caracteres distinta de la actual. Respeta el 2FA de la sesión y nunca cambia la contraseña ante una verificación fallida.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -384,7 +384,7 @@
           "auth"
         ],
         "summary": "Solicita recuperación de contraseña por colegio y usuario",
-        "description": "Auth: publico.\n\nNotas: Genera link con Supabase Admin y envia correo via Resend; PASSWORD_RESET_REDIRECT_URL es opcional.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "description": "Auth: publico.\n\nNotas: Resend envía un enlace directo con token_hash de recuperación de un uso, sin depender del Site URL ni del PKCE. Destino Android: https://nivramop.com/reset-password, registrado como App Link del paquete com.nivra.demo; el dominio debe publicar /.well-known/assetlinks.json con la firma del APK. PASSWORD_RESET_REDIRECT_URL obligatorio en producción. Para desarrollo web puede configurarse http://127.0.0.1:8080/#/reset-password. No devuelve sesión ni revela si la cuenta existe.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [],
         "requestBody": {
           "required": false,
@@ -405,6 +405,58 @@
         "responses": {
           "200": {
             "description": "{ ok, message }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Restablece contraseña con enlace de recuperación de un uso",
+        "description": "Auth: público con token de recuperación válido.\n\nNotas: Mínimo 8 caracteres. Verifica token_hash como recovery con Supabase, actualiza la contraseña y cierra las sesiones. Enlace inválido, usado o expirado: 400. No entrega sesión ni desactiva 2FA; el siguiente login requiere el método activo.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ tokenHash, newPassword }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ ok: true }",
             "content": {
               "application/json": {
                 "schema": {
@@ -519,8 +571,8 @@
         "tags": [
           "auth"
         ],
-        "summary": "Inicia configuracion 2FA con app autenticadora",
-        "description": "Auth: usuario autenticado.\n\nNotas: Migración 0028. TOTP devuelve URI para QR local y clave manual; email envía código por Resend. Caduca en 5 minutos. Un método activo debe desactivarse con verificación antes de cambiarlo. Secretos y retos son privados al backend.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "summary": "Inicia configuración 2FA con autenticador o correo",
+        "description": "Auth: usuario autenticado.\n\nNotas: Migración 0028. TOTP devuelve URI para QR local y clave manual; email envía código por Resend. Caduca en 5 minutos. Un método activo debe desactivarse con verificación antes de cambiarlo. Secretos y retos son privados al backend. La configuración del proveedor y del remitente se valida antes de enviar; devuelve 503 con un mensaje de configuración si es inválida, sin activar 2FA.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3890,7 +3942,7 @@
           "schedules"
         ],
         "summary": "Horario del alumno (o hijo del padre) o del maestro, con recesos de sus grupos",
-        "description": "Auth: student, parent (studentId de su hijo), teacher.\n\nFuente: backend/src/modules/schedules/schedules.routes.ts.",
+        "description": "Auth: student, parent (studentId de su hijo), teacher.\n\nNotas: Inicio y pantalla de horario consumen datos reales por sesión. SQL filtra institución y clases de los grupos matriculados (o del docente); los padres requieren studentId autorizado. Sin clases programadas devuelve schedules: [], sin inventar horarios ni mostrar recesos sueltos. Ejemplos frontend solo con DEMO=true; fallos muestran error y reintento.\n\nFuente: backend/src/modules/schedules/schedules.routes.ts.",
         "security": [
           {
             "bearerAuth": []

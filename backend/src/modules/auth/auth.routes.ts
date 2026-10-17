@@ -9,6 +9,7 @@ import {
   login,
   logout,
   recoverPassword,
+  resetPassword,
   refresh,
   setupTwoFactor,
   twoFactorStatus,
@@ -24,6 +25,7 @@ authRoutes.post("/2fa/resend-login", asyncHandler(resendTwoFactorLogin));
 authRoutes.post("/2fa/verify-login", asyncHandler(verifyTwoFactorLogin));
 authRoutes.post("/refresh", asyncHandler(refresh));
 authRoutes.post("/recover-password", asyncHandler(recoverPassword));
+authRoutes.post("/reset-password", asyncHandler(resetPassword));
 authRoutes.get("/2fa/status", authMiddleware, asyncHandler(twoFactorStatus));
 authRoutes.post("/2fa/setup", authMiddleware, asyncHandler(setupTwoFactor));
 authRoutes.post("/2fa/enable", authMiddleware, asyncHandler(enableTwoFactor));

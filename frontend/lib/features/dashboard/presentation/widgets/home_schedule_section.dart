@@ -9,6 +9,8 @@ import '../../../../core/theme/motion.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/section_header.dart';
+import '../../../../core/widgets/error_state.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../../../schedule/data/schedule_mock.dart';
 import '../../../schedule/providers.dart';
 
@@ -107,8 +109,25 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
         WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
       }
     });
-    final weekly = ref.watch(weeklySlotsProvider).valueOrNull ??
-        const <int, List<ClassSlot>>{};
+    final schedule = ref.watch(weeklySlotsProvider);
+    if (schedule.isLoading || schedule.hasError) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(title: 'Horario', accent: false),
+          const SizedBox(height: 12),
+          if (schedule.isLoading)
+            const Skeleton(height: _cardHeight)
+          else
+            ErrorStateView(
+              message: 'No se pudo cargar tu horario. Intenta nuevamente.',
+              onRetry: () => ref.invalidate(weeklySlotsProvider),
+            ),
+        ],
+      );
+    }
+    final weekly = schedule.valueOrNull ?? const <int, List<ClassSlot>>{};
+    final hasSchedule = weekly.values.any((day) => day.isNotEmpty);
     final dayCount = _dayCountOf(weekly);
     final slots = weekly[_selected] ?? const <ClassSlot>[];
     final now = DateTime.now();
@@ -156,14 +175,18 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Sin clases para este día',
+                        hasSchedule
+                            ? 'Sin clases para este día'
+                            : 'No tienes horario asignado',
                         style: context.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'No hay clases programadas para este día.',
+                        hasSchedule
+                            ? 'No hay clases programadas para este día.'
+                            : 'Tu colegio aún no ha asignado clases a tu horario.',
                         textAlign: TextAlign.center,
                         style: context.textTheme.bodySmall
                             ?.copyWith(color: context.palette.textMuted),
@@ -207,7 +230,8 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
                                                   ) &&
                                               nowMin <
                                                   DateUtilsX.hhmmToMinutes(
-                                                      slot.end,),
+                                                    slot.end,
+                                                  ),
                                         ),
                                 ),
                               );
@@ -217,7 +241,9 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
                       ),
                     ),
                     _CarouselArrows(
-                        controller: _controller, count: slots.length,),
+                      controller: _controller,
+                      count: slots.length,
+                    ),
                   ],
                 ),
         ),

@@ -7,22 +7,27 @@ import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
 import '../../core/theme/subject_palette.dart';
 import '../auth/presentation/auth_controller.dart';
-import '../dashboard/data/supabase_dashboard_datasource.dart' show iconForSubject;
+import '../dashboard/data/supabase_dashboard_datasource.dart'
+    show iconForSubject;
 import 'data/mock_schedule_repository.dart';
 import '../admin/data/demo_schedules.dart';
 import 'data/schedule_mock.dart';
 import 'data/supabase_schedule_repository.dart';
 import 'domain/schedule_repository.dart';
 
-/// Listo para cuando `ScheduleScreen` se cablee a datos reales — ver el
-/// comentario en `domain/schedule_repository.dart`. Hoy nada consume este
-/// provider todavía.
+/// Examples are opt-in. Missing credentials/session/API never enable fixtures.
+final scheduleDemoEnabledProvider = Provider<bool>((ref) => Env.forceDemo);
+
+/// Legacy repository interface; screens use the authenticated backend below.
 final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
   ref.watch(portalFingerprintProvider);
+  if (ref.watch(scheduleDemoEnabledProvider)) {
+    return MockScheduleRepository();
+  }
   final auth = ref.watch(authControllerProvider);
   final client = ref.watch(supabaseClientProvider);
   if (client == null || auth.institution == null) {
-    return MockScheduleRepository();
+    throw StateError('No se pudo conectar con el servicio de horarios.');
   }
   return SupabaseScheduleRepository(
     client: client,
@@ -32,7 +37,8 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
 
 /// Convierte los bloques que entrega el backend (o el almacén demo) al modelo
 /// de la UI, agrupados por día (0 = lunes … 6 = domingo) y ordenados por hora.
-Map<int, List<ClassSlot>> buildWeeklySlots(Iterable<Map<String, dynamic>> items) {
+Map<int, List<ClassSlot>> buildWeeklySlots(
+    Iterable<Map<String, dynamic>> items,) {
   final byDay = <int, List<ClassSlot>>{};
   for (final m in items) {
     final day = (m['weekdayIndex'] as num).toInt();
@@ -66,9 +72,13 @@ Future<Map<int, List<ClassSlot>>> _fetchWeekly(
 }) async {
   final data = await api.get(
     '/schedules/mine',
-    queryParameters: {'studentId': studentId},
+    queryParameters: {if (studentId != null) 'studentId': studentId},
   );
-  final items = (data is Map ? data['schedules'] : null) as List? ?? const [];
+  if (data is! Map || data['schedules'] is! List) {
+    throw StateError(
+        'El servicio de horarios devolvió una respuesta inválida.',);
+  }
+  final items = data['schedules'] as List;
   return buildWeeklySlots([
     for (final raw in items) (raw as Map).cast<String, dynamic>(),
   ]);
@@ -76,15 +86,20 @@ Future<Map<int, List<ClassSlot>>> _fetchWeekly(
 
 /// Horario semanal que ve el usuario, por día (0 = lunes … 6 = domingo).
 ///
-/// Demo (o sin conexión): el horario en memoria del módulo de horarios (parte
+/// Demo explícito: el horario en memoria del módulo de horarios (parte
 /// del de ejemplo, editable desde el admin). Conectado: lo que el admin
 /// configuró, filtrado por el backend según el rol (clases y recesos del
 /// alumno, o del maestro). Nunca se mezclan datos de ejemplo con reales.
 final weeklySlotsProvider =
     FutureProvider.autoDispose<Map<int, List<ClassSlot>>>((ref) async {
-  final api = ref.watch(backendApiClientProvider);
-  final user = ref.watch(authControllerProvider.select((a) => a.user));
-  if (Env.isDemoMode || api == null || user == null) {
+  final demoEnabled = ref.watch(scheduleDemoEnabledProvider);
+  final identity = ref.watch(authControllerProvider.select((a) => (
+        a.user?.id,
+        a.user?.institutionId,
+        a.user?.activeRole,
+        a.institution?.id
+      ),),);
+  if (demoEnabled) {
     final demo = ref.watch(demoSchedulesProvider);
     return buildWeeklySlots([
       for (final e in demo)
@@ -100,6 +115,16 @@ final weeklySlotsProvider =
         },
     ]);
   }
+  if (identity.$1 == null || identity.$4 == null) {
+    throw StateError('Inicia sesión para consultar tu horario.');
+  }
+  if (identity.$2 != identity.$4) {
+    throw StateError('No se pudo validar la institución de tu horario.');
+  }
+  final api = ref.watch(backendApiClientProvider);
+  if (api == null) {
+    throw StateError('No se pudo conectar con el servicio de horarios.');
+  }
   return _fetchWeekly(api);
 });
 
@@ -107,8 +132,20 @@ final weeklySlotsProvider =
 final childWeeklySlotsProvider = FutureProvider.autoDispose
     .family<Map<int, List<ClassSlot>>, int?>((ref, studentId) async {
   final api = ref.watch(backendApiClientProvider);
-  if (Env.isDemoMode || api == null || studentId == null) {
+  if (ref.watch(scheduleDemoEnabledProvider)) {
     return ref.watch(weeklySlotsProvider.future);
+  }
+  if (studentId == null) {
+    throw StateError('Selecciona un estudiante para consultar su horario.');
+  }
+  final identity = ref.watch(authControllerProvider.select((a) => (
+        a.user?.id,
+        a.user?.institutionId,
+        a.user?.activeRole,
+        a.institution?.id
+      ),),);
+  if (identity.$1 == null || identity.$2 != identity.$4 || api == null) {
+    throw StateError('No se pudo validar la sesión para consultar el horario.');
   }
   return _fetchWeekly(api, studentId: studentId);
 });

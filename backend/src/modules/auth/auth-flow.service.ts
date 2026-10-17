@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { createClient } from "@supabase/supabase-js";
 
 import {
   asList,
@@ -19,6 +20,9 @@ export class AuthFlowService {
     private readonly repository: AuthFlowRepository = authFlowRepository,
     private readonly emails: typeof emailService = emailService,
     private readonly auth: typeof supabasePublic.auth = supabasePublic.auth,
+    private readonly passwordAuth = () => createClient(env.supabaseUrl, env.supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    }).auth,
   ) {}
 
   async login(payload: Record<string, unknown>) {
@@ -134,12 +138,15 @@ export class AuthFlowService {
     }
 
     if (appUser?.email) {
+      // Link directly to the app. Supabase's default Site URL must not decide
+      // where password recovery lands, nor require a browser's PKCE verifier.
+      const recoveryUrl = this.passwordRecoveryUrl();
       const admin = requireSupabaseServiceRole();
       const { data, error } = await admin.auth.admin.generateLink({
         type: "recovery",
         email: String(appUser.email),
         options: {
-          redirectTo: env.passwordResetRedirectUrl || undefined,
+          redirectTo: recoveryUrl.toString(),
         },
       });
       if (error) {
@@ -149,22 +156,64 @@ export class AuthFlowService {
           "password_recovery_link_failed",
         );
       }
-      const actionLink =
-        data?.properties?.action_link ?? data?.properties?.email_otp ?? null;
-      if (typeof actionLink === "string") {
+      const tokenHash = data?.properties?.hashed_token;
+      if (typeof tokenHash === "string" && tokenHash.length > 0) {
+        if (recoveryUrl.hash.startsWith("#/")) {
+          const [route, query] = recoveryUrl.hash.slice(1).split("?");
+          const params = new URLSearchParams(query);
+          params.set("token_hash", tokenHash);
+          recoveryUrl.hash = `${route}?${params}`;
+        } else {
+          recoveryUrl.searchParams.set("token_hash", tokenHash);
+        }
         await this.emails.sendPasswordRecovery(
           String(appUser.email),
           String(appUser.full_name ?? username),
-          actionLink,
+          recoveryUrl.toString(),
         );
+      } else {
+        throw new HttpError(502, "No se pudo generar el enlace de recuperación.", "password_recovery_link_failed");
       }
     }
 
     return {
       ok: true,
       message:
-        "Si la cuenta existe y tiene correo, Supabase Auth enviara instrucciones de recuperacion.",
+        "Si la cuenta existe y tiene correo, recibirás instrucciones de recuperación.",
     };
+  }
+
+  private passwordRecoveryUrl() {
+    let url: URL;
+    try { url = new URL(env.passwordResetRedirectUrl); } catch {
+      throw new HttpError(503, "La recuperación de contraseña no está configurada. Contacta a la administración.", "password_recovery_unavailable");
+    }
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password ||
+      (url.hash.split("?")[0] !== "#/reset-password" && url.pathname !== "/reset-password")) {
+      throw new HttpError(503, "La dirección de recuperación no está configurada correctamente. Contacta a la administración.", "password_recovery_unavailable");
+    }
+    return url;
+  }
+
+  async resetPassword(payload: Record<string, unknown>) {
+    const tokenHash = requiredString(payload.tokenHash, "Enlace de recuperación", 300);
+    const password = requiredString(payload.newPassword, "Nueva contraseña", 200);
+    if (password.length < 8) throw new HttpError(400, "La nueva contraseña debe tener al menos 8 caracteres.", "validation_error");
+    const auth = this.passwordAuth();
+    const { data, error } = await auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+    if (error || !data.session || !data.user) {
+      throw new HttpError(400, "El enlace es inválido, expiró o ya fue utilizado. Solicita uno nuevo.", "password_recovery_invalid");
+    }
+    try {
+      const result = await auth.updateUser({ password });
+      if (result.error) throw new HttpError(400, "No se pudo actualizar la contraseña. Solicita un enlace nuevo y usa una contraseña diferente de al menos 8 caracteres.", "password_reset_failed");
+      // Recovery grants only a password change, never a returned app session.
+      // Keep the configured second factor; the next login must still verify it.
+      await auth.signOut({ scope: "global" });
+      return { ok: true };
+    } finally {
+      await auth.signOut({ scope: "local" }).catch(() => undefined);
+    }
   }
 
   /** Cambia la contrasena de quien tiene la sesion: exige la actual y una nueva distinta (min. 8). */
@@ -183,10 +232,12 @@ export class AuthFlowService {
     if (!authUserId || !email) {
       throw new HttpError(400, "La cuenta no tiene acceso por contrasena.", "validation_error");
     }
-    const { error } = await supabasePublic.auth.signInWithPassword({ email, password: current });
-    if (error) {
+    const verifier = this.passwordAuth();
+    const { data, error } = await verifier.signInWithPassword({ email, password: current });
+    if (error || data.user?.id !== authUserId) {
       throw new HttpError(400, "La contrasena actual no es correcta.", "invalid_credentials");
     }
+    await verifier.signOut({ scope: "local" });
     const admin = requireSupabaseServiceRole();
     const { error: updateError } = await admin.auth.admin.updateUserById(authUserId, { password: next });
     if (updateError) {
@@ -365,8 +416,9 @@ export class AuthFlowService {
       try {
         await this.emails.sendTwoFactorCode(String(user.email),String(user.full_name ?? "usuario"),code,purpose,id);
         await this.repository.finishTwoFactorDelivery(id,true);
-      } catch {
+      } catch (error) {
         await this.repository.finishTwoFactorDelivery(id,false);
+        if (error instanceof HttpError && error.status === 503) throw error;
         throw new HttpError(502,"No se pudo enviar el código por correo. Intenta nuevamente en un minuto.","email_send_failed");
       }
     } else if(recoveryOnly && method === "email") {

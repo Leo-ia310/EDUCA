@@ -16,6 +16,9 @@ class SupabaseService {
       publishableKey: Env.supabaseAnonKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
+        // GoRouter receives Android App Links. Recovery is verified by our
+        // backend and must never create a Supabase session from a URL.
+        detectSessionInUri: false,
       ),
     );
   }

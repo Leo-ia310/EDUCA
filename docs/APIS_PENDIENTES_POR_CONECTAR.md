@@ -12,14 +12,8 @@ Cuando se agregue, quite o cambie una API, actualiza `backend/src/lib/api-manife
 
 ## Resumen
 
-- Total pendiente de conectar: 13
-- Modulos con trabajo pendiente: 5
-
-## Auth
-
-| Metodo | Ruta | Resumen | Auth | Request | Response | Fuente | Notas |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `POST` | `/api/auth/change-password` | Cambia la contrasena de la cuenta autenticada | usuario autenticado | { currentPassword, newPassword } | { ok: true, data: { ok: true } } | `backend/src/modules/auth/auth.routes.ts` | Verifica la contrasena actual con Supabase Auth y exige una nueva de 8+ caracteres distinta de la actual. La pantalla de la app aun no la usa (hoy es un simulacro). |
+- Total pendiente de conectar: 12
+- Modulos con trabajo pendiente: 4
 
 ## Chat
 
