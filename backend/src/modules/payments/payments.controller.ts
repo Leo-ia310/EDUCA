@@ -27,6 +27,11 @@ export async function paymentsSummary(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function myCharges(req: AppRequest, res: Response) {
+  const data = await paymentsService.chargesOfStudent(requireAppContext(req), asRecord(req.query));
+  return res.json({ ok: true, data });
+}
+
 export async function listCharges(req: AppRequest, res: Response) {
   const data = await paymentsService.listCharges(requireAppContext(req), asRecord(req.query));
   return res.json({ ok: true, data });

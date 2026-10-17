@@ -225,6 +225,17 @@ export class PaymentsService {
     return { charges };
   }
 
+  /** Cargos de un hijo (padre) o propios (alumno), con lo pagado y el saldo. Solo lectura. */
+  async chargesOfStudent(ctx: AppContext, query: Record<string, unknown>) {
+    const studentId = await this.permissions.normalizeStudentId(ctx, query.studentId ?? query.student_id, "estudiante");
+    const [rows, paidAll] = await Promise.all([
+      this.repository.listCharges(ctx.institutionId, [studentId]),
+      this.repository.paidPayments(ctx.institutionId),
+    ]);
+    const paidBy = this.sumByCharge(paidAll);
+    return { charges: (rows as any[]).map((c) => this.chargeView(c, paidBy.get(Number(c.id)) ?? 0)) };
+  }
+
   async getCharge(ctx: AppContext, idValue: unknown) {
     this.requireAdminWith(ctx, "payments.view");
     const id = requiredId(idValue, "Cargo");
