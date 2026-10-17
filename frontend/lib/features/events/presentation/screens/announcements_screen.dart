@@ -161,10 +161,10 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
         await ref.read(announcementsProvider.future);
       },
       fab: isAdmin
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
+              tooltip: 'Nuevo anuncio',
               onPressed: () => context.push(Routes.eventNew),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Nuevo'),
+              child: const Icon(Icons.add_rounded),
             )
           : null,
       child: Column(

@@ -136,8 +136,20 @@ class BackendApiClient {
       if (data is Map && data['ok'] == true) return data['data'];
       throw StateError(_messageFrom(data) ?? 'Respuesta inválida del backend.');
     } on DioException catch (e) {
-      final message = _messageFrom(e.response?.data) ?? e.message;
-      throw StateError(message ?? 'No se pudo llamar al backend.');
+      final message = _messageFrom(e.response?.data) ??
+          switch (e.type) {
+            DioExceptionType.connectionError =>
+              'No se pudo conectar con el servidor. Revisa tu conexión e intenta nuevamente.',
+            DioExceptionType.connectionTimeout ||
+            DioExceptionType.sendTimeout ||
+            DioExceptionType.receiveTimeout =>
+              'El servidor está tardando en responder. Intenta nuevamente.',
+            DioExceptionType.badCertificate =>
+              'No se pudo establecer una conexión segura con el servidor.',
+            DioExceptionType.cancel => 'La solicitud se canceló.',
+            _ => 'No se pudo completar la solicitud. Intenta nuevamente.',
+          };
+      throw StateError(message);
     }
   }
 

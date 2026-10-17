@@ -208,4 +208,3 @@ function dateRange(query: Record<string, unknown>) {
   if (from > to) throw new HttpError(400, "La fecha inicial no puede ser posterior a la final.", "validation_error");
   return { from, to };
 }
-

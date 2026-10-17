@@ -163,7 +163,7 @@ void main() {
       final router = _router();
       await tester.pumpWidget(_app(repo, router));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Nuevo'));
+      await tester.tap(find.byTooltip('Nuevo anuncio'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byType(TextFormField).at(0),
@@ -208,7 +208,7 @@ void main() {
     final router = _router();
     await tester.pumpWidget(_app(repo, router));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Nuevo'));
+    await tester.tap(find.byTooltip('Nuevo anuncio'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byType(TextFormField).at(0),
@@ -227,7 +227,7 @@ void main() {
     expect(find.text('En segundo plano'), findsOneWidget);
     expect(repo.rows, isEmpty);
     // The user can open another form while the first publication continues.
-    await tester.tap(find.text('Nuevo'));
+    await tester.tap(find.byTooltip('Nuevo anuncio'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Crear anuncio'), findsOneWidget);

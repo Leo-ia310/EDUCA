@@ -59,8 +59,9 @@ del proyecto o el panel de Supabase). No subas `.env` al repo.
 | `CORS_ORIGIN` | Origen permitido, `*` en desarrollo. |
 | `TRUST_PROXY` | Activa `trust proxy` cuando corre detras de proxy/load balancer. |
 | `JSON_BODY_LIMIT` | Limite del body JSON. Default actual: `512kb`. |
-| `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX` | Ventana y maximo global de solicitudes por IP. |
-| `AUTH_RATE_LIMIT_MAX` | Maximo para rutas autenticadas/API de negocio. |
+| `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX` | Ventana y máximo global de respuestas con error por IP. Las respuestas exitosas no consumen cupo. |
+| `AUTH_RATE_LIMIT_MAX` | Máximo de respuestas con error por IP en rutas `/api`. Excluye los 429 del cupo individual autenticado. |
+| `USER_RATE_LIMIT_MAX` | Cupo por usuario tras validar su token. Default: `1200` por ventana; contadores en memoria por instancia. |
 | `FILE_UPLOAD_MAX_BYTES` | Tamano maximo permitido para subidas firmadas a Storage. |
 | `FILE_ALLOWED_MIME_TYPES` | Allowlist de MIME para archivos separados por coma. |
 | `PASSWORD_RESET_REDIRECT_URL` | Redirect opcional para recuperacion de contraseña Supabase Auth. |
