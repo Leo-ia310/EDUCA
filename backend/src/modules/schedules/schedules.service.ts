@@ -208,14 +208,8 @@ export class SchedulesService {
       classIds = classes.map((c) => Number(c.id));
     }
 
-    const rows = await this.repository.listByInstitution(institutionId);
-    const visible = rows.filter((row) => {
-      if (row.kind === "break") {
-        return row.group_id == null || groupIds.includes(Number(row.group_id));
-      }
-      return classIds.includes(Number(row.class_id));
-    });
-    return { schedules: visible.map((row) => this.view(row)) };
+    const rows = await this.repository.listForClasses(institutionId, classIds, groupIds);
+    return { schedules: rows.map((row) => this.view(row)) };
   }
 
   // ---------- Validación ----------

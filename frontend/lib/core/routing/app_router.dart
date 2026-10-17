@@ -89,6 +89,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
       final loggedIn = auth.isAuthenticated;
       final routingError = state.error != null;
+      // Email recovery must work signed out, signed in, or during a pending 2FA.
+      if (loc == Routes.resetPassword) return null;
       if (auth.loading && loc == Routes.splash) return null;
 
       // El splash siempre reenvía: al dashboard si hay sesión, o al login si no.
@@ -137,6 +139,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.forgotPassword,
         builder: (_, __) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: Routes.resetPassword,
+        builder: (_, state) => ChangePasswordScreen(
+          recoveryToken: state.uri.queryParameters['token_hash'] ?? '',
+        ),
       ),
 
       GoRoute(

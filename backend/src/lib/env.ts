@@ -55,7 +55,7 @@ export const env = {
     "application/vnd.ms-excel",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ].join(",")),
-  passwordResetRedirectUrl: optional("PASSWORD_RESET_REDIRECT_URL"),
+  passwordResetRedirectUrl: optional("PASSWORD_RESET_REDIRECT_URL", nodeEnv === "production" ? "" : "https://nivramop.com/reset-password"),
   emailProvider: optional("EMAIL_PROVIDER", "resend"),
   resendApiKey: optional("RESEND_API_KEY"),
   resendFromEmail: optional("RESEND_FROM_EMAIL", "no-reply@nivramop.com"),

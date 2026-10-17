@@ -3,12 +3,15 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import pg from 'pg';
-import {AuthFlowService} from '../src/modules/auth/auth-flow.service';
-import {AuthFlowRepository} from '../src/modules/auth/auth-flow.repository';
 import {loadEnv,pgConfig} from './env.mjs';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);
+const {HttpError}=require('../src/lib/errors.ts') as typeof import('../src/lib/errors');
+const {AuthFlowService}=require('../src/modules/auth/auth-flow.service.ts') as typeof import('../src/modules/auth/auth-flow.service');
+const {AuthFlowRepository}=require('../src/modules/auth/auth-flow.repository.ts') as typeof import('../src/modules/auth/auth-flow.repository');
 const c=new pg.Client({...pgConfig(loadEnv()),query_timeout:20000});
 let uid:number,authId:string;
-let failEmail=false;
+let failEmail:boolean|InstanceType<typeof HttpError>=false;
 const sent:Array<{code:string;purpose:string}>=[];
 const A='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 function totp(secret:string) {
@@ -41,7 +44,7 @@ class Repo extends AuthFlowRepository {
  async finishTwoFactorDelivery(id:string,success:boolean){await c.query("update auth_two_factor_challenges set delivery_status=$2,consumed_at=case when $3 then null else now() end where id=$1",[id,success?'sent':'failed',success]);}
  async updateLastSignIn(){}
 }
-const emails={async sendTwoFactorCode(_to:string,_name:string,code:string,purpose:string){if(failEmail)throw Error('Simulated provider failure');sent.push({code,purpose});}};
+const emails={async sendTwoFactorCode(_to:string,_name:string,code:string,purpose:string){if(failEmail instanceof HttpError)throw failEmail;if(failEmail)throw Error('Simulated provider failure');sent.push({code,purpose});}};
 let lastSession:string;
 const auth={async signInWithPassword(){lastSession=crypto.randomUUID();await c.query('insert into auth.sessions(id,user_id) values($1,$2)',[lastSession,authId]);return{data:{session:{access_token:`eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({sub:authId,session_id:lastSession})).toString('base64url')}.test`,refresh_token:'withheld-fixture-token'},user:{id:authId,email:'fixture@invalid.test'}},error:null};}};
 const repo=new Repo(),service=new AuthFlowService(repo,emails as any,auth as any);
@@ -111,6 +114,10 @@ async function main(){
  await rejects(()=>service.setupTwoFactor(uid,{method:'email'}),502);
  assert.equal((await service.twoFactorStatus(uid)).enabled,false);
  assert.equal((await c.query("select count(*)::int n from auth_two_factor_challenges where user_id=$1 and delivery_status='failed' and consumed_at is not null",[uid])).rows[0].n,1);
+ await cooldown();failEmail=new HttpError(503,'El remitente de correo está mal configurado. Contacta a la administración.','email_sender_invalid');
+ await assert.rejects(service.setupTwoFactor(uid,{method:'email'}),e=>e instanceof HttpError&&e.status===503&&e.code==='email_sender_invalid');
+ assert.equal((await service.twoFactorStatus(uid)).enabled,false);
+ assert.equal((await c.query("select count(*)::int n from auth_two_factor_challenges where user_id=$1 and delivery_status='failed' and consumed_at is not null",[uid])).rows[0].n,2);
  console.log('2FA checks passed: TOTP URI/secret, both enrollments, login, expiry, atomic one-time challenges and recovery codes, resend/cooldown/hour cap, lockouts, provider failure, private secrets and password-only API/RLS denial. No real email sent; all fixtures rolled back.');
 }
 main().finally(async()=>{await c.query('reset role').catch(()=>{});await c.query('rollback').catch(()=>{});await c.end();}).catch(e=>{console.error(e);process.exitCode=1;});

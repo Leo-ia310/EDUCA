@@ -5,6 +5,7 @@ class Routes {
   static const login = '/login';
   static const twoFactor = '/login/2fa';
   static const forgotPassword = '/forgot-password';
+  static const resetPassword = '/reset-password';
 
   static const studentDashboard = '/student/dashboard';
   static const teacherDashboard = '/teacher/dashboard';

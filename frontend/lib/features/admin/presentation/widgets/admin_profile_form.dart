@@ -3,29 +3,63 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
+import '../../../../shared/models/app_role.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/admin_permissions.dart';
 import '../../data/admin_profile.dart';
 import 'admin_widgets.dart';
+import 'person_form.dart';
+
+/// El alta general elige el rol antes de abrir su formulario especializado.
+Future<void> showNewProfileSheet(BuildContext context) async {
+  final role = await showBrutalSheet<AppRole>(
+    context,
+    title: 'Seleccionar rol',
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final role in AppRole.values)
+          ListTile(
+            leading: Icon(roleIcon(role)),
+            title: Text(role == AppRole.coordinator
+                ? 'Supervisor / Coordinador'
+                : role.label,),
+            subtitle: role.isAdminPanel
+                ? const Text('Cuenta con permisos administrativos por módulo')
+                : null,
+            onTap: () => Navigator.pop(context, role),
+          ),
+      ],
+    ),
+  );
+  if (role == null || !context.mounted) return;
+  if (role.isAdminPanel) {
+    await showAdminProfileSheet(context, initialRole: role.code);
+  } else {
+    await showPersonSheet(context, role: role);
+  }
+}
 
 /// Alta/edición de un perfil administrativo: rol (administrador, supervisor /
 /// coordinador o director) y permisos por módulo, individuales por persona.
 Future<void> showAdminProfileSheet(
   BuildContext context, {
   AdminProfile? existing,
+  String initialRole = 'coordinator',
 }) {
   return showBrutalSheet<void>(
     context,
     title: existing == null ? 'Nuevo perfil' : 'Editar ${existing.fullName}',
-    child: _AdminProfileForm(existing: existing),
+    child: _AdminProfileForm(existing: existing, initialRole: initialRole),
   );
 }
 
 class _AdminProfileForm extends ConsumerStatefulWidget {
-  const _AdminProfileForm({this.existing});
+  const _AdminProfileForm({this.existing, required this.initialRole});
 
   final AdminProfile? existing;
+  final String initialRole;
 
   @override
   ConsumerState<_AdminProfileForm> createState() => _AdminProfileFormState();
@@ -55,7 +89,7 @@ class _AdminProfileFormState extends ConsumerState<_AdminProfileForm> {
     _email = TextEditingController(text: p?.email ?? '');
     _phone = TextEditingController(text: p?.phone ?? '');
     _password = TextEditingController();
-    _roleCode = p?.roleCode ?? 'coordinator';
+    _roleCode = p?.roleCode ?? widget.initialRole;
     _active = p?.active ?? true;
     _perms = {...?p?.permissions};
     if (_isNew) _perms.add(Perm.dashboardView);
@@ -152,7 +186,7 @@ class _AdminProfileFormState extends ConsumerState<_AdminProfileForm> {
         await repo.updateProfile(widget.existing!.id, payload);
       }
       ref.invalidate(adminProfilesProvider);
-      await ref.read(adminProfilesProvider.future);
+      ref.invalidate(adminSchoolDirectoryProvider);
       navigator.pop();
       messenger.showSnackBar(
         SnackBar(

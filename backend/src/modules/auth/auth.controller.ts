@@ -20,6 +20,10 @@ export async function recoverPassword(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function resetPassword(req: AppRequest, res: Response) {
+  return res.json({ ok: true, data: await authFlowService.resetPassword(asRecord(req.body)) });
+}
+
 export async function verifyTwoFactorLogin(req: AppRequest, res: Response) {
   const data = await authFlowService.verifyTwoFactorLogin(asRecord(req.body));
   return res.json({ ok: true, data });

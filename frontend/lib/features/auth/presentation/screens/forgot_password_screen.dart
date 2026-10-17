@@ -7,8 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
 import '../auth_controller.dart';
 
-/// Recuperación de contraseña. En modo demo simula el envío del correo de
-/// restablecimiento; con Supabase real llamaría a `resetPasswordForEmail`.
+/// Solicita al backend el enlace de recuperación enviado mediante Resend.
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
