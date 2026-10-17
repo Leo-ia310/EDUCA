@@ -1,8 +1,10 @@
 import { Router } from "express";
 
 import {
+  assignmentSubmissions,
   deleteAssignment,
   gradeSubmission,
+  listAssignments,
   publishAssignment,
   submitAssignment,
   teacherClasses,
@@ -20,6 +22,8 @@ assignmentsRoutes.post(
   requireRoles(["teacher"]),
   asyncHandler(teacherClasses),
 );
+assignmentsRoutes.get("/teacher", requireRoles(["teacher"]), asyncHandler(listAssignments));
+assignmentsRoutes.get("/:id/submissions", requireRoles(["teacher"]), asyncHandler(assignmentSubmissions));
 assignmentsRoutes.post("/upsert", requireRoles(["teacher"]), asyncHandler(upsertAssignment));
 assignmentsRoutes.post("/delete", requireRoles(["teacher"]), asyncHandler(deleteAssignment));
 assignmentsRoutes.delete("/:id", requireRoles(["teacher"]), asyncHandler(deleteAssignment));
