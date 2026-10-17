@@ -11,19 +11,14 @@ import { consumeUserQuota } from "../lib/user-rate-limit";
 
 export async function authMiddleware(
   req: AppRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ) {
   try {
     const token = bearerToken(req);
     await withRequestSupabase(token, async () => {
       req.appContext = await loadContextFromToken(token);
-      try {
-        consumeUserQuota(req.appContext.userId);
-      } catch (error) {
-        res.locals.userQuotaExceeded = true;
-        throw error;
-      }
+      consumeUserQuota(req.appContext.userId);
       await portalAccessService.enforceRequest(req.appContext, req.originalUrl, req.method, (req.body ?? {}) as Record<string,unknown>);
       next();
     });

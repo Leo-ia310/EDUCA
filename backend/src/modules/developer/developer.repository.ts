@@ -1,8 +1,7 @@
 import { assertNoDbError, expectSingle } from "../../lib/db";
 import { PageOptions, paged } from "../../lib/pagination";
-import { supabaseAdmin } from "../../lib/supabase";
+import { requireSupabaseServiceRole, supabaseAdmin } from "../../lib/supabase";
 
-const db = supabaseAdmin as any;
 
 export type DeveloperTable =
   | "developer_dashboard_modules"
@@ -12,6 +11,16 @@ export type DeveloperTable =
   | "developer_system_checks";
 
 export class DeveloperRepository {
+  /**
+   * `client` decide con qué credenciales se consulta: el token del usuario (RLS, solo su institución) o,
+   * para el super administrador, el cliente de servicio (todas las instituciones).
+   */
+  constructor(private readonly client: () => any = () => supabaseAdmin) {}
+
+  private get db(): any {
+    return this.client();
+  }
+
   async summaryCounts() {
     const [
       institutions,
@@ -58,7 +67,7 @@ export class DeveloperRepository {
   }
 
   async listPendingTasks(limit = 10) {
-    const { data, error } = await db
+    const { data, error } = await this.db
       .from("developer_tasks")
       .select("*")
       .in("status", ["pending", "ready", "in_progress", "blocked"])
@@ -71,7 +80,7 @@ export class DeveloperRepository {
   }
 
   async listRecentAuditEvents(limit = 10) {
-    const { data, error } = await db
+    const { data, error } = await this.db
       .from("developer_audit_events")
       .select("*")
       .order("created_at", { ascending: false })
@@ -80,38 +89,52 @@ export class DeveloperRepository {
     return data ?? [];
   }
 
-  async listRecentAuditEventsPage(page: PageOptions) {
-    const { data, error, count } = await db
-      .from("developer_audit_events")
-      .select("*", { count: "exact" })
+  async listRecentAuditEventsPage(
+    page: PageOptions,
+    filters: { entityTable?: string; action?: string; institutionId?: number | "global" } = {},
+  ) {
+    let query = this.db.from("developer_audit_events").select("*", { count: "exact" });
+    query = this.applyFilters(query, {
+      entity_table: filters.entityTable,
+      action: filters.action,
+      institution_id: filters.institutionId,
+    });
+    const { data, error, count } = await query
       .order("created_at", { ascending: false })
       .range(page.from, page.to);
     assertNoDbError(error);
     return paged(data ?? [], count, page);
   }
 
-  async listInstitutions(page: PageOptions) {
-    const { data, error, count } = await db
+  async listInstitutions(page: PageOptions, filters: { search?: string } = {}) {
+    let query = this.db
       .from("institutions")
       .select(
         "id, code, name, commercial_name, subdomain, email, active, timezone, created_at, updated_at",
         { count: "exact" },
       )
-      .is("deleted_at", null)
+      .is("deleted_at", null);
+    const term = cleanSearch(filters.search);
+    if (term) query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%,subdomain.ilike.%${term}%,email.ilike.%${term}%`);
+    const { data, error, count } = await query
       .order("name")
       .range(page.from, page.to);
     assertNoDbError(error);
     return paged(data ?? [], count, page);
   }
 
-  async listUsers(page: PageOptions) {
-    const { data, error, count } = await db
+  async listUsers(page: PageOptions, filters: { institutionId?: number; search?: string } = {}) {
+    let query = this.db
       .from("users")
       .select(
-        "id, institution_id, email, full_name, active, last_sign_in, created_at, updated_at, user_roles(roles(code, name))",
+        "id, institution_id, email, full_name, active, last_sign_in, created_at, updated_at, institutions(name, code), user_roles(roles(code, name))",
         { count: "exact" },
       )
-      .is("deleted_at", null)
+      .is("deleted_at", null);
+    if (filters.institutionId != null) query = query.eq("institution_id", filters.institutionId);
+    const term = cleanSearch(filters.search);
+    if (term) query = query.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
+    const { data, error, count } = await query
       .order("full_name")
       .range(page.from, page.to);
     assertNoDbError(error);
@@ -123,7 +146,7 @@ export class DeveloperRepository {
     filters: Record<string, unknown> = {},
     page: PageOptions,
   ) {
-    let query = db.from(table).select("*", { count: "exact" }).is("deleted_at", null);
+    let query = this.db.from(table).select("*", { count: "exact" }).is("deleted_at", null);
     query = this.applyFilters(query, filters);
     const { data, error, count } = await query
       .order("created_at", { ascending: false })
@@ -134,14 +157,14 @@ export class DeveloperRepository {
 
   async findById(table: DeveloperTable, id: number) {
     return expectSingle<Record<string, unknown>>(
-      db.from(table).select("*").eq("id", id).is("deleted_at", null).single(),
+      this.db.from(table).select("*").eq("id", id).is("deleted_at", null).single(),
       "Registro no encontrado.",
     );
   }
 
   async create(table: DeveloperTable, payload: Record<string, unknown>) {
     return expectSingle<Record<string, unknown>>(
-      db.from(table).insert(payload).select("*").single(),
+      this.db.from(table).insert(payload).select("*").single(),
       "No se pudo crear el registro.",
     );
   }
@@ -152,7 +175,7 @@ export class DeveloperRepository {
     payload: Record<string, unknown>,
   ) {
     return expectSingle<Record<string, unknown>>(
-      db
+      this.db
         .from(table)
         .update(payload)
         .eq("id", id)
@@ -171,7 +194,7 @@ export class DeveloperRepository {
   }
 
   async audit(payload: Record<string, unknown>) {
-    const { error } = await db.from("developer_audit_events").insert(payload);
+    const { error } = await this.db.from("developer_audit_events").insert(payload);
     assertNoDbError(error);
   }
 
@@ -180,7 +203,7 @@ export class DeveloperRepository {
     configure: (query: any) => any = (query) => query,
   ) {
     const { count, error } = await configure(
-      db.from(table).select("id", { count: "exact", head: true }),
+      this.db.from(table).select("id", { count: "exact", head: true }),
     );
     assertNoDbError(error);
     return count ?? 0;
@@ -190,10 +213,17 @@ export class DeveloperRepository {
     let next = query;
     for (const [key, value] of Object.entries(filters)) {
       if (value == null || value === "") continue;
-      next = next.eq(key, value);
+      next = value === "global" && key === "institution_id" ? next.is(key, null) : next.eq(key, value);
     }
     return next;
   }
 }
 
+/** Texto de búsqueda seguro para filtros `or(...)` de PostgREST (sin comas, paréntesis ni comodines). */
+function cleanSearch(value: string | undefined) {
+  return (value ?? "").replace(/[,()%*\\]/g, " ").trim().slice(0, 80);
+}
+
 export const developerRepository = new DeveloperRepository();
+/** Para super_admin: ve y gestiona todas las instituciones (el servicio ya comprobó el rol). */
+export const globalDeveloperRepository = new DeveloperRepository(() => requireSupabaseServiceRole());

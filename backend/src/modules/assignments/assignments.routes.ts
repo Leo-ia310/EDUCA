@@ -5,6 +5,7 @@ import {
   deleteAssignment,
   gradeSubmission,
   listAssignments,
+  removeAssignmentAttachment,
   publishAssignment,
   submitAssignment,
   teacherClasses,
@@ -26,6 +27,7 @@ assignmentsRoutes.get("/teacher", requireRoles(["teacher"]), asyncHandler(listAs
 assignmentsRoutes.get("/:id/submissions", requireRoles(["teacher"]), asyncHandler(assignmentSubmissions));
 assignmentsRoutes.post("/upsert", requireRoles(["teacher"]), asyncHandler(upsertAssignment));
 assignmentsRoutes.post("/delete", requireRoles(["teacher"]), asyncHandler(deleteAssignment));
+assignmentsRoutes.delete("/:id/attachments/:fileId", requireRoles(["teacher"]), asyncHandler(removeAssignmentAttachment));
 assignmentsRoutes.delete("/:id", requireRoles(["teacher"]), asyncHandler(deleteAssignment));
 assignmentsRoutes.post("/publish", requireRoles(["teacher"]), asyncHandler(publishAssignment));
 assignmentsRoutes.patch("/:id/publish", requireRoles(["teacher"]), asyncHandler(publishAssignment));

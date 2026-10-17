@@ -924,6 +924,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -972,6 +982,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1096,6 +1116,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -1144,6 +1174,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1270,6 +1310,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -1318,6 +1368,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1408,6 +1468,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -1456,6 +1526,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1616,6 +1696,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -1754,6 +1844,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -1802,6 +1902,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1926,6 +2036,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -1974,6 +2094,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2098,6 +2228,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -2146,6 +2286,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2270,6 +2420,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -2318,6 +2478,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2415,7 +2585,112 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "classes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "classId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "groupId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "subjectName": {
+                                "type": "string"
+                              },
+                              "groupName": {
+                                "type": "string"
+                              },
+                              "isOwner": {
+                                "type": "boolean"
+                              },
+                              "permissions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "classId",
+                              "groupId",
+                              "subjectName",
+                              "groupName",
+                              "isOwner",
+                              "permissions"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "invitations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "teachers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "userId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "userId",
+                              "name"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "classes",
+                        "invitations",
+                        "teachers"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2482,6 +2757,127 @@
         }
       }
     },
+    "/api/assignments/{id}/attachments/{fileId}": {
+      "delete": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "Quita un archivo adjunto de una tarea",
+        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Solo desvincula el archivo de la tarea (assignment_files); el archivo y su objeto en almacenamiento no se borran.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { ok: true, attachments: [{ id, name, url, sizeBytes, mimeType }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "attachments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "mimeType": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "url",
+                              "sizeBytes",
+                              "mimeType"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "attachments"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/files/{id}/download-url": {
       "get": {
         "tags": [
@@ -2494,6 +2890,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ ok: true, data: { url, name, mimeType | null, expiresInSeconds } }",
@@ -2501,7 +2907,47 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "mimeType": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "expiresInSeconds": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "name",
+                        "mimeType",
+                        "expiresInSeconds"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2537,7 +2983,66 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "studentId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "groupId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "groupName": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "studentId",
+                              "name",
+                              "groupId",
+                              "groupName"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "children"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2573,7 +3078,142 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "studentId": {
+                          "type": "string"
+                        },
+                        "from": {
+                          "type": "string"
+                        },
+                        "to": {
+                          "type": "string"
+                        },
+                        "statuses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "string"
+                              },
+                              "countsAsAbsent": {
+                                "type": "boolean"
+                              },
+                              "color": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "code",
+                              "countsAsAbsent",
+                              "color"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "records": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "date": {
+                                "type": "string"
+                              },
+                              "subject": {
+                                "type": "string"
+                              },
+                              "statusId": {
+                                "type": "string"
+                              },
+                              "notes": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "date",
+                              "subject",
+                              "statusId",
+                              "notes"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "summary": {
+                          "type": "object",
+                          "properties": {
+                            "marks": {
+                              "type": "integer"
+                            },
+                            "absent": {
+                              "type": "integer"
+                            },
+                            "rate": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "byStatus": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          "required": [
+                            "marks",
+                            "absent",
+                            "rate",
+                            "byStatus"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "studentId",
+                        "from",
+                        "to",
+                        "statuses",
+                        "records",
+                        "summary"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2609,7 +3249,222 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "studentId": {
+                          "type": "string"
+                        },
+                        "assignments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "instructions": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "subjectName": {
+                                "type": "string"
+                              },
+                              "dueAt": {
+                                "type": "string"
+                              },
+                              "maxScore": {
+                                "type": "number"
+                              },
+                              "allowLate": {
+                                "type": "boolean"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "overdue",
+                                  "submitted",
+                                  "late",
+                                  "graded"
+                                ]
+                              },
+                              "submittedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "attachments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "mimeType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name",
+                                    "url",
+                                    "sizeBytes",
+                                    "mimeType"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "submissionAttachments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "mimeType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name",
+                                    "url",
+                                    "sizeBytes",
+                                    "mimeType"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "score": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "feedback": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "description",
+                              "instructions",
+                              "subjectName",
+                              "dueAt",
+                              "maxScore",
+                              "allowLate",
+                              "status",
+                              "submittedAt",
+                              "attachments",
+                              "submissionAttachments",
+                              "score",
+                              "feedback"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "studentId",
+                        "assignments"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2645,7 +3500,121 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "charges": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "studentId": {
+                                "type": "string"
+                              },
+                              "studentName": {
+                                "type": "string"
+                              },
+                              "conceptId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "conceptName": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "type": "number"
+                              },
+                              "discount": {
+                                "type": "number"
+                              },
+                              "lateFee": {
+                                "type": "number"
+                              },
+                              "total": {
+                                "type": "number"
+                              },
+                              "paid": {
+                                "type": "number"
+                              },
+                              "balance": {
+                                "type": "number"
+                              },
+                              "dueAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "partial",
+                                  "overdue",
+                                  "paid",
+                                  "cancelled"
+                                ]
+                              },
+                              "storedStatus": {
+                                "type": "string"
+                              },
+                              "currencyCode": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "studentId",
+                              "studentName",
+                              "conceptId",
+                              "conceptName",
+                              "description",
+                              "amount",
+                              "discount",
+                              "lateFee",
+                              "total",
+                              "paid",
+                              "balance",
+                              "dueAt",
+                              "status",
+                              "storedStatus",
+                              "currencyCode"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "charges"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2681,7 +3650,110 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "assignments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "classId": {
+                                "type": "string"
+                              },
+                              "subjectName": {
+                                "type": "string"
+                              },
+                              "groupName": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "instructions": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "assignedAt": {
+                                "type": "string"
+                              },
+                              "dueAt": {
+                                "type": "string"
+                              },
+                              "maxScore": {
+                                "type": "number"
+                              },
+                              "allowLate": {
+                                "type": "boolean"
+                              },
+                              "published": {
+                                "type": "boolean"
+                              },
+                              "totalStudents": {
+                                "type": "integer"
+                              },
+                              "submittedCount": {
+                                "type": "integer"
+                              },
+                              "gradedCount": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "classId",
+                              "subjectName",
+                              "groupName",
+                              "title",
+                              "description",
+                              "instructions",
+                              "assignedAt",
+                              "dueAt",
+                              "maxScore",
+                              "allowLate",
+                              "published",
+                              "totalStudents",
+                              "submittedCount",
+                              "gradedCount"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "assignments"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2710,6 +3782,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ ok: true, data: { assignment: { ...tarea, attachments }, students: [{ studentId, name, submissionId | null, status: pending|submitted|late|graded, submittedAt, notes, attachments, score | null, feedback | null }] } }",
@@ -2717,7 +3799,284 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "assignment": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "classId": {
+                              "type": "string"
+                            },
+                            "subjectName": {
+                              "type": "string"
+                            },
+                            "groupName": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "instructions": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "assignedAt": {
+                              "type": "string"
+                            },
+                            "dueAt": {
+                              "type": "string"
+                            },
+                            "maxScore": {
+                              "type": "number"
+                            },
+                            "allowLate": {
+                              "type": "boolean"
+                            },
+                            "published": {
+                              "type": "boolean"
+                            },
+                            "totalStudents": {
+                              "type": "integer"
+                            },
+                            "submittedCount": {
+                              "type": "integer"
+                            },
+                            "gradedCount": {
+                              "type": "integer"
+                            },
+                            "attachments": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "sizeBytes": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "mimeType": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "url",
+                                  "sizeBytes",
+                                  "mimeType"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "classId",
+                            "subjectName",
+                            "groupName",
+                            "title",
+                            "description",
+                            "instructions",
+                            "assignedAt",
+                            "dueAt",
+                            "maxScore",
+                            "allowLate",
+                            "published",
+                            "totalStudents",
+                            "submittedCount",
+                            "gradedCount",
+                            "attachments"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "students": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "studentId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "submissionId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "submitted",
+                                  "late",
+                                  "graded"
+                                ]
+                              },
+                              "submittedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "notes": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "attachments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "mimeType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name",
+                                    "url",
+                                    "sizeBytes",
+                                    "mimeType"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "score": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "feedback": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "studentId",
+                              "name",
+                              "submissionId",
+                              "status",
+                              "submittedAt",
+                              "notes",
+                              "attachments",
+                              "score",
+                              "feedback"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "assignment",
+                        "students"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2744,6 +4103,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "wildcard",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2786,7 +4155,7 @@
         }
       }
     },
-    "/api/attendance/class/:classId": {
+    "/api/attendance/class/{classId}": {
       "get": {
         "tags": [
           "attendance"
@@ -2798,6 +4167,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ ok: true, data: { class: { id, subject, group }, date, sessionId | null, statuses: [{ id, name, code, countsAsAbsent, color }], students: [{ studentId, name, statusId | null, notes }] } }",
@@ -2805,7 +4184,127 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "class": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "subject": {
+                              "type": "string"
+                            },
+                            "group": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "subject",
+                            "group"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "date": {
+                          "type": "string"
+                        },
+                        "sessionId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "statuses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "string"
+                              },
+                              "countsAsAbsent": {
+                                "type": "boolean"
+                              },
+                              "color": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "code",
+                              "countsAsAbsent",
+                              "color"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "students": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "studentId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "statusId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "notes": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "studentId",
+                              "name",
+                              "statusId",
+                              "notes"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "class",
+                        "date",
+                        "sessionId",
+                        "statuses",
+                        "students"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2832,6 +4331,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -2855,7 +4364,32 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "sessionId": {
+                          "type": "string"
+                        },
+                        "saved": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "sessionId",
+                        "saved"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2891,7 +4425,153 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string"
+                        },
+                        "to": {
+                          "type": "string"
+                        },
+                        "statuses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "string"
+                              },
+                              "countsAsAbsent": {
+                                "type": "boolean"
+                              },
+                              "color": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "code",
+                              "countsAsAbsent",
+                              "color"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "groups": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "groupId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "sessions": {
+                                "type": "integer"
+                              },
+                              "marks": {
+                                "type": "integer"
+                              },
+                              "absent": {
+                                "type": "integer"
+                              },
+                              "rate": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "byStatus": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "required": [
+                              "groupId",
+                              "name",
+                              "sessions",
+                              "marks",
+                              "absent",
+                              "rate",
+                              "byStatus"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "total": {
+                          "type": "object",
+                          "properties": {
+                            "sessions": {
+                              "type": "integer"
+                            },
+                            "marks": {
+                              "type": "integer"
+                            },
+                            "absent": {
+                              "type": "integer"
+                            },
+                            "rate": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "byStatus": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          "required": [
+                            "sessions",
+                            "marks",
+                            "absent",
+                            "rate",
+                            "byStatus"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to",
+                        "statuses",
+                        "groups",
+                        "total"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2908,7 +4588,7 @@
         }
       }
     },
-    "/api/attendance/groups/:groupId": {
+    "/api/attendance/groups/{groupId}": {
       "get": {
         "tags": [
           "attendance"
@@ -2920,6 +4600,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ ok: true, data: { from, to, group: { id, name }, statuses, sessions: [{ id, date, classId, subject, topic, marks, absent, rate, byStatus }], students: [{ studentId, name, marks, absent, rate, byStatus }] } }",
@@ -2927,7 +4617,192 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string"
+                        },
+                        "to": {
+                          "type": "string"
+                        },
+                        "group": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "statuses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "string"
+                              },
+                              "countsAsAbsent": {
+                                "type": "boolean"
+                              },
+                              "color": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "code",
+                              "countsAsAbsent",
+                              "color"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "sessions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "date": {
+                                "type": "string"
+                              },
+                              "classId": {
+                                "type": "string"
+                              },
+                              "subject": {
+                                "type": "string"
+                              },
+                              "topic": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "marks": {
+                                "type": "integer"
+                              },
+                              "absent": {
+                                "type": "integer"
+                              },
+                              "rate": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "byStatus": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "date",
+                              "classId",
+                              "subject",
+                              "topic",
+                              "marks",
+                              "absent",
+                              "rate",
+                              "byStatus"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "students": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "studentId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "marks": {
+                                "type": "integer"
+                              },
+                              "absent": {
+                                "type": "integer"
+                              },
+                              "rate": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "byStatus": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "required": [
+                              "studentId",
+                              "name",
+                              "marks",
+                              "absent",
+                              "rate",
+                              "byStatus"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to",
+                        "group",
+                        "statuses",
+                        "sessions",
+                        "students"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -2954,6 +4829,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "wildcard",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3032,7 +4917,7 @@
         }
       }
     },
-    "/api/chats/conversations/:conversationId/messages": {
+    "/api/chats/conversations/{conversationId}/messages": {
       "get": {
         "tags": [
           "chat"
@@ -3042,6 +4927,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3114,6 +5009,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "wildcard",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3254,6 +5159,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3414,6 +5329,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "wildcard",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3730,6 +5655,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ reportCard }",
@@ -4026,6 +5961,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -4076,6 +6021,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4200,6 +6155,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -4248,6 +6213,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4408,6 +6383,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -4458,6 +6443,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4694,7 +6689,7 @@
         }
       }
     },
-    "/api/payments/charges/:chargeId": {
+    "/api/payments/charges/{chargeId}": {
       "get": {
         "tags": [
           "payments"
@@ -4704,6 +6699,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4730,7 +6735,7 @@
         }
       }
     },
-    "/api/payments/charges/:chargeId/payments": {
+    "/api/payments/charges/{chargeId}/payments": {
       "post": {
         "tags": [
           "payments"
@@ -4740,6 +6745,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chargeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4792,6 +6807,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "wildcard",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4853,7 +6878,77 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "institutions": {
+                              "type": "integer"
+                            },
+                            "users": {
+                              "type": "integer"
+                            },
+                            "modules": {
+                              "type": "integer"
+                            },
+                            "pendingApis": {
+                              "type": "integer"
+                            },
+                            "openTasks": {
+                              "type": "integer"
+                            },
+                            "featureFlags": {
+                              "type": "integer"
+                            },
+                            "failingChecks": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "institutions",
+                            "users",
+                            "modules",
+                            "pendingApis",
+                            "openTasks",
+                            "featureFlags",
+                            "failingChecks"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "pendingTasks": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "recentAuditEvents": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "pendingTasks",
+                        "recentAuditEvents"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -4876,7 +6971,7 @@
           "developer"
         ],
         "summary": "Lista instituciones visibles por RLS",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: super_admin ve todas las instituciones (cliente de servicio); un admin solo la suya por RLS.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -4889,7 +6984,65 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -4912,7 +7065,7 @@
           "developer"
         ],
         "summary": "Lista usuarios visibles por RLS",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: super_admin ve los usuarios de todas las instituciones; incluye institutions(name, code) y filtros por institucion y texto.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -4925,7 +7078,65 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -4948,7 +7159,7 @@
           "developer"
         ],
         "summary": "Lista auditoria tecnica del dashboard",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: Filtros por tabla, accion e institucion (scope=global = eventos sin institucion). super_admin ve todas.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -4961,7 +7172,65 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -4997,7 +7266,65 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -5076,6 +7403,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -5126,6 +7463,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ module }",
@@ -5169,7 +7516,65 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -5248,6 +7653,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -5298,6 +7713,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ api }",
@@ -5341,7 +7766,65 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -5420,6 +7903,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -5470,6 +7963,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ task }",
@@ -5513,7 +8016,65 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -5592,6 +8153,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -5642,6 +8213,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "{ featureFlag }",
@@ -5685,7 +8266,65 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -5764,6 +8403,16 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": false,
           "content": {
@@ -5812,6 +8461,16 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {

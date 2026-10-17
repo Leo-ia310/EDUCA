@@ -2,12 +2,21 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { apiManifest } from "../src/lib/api-manifest";
+import { responseSchemas } from "../src/lib/api-schemas";
 
 const paths: Record<string, Record<string, unknown>> = {};
 
+// Cada esquema tipado debe corresponder a una entrada del manifiesto (evita que se desincronicen).
+const known = new Set(apiManifest.map((e) => `${e.method} ${e.path}`));
+for (const key of Object.keys(responseSchemas)) {
+  if (!known.has(key)) throw new Error(`api-schemas.ts: «${key}» no existe en api-manifest.ts`);
+}
+
 for (const entry of apiManifest) {
   if (entry.path.startsWith("action:")) continue;
-  const path = entry.path.replace(/\*/g, "{wildcard}").replace(/:id/g, "{id}");
+  const path = entry.path.replace(/\*/g, "{wildcard}").replace(/:([A-Za-z]+)/g, "{$1}");
+  const pathParams = [...path.matchAll(/\{([A-Za-z]+)\}/g)].map((m) => m[1]);
+  const typed = responseSchemas[`${entry.method} ${entry.path}`];
   const method = entry.method.toLowerCase();
   paths[path] ??= {};
   paths[path][method] = {
@@ -19,6 +28,9 @@ for (const entry of apiManifest) {
       `Fuente: ${entry.source}.`,
     ].filter(Boolean).join("\n\n"),
     security: entry.auth === "publico" ? [] : [{ bearerAuth: [] }],
+    parameters: pathParams.length
+      ? pathParams.map((name) => ({ name, in: "path", required: true, schema: { type: "string" } }))
+      : undefined,
     requestBody: ["POST", "PUT", "PATCH"].includes(entry.method)
       ? {
         required: false,
@@ -37,7 +49,9 @@ for (const entry of apiManifest) {
         description: entry.response,
         content: {
           "application/json": {
-            schema: { type: "object", additionalProperties: true },
+            schema: typed
+              ? { type: "object", required: ["ok", "data"], properties: { ok: { type: "boolean", const: true }, data: typed } }
+              : { type: "object", additionalProperties: true },
           },
         },
       },

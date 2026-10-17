@@ -5,10 +5,13 @@ import type { RequestHandler } from "express";
 
 import { env } from "../lib/env";
 
-/** Una respuesta cuenta para el cupo de fallos de la IP solo si falló por culpa del cliente no autenticado:
- * los 429 del cupo propio de un usuario (ver auth.middleware) no deben bloquear a los demás de esa IP. */
-const isNotAnIpFailure = (_req: unknown, res: { statusCode: number; locals: Record<string, unknown> }) =>
-  res.statusCode < 400 || res.locals.userQuotaExceeded === true;
+/**
+ * Solo los 401 (contraseña o código incorrectos, token inválido) gastan el cupo de fallos de la IP. Los demás
+ * errores (400 de validación, 403, 404, 409…) son normales en el uso diario y, como la web llega toda desde
+ * una misma IP, no deben acumularse contra todos los usuarios. Los 429 del cupo propio de un usuario
+ * (ver auth.middleware) tampoco cuentan.
+ */
+const isNotAnIpFailure = (_req: unknown, res: { statusCode: number }) => res.statusCode !== 401;
 
 const allowedOrigins = env.corsOrigin
   .split(",")
@@ -33,7 +36,7 @@ export const corsMiddleware = cors({
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
 } satisfies CorsOptions);
 
-// Por IP y solo se cobran las respuestas con error (>= 400): el uso normal no gasta el cupo, así que
+// Por IP y solo se cobran los fallos de autenticación (401): el uso normal no gasta el cupo, así que
 // muchos usuarios detrás de una misma IP (p. ej. el servidor de la web) no se bloquean entre sí, pero
 // los intentos fallidos (contraseñas erróneas, tokens falsos) siguen limitados. El uso normal de cada
 // usuario autenticado se limita aparte, por usuario (ver lib/user-rate-limit.ts).

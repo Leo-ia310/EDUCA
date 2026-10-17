@@ -222,6 +222,16 @@ export class AssignmentsService {
     return { assignment: await this.hydrateAssignment(ctx, Number(row.id)) };
   }
 
+  /** Quita un adjunto de la tarea (solo el vínculo; el archivo queda en el almacenamiento). */
+  async removeAttachment(ctx: AppContext, assignmentIdRaw: unknown, fileIdRaw: unknown) {
+    this.permissions.requireRole(ctx, ["teacher"]);
+    const assignmentId = requiredId(assignmentIdRaw, "Tarea");
+    const fileId = requiredId(fileIdRaw, "Archivo");
+    await this.permissions.assertTeacherCanUseAssignment(ctx, assignmentId, "assignments.create");
+    await this.repository.unlinkAssignmentFile(assignmentId, fileId);
+    return { ok: true, attachments: await this.attachmentRows("assignment_files", "assignment_id", assignmentId) };
+  }
+
   async deleteAssignment(ctx: AppContext, payload: Record<string, unknown>) {
     const id = requiredId(payload.id, "Tarea");
     await this.permissions.assertTeacherCanUseAssignment(ctx, id);
@@ -284,6 +294,13 @@ export class AssignmentsService {
         "Esta tarea ya venció y no permite entregas tarde.",
         "validation_error",
       );
+    }
+
+    // Una entrega ya calificada es definitiva: reentregar la devolvería a «entregada» y ocultaría su nota.
+    const previous = await this.repository.findSubmissionOf(ctx.institutionId, assignmentId, studentId);
+    const gradedStatusId = await this.repository.taskStatusId("CALI").catch(() => null);
+    if (previous != null && gradedStatusId != null && Number(previous.task_status_id) === gradedStatusId) {
+      throw new HttpError(409, "Esta tarea ya fue calificada: no se puede volver a entregar.", "already_graded");
     }
 
     const statusId = await this.repository.taskStatusId("ENTR");

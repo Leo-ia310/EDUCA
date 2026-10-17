@@ -292,6 +292,23 @@ export class AssignmentsRepository {
     );
   }
 
+  async unlinkAssignmentFile(assignmentId: number, fileId: number) {
+    const { error } = await db.from("assignment_files").delete().eq("assignment_id", assignmentId).eq("file_id", fileId);
+    assertNoDbError(error);
+  }
+
+  async findSubmissionOf(institutionId: number, assignmentId: number, studentId: number) {
+    const { data, error } = await db
+      .from("submissions")
+      .select("id, task_status_id")
+      .eq("institution_id", institutionId)
+      .eq("assignment_id", assignmentId)
+      .eq("student_id", studentId)
+      .maybeSingle();
+    assertNoDbError(error);
+    return (data ?? null) as Record<string, unknown> | null;
+  }
+
   async upsertSubmission(payload: Record<string, unknown>) {
     return expectSingle<Record<string, unknown>>(
       db

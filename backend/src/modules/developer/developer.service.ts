@@ -13,6 +13,7 @@ import {
   developerRepository,
   DeveloperRepository,
   DeveloperTable,
+  globalDeveloperRepository,
 } from "./developer.repository";
 import type { AppContext } from "../../types/app-context";
 import {
@@ -52,32 +53,48 @@ export class DeveloperService {
   constructor(
     private readonly repository: DeveloperRepository = developerRepository,
     private readonly permissions: PermissionsService = permissionsService,
+    private readonly globalRepository: DeveloperRepository = globalDeveloperRepository,
   ) {}
+
+  /** El super administrador consulta y gestiona todas las instituciones; un administrador, solo la suya (RLS). */
+  private repo(ctx: AppContext) {
+    return ctx.roles.has("super_admin") ? this.globalRepository : this.repository;
+  }
 
   async summary(ctx: AppContext) {
     this.ensureDeveloper(ctx);
     const [counts, pendingTasks, recentAuditEvents] = await Promise.all([
-      this.repository.summaryCounts(),
-      this.repository.listPendingTasks(),
-      this.repository.listRecentAuditEvents(),
+      this.repo(ctx).summaryCounts(),
+      this.repo(ctx).listPendingTasks(),
+      this.repo(ctx).listRecentAuditEvents(),
     ]);
     return { counts, pendingTasks, recentAuditEvents };
   }
 
   async institutions(ctx: AppContext, query: Record<string, unknown> = {}) {
     this.ensureDeveloper(ctx);
-    return this.repository.listInstitutions(paginationFromQuery(query));
+    return this.repo(ctx).listInstitutions(paginationFromQuery(query), {
+      search: typeof query.search === "string" ? query.search : undefined,
+    });
   }
 
   async users(ctx: AppContext, query: Record<string, unknown> = {}) {
     this.ensureDeveloper(ctx);
-    return this.repository.listUsers(paginationFromQuery(query));
+    return this.repo(ctx).listUsers(paginationFromQuery(query), {
+      institutionId: optionalId(query.institutionId) ?? undefined,
+      search: typeof query.search === "string" ? query.search : undefined,
+    });
   }
 
   async auditEvents(ctx: AppContext, query: Record<string, unknown> = {}) {
     this.ensureDeveloper(ctx);
-    return this.repository.listRecentAuditEventsPage(
+    return this.repo(ctx).listRecentAuditEventsPage(
       paginationFromQuery(query, { pageSize: 100, maxPageSize: 200 }),
+      {
+        entityTable: typeof query.entityTable === "string" ? query.entityTable : undefined,
+        action: typeof query.action === "string" ? query.action : undefined,
+        institutionId: query.scope === "global" ? "global" : optionalId(query.institutionId) ?? undefined,
+      },
     );
   }
 
@@ -87,7 +104,7 @@ export class DeveloperService {
     query: Record<string, unknown>,
   ) {
     this.ensureDeveloper(ctx);
-    return this.repository.list(
+    return this.repo(ctx).list(
       RESOURCES[resource].table,
       this.filtersFor(resource, query),
       paginationFromQuery(query),
@@ -101,7 +118,7 @@ export class DeveloperService {
   ) {
     this.ensureDeveloper(ctx);
     const config = RESOURCES[resource];
-    const record = await this.repository.create(
+    const record = await this.repo(ctx).create(
       config.table,
       this.payloadFor(ctx, resource, payload, "create"),
     );
@@ -118,8 +135,8 @@ export class DeveloperService {
     this.ensureDeveloper(ctx);
     const id = requiredId(idValue, "Registro");
     const config = RESOURCES[resource];
-    const before = await this.repository.findById(config.table, id);
-    const record = await this.repository.update(
+    const before = await this.repo(ctx).findById(config.table, id);
+    const record = await this.repo(ctx).update(
       config.table,
       id,
       this.payloadFor(ctx, resource, payload, "update"),
@@ -136,8 +153,8 @@ export class DeveloperService {
     this.ensureDeveloper(ctx);
     const id = requiredId(idValue, "Registro");
     const config = RESOURCES[resource];
-    const before = await this.repository.findById(config.table, id);
-    const record = await this.repository.archive(config.table, id, ctx.userId);
+    const before = await this.repo(ctx).findById(config.table, id);
+    const record = await this.repo(ctx).archive(config.table, id, ctx.userId);
     await this.log(ctx, config.table, id, "archive", before, record);
     return { [config.entity]: record };
   }
@@ -315,6 +332,9 @@ export class DeveloperService {
     query: Record<string, unknown>,
   ) {
     const filters: Record<string, unknown> = {};
+    // Alcance: una institución concreta o los registros globales (institution_id nulo).
+    if (query.scope === "global") filters.institution_id = "global";
+    else if (optionalId(query.institutionId) != null) filters.institution_id = optionalId(query.institutionId);
     const moduleKey = query.moduleKey ?? query.module_key;
     if (moduleKey) filters.module_key = moduleKey;
 
@@ -341,7 +361,7 @@ export class DeveloperService {
     before: unknown,
     after: unknown,
   ) {
-    await this.repository.audit({
+    await this.repo(ctx).audit({
       institution_id: ctx.institutionId,
       actor_user_id: ctx.userId,
       entity_table: table,

@@ -20,6 +20,11 @@ export async function assignmentSubmissions(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function removeAssignmentAttachment(req: AppRequest, res: Response) {
+  const data = await assignmentsService.removeAttachment(requireAppContext(req), req.params.id, req.params.fileId);
+  return res.json({ ok: true, data });
+}
+
 export async function upsertAssignment(req: AppRequest, res: Response) {
   const data = await assignmentsService.upsertAssignment(
     requireAppContext(req),
