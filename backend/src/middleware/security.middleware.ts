@@ -5,6 +5,11 @@ import type { RequestHandler } from "express";
 
 import { env } from "../lib/env";
 
+/** Una respuesta cuenta para el cupo de fallos de la IP solo si falló por culpa del cliente no autenticado:
+ * los 429 del cupo propio de un usuario (ver auth.middleware) no deben bloquear a los demás de esa IP. */
+const isNotAnIpFailure = (_req: unknown, res: { statusCode: number; locals: Record<string, unknown> }) =>
+  res.statusCode < 400 || res.locals.userQuotaExceeded === true;
+
 const allowedOrigins = env.corsOrigin
   .split(",")
   .map((origin) => origin.trim())
@@ -28,9 +33,15 @@ export const corsMiddleware = cors({
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
 } satisfies CorsOptions);
 
+// Por IP y solo se cobran las respuestas con error (>= 400): el uso normal no gasta el cupo, así que
+// muchos usuarios detrás de una misma IP (p. ej. el servidor de la web) no se bloquean entre sí, pero
+// los intentos fallidos (contraseñas erróneas, tokens falsos) siguen limitados. El uso normal de cada
+// usuario autenticado se limita aparte, por usuario (ver lib/user-rate-limit.ts).
 export const generalRateLimit = rateLimit({
   windowMs: env.rateLimitWindowMs,
   limit: env.rateLimitMax,
+  skipSuccessfulRequests: true,
+  requestWasSuccessful: isNotAnIpFailure,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
@@ -42,17 +53,16 @@ export const generalRateLimit = rateLimit({
   },
 });
 
+// Tope más estricto para los fallos en las rutas /api (inicio de sesión, 2FA…), siempre por IP: la clave
+// no puede depender de la cabecera Authorization, porque un cliente podría inventarla para abrir cupos nuevos.
 export const authenticatedRateLimit = rateLimit({
   windowMs: env.rateLimitWindowMs,
   limit: env.authRateLimitMax,
+  skipSuccessfulRequests: true,
+  requestWasSuccessful: isNotAnIpFailure,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    const auth = req.header("authorization") ?? "";
-    return auth.length > 0
-      ? auth.slice(-80)
-      : ipKeyGenerator(req.ip ?? "0.0.0.0");
-  },
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? "0.0.0.0"),
   message: {
     ok: false,
     error: {
