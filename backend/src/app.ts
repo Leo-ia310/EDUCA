@@ -1,4 +1,5 @@
 import express from "express";
+import { familyRoutes } from "./modules/family/family.routes";
 import { portalAccessRoutes } from "./modules/portal-access/portal-access.routes";
 
 import { env } from "./lib/env";
@@ -58,6 +59,7 @@ export function createApp() {
   app.use("/api/chats", authenticatedRateLimit, chatsRoutes);
   app.use("/api/collaborations", authenticatedRateLimit, collaborationRoutes);
   app.use("/api/developer", authenticatedRateLimit, developerRoutes);
+  app.use("/api/family", authenticatedRateLimit, familyRoutes);
   app.use("/api/events", authenticatedRateLimit, eventsRoutes);
   app.use("/api/files", authenticatedRateLimit, filesRoutes);
   app.use("/api/grades", authenticatedRateLimit, gradesRoutes);

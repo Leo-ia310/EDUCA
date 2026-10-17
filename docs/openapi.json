@@ -2482,6 +2482,150 @@
         }
       }
     },
+    "/api/family/children": {
+      "get": {
+        "tags": [
+          "family"
+        ],
+        "summary": "Hijos vinculados al padre (o el propio alumno) con su salon",
+        "description": "Auth: parent, student.\n\nNotas: Solo lectura para la web de familias. Corre con el token del usuario (RLS): un padre solo ve hijos vinculados en parent_students.\n\nFuente: backend/src/modules/family/family.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { children: [{ studentId, name, groupId | null, groupName | null }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/family/attendance": {
+      "get": {
+        "tags": [
+          "family"
+        ],
+        "summary": "Asistencia de un alumno en un rango de fechas",
+        "description": "Auth: parent (hijo vinculado), student (propio).\n\nNotas: Sujeto al permiso de portal attendance.view. normalizeStudentId valida el vinculo padre-hijo.\n\nFuente: backend/src/modules/family/family.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { studentId, from, to, statuses, records: [{ id, date, subject, statusId, notes }], summary: { marks, absent, rate | null, byStatus } } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/family/assignments": {
+      "get": {
+        "tags": [
+          "family"
+        ],
+        "summary": "Tareas publicadas del salon del alumno con su entrega y nota",
+        "description": "Auth: parent (hijo vinculado), student (propio).\n\nNotas: Solo tareas publicadas y no borradas, maximo 300. Sujeto al permiso de portal assignments.view. La nota solo se muestra si la entrega esta calificada.\n\nFuente: backend/src/modules/family/family.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { studentId, assignments: [{ id, title, description, instructions, subjectName, dueAt, maxScore, allowLate, status: pending|overdue|submitted|late|graded, submittedAt, score | null, feedback | null }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/payments/mine": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Cargos de un hijo (o propios) con pagado y saldo",
+        "description": "Auth: parent (hijo vinculado), student (propio).\n\nNotas: Solo lectura para la web de familias. Sujeto al permiso de portal payments.view.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { charges: [{ id, studentId, studentName, conceptName, description, amount, discount, lateFee, total, paid, balance, dueAt, status: pending|partial|overdue|paid|cancelled, currencyCode }] } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/assignments/teacher": {
       "get": {
         "tags": [
@@ -3158,7 +3302,7 @@
           "grades"
         ],
         "summary": "Periodos del anio academico actual",
-        "description": "Auth: admin con reports.view, maestro.\n\nNotas: Lo usa el panel web para filtrar el libro de calificaciones.\n\nFuente: backend/src/modules/grades/grades.routes.ts.",
+        "description": "Auth: admin con reports.view, maestro, padre y alumno.\n\nNotas: Lo usa el panel web para filtrar el libro de calificaciones.\n\nFuente: backend/src/modules/grades/grades.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3422,7 +3566,7 @@
           "reports"
         ],
         "summary": "Lista boletines emitidos (el mas reciente por alumno y periodo)",
-        "description": "Auth: admin, coordinator, director, super_admin con reports.view.\n\nNotas: Lo usa el panel web. groupId filtra por alumnos activos inscritos en el salon.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
+        "description": "Auth: admin con reports.view; padre y alumno solo de un hijo vinculado (studentId obligatorio).\n\nNotas: Lo usa el panel web. groupId filtra por alumnos activos inscritos en el salon.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
         "security": [
           {
             "bearerAuth": []

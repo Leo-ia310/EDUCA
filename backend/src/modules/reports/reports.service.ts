@@ -19,13 +19,19 @@ export class ReportsService {
 
   /** Lista de boletines emitidos (el más reciente por alumno y periodo). Solo administración con `reports.view`. */
   async listReportCards(ctx: AppContext, query: Record<string, unknown>) {
-    if (!this.permissions.isAdmin(ctx)) {
-      throw new HttpError(403, "Solo administración puede listar boletines.", "forbidden");
-    }
-    this.permissions.requireAdminPermission(ctx, "reports.view");
     const academicPeriodId = optionalId(query.academicPeriodId ?? query.academic_period_id);
-    const groupId = optionalId(query.groupId ?? query.group_id);
-    const studentId = optionalId(query.studentId ?? query.student_id);
+    let groupId = optionalId(query.groupId ?? query.group_id);
+    let studentId = optionalId(query.studentId ?? query.student_id);
+    if (!this.permissions.isAdmin(ctx)) {
+      // Padres y alumnos: solo los boletines de un hijo vinculado (o propios).
+      if (!ctx.roles.has("parent") && !ctx.roles.has("student")) {
+        throw new HttpError(403, "Solo administración puede listar boletines.", "forbidden");
+      }
+      studentId = await this.permissions.normalizeStudentId(ctx, studentId, "estudiante");
+      groupId = null;
+    } else {
+      this.permissions.requireAdminPermission(ctx, "reports.view");
+    }
 
     let studentIds: number[] | null = studentId == null ? null : [studentId];
     if (groupId != null) {

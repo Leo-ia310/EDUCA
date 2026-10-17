@@ -6,6 +6,7 @@ import {
   getCharge,
   listCharges,
   listConcepts,
+  myCharges,
   paymentsSummary,
   registerPayment,
   registerPaymentAsAdmin,
@@ -20,6 +21,9 @@ paymentsRoutes.use(authMiddleware);
 paymentsRoutes.post("/register", requireRoles(["parent"]), asyncHandler(registerPayment));
 paymentsRoutes.post("/cancel-charge", requireAdmin, requireAdminPermission("payments.cancel"), asyncHandler(cancelCharge));
 paymentsRoutes.patch("/charges/:chargeId/cancel", requireAdmin, requireAdminPermission("payments.cancel"), asyncHandler(cancelCharge));
+
+// Familias (panel web): cargos de un hijo o propios, solo lectura.
+paymentsRoutes.get("/mine", requireRoles(["parent", "student"]), asyncHandler(myCharges));
 
 // Administración (panel web): lectura, alta de cargos y pago en caja.
 paymentsRoutes.get("/summary", requireAdmin, requireAdminPermission("payments.view"), asyncHandler(paymentsSummary));

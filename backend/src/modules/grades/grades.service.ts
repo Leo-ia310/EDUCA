@@ -135,7 +135,8 @@ export class GradesService {
 
   /** Periodos del año académico actual (para filtrar el libro de calificaciones). */
   async periods(ctx: AppContext) {
-    this.requireGradebookAccess(ctx);
+    // Los periodos no son sensibles: las familias también los necesitan para elegir qué notas ver.
+    if (!ctx.roles.has("parent") && !ctx.roles.has("student")) this.requireGradebookAccess(ctx);
     const rows = await this.repository.currentPeriods(ctx.institutionId);
     return {
       periods: rows.map((r) => ({
