@@ -1,4 +1,5 @@
 import { assertNoDbError, expectSingle } from "../../lib/db";
+import { HttpError } from "../../lib/errors";
 import { supabaseAdmin } from "../../lib/supabase";
 
 const db = supabaseAdmin as any;
@@ -60,17 +61,21 @@ export class AuthRepository {
     return data == null ? null : Number(data.id);
   }
 
+  /**
+   * La consulta corre con el token del usuario (RLS): una clase que un maestro no puede ver llega vacía.
+   * Se responde 403 en vez de un 400 de BD, sin distinguir "no existe" de "no es tuya".
+   */
   async findClassForPermission(institutionId: number, classId: number) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("classes")
-        .select("id, group_id, teacher_id, institution_id")
-        .eq("id", classId)
-        .eq("institution_id", institutionId)
-        .eq("active", true)
-        .single(),
-      "Clase no encontrada.",
-    );
+    const { data, error } = await db
+      .from("classes")
+      .select("id, group_id, teacher_id, institution_id")
+      .eq("id", classId)
+      .eq("institution_id", institutionId)
+      .eq("active", true)
+      .maybeSingle();
+    assertNoDbError(error);
+    if (data == null) throw new HttpError(403, "No tienes acceso a esta clase.", "forbidden");
+    return data as Record<string, unknown>;
   }
 
   async findAssignmentForPermission(institutionId: number, assignmentId: number) {

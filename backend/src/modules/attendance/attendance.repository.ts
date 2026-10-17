@@ -112,6 +112,45 @@ export class AttendanceRepository {
     );
   }
 
+  async findSessionOfClassDate(institutionId: number, classId: number, date: string) {
+    const { data, error } = await db
+      .from("class_sessions")
+      .select("id, group_id")
+      .eq("institution_id", institutionId)
+      .eq("class_id", classId)
+      .eq("date", date)
+      .order("id")
+      .limit(1);
+    assertNoDbError(error);
+    return ((data ?? [])[0] ?? null) as Record<string, unknown> | null;
+  }
+
+  async marksOfSession(institutionId: number, sessionId: number) {
+    const { data, error } = await db
+      .from("attendances")
+      .select("uuid, student_id, attendance_status_id, notes")
+      .eq("institution_id", institutionId)
+      .eq("class_session_id", sessionId);
+    assertNoDbError(error);
+    return (data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  async upsertMarks(rows: Array<Record<string, unknown>>) {
+    const { error } = await db.from("attendances").upsert(rows, { onConflict: "class_session_id,student_id" });
+    assertNoDbError(error);
+  }
+
+  async classLabel(institutionId: number, classId: number) {
+    const { data, error } = await db
+      .from("classes")
+      .select("id, group_id, subjects(name), groups(name)")
+      .eq("institution_id", institutionId)
+      .eq("id", classId)
+      .maybeSingle();
+    assertNoDbError(error);
+    return data as Record<string, any> | null;
+  }
+
   async statuses() {
     const { data, error } = await db
       .from("catalog_attendance_statuses")

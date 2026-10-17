@@ -1,8 +1,10 @@
 import { Router } from "express";
 
 import {
+  getClassRoster,
   getGroupDetail,
   getSummary,
+  saveClassAttendance,
   upsertAttendance,
   upsertClassSession,
 } from "./attendance.controller";
@@ -19,6 +21,8 @@ attendanceRoutes.post(
   asyncHandler(upsertClassSession),
 );
 attendanceRoutes.post("/upsert", requireRoles(["teacher"]), asyncHandler(upsertAttendance));
+attendanceRoutes.get("/class/:classId", requireRoles(["teacher"]), asyncHandler(getClassRoster));
+attendanceRoutes.post("/class/:classId", requireRoles(["teacher"]), asyncHandler(saveClassAttendance));
 attendanceRoutes.get("/summary", asyncHandler(getSummary));
 attendanceRoutes.get("/groups/:groupId", asyncHandler(getGroupDetail));
 
