@@ -23,7 +23,7 @@ const businessSource = "backend/src/modules/business-api/business-api.handlers.t
 
 export const apiManifest: ApiManifestEntry[] = [
   api({module:"operations",method:"GET",path:"/health",summary:"Proceso HTTP activo",auth:"público",frontendStatus:"not_needed",request:"sin body",response:"{ ok: true, service }",source:"backend/src/app.ts",notes:"Liveness sin consultar dependencias; no mide capacidad de negocio."}),
-  api({module:"operations",method:"GET",path:"/ready",summary:"Disponibilidad de PostgreSQL y versión de contrato",auth:"público",frontendStatus:"not_needed",request:"sin body",response:"{ ok, service, schemaVersion: 53 }",source:"backend/src/app.ts",notes:"200 listo; 503 durante cierre, caída de consulta o falta de migración 0053. Probe compartido y caché de 2 segundos; no expone detalles internos ni comprueba cada proveedor externo. Paquete manual completo: supabase/deploy/scalability-0029-0053.sql; requiere backup, revisión de horarios y base compatible con 0028. No activa 2FA."}),
+  api({module:"operations",method:"GET",path:"/ready",summary:"Disponibilidad de PostgreSQL y versión de contrato",auth:"público",frontendStatus:"not_needed",request:"sin body",response:"{ ok, service, schemaVersion: 53, assignmentWriteVersion: 1 }",source:"backend/src/app.ts",notes:"200 listo; 503 durante cierre, caída de consulta o falta de migraciones 0053–0055. La capacidad aditiva assignmentWriteVersion=1 permite desplegar SQL antes del backend sin romper la versión anterior. Probe compartido y caché de 2 segundos; no expone detalles internos ni comprueba cada proveedor externo. Paquete inicial: supabase/deploy/scalability-0029-0053.sql; completar con supabase/deploy/assignment-performance-0054-0055.sql antes de publicar este backend. Requiere backup y, para el paquete inicial, revisión de horarios y base compatible con 0028. No activa 2FA."}),
   api({module:"operations",method:"GET",path:"/internal/metrics",summary:"Contadores, latencia y concurrencia del proceso",auth:"Authorization: Bearer INTERNAL_API_SECRET",frontendStatus:"not_needed",request:"sin body",response:"{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies } }",source:"backend/src/app.ts",notes:"Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Latencia de dependencia hasta cabeceras; solicitudes HTTP completas hasta finish/close."}),
   api({
     module: "portal-access",
@@ -809,7 +809,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: classId?, search?, onlyOpen?, kinds? (separados por coma), subject?, cursor?, limit? (1–100; defecto 50)",
     response: "{ ok: true, data: { assignments: [{ id, classId, subjectName, groupName, teacherName, title, description, instructions, assignedAt, dueAt, kind, maxScore, allowLate, published, attachments, totalStudents, submittedCount, gradedCount, progress }], nextCursor: string | null } }",
     source: "backend/src/modules/assignments/assignments.routes.ts",
-    notes: "Migración 0032. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.",
+    notes: "Migraciones 0032 y 0054. Permisos de clase, matrícula y familia se calculan una vez por consulta mediante InitPlans; no hay caché entre usuarios o peticiones. RLS, revocaciones y 2FA opcional permanecen activos. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.",
   }),
   api({
     module: "assignments", method: "GET", path: "/api/assignments/student",
@@ -819,7 +819,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: studentId (obligatorio para padres), classId?, search?, onlyOpen?, kinds?, subject?, cursor?, limit? (1–100; defecto 50)",
     response: "{ ok: true, data: { assignments: [tarea con progress: { status, score }], nextCursor: string | null } }",
     source: "backend/src/modules/assignments/assignments.routes.ts",
-    notes: "Migración 0032. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.",
+    notes: "Migraciones 0032 y 0054, con alcances RLS por consulta. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.",
   }),
   api({
     module: "assignments",
@@ -840,10 +840,10 @@ export const apiManifest: ApiManifestEntry[] = [
     summary: "Crea o actualiza una tarea",
     auth: "teacher con assignments.create en la clase",
     frontendStatus: "connected",
-    request: "{ assignmentId?, classId, title, description?, instructions?, dueAt, maxScore, allowLate?, published?, attachments?: [{ id }] }",
+    request: "{ assignmentId?, classId, title, description?, instructions?, dueAt, maxScore, allowLate?, published?, attachments?: [{ id }] (máximo 100), idempotencyKey?: UUID }",
     response: "{ ok: true, data: { assignment } }",
     source: "backend/src/modules/assignments/assignments.routes.ts",
-    notes: "Equivale a action assignments.upsert. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Los adjuntos se ligan por id de archivo ya registrado (files/metadata); al editar solo se agregan.",
+    notes: "Equivale a action assignments.upsert. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Migración 0055: guardado, adjuntos y documento de respuesta en una transacción SQL. attachments presente reemplaza la lista; omitido la conserva. Reintentos con el mismo idempotencyKey y contenido retornan el documento confirmado; contenido distinto devuelve 409. Sin clave se genera una por petición para compatibilidad, sin garantía entre reintentos. Flutter conserva la clave y el contenido hasta confirmar, incluso al navegar; resuelve una creación incierta antes de enviar ediciones. Se validan clase anterior/destino, institución, archivos y permisos vigentes.",
   }),
   api({
     module: "assignments",

@@ -1,6 +1,6 @@
 import { paginationFromQuery } from "../src/lib/pagination";
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test, mock } from "node:test";
 import { once } from "node:events";
 import express from "express";
 import { requestLifetime, currentRequestSignal, requestRuntime } from "../src/lib/request-lifetime";
@@ -41,6 +41,19 @@ test("database failures preserve HTTP semantics without disclosing SQL details",
     }
     assert.equal(databaseError({ code: "PGRST116", details: "The result contains 0 rows" }).status, 404);
     assert.equal(databaseError({ code: "PGRST116", details: "The result contains 2 rows" }).status, 503);
+});
+test('operational SQL errors log only a safe code and correlation ID',async()=>{
+    const logs:unknown[]=[];
+    const log=mock.method(console,'error',(value:unknown)=>{logs.push(value);});
+    const app=express();app.use(requestIdMiddleware);
+    app.get('/timeout',()=>{throw databaseError({code:'57014',message:'secret SQL email=private'});});
+    app.use(errorHandler);
+    try {await serve(app,async url=>{
+        const r=await fetch(url+'/timeout');assert.equal(r.status,503);
+        const body=await r.json() as any;assert.equal(body.error.code,'database_unavailable');
+        assert.equal(logs.length,1);assert.deepEqual(logs[0],{event:'database_request_failed',requestId:body.error.requestId,status:503,databaseCode:'57014'});
+        assert.ok(!JSON.stringify(body).includes('57014'));assert.ok(!JSON.stringify(logs).includes('secret SQL'));
+    });}finally{log.mock.restore();}
 });
 test("IDs reject coercions/precision loss and dates reject normalized impossible days", () => {
     for (const value of [true, false, [], {}, " 1 ", "1e3", "0x10", 9007199254740992])

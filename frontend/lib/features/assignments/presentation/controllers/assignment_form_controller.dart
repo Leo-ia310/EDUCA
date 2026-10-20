@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../domain/entities.dart';
 import '../../providers.dart';
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../../core/network/backend_api_client.dart';
 
 class AssignmentFormState {
   AssignmentFormState({
@@ -38,7 +42,8 @@ class AssignmentFormState {
   final bool uploading;
   final String? error;
 
-  bool get isValid => title.trim().isNotEmpty && classId != null && maxScore > 0;
+  bool get isValid =>
+      title.trim().isNotEmpty && classId != null && maxScore > 0;
 
   AssignmentFormState copyWith({
     String? assignmentId,
@@ -77,10 +82,22 @@ class AssignmentFormState {
 }
 
 class AssignmentFormController extends StateNotifier<AssignmentFormState> {
-  AssignmentFormController(this._ref) : super(AssignmentFormState());
+  AssignmentFormController(this._ref, this._keepPending)
+      : super(AssignmentFormState());
   final Ref _ref;
+  final void Function() Function() _keepPending;
+  void Function()? _releasePending;
+  AssignmentDraft? _pendingSaveDraft;
+  String? _pendingSaveFingerprint;
+  bool _hasUncertainSave = false;
 
   void hydrate(Assignment a) {
+    if (_pendingSaveDraft != null && state.assignmentId == a.id) return;
+    _pendingSaveDraft = null;
+    _pendingSaveFingerprint = null;
+    _hasUncertainSave = false;
+    _releasePending?.call();
+    _releasePending = null;
     state = AssignmentFormState(
       assignmentId: a.id,
       classId: a.classId,
@@ -119,8 +136,7 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
       }
       state = state.copyWith(attachments: next, uploading: false);
     } catch (e) {
-      state =
-          state.copyWith(uploading: false, error: 'No se pudo subir: $e');
+      state = state.copyWith(uploading: false, error: 'No se pudo subir: $e');
     }
   }
 
@@ -130,7 +146,22 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
     );
   }
 
+  String _saveFingerprint() => jsonEncode([
+        state.assignmentId,
+        state.classId,
+        state.title.trim(),
+        state.description.trim(),
+        state.instructions.trim(),
+        state.kind.name,
+        state.dueAt.toUtc().toIso8601String(),
+        state.maxScore,
+        state.allowLate,
+        state.published,
+        state.attachments.map((a) => a.id).toList()..sort(),
+      ]);
+
   Future<Assignment?> save() async {
+    if (state.saving) return null;
     if (!state.isValid) {
       state = state.copyWith(error: 'Completa título, clase y puntaje.');
       return null;
@@ -138,27 +169,66 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
     state = state.copyWith(saving: true, clearError: true);
     try {
       final repo = _ref.read(assignmentRepositoryProvider);
-      final created = await repo.upsertAssignment(AssignmentDraft(
-        assignmentId: state.assignmentId,
-        classId: state.classId!,
-        title: state.title.trim(),
-        description: state.description.trim().isEmpty
-            ? null
-            : state.description.trim(),
-        instructions: state.instructions.trim().isEmpty
-            ? null
-            : state.instructions.trim(),
-        kind: state.kind,
-        dueAt: state.dueAt,
-        maxScore: state.maxScore,
-        allowLate: state.allowLate,
-        published: state.published,
-        attachments: state.attachments,
-      ),);
-      state = state.copyWith(saving: false);
+      // Resolve the original attempt before sending edits with another key.
+      // Otherwise an unconfirmed creation could become a duplicate task.
+      if (_pendingSaveDraft != null &&
+          _pendingSaveFingerprint != _saveFingerprint()) {
+        final confirmed = await repo.upsertAssignment(_pendingSaveDraft!);
+        if (!mounted) return null;
+        state = state.copyWith(assignmentId: confirmed.id);
+        _pendingSaveDraft = null;
+        _pendingSaveFingerprint = null;
+        _hasUncertainSave = false;
+      }
+      if (_pendingSaveDraft == null) {
+        _pendingSaveFingerprint = _saveFingerprint();
+        _pendingSaveDraft = AssignmentDraft(
+          assignmentId: state.assignmentId,
+          idempotencyKey: const Uuid().v4(),
+          classId: state.classId!,
+          title: state.title.trim(),
+          description: state.description.trim().isEmpty
+              ? null
+              : state.description.trim(),
+          instructions: state.instructions.trim().isEmpty
+              ? null
+              : state.instructions.trim(),
+          kind: state.kind,
+          dueAt: state.dueAt,
+          maxScore: state.maxScore,
+          allowLate: state.allowLate,
+          published: state.published,
+          attachments: state.attachments,
+        );
+      }
+      _releasePending ??= _keepPending();
+      final created = await repo.upsertAssignment(_pendingSaveDraft!);
+      if (!mounted) return null;
+      _pendingSaveDraft = null;
+      _pendingSaveFingerprint = null;
+      _hasUncertainSave = false;
+      state = state.copyWith(saving: false, assignmentId: created.id);
+      _releasePending?.call();
+      _releasePending = null;
       return created;
     } catch (e) {
-      state = state.copyWith(saving: false, error: 'No se pudo guardar: $e');
+      final rejected = e is BackendApiException &&
+          !e.retryable &&
+          e.statusCode != null &&
+          e.statusCode! >= 400 &&
+          e.statusCode! < 500 &&
+          e.statusCode != 408;
+      if (rejected && !_hasUncertainSave) {
+        _pendingSaveDraft = null;
+        _pendingSaveFingerprint = null;
+        _releasePending?.call();
+        _releasePending = null;
+      } else {
+        _hasUncertainSave = true;
+      }
+      if (mounted) {
+        state = state.copyWith(saving: false, error: 'No se pudo guardar: $e');
+      }
       return null;
     }
   }
@@ -166,5 +236,9 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
 
 final assignmentFormControllerProvider = StateNotifierProvider.autoDispose<
     AssignmentFormController, AssignmentFormState>((ref) {
-  return AssignmentFormController(ref);
+  ref.watch(authControllerProvider.select((state) => state.user?.id));
+  return AssignmentFormController(ref, () {
+    final link = ref.keepAlive();
+    return link.close;
+  });
 });

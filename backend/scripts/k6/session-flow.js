@@ -19,8 +19,8 @@ export const options={
 };
 const journeys={
  admin:['/api/admin/directory/counts','/api/admin/profiles?pageSize=20','/api/events/announcements?limit=20'],
- teacher:['/api/assignments?limit=20','/api/schedules/mine','/api/chats/conversations?limit=20'],
- student:['/api/assignments?limit=20','/api/payments/mine','/api/schedules/mine'],
+ teacher:['/api/assignments/teacher?limit=20','/api/schedules/mine','/api/chats/conversations?limit=20'],
+ student:['/api/assignments/student?limit=20','/api/payments/mine','/api/schedules/mine'],
  parent:['/api/family/children','/api/chats/conversations?limit=20','/api/events/announcements?limit=20'],
 };
 function json(response){try{return response.json();}catch{return null;}}

@@ -57,11 +57,11 @@ export function createApp() {
 
   const readiness=new Readiness(async()=>{
     const {data,error}=await supabasePublic.rpc("backend_readiness_v1");
-    return !error && data?.schemaVersion===53;
+    return !error && data?.schemaVersion===53 && data?.assignmentWriteVersion===1;
   });
   app.get("/ready",async(_req,res)=>{
     const healthy=await readiness.check();
-    res.status(healthy?200:503).json({ok:healthy,service:"educa360-backend",schemaVersion:53});
+    res.status(healthy?200:503).json({ok:healthy,service:"educa360-backend",schemaVersion:53,assignmentWriteVersion:1});
   });
   app.get("/internal/metrics",(req,res)=>{
     const provided=Buffer.from(req.header("authorization")??""),expected=Buffer.from(`Bearer ${env.internalApiSecret}`);

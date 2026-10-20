@@ -1,33 +1,18 @@
 import { assertNoDbError, expectSingle } from "../../lib/db";
 import { supabaseAdmin } from "../../lib/supabase";
-import { dateOnly } from "../../validators/common.validators";
 import { readAllPages } from "../../lib/read-all";
 
 const db = supabaseAdmin as any;
 
 export class AssignmentsRepository {
+  async writeAssignment(id: number | null, data: Record<string, unknown>, fileIds: number[] | null, key: string) {
+    return expectSingle<Record<string, unknown>>(db.rpc('assignment_write', {
+      p_id: id, p_data: data, p_file_ids: fileIds, p_key: key,
+    }), 'No se pudo guardar la tarea.');
+  }
   async feed(parameters: Record<string, unknown>) {
     return expectSingle<Record<string, unknown>>(db.rpc("assignment_feed", parameters), "No se pudieron cargar las tareas.");
   }
-  async assignmentCounts(id: number) {
-    const { data, error } = await db.rpc("dashboard_assignment_counts", { p_assignment_ids: [id] });
-    assertNoDbError(error);
-    return (data?.[0] ?? { total: 0, delivered: 0, graded: 0 }) as Record<string, unknown>;
-  }
-  async currentAcademicPeriodId(institutionId: number, dueAt: Date) {
-    const { data , error: queryError_1} = await db
-      .from("academic_periods")
-      .select("id")
-      .eq("institution_id", institutionId)
-      .lte("start_date", dateOnly(dueAt))
-      .gte("end_date", dateOnly(dueAt))
-      .order("display_order")
-      .limit(1)
-      .maybeSingle();
-    assertNoDbError(queryError_1);
-    return data == null ? null : Number(data.id);
-  }
-
   async taskStatusId(code: string) {
     const row = await expectSingle<Record<string, unknown>>(
       db.from("catalog_task_statuses").select("id").eq("code", code).single(),
@@ -57,15 +42,6 @@ export class AssignmentsRepository {
       .maybeSingle();
     assertNoDbError(queryError_2);
     return data;
-  }
-
-  async linkAssignmentFile(assignmentId: number, fileId: number) {
-    return db
-      .from("assignment_files")
-      .upsert({ assignment_id: assignmentId, file_id: fileId }, {
-        onConflict: "assignment_id,file_id",
-        ignoreDuplicates: true,
-      });
   }
 
   async linkSubmissionFile(submissionId: number, fileId: number) {
@@ -152,30 +128,6 @@ export class AssignmentsRepository {
       for (const row of data ?? []) counts.set(Number(row.class_id), Number(row.total));
     }
     return counts;
-  }
-
-  async insertAssignment(payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db.from("assignments").insert(payload).select("id").single(),
-      "No se pudo crear la tarea.",
-    );
-  }
-
-  async updateAssignment(
-    assignmentId: number,
-    institutionId: number,
-    payload: Record<string, unknown>,
-  ) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("assignments")
-        .update(payload)
-        .eq("id", assignmentId)
-        .eq("institution_id", institutionId)
-        .select("id")
-        .single(),
-      "No se pudo actualizar la tarea.",
-    );
   }
 
   async submissionsOfAssignment(institutionId: number, assignmentId: number) {

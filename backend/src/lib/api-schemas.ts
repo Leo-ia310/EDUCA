@@ -312,8 +312,8 @@ export const requestSchemas: Record<string, Schema> = {
   "POST /api/assignments/upsert": obj({
     assignmentId: idish, classId: idish, title: str, description: str, instructions: str, dueAt: str, maxScore: num,
     kind: enumOf("homework", "exam", "project", "quiz", "presentation"),
-    allowLate: bool, published: bool, attachments: arr(fileRef),
-  }, ["assignmentId", "description", "instructions", "allowLate", "published", "attachments", "kind"]),
+    allowLate: bool, published: bool, attachments: arr(fileRef), idempotencyKey: str,
+  }, ["assignmentId", "description", "instructions", "allowLate", "published", "attachments", "kind", "idempotencyKey"]),
   "PATCH /api/assignments/:id/publish": obj({ published: bool }),
   "PATCH /api/assignments/submissions/:submissionId/grade": obj({ score: num, feedback: str }, ["feedback"]),
   "POST /api/assignments/submit": obj({ assignmentId: idish, studentId: idish, notes: str, attachments: arr(fileRef) }, ["studentId", "notes", "attachments"]),

@@ -41,4 +41,33 @@ Pasar `ACCOUNTS_JSON` mediante entorno, sin guardarlo en el repositorio ni activ
 
 La rampa llega a PEOPLE, mantiene tres minutos el máximo y reduce la carga. Umbrales: errores de negocio <1 %, p95 <2 s; aborta por >5 % de errores de servidor o >10 % de limitación sostenida. Revisar 429 por separado: una cuota no mide CPU máxima. Comparar solicitudes realmente completadas, RPS, VUs alcanzados, latencias y recursos de Render/Supabase. `http_reqs` incluye login/probes; `business_requests` cuenta solo recorridos. El resumen omite tokens y datos de setup. No afirmar capacidad superior a la realmente sostenida ni presentar `/health`/`/ready` como tráfico de negocio.
 
-No se ha ejecutado esta nueva prueba contra Render: primero deben desplegarse las migraciones/backend/clientes y prepararse las cuentas independientes necesarias. Los resultados del 17 de octubre permanecen históricos.
+La ejecución del 20 de octubre usa el diagnóstico descrito a continuación. Los resultados del 17 de octubre permanecen históricos y no se suman a las cifras nuevas.
+
+## Diagnóstico de 503 y carga con ocho cuentas
+
+`run-diagnostic.mjs` inicia sesión una vez por cuenta, comprueba 25 rutas de lectura y ejecuta `diagnostic.js` con k6. Recibe exactamente ocho cuentas distintas en `K6_ACCOUNTS_JSON`, con `username`, `password`, `institutionCode` y `role` (`admin`, `teacher`, `student`, `parent`). Usar únicamente cuentas autorizadas. Las contraseñas y tokens pasan por memoria/entorno y no se guardan en resultados; no activar HTTP debug.
+
+Desde la raíz, con el entorno de credenciales ya configurado:
+
+```powershell
+$env:RUN_LABEL='mi-diagnostico'
+node backend/scripts/k6/run-diagnostic.mjs
+```
+
+El destino de este diagnóstico es Render. Busca k6 en `C:\Program Files\k6\k6.exe`; se puede sustituir con `K6_PATH`. Guarda los resultados en `backend/stress-results/<RUN_LABEL>/`. Las rutas que fallan en preflight aparecen en `evidence.json` y se excluyen de carga: deben revisarse, no contarse como aprobadas.
+
+Primero ejecuta ocho VUs con identidades distintas y pausas de 3–7 s durante 90 s. Luego intenta mesetas de 5, 10, 20, 40 y 80 solicitudes/s, 45 s cada una, y recuperación a 2/s durante 60 s. Detiene la escalada al encontrar errores/429, iteraciones descartadas o p95 >10 s; un objetivo no alcanzado no mide capacidad. Cada escenario k6 también tiene aborto por >5 % de fallos de servidor o >10 % de 429. El objetivo p95 <2 s es un criterio de esta prueba, no un SLA acordado.
+
+Para comprobar una carga menor durante tres minutos, ejecutar por separado con otro `RUN_LABEL`:
+
+```powershell
+$env:DIAGNOSTIC_MODE='soak'
+$env:SOAK_RPS='1'
+$env:SOAK_DURATION='180s'
+$env:RUN_LABEL='mi-diagnostico/soak'
+node backend/scripts/k6/run-diagnostic.mjs
+```
+
+La llegada por segundo reutiliza las ocho identidades; los VUs adicionales son trabajadores sintéticos y no personas distintas. `business_requests` separa negocio de `operational_requests`; `http_reqs` cuenta respuestas registradas. En abortos puede haber solicitudes interrumpidas sin respuesta/medición y `dropped_iterations` que nunca se enviaron. No sumarlas como operaciones completadas. Los logins/preflight del runner se cuentan aparte en `runnerRequests`. El runner cierra únicamente las sesiones que creó, con alcance `local`.
+
+`inspect-feed.mjs` consulta la definición SQL viva y obtiene EXPLAIN ANALYZE de la lectura bajo `authenticated`, con RLS y una transacción READ ONLY que revierte al terminar. Usa el maestro de diagnóstico ID 12. `inspect-dependency.mjs` requiere `TEST_USERNAME`/`TEST_PASSWORD` de ese maestro de Big School y realiza una tanda acotada de lecturas RPC directas para obtener el código SQL oculto por el 503 público. Admite `DEPENDENCY_CONCURRENCY` de 1 a 8. Estos dos inspectores guardan evidencia bajo `2026-10-20`; no cambian funciones, políticas, límites ni datos académicos. Evitar ejecutarlos a la vez que una prueba k6 para poder atribuir resultados.

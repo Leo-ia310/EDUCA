@@ -171,6 +171,7 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
   Future<Assignment> upsertAssignment(AssignmentDraft draft) async {
     final response = await _api.call('assignments.upsert', {
       'assignmentId': draft.assignmentId,
+      'idempotencyKey': draft.idempotencyKey,
       'classId': draft.classId,
       'title': draft.title,
       'description': draft.description,

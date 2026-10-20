@@ -62,7 +62,7 @@
           "operations"
         ],
         "summary": "Disponibilidad de PostgreSQL y versión de contrato",
-        "description": "Auth: público.\n\nNotas: 200 listo; 503 durante cierre, caída de consulta o falta de migración 0053. Probe compartido y caché de 2 segundos; no expone detalles internos ni comprueba cada proveedor externo. Paquete manual completo: supabase/deploy/scalability-0029-0053.sql; requiere backup, revisión de horarios y base compatible con 0028. No activa 2FA.\n\nFuente: backend/src/app.ts.",
+        "description": "Auth: público.\n\nNotas: 200 listo; 503 durante cierre, caída de consulta o falta de migraciones 0053–0055. La capacidad aditiva assignmentWriteVersion=1 permite desplegar SQL antes del backend sin romper la versión anterior. Probe compartido y caché de 2 segundos; no expone detalles internos ni comprueba cada proveedor externo. Paquete inicial: supabase/deploy/scalability-0029-0053.sql; completar con supabase/deploy/assignment-performance-0054-0055.sql antes de publicar este backend. Requiere backup y, para el paquete inicial, revisión de horarios y base compatible con 0028. No activa 2FA.\n\nFuente: backend/src/app.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -70,7 +70,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok, service, schemaVersion: 53 }",
+            "description": "{ ok, service, schemaVersion: 53, assignmentWriteVersion: 1 }",
             "content": {
               "application/json": {
                 "schema": {
@@ -6172,7 +6172,7 @@
           "assignments"
         ],
         "summary": "Lista las tareas del maestro con conteos de entregas",
-        "description": "Auth: teacher (admin tambien).\n\nNotas: Migración 0032. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: teacher (admin tambien).\n\nNotas: Migraciones 0032 y 0054. Permisos de clase, matrícula y familia se calculan una vez por consulta mediante InitPlans; no hay caché entre usuarios o peticiones. RLS, revocaciones y 2FA opcional permanecen activos. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -6440,7 +6440,7 @@
           "assignments"
         ],
         "summary": "Tareas publicadas del alumno con su avance y paginación",
-        "description": "Auth: student o parent de un hijo vinculado; administración.\n\nNotas: Migración 0032. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: student o parent de un hijo vinculado; administración.\n\nNotas: Migraciones 0032 y 0054, con alcances RLS por consulta. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7031,7 +7031,7 @@
           "assignments"
         ],
         "summary": "Crea o actualiza una tarea",
-        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Equivale a action assignments.upsert. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Los adjuntos se ligan por id de archivo ya registrado (files/metadata); al editar solo se agregan.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Equivale a action assignments.upsert. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Migración 0055: guardado, adjuntos y documento de respuesta en una transacción SQL. attachments presente reemplaza la lista; omitido la conserva. Reintentos con el mismo idempotencyKey y contenido retornan el documento confirmado; contenido distinto devuelve 409. Sin clave se genera una por petición para compatibilidad, sin garantía entre reintentos. Flutter conserva la clave y el contenido hasta confirmar, incluso al navegar; resuelve una creación incierta antes de enviar ediciones. Se validan clase anterior/destino, institución, archivos y permisos vigentes.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7116,6 +7116,9 @@
                       ],
                       "additionalProperties": false
                     }
+                  },
+                  "idempotencyKey": {
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -7128,7 +7131,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ assignmentId?, classId, title, description?, instructions?, dueAt, maxScore, allowLate?, published?, attachments?: [{ id }] }"
+                  "value": "{ assignmentId?, classId, title, description?, instructions?, dueAt, maxScore, allowLate?, published?, attachments?: [{ id }] (máximo 100), idempotencyKey?: UUID }"
                 }
               }
             }

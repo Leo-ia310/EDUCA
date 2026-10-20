@@ -19,5 +19,6 @@ export function databaseError(error: DatabaseError): HttpError {
         return new HttpError(400, "Los datos no cumplen las reglas de la operación.", "validation_error");
     // Missing migrations, malformed queries and dependency timeouts are operational
     // failures, not invalid user input. PGRST116 can also mean multiple rows.
-    return new HttpError(503, "No se pudo confirmar la operación. Reintenta con la misma clave.", "database_unavailable", 2);
+    return new HttpError(503, "No se pudo confirmar la operación. Reintenta con la misma clave.", "database_unavailable", 2,
+        {databaseCode: /^(?:[0-9A-Z]{5}|PGRST\d{3})$/.test(code) ? code : 'unknown'});
 }

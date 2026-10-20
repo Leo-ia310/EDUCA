@@ -9,7 +9,7 @@ const { createApp } = require('../src/app') as typeof import('../src/app');
 const { supabasePublic } = require('../src/lib/supabase') as typeof import('../src/lib/supabase');
 test('real app separates liveness, cached readiness and authenticated metrics without using a remote dependency', async () => {
     let probes = 0;
-    const rpc = mock.method(supabasePublic, 'rpc', ((name: string) => { assert.equal(name, 'backend_readiness_v1'); probes++; return Promise.resolve({ data: { schemaVersion: 53 }, error: null }); }) as any);
+    const rpc = mock.method(supabasePublic, 'rpc', ((name: string) => { assert.equal(name, 'backend_readiness_v1'); probes++; return Promise.resolve({ data: { schemaVersion: 53,assignmentWriteVersion:1 }, error: null }); }) as any);
     const server = createApp().listen(0, '127.0.0.1');
     await once(server, 'listening');
     const url = `http://127.0.0.1:${(server.address() as {
