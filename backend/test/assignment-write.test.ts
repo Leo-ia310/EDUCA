@@ -3,6 +3,7 @@ import {test} from 'node:test';
 import {AssignmentsService} from '../src/modules/assignments/assignments.service';
 import {AssignmentsRepository} from '../src/modules/assignments/assignments.repository';
 import type {AppContext} from '../src/types/app-context';
+import type {PermissionsService} from '../src/services/permissions.service';
 class Repository extends AssignmentsRepository {
   calls: {id:number|null;data:Record<string,unknown>;files:number[]|null;key:string}[]=[];
   override async writeAssignment(id:number|null,data:Record<string,unknown>,files:number[]|null,key:string) {
@@ -25,4 +26,14 @@ test('malformed attachments cannot silently become an empty replacement or cause
     await assert.rejects(service.upsertAssignment(ctx,{...payload,attachments}),{status:400});
   }
   assert.equal(repository.calls.length,0);
+});
+
+test('attachment response failures retain dependency status and never expose database details',async()=>{
+  class Attachments extends AssignmentsRepository {
+    override async unlinkAssignmentFile() {}
+    override async attachmentRows() {return {data:null,error:{code:'57014',message:'private SQL relation'}};}
+  }
+  const permissions={requireRole(){},async assertTeacherCanUseAssignment(){}} as unknown as PermissionsService;
+  const service=new AssignmentsService(new Attachments(),permissions);
+  await assert.rejects(service.removeAttachment(ctx,42,8),(error:any)=>error.status===503&&!error.message.includes('private SQL'));
 });

@@ -365,7 +365,7 @@ export class AssignmentsService {
       column,
       id,
     );
-    if (error) throw new HttpError(400, error.message, "db_error");
+    assertNoDbError(error);
     return (data ?? [])
       .map((row: Record<string, unknown>) =>
         row.files as Record<string, unknown> | null

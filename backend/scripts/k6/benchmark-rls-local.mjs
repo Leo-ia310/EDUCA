@@ -14,7 +14,8 @@ let local;
 const quote=s=>'"'+s.replaceAll('"','""')+'"';
 try {
  await remote.connect();await remote.query('begin read only');
- local=await database({through:'0053_backend_readiness.sql'});
+ const roleQueries = process.env.BENCHMARK_ROLE_QUERIES === '1';
+ local=await database({through:roleQueries?'0055_atomic_assignment_write.sql':'0053_backend_readiness.sql'});
  const tables=(await local.admin.query("select c.relname,array_agg(a.attname::text order by a.attnum) columns from pg_class c join pg_namespace n on n.oid=c.relnamespace join pg_attribute a on a.attrelid=c.oid where n.nspname='public' and c.relkind='r' and a.attnum>0 and not a.attisdropped and a.attgenerated='' group by c.relname order by c.relname")).rows;
  await local.admin.query('set session_replication_role=replica');
  await local.admin.query('truncate '+tables.map(t=>'public.'+quote(t.relname)).join(',')+' cascade');
@@ -41,7 +42,7 @@ try {
   cases.push({client,role,institution:user.institution_id,student});
  }
  for(const phase of ['before','after']) {
-  if(phase==='after')await local.admin.query(fs.readFileSync(path.resolve(import.meta.dirname,'../../../supabase/migrations/0054_batched_academic_rls.sql'),'utf8'));
+  if(phase==='after')await local.admin.query(fs.readFileSync(path.resolve(import.meta.dirname,'../../../supabase/migrations',roleQueries?'0056_live_actor_role_queries.sql':'0054_batched_academic_rls.sql'),'utf8'));
   for(const item of cases) {
    const t=performance.now();
    const doc=(await item.client.query('select assignment_feed(p_student_id=>$1,p_limit=>20) result',[item.student])).rows[0].result;
@@ -57,5 +58,5 @@ try {
 } finally {
  await remote.end().catch(()=>{});if(local)await local.close();
  const out=path.resolve(import.meta.dirname,'../../stress-results/2026-10-20/fixes');fs.mkdirSync(out,{recursive:true});
- fs.writeFileSync(path.join(out,'local-rls-benchmark.json'),JSON.stringify(result,null,2));
+ fs.writeFileSync(path.join(out,process.env.BENCHMARK_ROLE_QUERIES==='1'?'local-role-query-benchmark.json':'local-rls-benchmark.json'),JSON.stringify(result,null,2));
 }

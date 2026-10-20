@@ -21,8 +21,8 @@ export class PortalAccessService {
   }
   private async rpc(query: PromiseLike<{data: unknown; error: {code?: string; message: string} | null}>, message: string) {
     const {data,error}=await query;
-    if(error) throw new HttpError(error.code === "42501" ? 403 : 400,error.message,error.code === "42501" ? "forbidden" : "db_error");
-    if(data == null) throw new HttpError(500,message,"db_error");
+    assertNoDbError(error);
+    if(data == null) throw new HttpError(503,message,"database_unavailable",2);
     return data as Record<string,unknown>;
   }
   me() { return this.rpc(this.client.rpc("portal_access_me"),"No se pudieron consultar tus permisos."); }

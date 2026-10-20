@@ -98,7 +98,7 @@
           "operations"
         ],
         "summary": "Contadores, latencia y concurrencia del proceso",
-        "description": "Auth: Authorization: Bearer INTERNAL_API_SECRET.\n\nNotas: Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Latencia de dependencia hasta cabeceras; solicitudes HTTP completas hasta finish/close.\n\nFuente: backend/src/app.ts.",
+        "description": "Auth: Authorization: Bearer INTERNAL_API_SECRET.\n\nNotas: Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Auth y PostgREST comparten admisión FIFO por proceso: SUPABASE_MAX_CONCURRENT_REQUESTS=8, SUPABASE_MAX_DATABASE_REQUESTS=4 y SUPABASE_MAX_PENDING_REQUESTS=100 por defecto. Las consultas SQL adquieren primero su límite propio para dejar capacidad compartida a Auth. La espera usa el deadline existente y se cancela al desconectar; no cachea permisos. dependencyConcurrency informa active, pending, limit, queueLimit, rejected, cancelled y tiempos de espera, además del límite SQL anidado en database. Latencia de dependencia incluye cola y llega hasta cabeceras; solicitudes HTTP completas hasta finish/close. Storage conserva su transporte y deadline sin usar esta cola.\n\nFuente: backend/src/app.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -106,7 +106,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies } }",
+            "description": "{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies, dependencyConcurrency } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -134,7 +134,7 @@
           "portal-access"
         ],
         "summary": "Permisos efectivos con roles vigentes de la institución y visibilidad de notas de la sesión",
-        "description": "Auth: usuario autenticado.\n\nNotas: Migraciones 0026, 0027 y 0039–0044. annualVisible corresponde al año actual; los documentos históricos conservan su autorización por año conocido y los anuales sin año mantienen la comprobación conservadora. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Migraciones 0026, 0027 y 0039–0044. annualVisible corresponde al año actual; los documentos históricos conservan su autorización por año conocido y los anuales sin año mantienen la comprobación conservadora. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Las RPC del módulo distinguen errores de dependencia (503), permisos (403) y validación (400), sin exponer mensajes SQL. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -5298,7 +5298,7 @@
           "assignments"
         ],
         "summary": "Quita un archivo adjunto de una tarea",
-        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Solo desvincula el archivo de la tarea (assignment_files); el archivo y su objeto en almacenamiento no se borran.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Solo desvincula el archivo de la tarea (assignment_files); el archivo y su objeto en almacenamiento no se borran. Si falla la lectura posterior de adjuntos, conserva 503 para dependencia y 403 para permisos, sin exponer SQL.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -6172,7 +6172,7 @@
           "assignments"
         ],
         "summary": "Lista las tareas del maestro con conteos de entregas",
-        "description": "Auth: teacher (admin tambien).\n\nNotas: Migraciones 0032 y 0054. Permisos de clase, matrícula y familia se calculan una vez por consulta mediante InitPlans; no hay caché entre usuarios o peticiones. RLS, revocaciones y 2FA opcional permanecen activos. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: teacher (admin tambien).\n\nNotas: Migraciones 0032 y 0054. Permisos de clase, matrícula y familia se calculan una vez por consulta mediante InitPlans; no hay caché entre usuarios o peticiones. 0056 evita consultas anidadas redundantes de roles vigentes en esos alcances. RLS, revocaciones y 2FA opcional permanecen activos. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -6440,7 +6440,7 @@
           "assignments"
         ],
         "summary": "Tareas publicadas del alumno con su avance y paginación",
-        "description": "Auth: student o parent de un hijo vinculado; administración.\n\nNotas: Migraciones 0032 y 0054, con alcances RLS por consulta. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: student o parent de un hijo vinculado; administración.\n\nNotas: Migraciones 0032 y 0054, con alcances RLS por consulta; 0056 simplifica comprobaciones de roles sin cachear permisos. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -6708,7 +6708,7 @@
           "assignments"
         ],
         "summary": "Alumnos del salon con el estado de su entrega, nota y comentarios",
-        "description": "Auth: teacher con assignments.review en la clase.\n\nNotas: Incluye alumnos activos sin entrega (pending). La nota sale de grades via la evaluacion ligada a la tarea.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: teacher con assignments.review en la clase.\n\nNotas: Incluye alumnos activos sin entrega (pending). La nota sale de grades via la evaluacion ligada a la tarea. Los fallos de lectura de adjuntos conservan su estado de dependencia o permisos y no exponen SQL.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []

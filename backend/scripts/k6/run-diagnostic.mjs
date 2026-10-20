@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 const require = createRequire(import.meta.url);
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
-const base = 'https://nivra-backend-mcc4.onrender.com';
+const base = process.env.BASE_URL || 'https://nivra-backend-mcc4.onrender.com';
 const root = path.resolve(import.meta.dirname, '../..');
 const out = path.resolve(root, 'stress-results', process.env.RUN_LABEL || '2026-10-20');
 fs.mkdirSync(out, { recursive: true });
