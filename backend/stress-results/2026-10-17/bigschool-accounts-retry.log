@@ -1,0 +1,2 @@
+time="2026-10-17T10:38:31-06:00" level=info msg="{\"account\":\"pablo@bigschool.edu\",\"status\":200,\"authenticated\":true,\"roles\":[\"student\"],\"institution\":\"BIGSCHOOL\"}" source=console
+time="2026-10-17T10:38:32-06:00" level=info msg="{\"account\":\"osmar@bigschool.edu\",\"status\":200,\"authenticated\":true,\"roles\":[\"teacher\"],\"institution\":\"BIGSCHOOL\"}" source=console

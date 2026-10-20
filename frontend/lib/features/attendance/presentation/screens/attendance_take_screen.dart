@@ -9,7 +9,6 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
-import '../../data/mock_attendance_data.dart';
 import '../../domain/entities.dart';
 import '../controllers/attendance_take_controller.dart';
 import '../widgets/sync_status_badge.dart';
@@ -27,14 +26,24 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final id = widget.classId;
       if (id == null) return;
-      final brief = AttendanceMock.todaysClasses.firstWhere(
-        (c) => c.classId == id,
-        orElse: () => AttendanceMock.todaysClasses.first,
-      );
-      ref.read(attendanceTakeControllerProvider.notifier).load(brief: brief);
+      try {
+        final classes = await ref.read(todaysClassesProvider.future);
+        if (!mounted) return;
+        final brief = classes.where((c) => c.classId == id).firstOrNull;
+        if (brief != null) {
+          await ref
+              .read(attendanceTakeControllerProvider.notifier)
+              .load(brief: brief);
+        }
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('No se pudo cargar la clase. $error')),);
+        }
+      }
     });
   }
 
@@ -84,6 +93,11 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
         bottom: false,
         child: Column(
           children: [
+            if (state.error != null)
+              Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(state.error!,
+                      style: TextStyle(color: context.palette.warning),),),
             _HeaderSummary(
               brief: brief,
               present: state.present,
@@ -101,8 +115,29 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
                   final row = state.rows[i];
                   return _StudentTile(
                     row: row,
-                    onChanged: (status) =>
-                        controller.setStatus(row.student.id, status),
+                    onChanged: (status) async {
+                      if (row.conflict) {
+                        final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                                    title: const Text('Cambio en otra sesión'),
+                                    content: Text(
+                                        'Servidor: ${row.conflictStatus?.label ?? "Sin marcación"}. ${row.conflictNotes ?? ""}\nSe guardará tu elección: ${status.label}.',),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancelar'),),
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child:
+                                              const Text('Confirmar elección'),),
+                                    ],),);
+                        if (confirmed != true || !mounted) return;
+                      }
+                      await controller.setStatus(row.student.id, status);
+                    },
                   );
                 },
               ),
@@ -222,9 +257,8 @@ class _HeaderSummary extends StatelessWidget {
                     builder: (context, ref, _) {
                       final controller =
                           ref.read(attendanceTakeControllerProvider.notifier);
-                      final loading = ref
-                          .watch(attendanceTakeControllerProvider)
-                          .loading;
+                      final loading =
+                          ref.watch(attendanceTakeControllerProvider).loading;
                       return FilledButton.icon(
                         onPressed: loading ? null : controller.finishPass,
                         style: FilledButton.styleFrom(
@@ -326,9 +360,14 @@ class _StudentTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (row.conflict)
+                  Text('Cambió en otra sesión · Revisa tu elección',
+                      style: TextStyle(color: palette.warning),),
                 if (row.student.studentCode != null)
-                  Text(row.student.studentCode!,
-                      style: context.textTheme.bodySmall,),
+                  Text(
+                    row.student.studentCode!,
+                    style: context.textTheme.bodySmall,
+                  ),
               ],
             ),
           ),
@@ -337,8 +376,11 @@ class _StudentTile extends StatelessWidget {
               padding: const EdgeInsets.only(right: 6),
               child: Tooltip(
                 message: 'Pendiente de guardar',
-                child: Icon(Icons.cloud_off_rounded,
-                    size: 14, color: palette.warning,),
+                child: Icon(
+                  Icons.cloud_off_rounded,
+                  size: 14,
+                  color: palette.warning,
+                ),
               ),
             ),
           PopupMenuButton<AttendanceStatus>(
@@ -365,8 +407,7 @@ class _StudentTile extends StatelessWidget {
                 ),
             ],
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(Radii.pill),
@@ -383,7 +424,7 @@ class _StudentTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    row.status.label,
+                    row.status?.label ?? 'Sin marcar',
                     style: context.textTheme.labelMedium?.copyWith(
                       color: color,
                       fontWeight: FontWeight.w800,
@@ -400,7 +441,8 @@ class _StudentTile extends StatelessWidget {
     );
   }
 
-  Color _statusColor(AttendanceStatus s, AppPalette palette) => switch (s) {
+  Color _statusColor(AttendanceStatus? s, AppPalette palette) => switch (s) {
+        null => palette.textMuted,
         AttendanceStatus.present => palette.success,
         AttendanceStatus.absent => palette.danger,
         AttendanceStatus.late => palette.warning,
@@ -444,8 +486,11 @@ class _FinishedSheet extends StatelessWidget {
                     color: palette.success.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.check_circle_rounded,
-                      color: palette.success, size: 56,),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: palette.success,
+                    size: 56,
+                  ),
                 ).animate().scale(
                       duration: 420.ms,
                       curve: Curves.easeOutBack,
@@ -475,20 +520,28 @@ class _FinishedSheet extends StatelessWidget {
                 child: Row(
                   children: [
                     _SummaryStat(
-                        label: 'Presentes',
-                        value: present,
-                        color: palette.success,),
+                      label: 'Presentes',
+                      value: present,
+                      color: palette.success,
+                    ),
                     const SizedBox(width: 8),
                     _SummaryStat(
-                        label: 'Ausentes',
-                        value: absent,
-                        color: palette.danger,),
+                      label: 'Ausentes',
+                      value: absent,
+                      color: palette.danger,
+                    ),
                     const SizedBox(width: 8),
                     _SummaryStat(
-                        label: 'Tarde', value: late, color: palette.warning,),
+                      label: 'Tarde',
+                      value: late,
+                      color: palette.warning,
+                    ),
                     const SizedBox(width: 8),
                     _SummaryStat(
-                        label: 'Total', value: total, color: palette.info,),
+                      label: 'Total',
+                      value: total,
+                      color: palette.info,
+                    ),
                   ],
                 ),
               ),
@@ -506,8 +559,11 @@ class _FinishedSheet extends StatelessWidget {
 }
 
 class _SummaryStat extends StatelessWidget {
-  const _SummaryStat(
-      {required this.label, required this.value, required this.color,});
+  const _SummaryStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
   final String label;
   final int value;
   final Color color;

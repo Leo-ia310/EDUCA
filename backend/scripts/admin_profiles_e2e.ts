@@ -16,6 +16,7 @@ async function main() {
   const api = `http://127.0.0.1:${address.port}/api`;
   let ownerAuthId: string | undefined;
   async function call(path: string, body?: unknown, token?: string) {
+    if(path==="/admin/profiles" && body!=null)body={requestId:crypto.randomUUID(),...(body as Record<string,unknown>)};
     const response = await fetch(api + path, {
       method: body === undefined ? "GET" : "POST",
       headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },

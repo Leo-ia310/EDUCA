@@ -8,6 +8,7 @@ import '../../../auth/presentation/auth_controller.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import 'admin_widgets.dart';
+import 'directory_picker.dart';
 
 /// Alta/edición de una clase: materia, salón, maestro y aula. Editar el
 /// maestro o el salón de una clase existente es la "edición de asignación".
@@ -135,10 +136,10 @@ class _ClassFormState extends ConsumerState<_ClassForm> {
   @override
   Widget build(BuildContext context) {
     final repo = ref.watch(adminBackendRepositoryProvider);
-    final remote =
-        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
-    final SchoolDirectory dir =
-        remote?.asData?.value ?? ref.watch(schoolDirectoryProvider);
+    final connected = repo != null;
+    final SchoolDirectory dir = connected
+        ? const SchoolDirectory()
+        : ref.watch(schoolDirectoryProvider);
     final teachers = dir.byRole(AppRole.teacher);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -157,19 +158,26 @@ class _ClassFormState extends ConsumerState<_ClassForm> {
           icon: Icons.meeting_room_rounded,
         ),
         const FormLabel('Salón / año'),
-        Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: [
-            for (final g in dir.groups)
-              BrutalPill(
-                compact: true,
-                label: g.name,
-                selected: _groupId == g.id,
-                onTap: () => setState(() => _groupId = g.id),
-              ),
-          ],
-        ),
+        if (connected)
+          DirectoryPicker(
+              kind: 'groups',
+              selected: {if (_groupId != null) _groupId!},
+              onChanged: (values) =>
+                  setState(() => _groupId = values.firstOrNull),)
+        else
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final g in dir.groups)
+                BrutalPill(
+                  compact: true,
+                  label: g.name,
+                  selected: _groupId == g.id,
+                  onTap: () => setState(() => _groupId = g.id),
+                ),
+            ],
+          ),
         if (_error != null && _groupId == null)
           Padding(
             padding: const EdgeInsets.only(top: 6),
@@ -180,25 +188,32 @@ class _ClassFormState extends ConsumerState<_ClassForm> {
             ),
           ),
         const FormLabel('Maestro'),
-        Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: [
-            BrutalPill(
-              compact: true,
-              label: 'Sin asignar',
-              selected: _teacherId == null,
-              onTap: () => setState(() => _teacherId = null),
-            ),
-            for (final t in teachers)
+        if (connected)
+          DirectoryPicker(
+              kind: 'teachers',
+              selected: {if (_teacherId != null) _teacherId!},
+              onChanged: (values) =>
+                  setState(() => _teacherId = values.firstOrNull),)
+        else
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
               BrutalPill(
                 compact: true,
-                label: t.name,
-                selected: _teacherId == t.id,
-                onTap: () => setState(() => _teacherId = t.id),
+                label: 'Sin asignar',
+                selected: _teacherId == null,
+                onTap: () => setState(() => _teacherId = null),
               ),
-          ],
-        ),
+              for (final t in teachers)
+                BrutalPill(
+                  compact: true,
+                  label: t.name,
+                  selected: _teacherId == t.id,
+                  onTap: () => setState(() => _teacherId = t.id),
+                ),
+            ],
+          ),
         const SizedBox(height: 20),
         BrutalButton(
           expand: true,

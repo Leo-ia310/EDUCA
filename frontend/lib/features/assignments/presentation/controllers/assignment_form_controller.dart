@@ -88,7 +88,7 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
       description: a.description ?? '',
       instructions: a.instructions ?? '',
       kind: a.kind,
-      dueAt: a.dueAt,
+      dueAt: a.dueAt ?? DateTime.now().add(const Duration(days: 1)),
       maxScore: a.maxScore,
       allowLate: a.allowLate,
       published: a.published,

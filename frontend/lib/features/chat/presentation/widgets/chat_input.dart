@@ -14,7 +14,7 @@ class ChatInput extends StatefulWidget {
     this.sending = false,
   });
 
-  final Future<void> Function(String text) onSend;
+  final Future<bool> Function(String text) onSend;
   final Future<void> Function() onPickAttachment;
   final MessageAttachment? pendingAttachment;
   final VoidCallback? onRemoveAttachment;
@@ -28,6 +28,7 @@ class _ChatInputState extends State<ChatInput> {
   final _controller = TextEditingController();
   final _focus = FocusNode();
   bool _canSend = false;
+  bool _sending = false;
 
   @override
   void initState() {
@@ -75,14 +76,18 @@ class _ChatInputState extends State<ChatInput> {
   }
 
   Future<void> _send() async {
-    if (widget.sending) return;
+    if (widget.sending || _sending) return;
     final text = _controller.text.trim();
     if (text.isEmpty && widget.pendingAttachment == null) return;
-    final send = widget.onSend(text);
-    _controller.clear();
-    _focus.requestFocus();
-    setState(() => _canSend = widget.pendingAttachment != null);
-    await send;
+    setState(() => _sending = true);
+    try {
+      final sent = await widget.onSend(text);
+      if (!mounted) return;
+      if (sent) _controller.clear();
+      _focus.requestFocus();
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
   }
 
   @override
@@ -125,6 +130,7 @@ class _ChatInputState extends State<ChatInput> {
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: TextField(
                       controller: _controller,
+                      readOnly: widget.sending || _sending,
                       focusNode: _focus,
                       minLines: 1,
                       maxLines: 5,

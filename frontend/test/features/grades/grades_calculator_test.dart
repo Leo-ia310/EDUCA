@@ -14,8 +14,12 @@ const _scale = GradingScale(
   ranges: [],
 );
 
-Evaluation _eval(String id,
-        {double maxScore = 100, double weight = 1, String period = 'p1',}) =>
+Evaluation _eval(
+  String id, {
+  double maxScore = 100,
+  double weight = 1,
+  String period = 'p1',
+}) =>
     Evaluation(
       id: id,
       classId: 1,
@@ -33,8 +37,25 @@ GradeEntry _grade(String evalId, double raw, {int studentId = 7}) =>
 void main() {
   const calc = GradesCalculator();
 
-  PeriodGrade compute(
-          {required List<Evaluation> evals, required List<GradeEntry> grades,}) =>
+  test('el promedio del boletín incluye cero y excluye materias sin calificar',
+      () {
+    ReportCardLine line(double score, int count) => ReportCardLine(
+          subjectName: 'Materia',
+          teacherName: 'Docente',
+          finalScore: score,
+          qualitativeLabel: null,
+          passed: score >= 6,
+          evaluationCount: count,
+        );
+    expect(calc.reportAverage([line(0, 1), line(10, 1), line(0, 0)]), 5);
+    expect(calc.reportAverage([line(0, 0)]), 0);
+    expect(line(0, 1), isNot(line(0, 0)));
+  });
+
+  PeriodGrade compute({
+    required List<Evaluation> evals,
+    required List<GradeEntry> grades,
+  }) =>
       calc.computePeriodGrade(
         studentId: 7,
         subjectName: 'Matemáticas',

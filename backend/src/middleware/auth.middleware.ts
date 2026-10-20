@@ -1,3 +1,4 @@
+import {assertAuthAvailable} from "../lib/auth-error";
 import { sessionIdFromToken } from "../modules/auth/auth-flow.service";
 import type { NextFunction, Response } from "express";
 import { portalAccessService } from "../modules/portal-access/portal-access.service";
@@ -5,20 +6,18 @@ import { portalAccessService } from "../modules/portal-access/portal-access.serv
 import { authRepository } from "../modules/auth/auth.repository";
 import type { AppContext, AppRequest } from "../types/app-context";
 import { HttpError } from "../lib/errors";
-import { currentSupabaseClient, withRequestSupabase } from "../lib/supabase";
-import { asList } from "../validators/common.validators";
-import { consumeUserQuota } from "../lib/user-rate-limit";
+import { withRequestSupabase } from "../lib/supabase";
+import { env } from "../lib/env";
 
 export async function authMiddleware(
   req: AppRequest,
-  _res: Response,
+  res: Response,
   next: NextFunction,
 ) {
   try {
     const token = bearerToken(req);
     await withRequestSupabase(token, async () => {
-      req.appContext = await loadContextFromToken(token);
-      consumeUserQuota(req.appContext.userId);
+      req.appContext = await loadContextFromToken(token, res);
       await portalAccessService.enforceRequest(req.appContext, req.originalUrl, req.method, (req.body ?? {}) as Record<string,unknown>);
       next();
     });
@@ -43,44 +42,35 @@ function bearerToken(req: AppRequest) {
   return token;
 }
 
-async function loadContextFromToken(token: string): Promise<AppContext> {
-  const { data: authData, error: authError } =
-    await authRepository.getAuthUser(token);
+async function loadContextFromToken(token: string, res: Response): Promise<AppContext> {
+  const { data: authData, error: authError } = await authRepository.getAuthUser(token);
   if (authError || !authData.user) {
+    assertAuthAvailable(authError);
     throw new HttpError(401, "Sesión inválida o expirada.", "unauthorized");
   }
-
-  let appUser;
-  try {
-    appUser = await authRepository.findAppUserByAuthUserId(authData.user.id);
-  } catch (error) {
-    const {data} = await currentSupabaseClient().rpc("auth_2fa_session_allowed");
-    if (data === false) throw new HttpError(403,"Completa la verificación de seguridad e inicia sesión nuevamente.","two_factor_required");
-    throw error;
+  const sessionId = sessionIdFromToken(token);
+  if (sessionId == null || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId)) {
+    throw new HttpError(401, "Sesión inválida. Inicia sesión nuevamente.", "unauthorized");
   }
-  const roles = new Set(
-    asList(appUser.user_roles)
-      .map((entry) =>
-        ((entry as Record<string, unknown>).roles as
-          | Record<string, unknown>
-          | null)?.code
-      )
-      .filter((code): code is string => typeof code === "string"),
-  );
-  if (roles.size === 0) {
-    throw new HttpError(403, "Usuario sin roles asignados.", "forbidden");
+  // Auth has verified this exact token. Only the backend service credential can
+  // invoke the context/quota RPC; handlers keep their user-scoped RLS client.
+  const row = await authRepository.requestContext(authData.user.id, sessionId, env.rateLimitWindowMs, env.userRateLimitMax);
+  res.setHeader("x-user-ratelimit-limit", String(row.limit));
+  res.setHeader("x-user-ratelimit-remaining", String(row.remaining));
+  res.setHeader("x-user-ratelimit-reset", String(row.resetsAt));
+  if (row.allowed !== true) {
+    res.setHeader("retry-after", String(row.retryAfterSeconds));
+    throw new HttpError(429, "Demasiadas solicitudes. Intenta de nuevo más tarde.", "rate_limited");
   }
-
   return {
-    authUserId: authData.user.id,
-    sessionId: sessionIdFromToken(token),
-    userId: Number(appUser.id),
-    institutionId: Number(appUser.institution_id),
-    personId: appUser.person_id == null ? null : Number(appUser.person_id),
-    fullName: String(appUser.full_name ?? "Usuario"),
-    roles,
-    adminPermissions: Array.isArray(appUser.admin_permissions)
-      ? (appUser.admin_permissions as unknown[]).map(String)
-      : null,
+    authUserId: String(row.authUserId), sessionId: String(row.sessionId),
+    userId: Number(row.userId), institutionId: Number(row.institutionId),
+    personId: row.personId == null ? null : Number(row.personId), fullName: String(row.fullName ?? "Usuario"),
+    roles: new Set((row.roles as string[]) ?? []),
+    adminPermissions: Array.isArray(row.adminPermissions) ? row.adminPermissions.map(String) : null,
+    teacherId: row.teacherId == null ? null : Number(row.teacherId),
+    studentId: row.studentId == null ? null : Number(row.studentId),
+    parentId: row.parentId == null ? null : Number(row.parentId),
+    portalPermissions: row.portalPermissions as Record<string, boolean>,
   };
 }

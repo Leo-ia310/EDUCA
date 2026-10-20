@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/backend_api_client.dart';
@@ -11,10 +14,89 @@ import 'school_directory.dart';
 
 typedef JsonMap = Map<String, dynamic>;
 
+class AdminCatalogPage {
+  const AdminCatalogPage({required this.directory, required this.pageInfo});
+  final SchoolDirectory directory;
+  final PageInfo pageInfo;
+}
+
 class AdminBackendRepository {
-  AdminBackendRepository(this._api);
+  AdminBackendRepository(this._api, {String? creationScope})
+      : _creationScope = creationScope;
+  final String? _creationScope;
+  bool _disposed = false;
+  void dispose() {
+    _disposed = true;
+  }
 
   final BackendApiClient _api;
+
+  Future<dynamic> _createAccess(
+      String kind, String path, JsonMap payload,) async {
+    final scope = _creationScope;
+    if (scope == null && payload['requestId'] == null) {
+      throw StateError('Se requiere contexto de cuenta para crear un acceso.');
+    }
+    final prefs = scope == null ? null : await SharedPreferences.getInstance();
+    final slot = 'admin.creation.v1.${Uri.encodeComponent(jsonEncode([
+          scope,
+          kind,
+          payload['email'].toString().trim().toLowerCase(),
+        ]),)}';
+    final storedKey = prefs?.getString(slot);
+    if (storedKey != null &&
+        payload['requestId'] != null &&
+        payload['requestId'] != storedKey) {
+      throw StateError(
+          'Ya hay una solicitud pendiente para este acceso. Reintenta con su clave original.',);
+    }
+    final key =
+        payload['requestId'] as String? ?? storedKey ?? const Uuid().v4();
+    if (prefs != null && !await prefs.setString(slot, key)) {
+      throw StateError(
+          'No se pudo conservar la solicitud de alta en este dispositivo.',);
+    }
+    final data = {...payload, 'requestId': key};
+    if (kind == 'students') data.putIfAbsent('studentCode', () => 'EST-$key');
+    if (kind == 'teachers') data.putIfAbsent('teacherCode', () => 'DOC-$key');
+    try {
+      if (_disposed) {
+        throw StateError('La sesión cambió antes de enviar la solicitud.');
+      }
+      final result = await _api.post(path, data: data);
+      if (prefs?.getString(slot) == key) await prefs!.remove(slot);
+      return result;
+    } on BackendApiException catch (error) {
+      // Only a confirmed Auth rejection retires the reservation. Timeouts and
+      // ambiguous SQL results retain the same key across navigation/restarts.
+      if (error.code == 'auth_user_create_failed' &&
+          prefs?.getString(slot) == key) {
+        await prefs!.remove(slot);
+      }
+      rethrow;
+    }
+  }
+
+  Future<JsonMap> directoryOptions(
+    String kind, {
+    String? search,
+    int page = 1,
+    Set<String> includeIds = const {},
+  }) async {
+    return Map<String, dynamic>.from(
+      await _api.get(
+        '/admin/directory/options',
+        queryParameters: {
+          'kind': kind,
+          'search': search,
+          'page': page,
+          'pageSize': 50,
+          if (includeIds.isNotEmpty)
+            'includeIds': includeIds.take(100).join(','),
+        },
+      ) as Map,
+    );
+  }
 
   Future<PaginatedResponse<JsonMap>> listInstitutions({
     String? search,
@@ -128,6 +210,7 @@ class AdminBackendRepository {
 
   Future<PaginatedResponse<JsonMap>> listPeople(
     String resource, {
+    String? id,
     int? institutionId,
     String? search,
     bool? active,
@@ -138,6 +221,7 @@ class AdminBackendRepository {
     final data = await _api.get(
       '/admin/$resource',
       queryParameters: {
+        'id': id,
         'institutionId': institutionId,
         'search': search,
         'active': active,
@@ -148,20 +232,68 @@ class AdminBackendRepository {
     return _page(data);
   }
 
-  Future<List<AdminProfile>> listProfiles({int? institutionId}) async {
+  Future<Person> personDirectoryDetail(AppRole role, String id) async {
+    final resource = switch (role) {
+      AppRole.teacher => 'teachers',
+      AppRole.parent => 'parents',
+      _ => 'students'
+    };
+    final page = await listPeople(resource, id: id, pageSize: 1);
+    if (page.items.isEmpty) throw StateError('Registro no encontrado.');
+    return _directoryPerson(page.items.single, const []);
+  }
+
+  Future<PaginatedResponse<Person>> directoryPeoplePage({
+    AppRole? role,
+    String? search,
+    int page = 1,
+    String? groupId,
+  }) async {
+    final data = await _api.get(
+      '/admin/directory/people',
+      queryParameters: {
+        'role': role?.code ?? 'all',
+        'search': search,
+        'page': page,
+        'pageSize': 50,
+        'groupId': groupId,
+      },
+    );
+    return PaginatedResponse<Person>.fromMap(
+      data,
+      (row) => _directoryPerson(row, const []),
+    );
+  }
+
+  Future<PaginatedResponse<AdminProfile>> listProfiles({
+    int? institutionId,
+    String? search,
+    int page = 1,
+  }) async {
     final data = await _api.get(
       '/admin/profiles',
-      queryParameters: {'institutionId': institutionId},
+      queryParameters: {
+        'institutionId': institutionId,
+        'search': search,
+        'page': page,
+        'pageSize': 50,
+      },
     );
     final map = (data as Map).cast<String, dynamic>();
-    return [
-      for (final row in (map['profiles'] as List? ?? const []))
-        AdminProfile.fromJson((row as Map).cast<String, dynamic>()),
-    ];
+    return PaginatedResponse<AdminProfile>.fromMap(
+      {'items': map['profiles'], 'pageInfo': map['pageInfo']},
+      AdminProfile.fromJson,
+    );
+  }
+
+  Future<Map<String, int>> directoryCounts() async {
+    final data = await _api.get('/admin/directory/counts') as Map;
+    return Map<String, dynamic>.from(data['counts'] as Map)
+        .map((key, value) => MapEntry(key, (value as num).toInt()));
   }
 
   Future<AdminProfile> createProfile(JsonMap payload) async {
-    final data = await _api.post('/admin/profiles', data: payload);
+    final data = await _createAccess('profile', '/admin/profiles', payload);
     return AdminProfile.fromJson(
       ((data as Map)['profile'] as Map).cast<String, dynamic>(),
     );
@@ -174,19 +306,25 @@ class AdminBackendRepository {
     );
   }
 
-  Future<List<AdminScheduleEntry>> listSchedules({
+  Future<PaginatedResponse<AdminScheduleEntry>> schedulesPage({
     String? groupId,
-    String? weekdayId,
+    int? weekdayId,
+    int page = 1,
   }) async {
     final data = await _api.get(
       '/schedules',
-      queryParameters: {'groupId': groupId, 'weekdayId': weekdayId},
+      queryParameters: {
+        'groupId': groupId,
+        'weekdayId': weekdayId,
+        'page': page,
+        'pageSize': 50,
+      },
     );
     final map = (data as Map).cast<String, dynamic>();
-    return [
-      for (final row in (map['schedules'] as List? ?? const []))
-        AdminScheduleEntry.fromJson((row as Map).cast<String, dynamic>()),
-    ];
+    return PaginatedResponse<AdminScheduleEntry>.fromMap(
+      {'items': map['schedules'], 'pageInfo': map['pageInfo']},
+      AdminScheduleEntry.fromJson,
+    );
   }
 
   /// Crea el horario en uno o varios días (`weekdayIds`) y devuelve lo creado.
@@ -210,10 +348,23 @@ class AdminBackendRepository {
     await _api.delete('/schedules/$id');
   }
 
-  Future<SchoolDirectory> listDirectory({int? institutionId}) async {
+  Future<AdminCatalogPage> directoryPage({
+    int? institutionId,
+    String kind = 'classes',
+    String? search,
+    int page = 1,
+    String? groupId,
+  }) async {
     final data = await _api.get(
       '/admin/directory',
-      queryParameters: {'institutionId': institutionId},
+      queryParameters: {
+        'institutionId': institutionId,
+        'kind': kind,
+        'search': search,
+        'page': page,
+        'pageSize': 50,
+        'groupId': groupId,
+      },
     );
     final map = (data as Map).cast<String, dynamic>();
     final groups = ((map['groups'] as List?) ?? const [])
@@ -230,13 +381,22 @@ class AdminBackendRepository {
           ),
         )
         .toList();
-    return SchoolDirectory(people: people, groups: groups, classes: classes);
+    return AdminCatalogPage(
+      directory:
+          SchoolDirectory(people: people, groups: groups, classes: classes),
+      pageInfo: PageInfo.fromMap(
+        Map<String, dynamic>.from(map['pageInfo'] as Map),
+      ),
+    );
   }
+
+  Future<SchoolDirectory> listDirectory({int? institutionId}) async =>
+      (await directoryPage(institutionId: institutionId)).directory;
 
   Future<JsonMap> createPeople(String resource, JsonMap payload) async {
     _assertPeopleResource(resource);
     return _entity(
-      await _api.post('/admin/$resource', data: payload),
+      await _createAccess(resource, '/admin/$resource', payload),
       _key(resource),
     );
   }
@@ -368,6 +528,14 @@ Person _directoryPerson(JsonMap row, List<SchoolClass> classes) {
     groupId: groupId,
     classIds: classIds,
     childIds: childIds,
+    groupName: row['group_name'] as String?,
+    classLabels: ((row['classes'] as List?) ?? const []).map((value) {
+      final c = value as Map;
+      return '${c['subject'] ?? 'Materia'} (${c['groupName'] ?? '—'})';
+    }).toList(),
+    childNames: ((row['children'] as List?) ?? const [])
+        .map((value) => (value as Map)['name']?.toString() ?? 'Estudiante')
+        .toList(),
   );
 }
 
@@ -375,6 +543,8 @@ SchoolGroup _directoryGroup(JsonMap row) {
   return SchoolGroup(
     id: row['id']?.toString() ?? '',
     name: row['name']?.toString() ?? 'Sin nombre',
+    studentCount: (row['student_count'] as num?)?.toInt(),
+    classCount: (row['class_count'] as num?)?.toInt(),
   );
 }
 
@@ -394,8 +564,11 @@ SchoolClass _directoryClass(JsonMap row) {
 final adminBackendRepositoryProvider = Provider<AdminBackendRepository?>((ref) {
   final api = ref.watch(backendApiClientProvider);
   final auth = ref.watch(authControllerProvider);
-  if (api == null || auth.institution == null) return null;
-  return AdminBackendRepository(api);
+  if (api == null || auth.institution == null || auth.user == null) return null;
+  final repository = AdminBackendRepository(api,
+      creationScope: '${auth.institution!.id}:${auth.user!.id}',);
+  ref.onDispose(repository.dispose);
+  return repository;
 });
 
 final adminInstitutionsProvider =
@@ -422,19 +595,58 @@ final adminUsersProvider =
   return repo.listUsers();
 });
 
-final adminProfilesProvider =
-    FutureProvider.autoDispose<List<AdminProfile>>((ref) async {
+final adminProfilesProvider = FutureProvider.autoDispose
+    .family<PaginatedResponse<AdminProfile>, ({String search, int page})>(
+        (ref, query) async {
   final repo = ref.watch(adminBackendRepositoryProvider);
-  if (repo == null) return const [];
-  return repo.listProfiles();
+  if (repo == null) {
+    return PaginatedResponse(
+      items: const [],
+      pageInfo: PageInfo.fromMap(const {}),
+    );
+  }
+  return repo.listProfiles(search: query.search, page: query.page);
 });
 
-final adminSchedulesProvider =
-    FutureProvider.autoDispose<List<AdminScheduleEntry>>((ref) async {
+final adminDirectoryCountsProvider =
+    FutureProvider.autoDispose<Map<String, int>>((ref) async {
+  return await ref.watch(adminBackendRepositoryProvider)?.directoryCounts() ??
+      const {};
+});
+
+typedef AdminScheduleQuery = ({String? groupId, int? weekdayId, int page});
+final adminSchedulesProvider = FutureProvider.autoDispose
+    .family<PaginatedResponse<AdminScheduleEntry>, AdminScheduleQuery>(
+        (ref, query) async {
   final repo = ref.watch(adminBackendRepositoryProvider);
-  // Sin servidor (demo): horarios en memoria.
-  if (repo == null) return ref.watch(demoSchedulesProvider);
-  return repo.listSchedules();
+  if (repo != null) {
+    return repo.schedulesPage(
+      groupId: query.groupId,
+      weekdayId: query.weekdayId,
+      page: query.page,
+    );
+  }
+  final items = ref
+      .watch(demoSchedulesProvider)
+      .where(
+        (s) =>
+            (query.groupId == null ||
+                s.groupId == null ||
+                s.groupId == query.groupId) &&
+            (query.weekdayId == null || s.weekdayId == query.weekdayId),
+      )
+      .toList();
+  return PaginatedResponse(
+    items: items,
+    pageInfo: PageInfo(
+      page: 1,
+      pageSize: items.length,
+      total: items.length,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+    ),
+  );
 });
 
 final adminSchoolDirectoryProvider =
@@ -444,35 +656,74 @@ final adminSchoolDirectoryProvider =
   return repo.listDirectory();
 });
 
-final adminPeopleByRoleProvider =
-    FutureProvider.family<List<Person>, AppRole>((ref, role) async {
-  final repo = ref.watch(adminBackendRepositoryProvider);
-  if (repo == null) return const [];
-  final resource = switch (role) {
-    AppRole.teacher => 'teachers',
-    AppRole.student => 'students',
-    AppRole.parent => 'parents',
-    _ => null,
-  };
-  if (resource == null) return const [];
-  final page = await repo.listPeople(resource, pageSize: 100);
-  return page.items.map((row) => _personFromBackend(row, role)).toList();
+typedef AdminCatalogQuery = ({
+  String kind,
+  String search,
+  int page,
+  String? groupId
+});
+final adminCatalogProvider = FutureProvider.autoDispose
+    .family<AdminCatalogPage, AdminCatalogQuery>((ref, query) async {
+  final repository = ref.watch(adminBackendRepositoryProvider);
+  if (repository == null) {
+    return AdminCatalogPage(
+      directory: ref.watch(schoolDirectoryProvider),
+      pageInfo: PageInfo.fromMap(const {}),
+    );
+  }
+  return repository.directoryPage(
+    kind: query.kind,
+    search: query.search,
+    page: query.page,
+    groupId: query.groupId,
+  );
 });
 
-Person _personFromBackend(JsonMap row, AppRole role) {
-  final person = (row['persons'] as Map?)?.cast<String, dynamic>() ??
-      (row['person'] as Map?)?.cast<String, dynamic>() ??
-      const <String, dynamic>{};
-  final first = person['first_name']?.toString() ?? '';
-  final last = person['last_name']?.toString() ?? '';
-  final fullName =
-      [first, last].where((part) => part.trim().isNotEmpty).join(' ');
-  return Person(
-    id: row['id']?.toString() ?? '',
-    name: fullName.trim().isEmpty ? 'Sin nombre' : fullName,
-    role: role,
-    email: person['email']?.toString() ?? '',
-    phone: person['phone']?.toString() ?? '',
-    active: row['active'] != false,
+typedef AdminPeopleQuery = ({AppRole role, String search, int page});
+typedef AdminDirectoryPeopleQuery = ({
+  AppRole? role,
+  String search,
+  int page,
+  String? groupId
+});
+final adminDirectoryPeoplePageProvider = FutureProvider.autoDispose
+    .family<PaginatedResponse<Person>, AdminDirectoryPeopleQuery>(
+        (ref, query) async {
+  final repository = ref.watch(adminBackendRepositoryProvider);
+  if (repository == null) {
+    return PaginatedResponse(
+      items: const [],
+      pageInfo: PageInfo.fromMap(const {}),
+    );
+  }
+  return repository.directoryPeoplePage(
+    role: query.role,
+    search: query.search,
+    page: query.page,
+    groupId: query.groupId,
   );
-}
+});
+final adminPeoplePageProvider = FutureProvider.autoDispose
+    .family<PaginatedResponse<Person>, AdminPeopleQuery>((ref, query) async {
+  final repository = ref.watch(adminBackendRepositoryProvider);
+  if (repository == null) {
+    return PaginatedResponse(
+      items: const [],
+      pageInfo: PageInfo.fromMap(const {'page': 1, 'pageSize': 50}),
+    );
+  }
+  final resource = switch (query.role) {
+    AppRole.teacher => 'teachers',
+    AppRole.parent => 'parents',
+    _ => 'students'
+  };
+  final page = await repository.listPeople(
+    resource,
+    search: query.search,
+    page: query.page,
+  );
+  return PaginatedResponse(
+    items: page.items.map((row) => _directoryPerson(row, const [])).toList(),
+    pageInfo: page.pageInfo,
+  );
+});

@@ -23,6 +23,7 @@ class MockPaymentsRepository implements PaymentsRepository {
 
   /// `{studentId: List<Payment>}`.
   final _payments = <int, List<Payment>>{};
+  final _registeredByKey = <String, Payment>{};
 
   int _receiptCounter = 500;
 
@@ -43,14 +44,16 @@ class MockPaymentsRepository implements PaymentsRepository {
   @override
   Future<StudentBalance> balanceFor(int studentId) async {
     final list = _charges[studentId] ?? const <Charge>[];
-    final overdue = list.where((c) => c.isOverdue && c.status != ChargeStatus.paid);
+    final overdue =
+        list.where((c) => c.isOverdue && c.status != ChargeStatus.paid);
     final upcoming = list.where(
-        (c) => c.status == ChargeStatus.pending && !c.isOverdue,);
+      (c) => c.status == ChargeStatus.pending && !c.isOverdue,
+    );
     final totalPending = list
-        .where((c) => c.status != ChargeStatus.paid && c.status != ChargeStatus.cancelled)
+        .where((c) =>
+            c.status != ChargeStatus.paid && c.status != ChargeStatus.cancelled,)
         .fold<double>(0, (a, c) => a + c.pending);
-    final totalOverdue =
-        overdue.fold<double>(0, (a, c) => a + c.pending);
+    final totalOverdue = overdue.fold<double>(0, (a, c) => a + c.pending);
     final nextDue = upcoming.isEmpty
         ? null
         : upcoming.reduce((a, b) => a.dueDate.isBefore(b.dueDate) ? a : b);
@@ -99,8 +102,25 @@ class MockPaymentsRepository implements PaymentsRepository {
     required String payerName,
     String? reference,
     String? gatewayName,
+    String? idempotencyKey,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
+    final previous = _registeredByKey[idempotencyKey];
+    if (previous != null) {
+      if (previous.chargeId != chargeId ||
+          previous.amount != amount ||
+          previous.method != method ||
+          previous.reference != reference) {
+        throw StateError(
+            'La llave de idempotencia ya corresponde a otro pago.',);
+      }
+      return previous;
+    }
+    if (!amount.isFinite ||
+        amount <= 0 ||
+        (amount * 100 - (amount * 100).round()).abs() > 1e-7) {
+      throw StateError('Monto inválido.');
+    }
     // Localizar el cargo.
     int? studentId;
     Charge? charge;
@@ -109,6 +129,9 @@ class MockPaymentsRepository implements PaymentsRepository {
       if (idx == -1) continue;
       studentId = entry.key;
       charge = entry.value[idx];
+      if (charge.status == ChargeStatus.cancelled || amount > charge.pending) {
+        throw StateError('El cargo está cerrado o el monto excede el saldo.');
+      }
       // Actualizar cargo.
       final newPaid = charge.paidAmount + amount;
       final newStatus = newPaid >= charge.totalAmount
@@ -134,12 +157,14 @@ class MockPaymentsRepository implements PaymentsRepository {
       currencyCode: charge.currencyCode,
       status: PaymentStatus.paid,
       paidAt: DateTime.now(),
-      receiptNumber: 'RC-2026-${(++_receiptCounter).toString().padLeft(6, '0')}',
+      receiptNumber:
+          'RC-2026-${(++_receiptCounter).toString().padLeft(6, '0')}',
       reference: reference,
       gatewayName: gatewayName,
       payerName: payerName,
     );
     _payments.putIfAbsent(studentId, () => []).add(payment);
+    if (idempotencyKey != null) _registeredByKey[idempotencyKey] = payment;
     return payment;
   }
 
@@ -148,7 +173,11 @@ class MockPaymentsRepository implements PaymentsRepository {
     for (final entry in _charges.entries) {
       final idx = entry.value.indexWhere((c) => c.id == chargeId);
       if (idx == -1) continue;
-      entry.value[idx] = entry.value[idx].copyWith(status: ChargeStatus.cancelled);
+      if (entry.value[idx].paidAmount > 0) {
+        throw StateError('No se puede anular un cargo con pagos registrados.');
+      }
+      entry.value[idx] =
+          entry.value[idx].copyWith(status: ChargeStatus.cancelled);
       return;
     }
   }

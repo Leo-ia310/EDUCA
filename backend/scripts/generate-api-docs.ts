@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { writeGenerated } from "./write-generated";
 import { join } from "node:path";
 
 import { apiManifest } from "../src/lib/api-manifest";
@@ -57,7 +57,7 @@ while (lines.length > 0 && lines[lines.length - 1] === "") {
   lines.pop();
 }
 
-writeFileSync(docsPath, `${lines.join("\n")}\n`, "utf8");
+writeGenerated(docsPath, `${lines.join("\n")}\n`);
 console.log(`API docs generated: ${docsPath}`);
 
 function title(value: string) {

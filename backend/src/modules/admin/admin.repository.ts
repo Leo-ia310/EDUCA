@@ -1,3 +1,5 @@
+import { transactionRpc } from "../../lib/transaction-rpc";
+import { supabaseAdmin as scopedDb } from "../../lib/supabase";
 import { assertNoDbError, expectSingle } from "../../lib/db";
 import { HttpError } from "../../lib/errors";
 import { PageOptions, paged } from "../../lib/pagination";
@@ -12,6 +14,31 @@ const db = new Proxy({} as any, {
 });
 
 export class AdminRepository {
+  constructor(private readonly scoped:any = scopedDb) {}
+  async writePerson(institutionId:number,kind:string,id:number,person:Record<string,unknown>,entity:Record<string,unknown>,relations:Record<string,unknown>) {
+    return transactionRpc(this.scoped,"admin_person_write",{p_inst:institutionId,p_kind:kind,p_id:id,p_person:person,p_entity:entity,p_relations:relations});
+  }
+  async writeAccount(institutionId:number,id:number|null,changes:Record<string,unknown>,roles:string[]|null) {
+    return transactionRpc(this.scoped,"admin_account_write",{p_inst:institutionId,p_id:id,p_changes:changes,p_roles:roles});
+  }
+
+  async beginProvision(institutionId:number,kind:string,key:string,payload:Record<string,unknown>,passwordProof:string) {
+    return transactionRpc(this.scoped,"admin_provision_begin",{p_inst:institutionId,p_kind:kind,p_key:key,p_payload:payload,p_password_proof:passwordProof});
+  }
+  async completeProvision(id:string) { return transactionRpc(this.scoped,"admin_provision_complete",{p_id:id}); }
+  async observeProvision(id:string,authId:string) {
+    return transactionRpc<boolean>(this.scoped,"admin_provision_observe",{p_id:id,p_auth_id:authId});
+  }
+  async rejectProvision(id:string) { return transactionRpc<boolean>(this.scoped,"admin_provision_reject",{p_id:id}); }
+
+  async archivePersonAccount(institutionId:number,kind:string,id:number) {
+    return transactionRpc(this.scoped,"admin_person_archive",{p_inst:institutionId,p_kind:kind,p_id:id});
+  }
+  async directoryOptions(institutionId: number, kind: string, search: string | null, page: PageOptions, ids: number[]) {
+    const {data,error} = await db.rpc("admin_directory_options", {p_institution_id:institutionId,p_kind:kind,p_search:search,
+      p_page:page.page,p_page_size:page.pageSize,p_include_ids:ids});
+    assertNoDbError(error); return data;
+  }
   async listInstitutions(
     filters: Record<string, unknown> = {},
     page: PageOptions,
@@ -105,66 +132,8 @@ export class AdminRepository {
     );
   }
 
-  /**
-   * Escrituras de perfiles administrativos: van con la service role porque
-   * `users.admin_permissions` está protegida por un trigger contra escrituras
-   * directas de usuarios autenticados (0018_guard_admin_permissions.sql).
-   */
-  async createProfileUser(payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      requireSupabaseServiceRole()
-        .from("users")
-        .insert(payload)
-        .select("*")
-        .single(),
-      "No se pudo crear el perfil.",
-    );
-  }
-
-  async updateProfileUser(
-    institutionId: number,
-    id: number,
-    payload: Record<string, unknown>,
-  ) {
-    return expectSingle<Record<string, unknown>>(
-      requireSupabaseServiceRole()
-        .from("users")
-        .update({ ...payload, updated_at: new Date().toISOString() })
-        .eq("institution_id", institutionId)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .select("*")
-        .single(),
-      "No se pudo actualizar el perfil.",
-    );
-  }
-
-  async createUser(payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db.from("users").insert(payload).select("*").single(),
-      "No se pudo crear el usuario.",
-    );
-  }
-
-  async updateUser(institutionId: number, id: number, payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("users")
-        .update({ ...payload, updated_at: new Date().toISOString() })
-        .eq("institution_id", institutionId)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .select("*")
-        .single(),
-      "No se pudo actualizar el usuario.",
-    );
-  }
-
-  async archiveUser(institutionId: number, id: number) {
-    return this.updateUser(institutionId, id, {
-      active: false,
-      deleted_at: new Date().toISOString(),
-    });
+  async archiveUser(institutionId:number,id:number) {
+    return transactionRpc(this.scoped,"admin_account_archive",{p_inst:institutionId,p_id:id});
   }
 
   async listRoles(institutionId: number | null, page: PageOptions) {
@@ -184,297 +153,49 @@ export class AdminRepository {
     return paged(data ?? [], count, page);
   }
 
-  async listAdminProfiles(institutionId: number, roleCodes: readonly string[]) {
-    const { data, error } = await db
-      .from("users")
-      .select(
-        "id, institution_id, username, email, phone, full_name, active, admin_permissions, created_at, user_roles(roles(code, name))",
-      )
-      .eq("institution_id", institutionId)
-      .is("deleted_at", null)
-      .order("full_name");
-    assertNoDbError(error);
-    return ((data ?? []) as Record<string, unknown>[]).filter((row) => {
-      const roles = Array.isArray(row.user_roles) ? row.user_roles : [];
-      return roles.some((entry: Record<string, unknown>) =>
-        roleCodes.includes(
-          String((entry.roles as Record<string, unknown> | null)?.code ?? ""),
-        )
-      );
-    });
+  async listAdminProfiles(institutionId: number, search: string | null, page: PageOptions) {
+    const {data,error}=await db.rpc("admin_profiles_page",{p_institution_id:institutionId,p_search:search,p_page:page.page,p_page_size:page.pageSize});
+    assertNoDbError(error);return data;
   }
 
-  async findRoleForAssignment(institutionId: number, code: string) {
-    const { data } = await db
-      .from("roles")
-      .select("id, code, institution_id")
-      .or(`institution_id.is.null,institution_id.eq.${institutionId}`)
-      .eq("code", code)
-      .eq("active", true)
-      .limit(1);
-    return Array.isArray(data) && data.length > 0
-      ? data[0] as Record<string, unknown>
-      : null;
+  async directoryCounts(institutionId: number) {
+    const {data,error}=await db.rpc("admin_directory_counts",{p_institution_id:institutionId});
+    assertNoDbError(error);return data;
   }
 
-  async createRole(payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db.from("roles").insert(payload).select("*").single(),
-      "No se pudo crear el rol.",
-    );
+  async createRole(payload:Record<string,unknown>) {
+    const {institution_id,...changes}=payload;
+    return transactionRpc(this.scoped,"admin_role_write",{p_inst:institution_id,p_id:null,p_changes:changes,p_archive:false});
   }
 
-  async updateRole(institutionId: number, id: number, payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("roles")
-        .update(payload)
-        .eq("id", id)
-        .eq("institution_id", institutionId)
-        .eq("is_system", false)
-        .select("*")
-        .single(),
-      "No se pudo actualizar el rol.",
-    );
+  async updateRole(institutionId:number,id:number,payload:Record<string,unknown>) {
+    return transactionRpc(this.scoped,"admin_role_write",{p_inst:institutionId,p_id:id,p_changes:payload,p_archive:false});
   }
 
-  async archiveRole(institutionId: number, id: number) {
-    return this.updateRole(institutionId, id, { active: false });
-  }
-
-  async replaceUserRoles(institutionId: number, userId: number, roleIds: number[]) {
-    // Con la service role: user_roles está protegida por un trigger contra
-    // escrituras directas de usuarios autenticados (0019_guard_user_roles.sql).
-    const service = requireSupabaseServiceRole();
-    const { error: deleteError } = await service
-      .from("user_roles")
-      .delete()
-      .eq("institution_id", institutionId)
-      .eq("user_id", userId);
-    assertNoDbError(deleteError);
-    if (roleIds.length === 0) return;
-    const { error } = await service.from("user_roles").insert(
-      roleIds.map((roleId) => ({
-        institution_id: institutionId,
-        user_id: userId,
-        role_id: roleId,
-      })),
-    );
-    assertNoDbError(error);
-  }
-
-  async createPerson(payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db.from("persons").insert(payload).select("*").single(),
-      "No se pudo crear la persona.",
-    );
-  }
-
-  async updatePerson(institutionId: number, id: number, payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("persons")
-        .update({ ...payload, updated_at: new Date().toISOString() })
-        .eq("institution_id", institutionId)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .select("*")
-        .single(),
-      "No se pudo actualizar la persona.",
-    );
-  }
-
-  async archivePerson(institutionId: number, id: number) {
-    return this.updatePerson(institutionId, id, {
-      deleted_at: new Date().toISOString(),
-    });
+  async archiveRole(institutionId:number,id:number) {
+    return transactionRpc(this.scoped,"admin_role_write",{p_inst:institutionId,p_id:id,p_changes:{},p_archive:true});
   }
 
   async listPeopleResource(
-    table: "students" | "teachers" | "parents",
+    table: "students" | "teachers" | "parents" | "all",
     institutionId: number | null,
     filters: Record<string, unknown> = {},
     page: PageOptions,
   ) {
-    const extraSelect = table === "students"
-      ? "student_code, enrollment_date, blood_type, allergies, medical_notes, active"
-      : table === "teachers"
-        ? "teacher_code, specialty, academic_title, hired_at, active"
-        : "occupation, workplace, work_phone, is_emergency_contact";
-    let query = db
-      .from(table)
-      .select(
-        `id, institution_id, person_id, ${extraSelect}, created_at, persons!inner(id, first_name, last_name, document_number, birth_date, email, phone, address, photo_url, deleted_at)`,
-        { count: "exact" },
-      )
-      .is("persons.deleted_at", null)
-      .order("created_at", { ascending: false });
-    if (institutionId != null) query = query.eq("institution_id", institutionId);
-    if (filters.active != null && table !== "parents") {
-      query = query.eq("active", filters.active);
-    }
-    if (filters.search) {
-      const search = String(filters.search).replace(/[%_]/g, "");
-      query = query.or(
-        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
-        { referencedTable: "persons" },
-      );
-    }
-    const { data, error, count } = await query.range(page.from, page.to);
+    const { data, error } = await db.rpc("admin_people_page", {
+      p_institution_id: institutionId, p_resource: table, p_search: filters.search ?? null,
+      p_active: filters.active ?? null, p_page: page.page, p_page_size: page.pageSize,
+      p_id: filters.id ?? null,
+      p_group_id: filters.groupId ?? null,
+    });
     assertNoDbError(error);
-    return paged(data ?? [], count, page);
+    return data;
   }
 
-  async findPeopleResource(
-    table: "students" | "teachers" | "parents",
-    institutionId: number,
-    id: number,
-  ) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from(table)
-        .select("*, persons(*)")
-        .eq("institution_id", institutionId)
-        .eq("id", id)
-        .single(),
-      "Registro no encontrado.",
-    );
-  }
-
-  async createPeopleResource(
-    table: "students" | "teachers" | "parents",
-    payload: Record<string, unknown>,
-  ) {
-    return expectSingle<Record<string, unknown>>(
-      db.from(table).insert(payload).select("*, persons(*)").single(),
-      "No se pudo crear el registro.",
-    );
-  }
-
-  async updatePeopleResource(
-    table: "students" | "teachers" | "parents",
-    institutionId: number,
-    id: number,
-    payload: Record<string, unknown>,
-  ) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from(table)
-        .update(payload)
-        .eq("institution_id", institutionId)
-        .eq("id", id)
-        .select("*, persons(*)")
-        .single(),
-      "No se pudo actualizar el registro.",
-    );
-  }
-
-  async archivePeopleResource(
-    table: "students" | "teachers",
-    institutionId: number,
-    id: number,
-  ) {
-    return this.updatePeopleResource(table, institutionId, id, { active: false });
-  }
-
-  async listDirectory(institutionId: number) {
-    const [students, teachers, parents, parentLinks, enrollments, groups, classes] =
-      await Promise.all([
-        this.listDirectoryPeople("students", institutionId),
-        this.listDirectoryPeople("teachers", institutionId),
-        this.listDirectoryPeople("parents", institutionId),
-        db
-          .from("parent_students")
-          .select("student_id, parent_id, parents!inner(institution_id)")
-          .eq("parents.institution_id", institutionId),
-        db
-          .from("enrollments")
-          .select("student_id, group_id, academic_year_id")
-          .eq("institution_id", institutionId),
-        db
-          .from("groups")
-          .select(
-            "id, name, max_capacity, active, classroom_id, guide_teacher_id, classrooms(name)",
-          )
-          .eq("institution_id", institutionId)
-          .eq("active", true)
-          .order("name"),
-        db
-          .from("classes")
-          .select(
-            "id, group_id, teacher_id, active, subjects(name), groups(name, classrooms(name))",
-          )
-          .eq("institution_id", institutionId)
-          .eq("active", true)
-          .order("created_at"),
-      ]);
-    for (const result of [parentLinks, enrollments, groups, classes]) {
-      assertNoDbError(result.error);
-    }
-    return {
-      people: [
-        ...students.map((row: Record<string, unknown>) =>
-          this.directoryPerson(row, "student", enrollments.data ?? [], parentLinks.data ?? [], classes.data ?? [])
-        ),
-        ...teachers.map((row: Record<string, unknown>) =>
-          this.directoryPerson(row, "teacher", enrollments.data ?? [], parentLinks.data ?? [], classes.data ?? [])
-        ),
-        ...parents.map((row: Record<string, unknown>) =>
-          this.directoryPerson(row, "parent", enrollments.data ?? [], parentLinks.data ?? [], classes.data ?? [])
-        ),
-      ],
-      groups: groups.data ?? [],
-      classes: classes.data ?? [],
-    };
-  }
-
-  private async listDirectoryPeople(
-    table: "students" | "teachers" | "parents",
-    institutionId: number,
-  ) {
-    const extraSelect = table === "students"
-      ? "student_code, active"
-      : table === "teachers"
-        ? "teacher_code, active"
-        : "is_emergency_contact";
-    const { data, error } = await db
-      .from(table)
-      .select(
-        `id, institution_id, person_id, ${extraSelect}, persons!inner(id, first_name, last_name, email, phone, deleted_at)`,
-      )
-      .eq("institution_id", institutionId)
-      .is("persons.deleted_at", null);
-    assertNoDbError(error);
-    return data ?? [];
-  }
-
-  private directoryPerson(
-    row: Record<string, unknown>,
-    role: "student" | "teacher" | "parent",
-    enrollments: Record<string, unknown>[],
-    parentLinks: Record<string, unknown>[],
-    classes: Record<string, unknown>[],
-  ) {
-    const person = row.persons as Record<string, unknown> | null;
-    const groupId = role === "student"
-      ? enrollments.find((e) => String(e.student_id) === String(row.id))?.group_id ?? null
-      : null;
-    return {
-      ...row,
-      role,
-      group_id: groupId,
-      class_ids: role === "student" && groupId != null
-        ? classes
-          .filter((classRow) => String(classRow.group_id) === String(groupId))
-          .map((classRow) => String(classRow.id))
-        : [],
-      child_ids: role === "parent"
-        ? parentLinks
-          .filter((link) => String(link.parent_id) === String(row.id))
-          .map((link) => String(link.student_id))
-        : [],
-      persons: person,
-    };
+  async listDirectory(institutionId: number, kind: string, search: string | null, page: PageOptions, groupId: number | null) {
+    const {data,error}=await db.rpc("admin_catalog_page",{p_institution_id:institutionId,p_kind:kind,p_search:search,
+      p_page:page.page,p_page_size:page.pageSize,p_group_id:groupId});
+    assertNoDbError(error);return data;
   }
 
   async currentAcademicYear(institutionId: number) {
@@ -667,130 +388,8 @@ export class AdminRepository {
     return data ?? [];
   }
 
-  async replaceTeacherClassAssignments(
-    institutionId: number,
-    teacherId: number,
-    classIds: number[],
-  ) {
-    await expectSingle<Record<string, unknown>>(
-      db
-        .from("teachers")
-        .select("id")
-        .eq("institution_id", institutionId)
-        .eq("id", teacherId)
-        .eq("active", true)
-        .single(),
-      "Maestro no encontrado.",
-    );
-    const uniqueClassIds = [...new Set(classIds)];
-    const foundClasses = await this.findClasses(institutionId, uniqueClassIds);
-    if (foundClasses.length !== uniqueClassIds.length) {
-      throw new HttpError(400, "Una o más clases no existen o no pertenecen a la institución.", "validation_error");
-    }
-    const { error: clearError } = await db
-      .from("classes")
-      .update({ teacher_id: null })
-      .eq("institution_id", institutionId)
-      .eq("teacher_id", teacherId);
-    assertNoDbError(clearError);
-    if (uniqueClassIds.length === 0) return;
-    const { error } = await db
-      .from("classes")
-      .update({ teacher_id: teacherId })
-      .eq("institution_id", institutionId)
-      .in("id", uniqueClassIds);
-    assertNoDbError(error);
-  }
-
   async archiveClass(institutionId: number, id: number) {
     return this.updateClass(institutionId, id, { active: false });
-  }
-
-  async replaceStudentEnrollment(
-    institutionId: number,
-    studentId: number,
-    groupId: number | null,
-  ) {
-    const year = await this.currentAcademicYear(institutionId);
-    if (groupId == null) {
-      const { error } = await db
-        .from("enrollments")
-        .delete()
-        .eq("institution_id", institutionId)
-        .eq("student_id", studentId)
-        .eq("academic_year_id", year.id);
-      assertNoDbError(error);
-      return;
-    }
-    await this.findGroup(institutionId, groupId);
-    const status = await db
-      .from("catalog_enrollment_statuses")
-      .select("id")
-      .eq("code", "ACT")
-      .maybeSingle();
-    assertNoDbError(status.error);
-    const { error } = await db.from("enrollments").upsert(
-      {
-        institution_id: institutionId,
-        student_id: studentId,
-        group_id: groupId,
-        academic_year_id: year.id,
-        enrollment_status_id: status.data?.id ?? null,
-        enrolled_at: new Date().toISOString().slice(0, 10),
-      },
-      { onConflict: "student_id,academic_year_id" },
-    );
-    assertNoDbError(error);
-  }
-
-  async replaceParentStudents(
-    institutionId: number,
-    parentId: number,
-    studentIds: number[],
-  ) {
-    await expectSingle<Record<string, unknown>>(
-      db
-        .from("parents")
-        .select("id")
-        .eq("institution_id", institutionId)
-        .eq("id", parentId)
-        .single(),
-      "Padre o tutor no encontrado.",
-    );
-    const uniqueStudentIds = [...new Set(studentIds)];
-    if (uniqueStudentIds.length > 0) {
-      const { data, error } = await db
-        .from("students")
-        .select("id")
-        .eq("institution_id", institutionId)
-        .in("id", uniqueStudentIds);
-      assertNoDbError(error);
-      const validIds = new Set((data ?? []).map((row: Record<string, unknown>) => Number(row.id)));
-      const invalid = uniqueStudentIds.filter((id) => !validIds.has(id));
-      if (invalid.length > 0) {
-        throw new HttpError(
-          400,
-          "Uno o más estudiantes no pertenecen a la institución.",
-          "validation_error",
-        );
-      }
-    }
-    const { error: deleteError } = await db
-      .from("parent_students")
-      .delete()
-      .eq("parent_id", parentId);
-    assertNoDbError(deleteError);
-    if (uniqueStudentIds.length === 0) return;
-    const { error } = await db.from("parent_students").insert(
-      uniqueStudentIds.map((studentId, index) => ({
-        parent_id: parentId,
-        student_id: studentId,
-        is_main_responsible: index === 0,
-        can_pickup: true,
-        lives_with: index === 0,
-      })),
-    );
-    assertNoDbError(error);
   }
 }
 

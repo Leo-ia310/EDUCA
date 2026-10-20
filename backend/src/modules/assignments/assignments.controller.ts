@@ -15,6 +15,11 @@ export async function listAssignments(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function studentAssignments(req: AppRequest, res: Response) {
+  const data = await assignmentsService.studentAssignments(requireAppContext(req), asRecord(req.query));
+  return res.json({ ok: true, data });
+}
+
 export async function assignmentSubmissions(req: AppRequest, res: Response) {
   const data = await assignmentsService.assignmentSubmissions(requireAppContext(req), req.params.id);
   return res.json({ ok: true, data });

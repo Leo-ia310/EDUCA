@@ -1,3 +1,4 @@
+import {withRequestKey} from './request-keys.mjs';
 // E2E de permisos admin contra el backend real. Requiere una cuenta admin real:
 //   E2E_ADMIN_EMAIL=... E2E_ADMIN_PASSWORD=... [API=http://localhost:3001/api] \
 //     node scripts/admin_permissions_e2e.mjs
@@ -28,6 +29,7 @@ async function login(email, password) {
   return j.access_token;
 }
 async function call(token, method, path, body) {
+  body=withRequestKey(method,path,body);
   const r = await fetch(API + path, {
     method,
     headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },

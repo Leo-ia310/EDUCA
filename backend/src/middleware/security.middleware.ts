@@ -32,14 +32,14 @@ export const corsMiddleware = cors({
     "content-type",
     "x-request-id",
   ],
-  exposedHeaders: ["x-request-id"],
+  exposedHeaders: ["x-request-id", "retry-after", "x-user-ratelimit-limit", "x-user-ratelimit-remaining", "x-user-ratelimit-reset"],
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
 } satisfies CorsOptions);
 
 // Por IP y solo se cobran los fallos de autenticación (401): el uso normal no gasta el cupo, así que
 // muchos usuarios detrás de una misma IP (p. ej. el servidor de la web) no se bloquean entre sí, pero
 // los intentos fallidos (contraseñas erróneas, tokens falsos) siguen limitados. El uso normal de cada
-// usuario autenticado se limita aparte, por usuario (ver lib/user-rate-limit.ts).
+// usuario autenticado se limita aparte con un cupo compartido en PostgreSQL (migración 0035).
 export const generalRateLimit = rateLimit({
   windowMs: env.rateLimitWindowMs,
   limit: env.rateLimitMax,

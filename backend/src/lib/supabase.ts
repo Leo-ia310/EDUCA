@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 import { env } from "./env";
+import {dependencyFetch} from "./dependency-fetch";
 import { HttpError } from "./errors";
 
 type SupabaseClientLike = ReturnType<typeof createClient<any>>;
@@ -17,6 +18,7 @@ function createUserClient(accessToken: string) {
   return createClient(env.supabaseUrl, env.supabaseAnonKey, {
     auth: authOptions,
     global: {
+      fetch:dependencyFetch,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -27,14 +29,14 @@ function createUserClient(accessToken: string) {
 const fallbackClient = createClient(
   env.supabaseUrl,
   env.supabaseAnonKey,
-  { auth: authOptions },
+  { auth: authOptions,global:{fetch:dependencyFetch} },
 );
 
 export const supabasePublic = fallbackClient;
 
 export const supabaseServiceRole = env.supabaseServiceRoleKey
   ? createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
-    auth: authOptions,
+    auth: authOptions,global:{fetch:dependencyFetch},
   })
   : null;
 

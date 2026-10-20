@@ -30,14 +30,20 @@ export function errorHandler(
   _next: NextFunction,
 ) {
   const requestId = (req as AppRequest).requestId;
+  if(res.headersSent || res.destroyed)return;
+  const parser=error as {type?:string};
+  if(parser?.type==='entity.parse.failed')error=new HttpError(400,"JSON inválido.","invalid_json");
+  else if(parser?.type==='entity.too.large')error=new HttpError(413,"El cuerpo excede el tamaño permitido.","payload_too_large");
+  else if(parser?.type==='encoding.unsupported'||parser?.type==='charset.unsupported')error=new HttpError(415,"Codificación no admitida.","unsupported_encoding");
   if (isHttpError(error)) {
+    if(error.retryAfter!=null)res.setHeader("retry-after",String(error.retryAfter));
     return res.status(error.status).json({
       ok: false,
       error: { code: error.code, message: error.message, requestId },
     });
   }
 
-  console.error({ requestId, error });
+  console.error({ event:"request_failed",requestId,errorType:error instanceof Error?error.name:"unknown" });
   return res.status(500).json({
     ok: false,
     error: {

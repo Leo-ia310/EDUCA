@@ -11,6 +11,7 @@ import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
+import 'admin_people_screen.dart';
 
 /// Boletines: lista de estudiantes por salón; al tocar uno se abre su boletín.
 class AdminReportCardsScreen extends ConsumerStatefulWidget {
@@ -27,6 +28,9 @@ class _AdminReportCardsScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(adminBackendRepositoryProvider) != null) {
+      return const AdminPeopleScreen(role: AppRole.student, reportCards: true);
+    }
     // Conectado: directorio del backend; demo: el de memoria.
     final SchoolDirectory dir =
         ref.watch(adminSchoolDirectoryProvider).valueOrNull ??

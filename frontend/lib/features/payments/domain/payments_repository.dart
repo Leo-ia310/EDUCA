@@ -12,6 +12,8 @@ abstract class PaymentsRepository {
   /// Registra un pago contra un cargo. Devuelve el `Payment` persistido.
   /// Si `amount == charge.pending`, el cargo pasa a `paid`; si es menor,
   /// pasa a `partial`.
+  /// Reutiliza [idempotencyKey] y el mismo contenido cuando una respuesta se
+  /// pierde; el backend devuelve el recibo original sin duplicar el abono.
   Future<Payment> registerPayment({
     required String chargeId,
     required double amount,
@@ -19,6 +21,7 @@ abstract class PaymentsRepository {
     required String payerName,
     String? reference,
     String? gatewayName,
+    String? idempotencyKey,
   });
 
   Future<void> cancelCharge(String chargeId);

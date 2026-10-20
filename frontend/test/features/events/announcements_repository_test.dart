@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 class _Api implements BackendApiClient {
   bool fail = false;
   String? lastPath;
+  final queries = <Map<String, dynamic>>[];
   Map<String, dynamic>? lastPayload;
   final Map<String, dynamic> announcement = {
     'id': '17',
@@ -21,9 +22,26 @@ class _Api implements BackendApiClient {
     bool authenticated = true,
   }) async {
     lastPath = path;
+    queries.add(queryParameters ?? {});
+    if (path.endsWith('/status')) {
+      return {
+        'deliveries': [
+          for (final id in queryParameters!['ids'].toString().split(','))
+            {
+              'announcementId': id,
+              'delivery': {
+                'status': 'completed',
+                'updatedAt': '2026-10-19T00:00:00Z',
+              },
+            },
+        ],
+      };
+    }
     if (fail) throw StateError('API no disponible');
     return {
       'announcements': [announcement],
+      'hasMore': true,
+      'nextBeforeId': '17',
     };
   }
 
@@ -92,6 +110,21 @@ void main() {
     expect(row.isPublishing, true);
     expect(row.delivery!.processed, 5);
     expect(row.delivery!.emailFailed, 1);
+  });
+  test('passes cursor without numeric rounding and batches progress by 100 IDs',
+      () async {
+    final api = _Api();
+    final repo = SupabaseEventsRepository(api: api);
+    final page = await repo.publishedPage(beforeId: '9007199254740993');
+    expect(api.queries.single['beforeId'], '9007199254740993');
+    expect(page.nextBeforeId, '17');
+    expect(page.hasMore, isTrue);
+    final states = await repo.progress(List.generate(205, (i) => '${i + 1}'));
+    expect(
+        api.queries.skip(1).map((q) => q['ids'].toString().split(',').length),
+        [100, 100, 5],);
+    expect(states.length, 205);
+    expect(states['205']!.updatedAt, DateTime.utc(2026, 10, 19));
   });
   test('API failures propagate instead of becoming an empty list', () async {
     final api = _Api()..fail = true;

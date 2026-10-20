@@ -8,6 +8,7 @@ import '../../../auth/presentation/auth_controller.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import 'admin_widgets.dart';
+import 'directory_picker.dart';
 
 /// Abre la hoja de alta/edición de una persona.
 ///
@@ -61,6 +62,8 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
   String? _emailError;
   String? _passwordError;
   bool _saving = false;
+  bool _loadingDetails = false;
+  String? _detailsError;
   String? _saveError;
 
   @override
@@ -77,7 +80,34 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
     _groupId = p?.groupId;
     _classIds = {...?p?.classIds};
     _childIds = {...?p?.childIds};
-    _teacherClassIds = <String>{};
+    _teacherClassIds = {...?p?.classIds};
+    if (p != null && ref.read(adminBackendRepositoryProvider) != null) {
+      _loadDetails();
+    }
+  }
+
+  Future<void> _loadDetails() async {
+    final repository = ref.read(adminBackendRepositoryProvider);
+    final existing = widget.existing;
+    if (repository == null || existing == null) return;
+    setState(() {
+      _loadingDetails = true;
+      _detailsError = null;
+    });
+    try {
+      final person = await repository.personDirectoryDetail(_role, existing.id);
+      if (!mounted) return;
+      setState(() {
+        _groupId = person.groupId;
+        _classIds = {...person.classIds};
+        _teacherClassIds = {...person.classIds};
+        _childIds = {...person.childIds};
+      });
+    } catch (error) {
+      if (mounted) setState(() => _detailsError = '$error');
+    } finally {
+      if (mounted) setState(() => _loadingDetails = false);
+    }
   }
 
   @override
@@ -198,15 +228,14 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
         if (widget.existing == null) 'password': _password.text,
       };
       if (_role == AppRole.teacher) {
-        payload['teacherCode'] = 'DOC-${DateTime.now().millisecondsSinceEpoch}';
-        payload['classIds'] = _teacherClassIds.toList();
+        if (ref.read(authControllerProvider).user?.can('classes.edit') ?? false) {
+          payload['classIds'] = _teacherClassIds.toList()..sort();
+        }
       } else if (_role == AppRole.student) {
-        payload['studentCode'] = 'EST-${DateTime.now().millisecondsSinceEpoch}';
         payload['groupId'] = _groupId;
-        payload['classIds'] = _classIds.toList();
       } else if (_role == AppRole.parent) {
         payload['isEmergencyContact'] = true;
-        payload['childIds'] = _childIds.toList();
+        payload['childIds'] = _childIds.toList()..sort();
       }
 
       if (widget.existing == null) {
@@ -214,9 +243,11 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
       } else {
         await repo.updatePeople(resource, widget.existing!.id, payload);
       }
-      ref.invalidate(adminPeopleByRoleProvider(_role));
       ref.invalidate(adminSchoolDirectoryProvider);
-      await ref.read(adminSchoolDirectoryProvider.future);
+      ref.invalidate(adminCatalogProvider);
+      ref.invalidate(adminPeoplePageProvider);
+      ref.invalidate(adminDirectoryPeoplePageProvider);
+      ref.invalidate(adminDirectoryCountsProvider);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -245,8 +276,11 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
     if (repo != null && resource != null) {
       try {
         await repo.archivePeople(resource, p.id);
-        ref.invalidate(adminPeopleByRoleProvider(p.role));
         ref.invalidate(adminSchoolDirectoryProvider);
+        ref.invalidate(adminCatalogProvider);
+        ref.invalidate(adminPeoplePageProvider);
+        ref.invalidate(adminDirectoryPeoplePageProvider);
+        ref.invalidate(adminDirectoryCountsProvider);
       } catch (e) {
         if (!mounted) return;
         setState(() => _saveError = '$e'.replaceFirst('Bad state: ', ''));
@@ -260,12 +294,23 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingDetails) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_detailsError != null) {
+      return Column(
+        children: [
+          Text(_detailsError!),
+          TextButton(onPressed: _loadDetails, child: const Text('Reintentar')),
+        ],
+      );
+    }
     final repo = ref.watch(adminBackendRepositoryProvider);
     final connected = repo != null;
-    final remote = connected ? ref.watch(adminSchoolDirectoryProvider) : null;
-    final SchoolDirectory dir =
-        remote?.asData?.value ?? ref.watch(schoolDirectoryProvider);
-    _hydrateTeacherClassIds(dir);
+    final SchoolDirectory dir = connected
+        ? const SchoolDirectory()
+        : ref.watch(schoolDirectoryProvider);
+    if (!connected) _hydrateTeacherClassIds(dir);
     final students = dir.byRole(AppRole.student);
     final roleOptions = connected ? _backendPeopleRoles : AppRole.values;
 
@@ -340,44 +385,56 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
         ),
         if (_role == AppRole.student) ...[
           const FormLabel('Salón / año'),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              for (final g in dir.groups)
-                BrutalPill(
-                  compact: true,
-                  label: g.name,
-                  selected: _groupId == g.id,
-                  onTap: () => setState(() {
-                    _groupId = g.id;
-                    // Al cambiar de salón se inscribe en sus clases.
-                    _classIds =
-                        dir.classesOfGroup(g.id).map((c) => c.id).toSet();
-                  }),
-                ),
-            ],
-          ),
-          const FormLabel('Clases inscritas'),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              for (final c in dir.classes)
-                BrutalPill(
-                  compact: true,
-                  label: classLabel(c),
-                  selected: _classIds.contains(c.id),
-                  onTap: () => setState(() {
-                    _groupId = c.groupId;
-                    _classIds = dir
-                        .classesOfGroup(c.groupId)
-                        .map((schoolClass) => schoolClass.id)
-                        .toSet();
-                  }),
-                ),
-            ],
-          ),
+          if (connected)
+            DirectoryPicker(
+              kind: 'groups',
+              selected: {if (_groupId != null) _groupId!},
+              onChanged: (values) => setState(() {
+                _groupId = values.firstOrNull;
+                _classIds.clear();
+              }),
+            )
+          else
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final g in dir.groups)
+                  BrutalPill(
+                    compact: true,
+                    label: g.name,
+                    selected: _groupId == g.id,
+                    onTap: () => setState(() {
+                      _groupId = g.id;
+                      // Al cambiar de salón se inscribe en sus clases.
+                      _classIds =
+                          dir.classesOfGroup(g.id).map((c) => c.id).toSet();
+                    }),
+                  ),
+              ],
+            ),
+          if (!connected) ...[
+            const FormLabel('Clases inscritas'),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final c in dir.classes)
+                  BrutalPill(
+                    compact: true,
+                    label: classLabel(c),
+                    selected: _classIds.contains(c.id),
+                    onTap: () => setState(() {
+                      _groupId = c.groupId;
+                      _classIds = dir
+                          .classesOfGroup(c.groupId)
+                          .map((schoolClass) => schoolClass.id)
+                          .toSet();
+                    }),
+                  ),
+              ],
+            ),
+          ],
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
@@ -389,43 +446,63 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
         ],
         if (_role == AppRole.parent) ...[
           const FormLabel('Hijos / alumnos a cargo'),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              for (final s in students)
-                BrutalPill(
-                  compact: true,
-                  label: s.name,
-                  selected: _childIds.contains(s.id),
-                  onTap: () => setState(() {
-                    _childIds.contains(s.id)
-                        ? _childIds.remove(s.id)
-                        : _childIds.add(s.id);
-                  }),
-                ),
-            ],
-          ),
+          if (connected)
+            DirectoryPicker(
+              kind: 'students',
+              selected: _childIds,
+              multiple: true,
+              onChanged: (values) => setState(() => _childIds = values),
+            )
+          else
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final s in students)
+                  BrutalPill(
+                    compact: true,
+                    label: s.name,
+                    selected: _childIds.contains(s.id),
+                    onTap: () => setState(() {
+                      _childIds.contains(s.id)
+                          ? _childIds.remove(s.id)
+                          : _childIds.add(s.id);
+                    }),
+                  ),
+              ],
+            ),
         ],
         if (_role == AppRole.teacher) ...[
           const FormLabel('Clases asignadas'),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: [
-              for (final c in dir.classes)
-                BrutalPill(
-                  compact: true,
-                  label: classLabel(c),
-                  selected: _teacherClassIds.contains(c.id),
-                  onTap: () => setState(() {
-                    _teacherClassIds.contains(c.id)
-                        ? _teacherClassIds.remove(c.id)
-                        : _teacherClassIds.add(c.id);
-                  }),
-                ),
-            ],
-          ),
+          if (connected &&
+              !(ref.watch(authControllerProvider).user?.can('classes.edit') ??
+                  false))
+            Text('${_teacherClassIds.length} clases asignadas')
+          else if (connected)
+            DirectoryPicker(
+              kind: 'classes',
+              selected: _teacherClassIds,
+              multiple: true,
+              onChanged: (values) => setState(() => _teacherClassIds = values),
+            )
+          else
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final c in dir.classes)
+                  BrutalPill(
+                    compact: true,
+                    label: classLabel(c),
+                    selected: _teacherClassIds.contains(c.id),
+                    onTap: () => setState(() {
+                      _teacherClassIds.contains(c.id)
+                          ? _teacherClassIds.remove(c.id)
+                          : _teacherClassIds.add(c.id);
+                    }),
+                  ),
+              ],
+            ),
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(

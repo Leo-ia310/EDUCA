@@ -1,3 +1,4 @@
+import {withRequestKey} from './request-keys.mjs';
 // Smoke test de endpoints HTTP publicados por el backend.
 // Genera backend/all-endpoints-smoke-results.json.
 import { spawn } from 'node:child_process';
@@ -110,6 +111,7 @@ async function request(name, method, path, {
   note = '',
 } = {}) {
   try {
+    body=withRequestKey(method,path,body);
     const options = { method, headers: token ? headers(token) : { 'Content-Type': 'application/json' } };
     if (body !== undefined) options.body = JSON.stringify(body);
     const { response, body: responseBody } = await fetchJson(`${API_BASE}${path}`, options);
@@ -438,7 +440,7 @@ async function testDomainEndpoints() {
   }
   await request('sync changes', 'GET', '/api/sync/changes?since=1970-01-01T00:00:00.000Z', { token: t, expected: ok });
 
-  await request('notification save web push device', 'POST', '/api/notifications/web-push-device', { token: a, body: { endpoint: `${MARK}-endpoint`, pushToken: `${MARK}-token` }, expected: ok });
+  await request('notification rejects invalid push subscription', 'POST', '/api/notifications/web-push-device', { token: a, body: { endpoint: `${MARK}-endpoint`, pushToken: `${MARK}-token` }, expected: status => status === 400 });
 }
 
 async function testBusinessApiAliases() {

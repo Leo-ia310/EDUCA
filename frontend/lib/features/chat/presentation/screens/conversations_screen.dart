@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,9 +27,50 @@ class ConversationsScreen extends ConsumerStatefulWidget {
 class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   final _searchCtrl = TextEditingController();
   String _query = '';
+  Timer? _searchDebounce;
+  bool _loadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _search('');
+    });
+  }
+
+  void _search(String value) {
+    setState(() => _query = value.trim().toLowerCase());
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () async {
+      try {
+        await ref.read(chatRepositoryProvider).searchConversations(value);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('No se pudo buscar: $e')));
+        }
+      }
+    });
+  }
+
+  Future<void> _loadMore() async {
+    if (_loadingMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      await ref.read(chatRepositoryProvider).loadMoreConversations();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo cargar: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -57,8 +99,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
               child: TextField(
                 controller: _searchCtrl,
-                onChanged: (v) =>
-                    setState(() => _query = v.trim().toLowerCase()),
+                onChanged: _search,
                 decoration: InputDecoration(
                   hintText: 'Buscar conversación…',
                   prefixIcon: const Icon(Icons.search_rounded),
@@ -87,18 +128,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                 loading: () => const SkeletonList(),
                 error: (e, _) => ErrorStateView(message: '$e'),
                 data: (list) {
-                  final filtered = _query.isEmpty
-                      ? list
-                      : list
-                          .where(
-                            (c) =>
-                                c.title.toLowerCase().contains(_query) ||
-                                (c.lastMessage?.content
-                                        ?.toLowerCase()
-                                        .contains(_query) ??
-                                    false),
-                          )
-                          .toList();
+                  final filtered = list;
                   if (filtered.isEmpty) {
                     return EmptyState(
                       icon: Icons.forum_rounded,
@@ -112,15 +142,24 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                   }
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                    itemCount: filtered.length,
+                    itemCount: filtered.length +
+                        (ref.read(chatRepositoryProvider).hasMoreConversations
+                            ? 1
+                            : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (_, i) => ConversationTile(
-                      conversation: filtered[i],
-                      currentUserId: me?.id ?? '',
-                      onTap: () => context.push(
-                        '${Routes.chat}/${filtered[i].id}',
-                      ),
-                    ),
+                    itemBuilder: (_, i) => i == filtered.length
+                        ? TextButton(
+                            onPressed: _loadingMore ? null : _loadMore,
+                            child: Text(_loadingMore
+                                ? 'Cargando…'
+                                : 'Cargar más conversaciones',),)
+                        : ConversationTile(
+                            conversation: filtered[i],
+                            currentUserId: me?.id ?? '',
+                            onTap: () => context.push(
+                              '${Routes.chat}/${filtered[i].id}',
+                            ),
+                          ),
                   );
                 },
               ),

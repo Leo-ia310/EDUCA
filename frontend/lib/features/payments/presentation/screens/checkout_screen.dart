@@ -43,8 +43,8 @@ class _CheckoutBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(checkoutControllerProvider);
-    final ctrl = ref.read(checkoutControllerProvider.notifier);
+    final state = ref.watch(checkoutControllerProvider(charge.id));
+    final ctrl = ref.read(checkoutControllerProvider(charge.id).notifier);
     final palette = context.palette;
 
     if (state.stage == CheckoutStage.success && state.payment != null) {

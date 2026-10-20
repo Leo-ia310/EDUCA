@@ -35,6 +35,18 @@ export async function directory(req: AppRequest, res: Response) {
   return res.json({ ok: true, data });
 }
 
+export async function directoryOptions(req: AppRequest, res: Response) {
+  return res.json({ok:true,data:await adminService.directoryOptions(requireAppContext(req),asRecord(req.query))});
+}
+
+export async function directoryPeoplePage(req: AppRequest, res: Response) {
+  return res.json({ok:true,data:await adminService.directoryPeoplePage(requireAppContext(req),asRecord(req.query))});
+}
+
+export async function directoryCounts(req: AppRequest, res: Response) {
+  return res.json({ok:true,data:await adminService.directoryCounts(requireAppContext(req),asRecord(req.query))});
+}
+
 export async function createUser(req: AppRequest, res: Response) {
   const data = await adminService.createUser(requireAppContext(req), asRecord(req.body));
   return res.status(201).json({ ok: true, data });

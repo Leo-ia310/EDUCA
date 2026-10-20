@@ -22,9 +22,11 @@ Future<void> showNewProfileSheet(BuildContext context) async {
         for (final role in AppRole.values)
           ListTile(
             leading: Icon(roleIcon(role)),
-            title: Text(role == AppRole.coordinator
-                ? 'Supervisor / Coordinador'
-                : role.label,),
+            title: Text(
+              role == AppRole.coordinator
+                  ? 'Supervisor / Coordinador'
+                  : role.label,
+            ),
             subtitle: role.isAdminPanel
                 ? const Text('Cuenta con permisos administrativos por módulo')
                 : null,
@@ -186,6 +188,7 @@ class _AdminProfileFormState extends ConsumerState<_AdminProfileForm> {
         await repo.updateProfile(widget.existing!.id, payload);
       }
       ref.invalidate(adminProfilesProvider);
+      ref.invalidate(adminDirectoryCountsProvider);
       ref.invalidate(adminSchoolDirectoryProvider);
       navigator.pop();
       messenger.showSnackBar(

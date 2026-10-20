@@ -1,0 +1,16 @@
+time="2026-10-17T10:51:13-06:00" level=info msg="{\"login\":\"admin\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"EDU360\"}" source=console
+time="2026-10-17T10:51:14-06:00" level=info msg="{\"login\":\"teacher\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"EDU360\"}" source=console
+time="2026-10-17T10:51:15-06:00" level=info msg="{\"login\":\"student\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"EDU360\"}" source=console
+time="2026-10-17T10:51:16-06:00" level=info msg="{\"login\":\"parent\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"EDU360\"}" source=console
+time="2026-10-17T10:51:17-06:00" level=info msg="COVERAGE [{\"path\":\"/api/assignments/teacher-classes\",\"method\":\"POST\",\"role\":\"teacher\",\"status\":200,\"ms\":1099.2167}]" source=console
+time="2026-10-17T10:51:29-06:00" level=info msg="FIXTURES [{\"id\":\"77\",\"title\":\"K6-STRESS-1792255877327-0\"},{\"id\":\"78\",\"title\":\"K6-STRESS-1792255878947-1\"},{\"id\":\"79\",\"title\":\"K6-STRESS-1792255880526-2\"},{\"id\":\"80\",\"title\":\"K6-STRESS-1792255882083-3\"},{\"id\":\"81\",\"title\":\"K6-STRESS-1792255883514-4\"},{\"id\":\"82\",\"title\":\"K6-STRESS-1792255885208-5\"},{\"id\":\"83\",\"title\":\"K6-STRESS-1792255886744-6\"},{\"id\":\"84\",\"title\":\"K6-STRESS-1792255888209-7\"}]" source=console
+time="2026-10-17T10:52:17-06:00" level=info msg="CLEANUP {\"id\":\"77\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-17T10:52:17-06:00" level=info msg="CLEANUP {\"id\":\"78\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-17T10:52:18-06:00" level=info msg="CLEANUP {\"id\":\"79\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-17T10:52:18-06:00" level=info msg="CLEANUP {\"id\":\"80\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-17T10:52:19-06:00" level=info msg="CLEANUP {\"id\":\"81\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-17T10:52:20-06:00" level=info msg="CLEANUP {\"id\":\"82\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-17T10:52:20-06:00" level=info msg="CLEANUP {\"id\":\"83\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-17T10:52:21-06:00" level=info msg="CLEANUP {\"id\":\"84\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-17T10:52:22-06:00" level=info msg="CLEANUP_VERIFIED {\"status\":200,\"remaining\":[],\"verified\":true}" source=console
+time="2026-10-17T10:52:22-06:00" level=info msg="RECOVERY {\"status\":200,\"ms\":113.4135}" source=console

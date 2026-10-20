@@ -24,96 +24,119 @@ class _Auth extends MockAuthRepository {
   int sends = 0, verifications = 0;
   @override
   Future<TwoFactorStatus> twoFactorStatus() async => TwoFactorStatus(
-      enabled: enabled,
-      required: false,
-      method: method,
-      hasAuthenticator: enabled && method == 'totp',
-      recoveryCodesRemaining: enabled ? 10 : 0,);
+        enabled: enabled,
+        required: false,
+        method: method,
+        hasAuthenticator: enabled && method == 'totp',
+        recoveryCodesRemaining: enabled ? 10 : 0,
+      );
   @override
   Future<TwoFactorSetup> setupTwoFactor({String method = 'totp'}) async {
     if (sendFails) throw StateError('No se pudo enviar el código por correo.');
     this.method = method;
     sends++;
     return TwoFactorSetup(
-        id: 'setup-$sends',
-        method: method,
-        secret: method == 'totp' ? secret : '',
-        otpauthUrl: method == 'totp' ? uri : '',
-        accountName: 'fixture',
-        issuer: 'Nivra',
-        emailHint: 'fi***@example.com',
-        expiresAt: DateTime.now().add(Duration(seconds: shortExpiry ? 2 : 300)),
-        resendAt: DateTime.now().add(const Duration(seconds: 1)),);
+      id: 'setup-$sends',
+      method: method,
+      secret: method == 'totp' ? secret : '',
+      otpauthUrl: method == 'totp' ? uri : '',
+      accountName: 'fixture',
+      issuer: 'Nivra',
+      emailHint: 'fi***@example.com',
+      expiresAt: DateTime.now().add(Duration(seconds: shortExpiry ? 2 : 300)),
+      resendAt: DateTime.now().add(const Duration(seconds: 1)),
+    );
   }
 
   @override
-  Future<TwoFactorEnableResult> enableTwoFactor(String code,
-      {String? challengeId,}) async {
+  Future<TwoFactorEnableResult> enableTwoFactor(
+    String code, {
+    String? challengeId,
+  }) async {
     if (code != '123456') throw const AuthFailure('El código es incorrecto.');
     expect(challengeId, startsWith('setup-'));
     enabled = true;
     return TwoFactorEnableResult(
-        enabled: true,
-        method: method,
-        recoveryCodes: List.generate(10, (i) => 'RECOVERY-$i'),);
+      enabled: true,
+      method: method,
+      recoveryCodes: List.generate(10, (i) => 'RECOVERY-$i'),
+    );
   }
 
   @override
   Future<TwoFactorSetup> sendTwoFactorEmailCode() async {
     sends++;
     return const TwoFactorSetup(
-        id: 'disable-1',
-        method: 'email',
-        emailHint: 'fi***@example.com',
-        accountName: 'fixture',
-        issuer: 'Nivra',);
+      id: 'disable-1',
+      method: 'email',
+      emailHint: 'fi***@example.com',
+      accountName: 'fixture',
+      issuer: 'Nivra',
+    );
   }
 
   @override
-  Future<void> disableTwoFactor(
-      {String? code, String? recoveryCode, String? challengeId,}) async {
+  Future<void> disableTwoFactor({
+    String? code,
+    String? recoveryCode,
+    String? challengeId,
+  }) async {
     expect(challengeId, 'disable-1');
     if (code != '123456') throw const AuthFailure('El código es incorrecto.');
     enabled = false;
   }
 
   @override
-  Future<SignInResult> signIn(
-          {Institution? institution,
-          required String emailOrUsername,
-          required String password,}) async =>
-      SignInResult.twoFactor(TwoFactorChallenge(
+  Future<SignInResult> signIn({
+    Institution? institution,
+    required String emailOrUsername,
+    required String password,
+  }) async =>
+      SignInResult.twoFactor(
+        TwoFactorChallenge(
           id: 'login-1',
           method: method,
           emailHint: 'fi***@example.com',
-          expiresAt: DateTime.now().add(const Duration(minutes: 5)),),);
+          expiresAt: DateTime.now().add(const Duration(minutes: 5)),
+        ),
+      );
   @override
-  Future<AuthSession> verifyTwoFactorLogin(
-      {required String challengeId, String? code, String? recoveryCode,}) async {
+  Future<AuthSession> verifyTwoFactorLogin({
+    required String challengeId,
+    String? code,
+    String? recoveryCode,
+  }) async {
     expect(challengeId, 'login-1');
     expect(code, '123456');
     verifications++;
     return const AuthSession(
-        user: AppUser(
-            id: '1',
-            institutionId: 2,
-            email: 'fixture@example.com',
-            fullName: 'Fixture',
-            roles: [AppRole.student],
-            activeRole: AppRole.student,),
-        institution: Institution(id: 2, code: 'TEST', name: 'Test'),);
+      user: AppUser(
+        id: '1',
+        institutionId: 2,
+        email: 'fixture@example.com',
+        fullName: 'Fixture',
+        roles: [AppRole.student],
+        activeRole: AppRole.student,
+      ),
+      institution: Institution(id: 2, code: 'TEST', name: 'Test'),
+    );
   }
 }
 
 Widget app(MockAuthRepository repo) => ProviderScope(
-    overrides: [authRepositoryProvider.overrideWithValue(repo)],
-    child: MaterialApp(
-        theme: AppTheme.lightTheme, home: const SecuritySettingsScreen(),),);
+      overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      child: MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const SecuritySettingsScreen(),
+      ),
+    );
 Future<void> chooseEmail(WidgetTester tester) async {
+  await tester.ensureVisible(find.byType(DropdownButtonFormField<String>));
   await tester.tap(find.byType(DropdownButtonFormField<String>));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Correo electrónico').last);
   await tester.pumpAndSettle();
+  await tester.ensureVisible(find.text('Enviar código por correo'));
   await tester.tap(find.text('Enviar código por correo'));
   await tester.pumpAndSettle();
 }
@@ -131,7 +154,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(AuthenticatorQr), findsOneWidget);
     expect(
-        tester.widget<AuthenticatorQr>(find.byType(AuthenticatorQr)).data, uri,);
+      tester.widget<AuthenticatorQr>(find.byType(AuthenticatorQr)).data,
+      uri,
+    );
     expect(find.text(secret), findsOneWidget);
     final field = find.widgetWithText(TextField, 'Código de 6 dígitos');
     await tester.ensureVisible(field);
@@ -141,12 +166,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('El código es incorrecto.'), findsOneWidget);
     await tester.enterText(field, '123456');
+    await tester.ensureVisible(find.text('Verificar y activar 2FA'));
     await tester.tap(find.text('Verificar y activar 2FA'));
     await tester.pumpAndSettle();
     expect(find.text('Guarda tus códigos de recuperación'), findsOneWidget);
     await tester.tap(find.text('Ya los guardé'));
     await tester.pumpAndSettle();
-    expect(find.text('Método activo: App autenticadora'), findsOneWidget);
+    expect(find.text('Método activo'), findsOneWidget);
+    expect(find.text('App autenticadora'), findsOneWidget);
     expect(find.byType(AuthenticatorQr), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -187,7 +214,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Ya los guardé'));
     await tester.pumpAndSettle();
-    expect(find.text('Método activo: Correo electrónico'), findsOneWidget);
+    expect(find.text('Método activo'), findsOneWidget);
+    expect(find.text('Correo electrónico'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets(
@@ -198,7 +226,9 @@ void main() {
     await tester.pumpAndSettle();
     await chooseEmail(tester);
     expect(
-        find.text('No se pudo enviar el código por correo.'), findsOneWidget,);
+      find.text('No se pudo enviar el código por correo.'),
+      findsOneWidget,
+    );
     expect(find.text('Código enviado'), findsNothing);
     expect(repo.enabled, false);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -211,12 +241,16 @@ void main() {
       ..method = 'email';
     await tester.pumpWidget(app(repo));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Desactivar 2FA'));
+    await tester
+        .ensureVisible(find.text('Desactivar autenticación en dos pasos'));
+    await tester.tap(find.text('Desactivar autenticación en dos pasos'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Enviar código'));
     await tester.pumpAndSettle();
     await tester.enterText(
-        find.widgetWithText(TextField, 'Código de 6 dígitos'), '123456',);
+      find.widgetWithText(TextField, 'Código de 6 dígitos'),
+      '123456',
+    );
     await tester.tap(find.text('Desactivar 2FA').last);
     await tester.pumpAndSettle();
     expect(find.text('2FA desactivado'), findsOneWidget);
@@ -228,30 +262,45 @@ void main() {
         'login uses the configured $method method and verifies before navigation',
         (tester) async {
       final repo = _Auth()..method = method;
-      final router = GoRouter(initialLocation: '/verify', routes: [
-        GoRoute(path: '/verify', builder: (_, __) => const TwoFactorScreen()),
-        GoRoute(
+      final router = GoRouter(
+        initialLocation: '/verify',
+        routes: [
+          GoRoute(path: '/verify', builder: (_, __) => const TwoFactorScreen()),
+          GoRoute(
             path: '/student/dashboard',
-            builder: (_, __) => const Scaffold(body: Text('Sesión verificada')),),
-      ],);
-      await tester.pumpWidget(ProviderScope(
+            builder: (_, __) => const Scaffold(body: Text('Sesión verificada')),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
           overrides: [authRepositoryProvider.overrideWithValue(repo)],
           child: MaterialApp.router(
-              theme: AppTheme.lightTheme, routerConfig: router,),),);
+            theme: AppTheme.lightTheme,
+            routerConfig: router,
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
       final container = ProviderScope.containerOf(
-          tester.element(find.byType(TwoFactorScreen)),);
+        tester.element(find.byType(TwoFactorScreen)),
+      );
       await container
           .read(authControllerProvider.notifier)
           .signIn('fixture', 'password');
       await tester.pumpAndSettle();
       expect(
-          find.text(method == 'email'
+        find.text(
+          method == 'email'
               ? 'Código enviado por correo'
-              : 'Código de autenticador',),
-          findsOneWidget,);
+              : 'Código de autenticador',
+        ),
+        findsOneWidget,
+      );
       await tester.enterText(
-          find.widgetWithText(TextField, 'Código de 6 dígitos'), '123456',);
+        find.widgetWithText(TextField, 'Código de 6 dígitos'),
+        '123456',
+      );
       await tester.tap(find.text('Verificar'));
       await tester.pumpAndSettle();
       expect(repo.verifications, 1);

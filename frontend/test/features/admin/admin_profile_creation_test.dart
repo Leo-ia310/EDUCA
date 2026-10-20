@@ -1,4 +1,5 @@
 import 'package:educa360/core/theme/app_theme.dart';
+import 'package:educa360/core/network/paginated_response.dart';
 import 'package:educa360/core/widgets/brutal.dart';
 import 'package:educa360/features/admin/data/admin_backend_repository.dart';
 import 'package:educa360/features/admin/data/admin_profile.dart';
@@ -54,9 +55,11 @@ Widget _app(AdminBackendRepository repo, {bool failedList = false}) =>
         adminBackendRepositoryProvider.overrideWithValue(repo),
         adminSchoolDirectoryProvider
             .overrideWith((ref) async => const SchoolDirectory()),
-        adminProfilesProvider.overrideWith((ref) async {
+        adminDirectoryCountsProvider.overrideWith((ref) async => const {}),
+        adminDirectoryPeoplePageProvider.overrideWith((ref,query) async => PaginatedResponse(items:const [],pageInfo:PageInfo.fromMap(const {}))),
+        adminProfilesProvider.overrideWith((ref,query) async {
           if (failedList) throw StateError('No se pudo actualizar la lista');
-          return <AdminProfile>[];
+          return PaginatedResponse<AdminProfile>(items:const [],pageInfo:PageInfo.fromMap(const {}));
         }),
       ],
       child: MaterialApp(
@@ -69,17 +72,17 @@ Future<void> _open(WidgetTester tester, String role) async {
   expect(find.text('Seleccionar rol'), findsOneWidget);
   expect(find.text('Supervisor / Coordinador'), findsOneWidget);
   expect(
-      find.text('Administrador'), findsNWidgets(2),); // Role card and selector.
+      find.text('Administrador'), findsOneWidget,);
   await tester.tap(find.widgetWithText(ListTile, role));
   await tester.pumpAndSettle();
 }
 
 Future<void> _submit(WidgetTester tester) async {
-  final fields = find.byType(TextField);
+  final fields = find.descendant(of:find.byType(BottomSheet),matching:find.byType(TextField));
   await tester.enterText(
-      fields.at(1), 'Nombre perfil',); // Search remains behind sheet.
-  await tester.enterText(fields.at(2), 'new@example.com');
-  await tester.enterText(fields.at(4), 'StrongPassword123!');
+      fields.at(0), 'Nombre perfil',);
+  await tester.enterText(fields.at(1), 'new@example.com');
+  await tester.enterText(fields.at(3), 'StrongPassword123!');
   FocusManager.instance.primaryFocus?.unfocus();
   await tester.pumpAndSettle();
   await tester.ensureVisible(find.text('Crear perfil'));

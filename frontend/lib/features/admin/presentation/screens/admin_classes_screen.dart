@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/network/paginated_response.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -13,6 +15,7 @@ import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/class_form.dart';
+import '../widgets/page_controls.dart';
 
 /// CRUD de clases y de sus asignaciones: cada clase muestra su salón y su
 /// maestro, y se puede cambiar de maestro o de salón al editarla. Alterna
@@ -26,31 +29,32 @@ class AdminClassesScreen extends ConsumerStatefulWidget {
 
 class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
   bool _byGroup = true;
+  int _page = 1;
+  String _query = '';
+  Timer? _searchTimer;
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final repo = ref.watch(adminBackendRepositoryProvider);
-    final remote =
-        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
-    if (remote != null) {
-      return remote.when(
-        loading: () => const StudentDetailScaffold(
-          title: 'Clases y asignaciones',
-          bottomNav: false,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        error: (error, _) => StudentDetailScaffold(
-          title: 'Clases y asignaciones',
-          bottomNav: false,
-          child: ErrorStateView(message: '$error'),
-        ),
-        data: _buildWithDirectory,
-      );
+    if (repo != null) {
+      final result = ref.watch(adminCatalogProvider(
+          (kind: 'classes', search: _query, page: _page, groupId: null),),);
+      return _buildWithDirectory(
+          result.valueOrNull?.directory ?? const SchoolDirectory(),
+          loading: result.isLoading,
+          error: result.error,
+          pageInfo: result.valueOrNull?.pageInfo,);
     }
     return _buildWithDirectory(ref.watch(schoolDirectoryProvider));
   }
 
-  Widget _buildWithDirectory(SchoolDirectory dir) {
+  Widget _buildWithDirectory(SchoolDirectory dir,
+      {bool loading = false, Object? error, PageInfo? pageInfo,}) {
     final palette = context.palette;
 
     Widget tile(
@@ -71,7 +75,10 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
         leadingIcon: Icons.menu_book_rounded,
         onTap:
             ref.read(authControllerProvider).user?.can('classes.edit') ?? false
-                ? () => showClassSheet(context, existing: c)
+                ? () async {
+                    await showClassSheet(context, existing: c);
+                    if (mounted) ref.invalidate(adminCatalogProvider);
+                  }
                 : null,
       );
     }
@@ -117,12 +124,29 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
               false) ...[
             BrutalButton(
               expand: true,
-              onTap: () => showClassSheet(context),
+              onTap: () async {
+                await showClassSheet(context);
+                if (mounted) ref.invalidate(adminCatalogProvider);
+              },
               icon: Icons.add_rounded,
               label: 'Nueva clase',
             ),
             const SizedBox(height: 14),
           ],
+          if (ref.watch(adminBackendRepositoryProvider) != null)
+            AdminSearchField(
+                hint: 'Buscar materia, salón o maestro…',
+                onChanged: (value) {
+                  _searchTimer?.cancel();
+                  _searchTimer = Timer(const Duration(milliseconds: 300), () {
+                    if (mounted) {
+                      setState(() {
+                        _query = value.trim();
+                        _page = 1;
+                      });
+                    }
+                  });
+                },),
           Row(
             children: [
               BrutalPill(
@@ -138,7 +162,7 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
               ),
               const Spacer(),
               Text(
-                '${dir.classes.length} clases',
+                '${pageInfo?.total ?? dir.classes.length} clases',
                 style: context.textTheme.labelMedium?.copyWith(
                   color: palette.textMuted,
                   fontWeight: FontWeight.w700,
@@ -147,7 +171,13 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          if (sections.isEmpty)
+          if (loading)
+            const Center(child: CircularProgressIndicator())
+          else if (error != null)
+            ErrorStateView(
+                message: '$error',
+                onRetry: () => ref.invalidate(adminCatalogProvider),)
+          else if (sections.isEmpty)
             const EmptyState(
               icon: Icons.menu_book_rounded,
               title: 'Sin clases',
@@ -155,6 +185,10 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
             )
           else
             ...sections,
+          if (pageInfo != null)
+            PageControls(
+                pageInfo: pageInfo,
+                onPage: (page) => setState(() => _page = page),),
         ],
       ),
     );

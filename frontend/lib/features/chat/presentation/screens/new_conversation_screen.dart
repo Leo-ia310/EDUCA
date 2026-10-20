@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,11 +24,13 @@ class NewConversationScreen extends ConsumerStatefulWidget {
 class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
   final _messageCtrl = TextEditingController();
   String _query = '';
+  Timer? _searchTimer;
   ChatParticipant? _selected;
   bool _sending = false;
 
   @override
   void dispose() {
+    _searchTimer?.cancel();
     _messageCtrl.dispose();
     super.dispose();
   }
@@ -88,7 +91,12 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: TextField(
-                onChanged: (v) => setState(() => _query = v),
+                onChanged: (v) {
+                  _searchTimer?.cancel();
+                  _searchTimer = Timer(const Duration(milliseconds: 300), () {
+                    if (mounted) setState(() => _query = v.trim());
+                  });
+                },
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: 'Buscar por nombre o rol…',

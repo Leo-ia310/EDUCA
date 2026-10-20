@@ -203,7 +203,9 @@ class _Header extends StatelessWidget {
                     const Icon(Icons.event, size: 16, color: Colors.white),
                     const SizedBox(width: 6),
                     Text(
-                      'Entrega ${fmt.format(assignment.dueAt)}',
+                      assignment.dueAt == null
+                          ? 'Sin fecha de entrega'
+                          : 'Entrega ${fmt.format(assignment.dueAt!)}',
                       style: context.textTheme.labelMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,

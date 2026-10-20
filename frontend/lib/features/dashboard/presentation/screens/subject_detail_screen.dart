@@ -1,3 +1,4 @@
+import '../../../auth/presentation/identity_providers.dart';
 import '../../../portal_access/providers.dart';
 import '../../../portal_access/access_widgets.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +31,15 @@ class SubjectDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = context.pastel(subject.color ?? subjectColor(subject.name));
 
-    final assignmentsAsync = ref.watch(studentAssignmentsProvider);
+    final identity = ref.watch(currentStudentIdProvider);
+    final assignmentsAsync = identity.when<AsyncValue<List<Assignment>>>(
+      data: (id) => id == null
+          ? const AsyncValue.data([])
+          : ref.watch(studentAssignmentsProvider(
+              (studentId: id, exams: false, subject: subject.name),),),
+      loading: () => const AsyncValue.loading(),
+      error: AsyncValue.error,
+    );
     final tasks = assignmentsAsync.valueOrNull
             ?.where(
               (a) =>

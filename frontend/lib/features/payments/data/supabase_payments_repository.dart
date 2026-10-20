@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/network/backend_api_client.dart';
+import '../../../core/network/read_all.dart';
 import '../domain/entities.dart';
 import '../domain/payments_repository.dart';
 
@@ -46,17 +47,25 @@ class SupabasePaymentsRepository implements PaymentsRepository {
   @override
   Future<StudentBalance> balanceFor(int studentId) async {
     final charges = await chargesFor(studentId);
+    final name = charges.isEmpty
+        ? await _studentName(studentId)
+        : charges.first.studentName;
+    return _balanceFromCharges(studentId, charges, name);
+  }
+
+  StudentBalance _balanceFromCharges(
+      int studentId, List<Charge> charges, String studentName,) {
     final active = charges
-        .where((c) =>
-            c.status != ChargeStatus.paid && c.status != ChargeStatus.cancelled,)
+        .where(
+          (c) =>
+              c.status != ChargeStatus.paid &&
+              c.status != ChargeStatus.cancelled,
+        )
         .toList();
     final overdue = active.where((c) => c.isOverdue).toList();
     final upcoming = active.where((c) => !c.isOverdue).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
-    final studentName = charges.isNotEmpty
-        ? charges.first.studentName
-        : await _studentName(studentId);
     final currencyCode =
         charges.isNotEmpty ? charges.first.currencyCode : 'USD';
 
@@ -86,13 +95,18 @@ class SupabasePaymentsRepository implements PaymentsRepository {
 
   @override
   Future<List<Charge>> chargesFor(int studentId) async {
-    final rows = await _c
-        .from('charges')
-        .select(_chargeSelect)
-        .eq('student_id', studentId)
-        .eq('institution_id', institutionId)
-        .order('due_at');
-    final charges = (rows as List).cast<Map<String, dynamic>>();
+    return _charges(studentId: studentId);
+  }
+
+  Future<List<Charge>> _charges({int? studentId}) async {
+    final charges = await readAllPages<Map<String, dynamic>>((from, to) async {
+      var query = _c
+          .from('charges')
+          .select(_chargeSelect)
+          .eq('institution_id', institutionId);
+      if (studentId != null) query = query.eq('student_id', studentId);
+      return await query.order('due_at').order('id').range(from, to);
+    });
     final paidByCharge =
         await _paidAmountsByCharge(charges.map((c) => c['id']).toList());
     return charges
@@ -113,18 +127,20 @@ class SupabasePaymentsRepository implements PaymentsRepository {
   }
 
   Future<Map<String, double>> _paidAmountsByCharge(
-      List<dynamic> chargeIds,) async {
+    List<dynamic> chargeIds,
+  ) async {
     if (chargeIds.isEmpty) return {};
-    final rows = await _c
-        .from('payments')
-        .select('charge_id, amount')
-        .inFilter('charge_id', chargeIds)
-        .eq('status', PaymentStatus.paid.name);
     final map = <String, double>{};
-    for (final r in (rows as List).cast<Map<String, dynamic>>()) {
-      final cid = r['charge_id']?.toString();
-      if (cid == null) continue;
-      map[cid] = (map[cid] ?? 0) + ((r['amount'] as num?)?.toDouble() ?? 0);
+    for (var i = 0; i < chargeIds.length; i += 200) {
+      final rows = await _c.rpc('payment_charge_totals', params: {
+        'p_charge_ids':
+            chargeIds.sublist(i, (i + 200).clamp(0, chargeIds.length)),
+      },);
+      for (final r in (rows as List).cast<Map<String, dynamic>>()) {
+        final cid = r['charge_id']?.toString();
+        if (cid == null) continue;
+        map[cid] = (r['paid'] as num?)?.toDouble() ?? 0;
+      }
     }
     return map;
   }
@@ -167,16 +183,16 @@ class SupabasePaymentsRepository implements PaymentsRepository {
 
   @override
   Future<List<Payment>> paymentsFor(int studentId) async {
-    final rows = await _c
-        .from('payments')
-        .select(_paymentSelect)
-        .eq('student_id', studentId)
-        .eq('institution_id', institutionId)
-        .order('paid_at', ascending: false);
-    return (rows as List)
-        .cast<Map<String, dynamic>>()
-        .map(_paymentFromRow)
-        .toList();
+    final rows = await readAllPages<Map<String, dynamic>>((from, to) async =>
+        await _c
+            .from('payments')
+            .select(_paymentSelect)
+            .eq('student_id', studentId)
+            .eq('institution_id', institutionId)
+            .order('paid_at', ascending: false)
+            .order('id', ascending: false)
+            .range(from, to),);
+    return rows.map(_paymentFromRow).toList();
   }
 
   Payment _paymentFromRow(Map<String, dynamic> row) {
@@ -228,6 +244,7 @@ class SupabasePaymentsRepository implements PaymentsRepository {
     required String payerName,
     String? reference,
     String? gatewayName,
+    String? idempotencyKey,
   }) async {
     final response = await _api.call(
       'payments.register',
@@ -238,7 +255,7 @@ class SupabasePaymentsRepository implements PaymentsRepository {
         'payerName': payerName,
         'reference': reference,
         'gatewayName': gatewayName,
-        'idempotencyKey': _uuid.v4(),
+        'idempotencyKey': idempotencyKey ?? _uuid.v4(),
       },
     );
     final data = Map<String, dynamic>.from(response as Map);
@@ -253,69 +270,26 @@ class SupabasePaymentsRepository implements PaymentsRepository {
   // ---------- Admin ----------
   @override
   Future<List<StudentBalance>> allBalances() async {
-    final rows = await _c
-        .from('charges')
-        .select('student_id')
-        .eq('institution_id', institutionId);
-    final studentIds =
-        (rows as List).map((r) => (r['student_id'] as num).toInt()).toSet();
-    return Future.wait(studentIds.map(balanceFor));
+    final byStudent = <int, List<Charge>>{};
+    for (final charge in await _charges()) {
+      byStudent.putIfAbsent(charge.studentId, () => []).add(charge);
+    }
+    return byStudent.entries
+        .map((entry) => _balanceFromCharges(
+            entry.key, entry.value, entry.value.first.studentName,),)
+        .toList();
   }
 
   @override
   Future<DunningMetrics> dunningMetrics() async {
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
-    final nextMonthStart = DateTime(now.year, now.month + 1, 1);
-
-    final chargesRows = await _c
-        .from('charges')
-        .select(
-          'total_amount, status, due_at, payment_concepts(catalog_currencies(iso_code))',
-        )
-        .eq('institution_id', institutionId);
-
-    var totalOverdueAmount = 0.0;
-    var overdueCount = 0;
-    var expectedThisMonth = 0.0;
-    var currencyCode = 'USD';
-    for (final c in (chargesRows as List).cast<Map<String, dynamic>>()) {
-      final code = ((c['payment_concepts'] as Map?)?['catalog_currencies']
-          as Map?)?['iso_code'] as String?;
-      if (code != null) currencyCode = code;
-      final status = c['status'] as String?;
-      final dueAt = DateTime.tryParse(c['due_at'] as String? ?? '');
-      final total = (c['total_amount'] as num?)?.toDouble() ?? 0;
-      final isClosed = status == ChargeStatus.paid.name ||
-          status == ChargeStatus.cancelled.name;
-      if (!isClosed && dueAt != null && dueAt.isBefore(now)) {
-        totalOverdueAmount += total;
-        overdueCount++;
-      }
-      if (dueAt != null &&
-          !dueAt.isBefore(monthStart) &&
-          dueAt.isBefore(nextMonthStart)) {
-        expectedThisMonth += total;
-      }
-    }
-
-    final paymentsRows = await _c
-        .from('payments')
-        .select('amount')
-        .eq('institution_id', institutionId)
-        .eq('status', PaymentStatus.paid.name)
-        .gte('paid_at', monthStart.toIso8601String());
-    final collectedThisMonth = (paymentsRows as List)
-        .cast<Map<String, dynamic>>()
-        .fold<double>(
-            0, (a, p) => a + ((p['amount'] as num?)?.toDouble() ?? 0),);
-
+    final data =
+        Map<String, dynamic>.from(await _api.get('/payments/summary') as Map);
     return DunningMetrics(
-      totalOverdueAmount: totalOverdueAmount,
-      overdueCount: overdueCount,
-      collectedThisMonth: collectedThisMonth,
-      expectedThisMonth: expectedThisMonth,
-      currencyCode: currencyCode,
+      totalOverdueAmount: (data['overdueAmount'] as num?)?.toDouble() ?? 0,
+      overdueCount: (data['overdueCount'] as num?)?.toInt() ?? 0,
+      collectedThisMonth: (data['collectedThisMonth'] as num?)?.toDouble() ?? 0,
+      expectedThisMonth: (data['expectedThisMonth'] as num?)?.toDouble() ?? 0,
+      currencyCode: data['currencyCode'] as String? ?? 'USD',
     );
   }
 

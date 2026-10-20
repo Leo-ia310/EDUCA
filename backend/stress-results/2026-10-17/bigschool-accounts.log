@@ -1,0 +1,8 @@
+time="2026-10-17T10:37:21-06:00" level=warning msg="Error from API server" error="listen tcp 127.0.0.1:6565: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted."
+time="2026-10-17T10:37:40-06:00" level=warning msg="Request Failed" error="Post \"https://nivra-backend-mcc4.onrender.com/api/auth/login\": request timeout"
+time="2026-10-17T10:37:40-06:00" level=info msg="{\"account\":\"pablo@bigschool.edu\",\"status\":0,\"authenticated\":false}" source=console
+time="2026-10-17T10:38:00-06:00" level=warning msg="Request Failed" error="Post \"https://nivra-backend-mcc4.onrender.com/api/auth/login\": request timeout"
+time="2026-10-17T10:38:00-06:00" level=info msg="{\"account\":\"osmar@bigschool.edu\",\"status\":0,\"authenticated\":false}" source=console
+time="2026-10-17T10:38:03-06:00" level=info msg="{\"account\":\"ernesto@bigschool.edu\",\"status\":200,\"authenticated\":true,\"roles\":[\"director\"],\"institution\":\"BIGSCHOOL\"}" source=console
+time="2026-10-17T10:38:04-06:00" level=info msg="{\"account\":\"maikel@bigschool.edu\",\"status\":200,\"authenticated\":true,\"roles\":[\"parent\"],\"institution\":\"BIGSCHOOL\"}" source=console
+time="2026-10-17T10:38:05-06:00" level=error msg="thresholds on metrics 'checks' have been crossed"

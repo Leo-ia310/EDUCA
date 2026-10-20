@@ -9,6 +9,7 @@ import '../../data/admin_schedule.dart';
 import '../../data/demo_schedules.dart';
 import '../../data/school_directory.dart';
 import 'admin_widgets.dart';
+import 'directory_picker.dart';
 
 /// Alta/edición de un bloque de horario: clase (maestro y grupo salen de la
 /// clase) o receso (de un grupo o de toda la institución).
@@ -80,7 +81,9 @@ class _ScheduleFormState extends ConsumerState<_ScheduleForm> {
     _label = TextEditingController(text: e?.isBreak ?? false ? e?.subject : '');
     _room = TextEditingController(text: e?.room ?? '');
     _days = {
-      if (e != null) e.weekdayId else if (widget.initialWeekday != null)
+      if (e != null)
+        e.weekdayId
+      else if (widget.initialWeekday != null)
         widget.initialWeekday!,
     };
     _start = e == null ? null : _parse(e.startTime);
@@ -189,8 +192,7 @@ class _ScheduleFormState extends ConsumerState<_ScheduleForm> {
 
   /// Sin servidor (demo): guarda en memoria con las mismas reglas de choque.
   void _saveDemo() {
-    final SchoolDirectory dir = ref.read(adminSchoolDirectoryProvider).valueOrNull ??
-        ref.read(schoolDirectoryProvider);
+    final SchoolDirectory dir = ref.read(schoolDirectoryProvider);
     final store = ref.read(demoSchedulesProvider.notifier);
     final cls = dir.classById(_classId);
     final room = _room.text.trim();
@@ -292,8 +294,10 @@ class _ScheduleFormState extends ConsumerState<_ScheduleForm> {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final dir = ref.watch(adminSchoolDirectoryProvider).valueOrNull ??
-        const SchoolDirectory();
+    final connected = ref.watch(adminBackendRepositoryProvider) != null;
+    final dir = connected
+        ? const SchoolDirectory()
+        : ref.watch(schoolDirectoryProvider);
     final me = ref.watch(authControllerProvider).user;
     final canDelete = me?.can('schedules.delete') ?? false;
     final muted =
@@ -347,24 +351,36 @@ class _ScheduleFormState extends ConsumerState<_ScheduleForm> {
         ),
         if (!_isBreak) ...[
           const FormLabel('Clase (materia · grupo · maestro)'),
-          DropdownButtonFormField<String>(
-            isExpanded: true,
-            initialValue: selectedClass?.id,
-            hint: const Text('Elige la clase'),
-            decoration: const InputDecoration(isDense: true),
-            items: [
-              for (final c in classes)
-                DropdownMenuItem(
-                  value: c.id,
-                  child: Text(classLabel(c), overflow: TextOverflow.ellipsis),
-                ),
-            ],
-            onChanged: (v) => setState(() {
-              _classId = v;
-              final c = classes.where((x) => x.id == v).firstOrNull;
-              if (c != null && _room.text.trim().isEmpty) _room.text = c.room;
-            }),
-          ),
+          if (connected)
+            DirectoryPicker(
+                kind: 'classes',
+                selected: {if (_classId != null) _classId!},
+                onChanged: (values) =>
+                    setState(() => _classId = values.firstOrNull),
+                onOption: (option) {
+                  if (_room.text.trim().isEmpty) {
+                    _room.text = option['room'] as String? ?? '';
+                  }
+                },)
+          else
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              initialValue: selectedClass?.id,
+              hint: const Text('Elige la clase'),
+              decoration: const InputDecoration(isDense: true),
+              items: [
+                for (final c in classes)
+                  DropdownMenuItem(
+                    value: c.id,
+                    child: Text(classLabel(c), overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged: (v) => setState(() {
+                _classId = v;
+                final c = classes.where((x) => x.id == v).firstOrNull;
+                if (c != null && _room.text.trim().isEmpty) _room.text = c.room;
+              }),
+            ),
           const SizedBox(height: 12),
           BrutalTextField(
             controller: _room,
@@ -379,21 +395,29 @@ class _ScheduleFormState extends ConsumerState<_ScheduleForm> {
             icon: Icons.free_breakfast_rounded,
           ),
           const FormLabel('Aplica a'),
-          DropdownButtonFormField<String?>(
-            isExpanded: true,
-            initialValue:
-                dir.groups.any((g) => g.id == _groupId) ? _groupId : null,
-            decoration: const InputDecoration(isDense: true),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('Todos los grupos'),
-              ),
-              for (final g in dir.groups)
-                DropdownMenuItem<String?>(value: g.id, child: Text(g.name)),
-            ],
-            onChanged: (v) => setState(() => _groupId = v),
-          ),
+          if (connected) ...[
+            if (_groupId == null) const Text('Todos los grupos'),
+            DirectoryPicker(
+                kind: 'groups',
+                selected: {if (_groupId != null) _groupId!},
+                onChanged: (values) =>
+                    setState(() => _groupId = values.firstOrNull),),
+          ] else
+            DropdownButtonFormField<String?>(
+              isExpanded: true,
+              initialValue:
+                  dir.groups.any((g) => g.id == _groupId) ? _groupId : null,
+              decoration: const InputDecoration(isDense: true),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Todos los grupos'),
+                ),
+                for (final g in dir.groups)
+                  DropdownMenuItem<String?>(value: g.id, child: Text(g.name)),
+              ],
+              onChanged: (v) => setState(() => _groupId = v),
+            ),
         ],
         FormLabel(_isNew ? 'Días de la semana' : 'Día'),
         Wrap(
@@ -447,8 +471,7 @@ class _ScheduleFormState extends ConsumerState<_ScheduleForm> {
         if (_error != null) ...[
           Text(
             _error!,
-            style:
-                context.textTheme.bodySmall?.copyWith(color: palette.danger),
+            style: context.textTheme.bodySmall?.copyWith(color: palette.danger),
           ),
           const SizedBox(height: 10),
         ],

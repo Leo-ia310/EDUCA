@@ -30,7 +30,7 @@ const open = (props: Record<string, Schema>, optional: string[] = []): Schema =>
 /** Copia de un objeto cerrado con propiedades obligatorias adicionales. */
 const extend = (base: Schema, props: Record<string, Schema>): Schema => {
   const b = base as { properties: Record<string, Schema>; required: string[] };
-  return { ...b, properties: { ...b.properties, ...props }, required: [...b.required, ...Object.keys(props)] };
+  return { ...b, properties: { ...b.properties, ...props }, required: [...new Set([...b.required, ...Object.keys(props)])] };
 };
 /** Fila de base de datos devuelta tal cual (columnas en snake_case, sin esquema fino). */
 const row: Schema = { type: "object", additionalProperties: true };
@@ -47,6 +47,14 @@ const task = obj({
   description: nullable(str), instructions: nullable(str), assignedAt: str, dueAt: str,
   maxScore: num, allowLate: bool, published: bool, totalStudents: int, submittedCount: int, gradedCount: int,
 });
+const feedTask = extend(task, {
+  dueAt: nullable(str),
+  kind: enumOf("homework", "exam", "project", "quiz", "presentation"),
+  teacherName: nullable(str), attachments: arr(attachment),
+  progress: nullable(obj({ status: nullable(enumOf("submitted", "late", "graded")), score: nullable(num) })),
+});
+const paymentSummary = obj({ currencyCode: str, collectedThisMonth: num, expectedThisMonth: num,
+  overdueAmount: num, overdueCount: int, pendingAmount: num, chargesByStatus: byStatus });
 
 const charge = obj({
   id: str, studentId: str, studentName: str, conceptId: nullable(str), conceptName: str, description: str,
@@ -80,11 +88,14 @@ export const responseSchemas: Record<string, Schema> = {
   }),
   "GET /api/attendance/class/:classId": obj({
     class: obj({ id: str, subject: str, group: str }), date: str, sessionId: nullable(str), statuses: arr(attendanceStatus),
-    students: arr(obj({ studentId: str, name: str, statusId: nullable(str), notes: str })),
+    students: arr(obj({ studentId: str, name: str, statusId: nullable(str), notes: str, attendanceId:nullable(str),uuid:nullable(str),version:int,recordedAt:nullable(str) })),
   }),
-  "POST /api/attendance/class/:classId": obj({ sessionId: str, saved: int }),
+  "POST /api/attendance/class/:classId": obj({ sessionId:nullable(str), saved:int,conflicts:int,records:arr(row) }),
+  "POST /api/sync/attendance/batch": obj({sessions:arr(obj({classId:str,date:str,id:str})),records:arr(row)}),
+  "GET /api/sync/changes": obj({serverTime:str,changes:obj({items:arr(row),hasMore:bool,nextCursor:str}),conflictPolicy:str,scope:str}),
 
-  "GET /api/assignments/teacher": obj({ assignments: arr(task) }),
+  "GET /api/assignments/teacher": obj({ assignments: arr(feedTask), nextCursor: nullable(str) }),
+  "GET /api/assignments/student": obj({ assignments: arr(feedTask), nextCursor: nullable(str) }),
   "GET /api/assignments/:id/submissions": obj({
     assignment: extend(task, { attachments: arr(attachment) }),
     students: arr(obj({
@@ -145,16 +156,13 @@ export const responseSchemas: Record<string, Schema> = {
     status: str,
   }),
   "GET /api/grades/gradebook": obj({
-    evaluations: arr(obj({ id: str, title: str, date: nullable(str), maxScore: num, weight: num, kind: str })),
+    evaluations: arr(obj({ id: str, classId: str, periodId: str, subjectName: str, title: str, date: nullable(str), maxScore: num, weight: num, kind: str })),
     students: arr(obj({ studentId: str, name: str })),
     grades: rec(rec(nullable(num))),
   }),
 
   // ───────── Pagos (administración) ─────────
-  "GET /api/payments/summary": obj({
-    currencyCode: str, collectedThisMonth: num, expectedThisMonth: num, overdueAmount: num, overdueCount: int, pendingAmount: num,
-    chargesByStatus: rec(int),
-  }),
+  "GET /api/payments/summary": extend(paymentSummary, { byCurrency: rec(paymentSummary) }),
   "GET /api/payments/concepts": obj({
     concepts: arr(obj({ id: str, name: str, description: nullable(str), baseAmount: num, recurring: bool, currencyCode: str })),
   }),
@@ -170,14 +178,17 @@ export const responseSchemas: Record<string, Schema> = {
     conversations: arr(obj({
       id: str, kind: str, title: str, unreadCount: int, updatedAt: nullable(str),
       participants: arr(obj({ userId: str, name: str, role: str, avatarUrl: nullable(str), isMe: bool })),
-      lastMessage: nullable(obj({ id: str, senderId: str, senderName: str, content: str, hasAttachment: bool, sentAt: str })),
+      lastMessage: nullable(obj({ id: str, senderId: str, senderName: str, content: nullable(str), hasAttachment: bool, sentAt: str, attachment: nullable(attachment) })),
     })),
+    totalUnread: int,
+    nextCursor: nullable(obj({ updatedAt: str, id: str })),
   }),
   "GET /api/chats/conversations/:conversationId/messages": obj({
     messages: arr(obj({
-      id: str, uuid: str, conversationId: str, senderId: str, senderName: str, sentAt: str, content: str,
+      id: str, uuid: str, conversationId: str, senderId: str, senderName: str, sentAt: str, content: nullable(str),
       attachment: nullable(attachment), read: bool,
     })),
+    hasMore: bool, nextBeforeId: nullable(str), nextAfterId: nullable(str),
   }),
   "GET /api/chats/contacts": obj({
     contacts: arr(obj({ userId: str, name: str, email: str, role: str, avatarUrl: nullable(str) })),
@@ -190,23 +201,26 @@ export const responseSchemas: Record<string, Schema> = {
       publishedAt: nullable(str), createdBy: nullable(str), groupId: nullable(str),
       delivery: nullable(obj({
         status: enumOf("queued", "processing", "completed", "completed_with_errors", "failed"), phase: nullable(str),
-        total: int, processed: int, notified: int, emailed: int, emailFailed: int, emailSkipped: int, pushFailed: int,
-        error: nullable(str), completedAt: nullable(str),
+        total: int, processed: int, notified: int, emailed: int, emailFailed: int, emailReview: int, emailSkipped: int, pushFailed: int,
+        error: nullable(str), completedAt: nullable(str), updatedAt: nullable(str),
       })),
     })),
+    hasMore: bool, nextBeforeId: nullable(str),
   }),
+  "GET /api/events/announcements/status": obj({deliveries:arr(obj({announcementId:str,delivery:row}))}),
   "GET /api/notifications": arr(obj({
     id: str, channel: str, title: str, body: str, read: bool, receivedAt: str,
     data: open({ module: str, deepLink: str }, ["module", "deepLink"]),
   })),
   "GET /api/notifications/preferences": obj({ emailEnabled: bool }),
-  "GET /api/schedules": obj({ schedules: arr(schedule) }),
+  "GET /api/schedules": obj({ schedules: arr(schedule), pageInfo }),
   "GET /api/schedules/mine": obj({ schedules: arr(schedule) }),
 
   // ───────── Boletines ─────────
   "GET /api/reports/report-cards": obj({
+    pageInfo,
     reportCards: arr(obj({
-      id: str, studentId: str, studentName: str, academicPeriodId: str, periodName: nullable(str), overallAverage: nullable(num),
+      id: str, studentId: str, studentName: str, academicPeriodId: nullable(str), periodName: nullable(str), overallAverage: nullable(num),
       status: str, generatedAt: nullable(str), generalNotes: nullable(str),
     })),
   }),
@@ -222,6 +236,7 @@ export const responseSchemas: Record<string, Schema> = {
 
   // ───────── Administración (listas) ─────────
   "GET /api/admin/directory": obj({
+    pageInfo,
     people: arr(open({
       id: int, institution_id: int, person_id: int, role: str, group_id: nullable(int), class_ids: arr(str), child_ids: arr(str),
       persons: open({ id: int, first_name: str, last_name: str, email: nullable(str), phone: nullable(str) }),
@@ -234,6 +249,7 @@ export const responseSchemas: Record<string, Schema> = {
     })),
   }),
   "GET /api/admin/profiles": obj({
+    pageInfo,
     profiles: arr(obj({
       id: str, fullName: str, email: str, phone: nullable(str), username: nullable(str), active: bool, roleCode: str,
       customized: bool, permissions: arr(str),
@@ -248,6 +264,9 @@ export const responseSchemas: Record<string, Schema> = {
     id: int, institution_id: int, email: str, full_name: str, active: bool, last_sign_in: nullable(str),
     user_roles: arr(open({ roles: open({ id: int, code: str, name: str }) })),
   })),
+  "GET /api/admin/directory/options": obj({items: arr(obj({id: str, label: str, subtitle: nullable(str), groupId: nullable(str), teacherId: nullable(str), room: nullable(str)})), selected: arr(obj({id: str, label: str})), pageInfo}),
+  "GET /api/admin/directory/people": paged(open({id: int,role: str,active: bool,group_id: nullable(int),group_name: nullable(str),class_ids: arr(str),child_ids: arr(str),classes: arr(row),children: arr(row),persons:open({id:int,first_name:str,last_name:str,email:nullable(str),phone:nullable(str)})})),
+  "GET /api/admin/directory/counts": obj({counts: rec(int)}),
   "GET /api/admin/students": paged(open({ id: int, person_id: int, student_code: nullable(str), active: bool, persons: open({ first_name: str, last_name: str, email: nullable(str), phone: nullable(str) }) })),
   "GET /api/admin/teachers": paged(open({ id: int, person_id: int, teacher_code: nullable(str), specialty: nullable(str), active: bool, persons: open({ first_name: str, last_name: str, email: nullable(str), phone: nullable(str) }) })),
   "GET /api/admin/parents": paged(open({ id: int, person_id: int, is_emergency_contact: bool, persons: open({ first_name: str, last_name: str, email: nullable(str), phone: nullable(str) }) })),
@@ -292,24 +311,25 @@ export const responseSchemas: Record<string, Schema> = {
 export const requestSchemas: Record<string, Schema> = {
   "POST /api/assignments/upsert": obj({
     assignmentId: idish, classId: idish, title: str, description: str, instructions: str, dueAt: str, maxScore: num,
+    kind: enumOf("homework", "exam", "project", "quiz", "presentation"),
     allowLate: bool, published: bool, attachments: arr(fileRef),
-  }, ["assignmentId", "description", "instructions", "allowLate", "published", "attachments"]),
+  }, ["assignmentId", "description", "instructions", "allowLate", "published", "attachments", "kind"]),
   "PATCH /api/assignments/:id/publish": obj({ published: bool }),
   "PATCH /api/assignments/submissions/:submissionId/grade": obj({ score: num, feedback: str }, ["feedback"]),
   "POST /api/assignments/submit": obj({ assignmentId: idish, studentId: idish, notes: str, attachments: arr(fileRef) }, ["studentId", "notes", "attachments"]),
   "POST /api/grades/set-grade": obj({ evaluationId: idish, studentId: idish, rawScore: num, notes: str }, ["notes"]),
   "POST /api/attendance/class/:classId": obj({
-    date: str, marks: arr(obj({ studentId: idish, statusId: idish, notes: str }, ["notes"])),
+    date: str, marks: arr(obj({operationId:str,uuid:str,expectedVersion:int, studentId: idish, statusId: idish, notes: str,recordedAt:str }, ["notes"])),
   }, ["date"]),
   "POST /api/events": obj({ title: str, description: str, date: str, audience: str, requestId: str }, ["requestId"]),
-  "POST /api/reports/report-cards": obj({ studentId: idish, academicPeriodId: idish, generalNotes: str }, ["generalNotes"]),
+  "POST /api/reports/report-cards": obj({ requestId:str,studentId: idish, academicPeriodId: idish, generalNotes: str }, ["requestId","generalNotes"]),
   "POST /api/payments/charges": obj({
-    conceptId: idish, studentIds: arr(idish), groupId: idish, amount: num, discount: num, dueAt: str, description: str,
-  }, ["studentIds", "groupId", "amount", "discount", "description"]),
+    requestId:str,conceptId: idish, studentIds: arr(idish), groupId: idish, amount: num, discount: num, dueAt: str, description: str,
+  }, ["requestId","studentIds", "groupId", "amount", "discount", "description"]),
   "POST /api/payments/charges/:chargeId/payments": obj({
     method: enumOf("cash", "transfer", "card", "wallet"), amount: num, reference: str, idempotencyKey: str,
   }, ["reference", "idempotencyKey"]),
-  "POST /api/chats/messages": obj({ conversationId: idish, content: str, attachment: fileRef }, ["content", "attachment"]),
+  "POST /api/chats/messages": obj({ requestId:{type:"string",format:"uuid"},conversationId: idish, content: str, attachment: fileRef }, ["content", "attachment"]),
   "POST /api/chats/individual": obj({ otherUserId: idish }),
   "PATCH /api/notifications/preferences": obj({ emailEnabled: bool }, ["emailEnabled"]),
   "POST /api/schedules": obj({
@@ -327,6 +347,7 @@ export const requestSchemas: Record<string, Schema> = {
   "POST /api/admin/classes": obj({ subject: str, groupId: idish, teacherId: nullable(idish), room: str }, ["teacherId", "room"]),
   "PATCH /api/admin/classes/:id": obj({ subject: str, groupId: idish, teacherId: nullable(idish), room: str }, ["subject", "groupId", "teacherId", "room"]),
   "POST /api/admin/profiles": obj({
+    requestId: {type:"string",format:"uuid"},
     fullName: str, email: str, password: str, roleCode: enumOf("admin", "coordinator", "director"), permissions: arr(str),
     phone: str, username: str, active: bool,
   }, ["phone", "username", "active"]),
@@ -334,14 +355,17 @@ export const requestSchemas: Record<string, Schema> = {
     roleCode: enumOf("admin", "coordinator", "director"), permissions: arr(str), fullName: str, phone: str, active: bool,
   }, ["roleCode", "permissions", "fullName", "phone", "active"]),
   "POST /api/admin/teachers": obj({
+    requestId: {type:"string",format:"uuid"},
     firstName: str, lastName: str, phone: str, active: bool, email: str, password: str, username: str, teacherCode: str, classIds: arr(idish),
   }, ["phone", "active", "username", "teacherCode", "classIds"]),
   "PATCH /api/admin/teachers/:id": obj({ firstName: str, lastName: str, phone: str, active: bool, classIds: arr(idish) }, ["firstName", "lastName", "phone", "active", "classIds"]),
   "POST /api/admin/students": obj({
+    requestId: {type:"string",format:"uuid"},
     firstName: str, lastName: str, phone: str, active: bool, email: str, password: str, username: str, studentCode: str, groupId: nullable(idish), classIds: arr(idish),
   }, ["phone", "active", "username", "studentCode", "groupId", "classIds"]),
   "PATCH /api/admin/students/:id": obj({ firstName: str, lastName: str, phone: str, active: bool, groupId: nullable(idish), classIds: arr(idish) }, ["firstName", "lastName", "phone", "active", "groupId", "classIds"]),
   "POST /api/admin/parents": obj({
+    requestId: {type:"string",format:"uuid"},
     firstName: str, lastName: str, phone: str, active: bool, email: str, password: str, username: str, childIds: arr(idish), isEmergencyContact: bool,
   }, ["phone", "active", "username", "childIds", "isEmergencyContact"]),
   "PATCH /api/admin/parents/:id": obj({ firstName: str, lastName: str, phone: str, active: bool, childIds: arr(idish) }, ["firstName", "lastName", "phone", "active", "childIds"]),

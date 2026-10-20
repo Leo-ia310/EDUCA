@@ -14,6 +14,7 @@ class HiveBoxes {
   static const classSessions = 'class_sessions_local';
   static const syncQueue = 'sync_queue';
   static const notifications = 'notifications_feed';
+  static const attendanceCatalog = 'attendance_catalog_v1';
 }
 
 class HiveInit {
@@ -37,6 +38,7 @@ class HiveInit {
     }
 
     await Future.wait([
+      Hive.openBox<dynamic>(HiveBoxes.attendanceCatalog),
       Hive.openBox<LocalAttendance>(HiveBoxes.attendanceRecords),
       Hive.openBox<LocalClassSession>(HiveBoxes.classSessions),
       Hive.openBox<SyncEntry>(HiveBoxes.syncQueue),
@@ -60,3 +62,5 @@ final syncQueueBoxProvider = Provider<Box<SyncEntry>>((ref) {
 final notificationsBoxProvider = Provider<Box<LocalNotification>>((ref) {
   return Hive.box<LocalNotification>(HiveBoxes.notifications);
 });
+
+final attendanceCatalogBoxProvider = Provider<Box<dynamic>>((ref) => Hive.box<dynamic>(HiveBoxes.attendanceCatalog));

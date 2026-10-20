@@ -14,8 +14,10 @@ class SupabaseDashboardDatasource {
   final int institutionId;
 
   // ---------------------------------------------------------------- Estudiante
-  Future<StudentDashboardData> studentData(int studentId,
-      {bool showGrades = true,}) async {
+  Future<StudentDashboardData> studentData(
+    int studentId, {
+    bool showGrades = true,
+  }) async {
     final classIds = await _classIdsForStudent(studentId);
     if (classIds.isEmpty) return StudentDashboardData.empty();
 
@@ -28,6 +30,7 @@ class SupabaseDashboardDatasource {
       _classmates(studentId),
       _studentGradeGroup(studentId),
       _attendancePct(studentId: studentId),
+      _c.rpc('assignment_counters',params:{'p_student_id':studentId}).then<dynamic>((value)=>value),
     ]);
 
     final classes = results[0] as List<_ClassInfo>;
@@ -50,7 +53,7 @@ class SupabaseDashboardDatasource {
         )
         .toList();
 
-    final pending = tasks.where((t) => t.status == TaskStatus.pending).length;
+    final pending = ((results[8] as Map)['pending'] as num).toInt();
 
     return StudentDashboardData(
       pendingTasks: pending,
@@ -69,7 +72,7 @@ class SupabaseDashboardDatasource {
   // ------------------------------------------------------------------ Docente
   Future<TeacherDashboardData> teacherData(int teacherId) async {
     final workspace = Map<String, dynamic>.from(
-      await _c.rpc('collaboration_workspace') as Map,
+      await _c.rpc('teacher_dashboard_classes') as Map,
     );
     final classes = (workspace['classes'] as List)
         .map(
@@ -93,7 +96,7 @@ class SupabaseDashboardDatasource {
         .toList();
 
     final results = await Future.wait([
-      _teacherAssignments(classIds, groupIds),
+      _teacherAssignments(classIds),
       _teacherRecentGrades(classIds),
       _todaySchedule(classIds),
       _teacherPendingGrading(classIds),
@@ -127,7 +130,6 @@ class SupabaseDashboardDatasource {
 
   Future<List<UpcomingAssignment>> _teacherAssignments(
     List<int> classIds,
-    List<int> groupIds,
   ) async {
     final rows = await _c
         .from('assignments')
@@ -139,21 +141,13 @@ class SupabaseDashboardDatasource {
     final list = (rows as List).cast<Map<String, dynamic>>();
     if (list.isEmpty) return const [];
 
-    final totalByGroup = <int, int>{};
-    for (final g in groupIds) {
-      final enr = await _c.from('enrollments').select('id').eq('group_id', g);
-      totalByGroup[g] = (enr as List).length;
-    }
     final ids = list.map((a) => (a['id'] as num).toInt()).toList();
-    final subs = await _c
-        .from('submissions')
-        .select('assignment_id')
-        .inFilter('assignment_id', ids);
-    final deliveredBy = <int, int>{};
-    for (final s in (subs as List)) {
-      final aid = (s['assignment_id'] as num).toInt();
-      deliveredBy[aid] = (deliveredBy[aid] ?? 0) + 1;
-    }
+    final counts = await _c
+        .rpc('dashboard_assignment_counts', params: {'p_assignment_ids': ids});
+    final countsByAssignment = <int, Map<String, dynamic>>{
+      for (final row in (counts as List).cast<Map<String, dynamic>>())
+        (row['assignment_id'] as num).toInt(): row,
+    };
 
     final now = DateTime.now();
     return list.map((a) {
@@ -162,8 +156,9 @@ class SupabaseDashboardDatasource {
               'Grupo';
       final due = DateTime.tryParse(a['due_at'] as String? ?? '');
       final aid = (a['id'] as num).toInt();
-      final delivered = deliveredBy[aid] ?? 0;
-      final total = groupIds.isEmpty ? 0 : (totalByGroup.values.first);
+      final delivered =
+          (countsByAssignment[aid]?['delivered'] as num?)?.toInt() ?? 0;
+      final total = (countsByAssignment[aid]?['total'] as num?)?.toInt() ?? 0;
       final urgent =
           due != null && due.difference(now).inDays <= 1 && due.isAfter(now);
       final completed = total > 0 && delivered >= total;
@@ -182,23 +177,17 @@ class SupabaseDashboardDatasource {
   }
 
   Future<List<RecentGrade>> _teacherRecentGrades(List<int> classIds) async {
-    final evalRows = await _c
-        .from('evaluations')
-        .select('id, title')
-        .inFilter('class_id', classIds);
-    final evalTitles = {
-      for (final e in (evalRows as List))
-        (e['id'] as num).toInt(): e['title'] as String? ?? 'Evaluación',
-    };
-    if (evalTitles.isEmpty) return const [];
+    if (classIds.isEmpty) return const [];
     final rows = await _c
         .from('grades')
         .select(
-          'score, evaluation_id, created_at, students(persons(first_name, last_name)), evaluations(max_score)',
+          'score, evaluation_id, created_at, students(persons(first_name, last_name)), evaluations!inner(max_score,title,class_id)',
         )
-        .inFilter('evaluation_id', evalTitles.keys.toList())
+        .eq('institution_id',institutionId)
+        .inFilter('evaluations.class_id',classIds)
         .not('score', 'is', null)
         .order('created_at', ascending: false)
+        .order('id',ascending:false)
         .limit(5);
     return (rows as List).map((r) {
       final m = r as Map<String, dynamic>;
@@ -209,7 +198,7 @@ class SupabaseDashboardDatasource {
       final max =
           ((m['evaluations'] as Map?)?['max_score'] as num?)?.toDouble() ?? 100;
       final raw = (m['score'] as num?)?.toDouble() ?? 0;
-      final title = evalTitles[(m['evaluation_id'] as num).toInt()] ?? '';
+      final title = (m['evaluations'] as Map?)?['title'] as String? ?? 'Evaluación';
       return RecentGrade(
         name.isEmpty ? 'Estudiante' : name,
         'Tema: $title',
@@ -220,33 +209,22 @@ class SupabaseDashboardDatasource {
   }
 
   Future<int> _teacherPendingGrading(List<int> classIds) async {
-    final assigns = await _c
-        .from('assignments')
-        .select('id')
-        .inFilter('class_id', classIds)
-        .filter('deleted_at', 'is', null);
-    final ids = (assigns as List).map((a) => (a['id'] as num).toInt()).toList();
-    if (ids.isEmpty) return 0;
-    final statuses = await _taskStatusCodes();
-    int? caliId;
-    statuses.forEach((id, code) {
-      if (code == 'CALI') caliId = id;
-    });
-    final subs = await _c
-        .from('submissions')
-        .select('id, task_status_id')
-        .inFilter('assignment_id', ids);
-    return (subs as List)
-        .where((s) => (s['task_status_id'] as num?)?.toInt() != caliId)
-        .length;
+    return (await _c.rpc('dashboard_pending_grading',
+            params: {'p_class_ids': classIds},) as num)
+        .toInt();
   }
 
   Future<List<AttendanceLine>> _teacherRoster(List<int> groupIds) async {
     if (groupIds.isEmpty) return const [];
     final rows = await _c
         .from('enrollments')
-        .select('students(persons(first_name, last_name))')
+        .select('students!inner(persons(first_name, last_name),active),academic_years!inner(is_current),catalog_enrollment_statuses!inner(code)')
+        .eq('institution_id',institutionId)
+        .eq('students.active',true)
+        .eq('academic_years.is_current',true)
+        .eq('catalog_enrollment_statuses.code','ACT')
         .eq('group_id', groupIds.first)
+        .order('student_id')
         .limit(5);
     return (rows as List)
         .map(
@@ -260,8 +238,10 @@ class SupabaseDashboardDatasource {
   }
 
   // ------------------------------------------------------------------- Padre
-  Future<ParentDashboardData> parentData(int parentId,
-      {bool showGrades = true,}) async {
+  Future<ParentDashboardData> parentData(
+    int parentId, {
+    bool showGrades = true,
+  }) async {
     final psRows = await _c
         .from('parent_students')
         .select('student_id, students(persons(first_name, last_name))')
@@ -367,44 +347,33 @@ class SupabaseDashboardDatasource {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, 1);
     final end = DateTime(now.year, now.month + 1, 1);
-    final rows = await _c
+    return await _c
         .from('calendar_events')
-        .select('id')
+        .count(CountOption.exact)
         .eq('institution_id', institutionId)
         .gte('start_at', start.toIso8601String())
         .lt('start_at', end.toIso8601String());
-    return (rows as List).length;
   }
 
   /// Eventos futuros del calendario (admin.upcomingEvents).
   Future<int> _upcomingEventsCount() async {
-    final rows = await _c
+    return await _c
         .from('calendar_events')
-        .select('id')
+        .count(CountOption.exact)
         .eq('institution_id', institutionId)
         .gte('start_at', DateTime.now().toIso8601String());
-    return (rows as List).length;
   }
 
   Future<int> _count(String table) async {
-    final rows =
-        await _c.from(table).select('id').eq('institution_id', institutionId);
-    return (rows as List).length;
+    return await _c
+        .from(table)
+        .count(CountOption.exact)
+        .eq('institution_id', institutionId)
+        .eq('active', true);
   }
 
   Future<double> _institutionalAvg() async {
-    final rows = await _c
-        .from('student_weighted_averages')
-        .select('weighted_pct')
-        .eq('institution_id', institutionId);
-    final vals = (rows as List)
-        .map((r) => (r['weighted_pct'] as num?)?.toDouble())
-        .whereType<double>()
-        .toList();
-    if (vals.isEmpty) return 0;
-    return double.parse(
-      (vals.reduce((a, b) => a + b) / vals.length / 10).toStringAsFixed(1),
-    );
+    return (await _c.rpc('dashboard_institutional_average') as num).toDouble();
   }
 
   Future<List<Announcement>> _announcements() async {
@@ -426,12 +395,11 @@ class SupabaseDashboardDatasource {
   }
 
   Future<int> _publishedAnnouncementsCount() async {
-    final rows = await _c
+    return await _c
         .from('announcements')
-        .select('id')
+        .count(CountOption.exact)
         .eq('institution_id', institutionId)
         .eq('published', true);
-    return (rows as List).length;
   }
 
   Future<List<AdminTeacher>> _adminTeachers() async {
@@ -454,33 +422,22 @@ class SupabaseDashboardDatasource {
     }).toList();
   }
 
-  /// % de asistencia REAL = presentes (código PRE, id 1) / total de registros.
-  /// Si no hay registros aún, devuelve 0 para no inventar datos.
+  /// Current academic year, using the PRE catalog code rather than a fixed ID.
   Future<double> _attendancePct({int? studentId}) async {
-    var query = _c
-        .from('attendances')
-        .select('attendance_status_id')
-        .eq('institution_id', institutionId);
-    if (studentId != null) query = query.eq('student_id', studentId);
-    final rows = await query;
-    final list = rows as List;
-    if (list.isEmpty) return 0;
-    const presentStatusId = 1; // catalog_attendance_statuses code 'PRE'
-    final present = list
-        .where(
-          (r) =>
-              (r['attendance_status_id'] as num?)?.toInt() == presentStatusId,
-        )
-        .length;
-    return double.parse((100.0 * present / list.length).toStringAsFixed(1));
+    return (await _c.rpc('dashboard_attendance_pct',
+            params: {'p_student_id': studentId},) as num)
+        .toDouble();
   }
 
   Future<List<int>> _classIdsForStudent(int studentId) async {
     final enr = await _c
         .from('enrollments')
-        .select('group_id')
+        .select(
+            'group_id, academic_years!inner(is_current), catalog_enrollment_statuses!inner(code)',)
         .eq('student_id', studentId)
-        .eq('institution_id', institutionId);
+        .eq('institution_id', institutionId)
+        .eq('academic_years.is_current', true)
+        .eq('catalog_enrollment_statuses.code', 'ACT');
     final groupIds = (enr as List)
         .map((e) => (e['group_id'] as num?)?.toInt())
         .whereType<int>()
@@ -489,9 +446,11 @@ class SupabaseDashboardDatasource {
     if (groupIds.isEmpty) return const [];
     final classes = await _c
         .from('classes')
-        .select('id')
+        .select('id,academic_years!inner(is_current)')
         .inFilter('group_id', groupIds)
-        .eq('institution_id', institutionId);
+        .eq('institution_id', institutionId)
+        .eq('academic_years.is_current',true)
+        .eq('active',true);
     return (classes as List)
         .map((c) => (c['id'] as num?)?.toInt())
         .whereType<int>()
@@ -629,25 +588,20 @@ class SupabaseDashboardDatasource {
   }
 
   Future<double> _weightedAverage(int studentId) async {
-    final rows = await _c
-        .from('student_weighted_averages')
-        .select('weighted_pct')
-        .eq('student_id', studentId)
-        .eq('institution_id', institutionId);
-    final vals = (rows as List)
-        .map((r) => (r['weighted_pct'] as num?)?.toDouble())
-        .whereType<double>()
-        .toList();
-    if (vals.isEmpty) return 0;
-    return vals.reduce((a, b) => a + b) / vals.length;
+    return (await _c.rpc('dashboard_student_average',
+            params: {'p_student_id': studentId},) as num)
+        .toDouble();
   }
 
   Future<List<String>> _classmates(int studentId) async {
     final groups = await _c
         .from('enrollments')
-        .select('group_id')
+        .select(
+            'group_id, academic_years!inner(is_current), catalog_enrollment_statuses!inner(code)',)
         .eq('student_id', studentId)
-        .eq('institution_id', institutionId);
+        .eq('institution_id', institutionId)
+        .eq('academic_years.is_current', true)
+        .eq('catalog_enrollment_statuses.code', 'ACT');
     final groupIds = (groups as List)
         .map((e) => (e['group_id'] as num?)?.toInt())
         .whereType<int>()
@@ -655,9 +609,12 @@ class SupabaseDashboardDatasource {
     if (groupIds.isEmpty) return const [];
     final rows = await _c
         .from('enrollments')
-        .select('students(persons(first_name, last_name))')
+        .select(
+            'students(persons(first_name, last_name)), academic_years!inner(is_current), catalog_enrollment_statuses!inner(code)',)
         .inFilter('group_id', groupIds)
         .eq('institution_id', institutionId)
+        .eq('academic_years.is_current', true)
+        .eq('catalog_enrollment_statuses.code', 'ACT')
         .neq('student_id', studentId);
     return (rows as List)
         .map(
@@ -672,9 +629,12 @@ class SupabaseDashboardDatasource {
   Future<String> _studentGradeGroup(int studentId) async {
     final rows = await _c
         .from('enrollments')
-        .select('groups(name)')
+        .select(
+            'groups(name), academic_years!inner(is_current), catalog_enrollment_statuses!inner(code)',)
         .eq('student_id', studentId)
         .eq('institution_id', institutionId)
+        .eq('academic_years.is_current', true)
+        .eq('catalog_enrollment_statuses.code', 'ACT')
         .limit(1);
     final list = rows as List;
     if (list.isEmpty) return '';

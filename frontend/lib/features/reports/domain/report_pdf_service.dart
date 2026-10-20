@@ -23,36 +23,40 @@ class ReportPdfService {
 
     final fmt = DateFormat('d MMM y', 'es');
 
-    doc.addPage(pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.fromLTRB(28, 32, 28, 28),
-      header: (ctx) => _header(card, green, dark, muted, surfaceAlt, fmt),
-      footer: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-        children: [
-          pw.Divider(color: divider, thickness: 0.5),
-          pw.SizedBox(height: 6),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Educa360 — Boletín generado',
-                  style: const pw.TextStyle(fontSize: 8, color: muted),),
-              pw.Text(
-                'Página ${ctx.pageNumber} de ${ctx.pagesCount}',
-                style: const pw.TextStyle(fontSize: 8, color: muted),
-              ),
-            ],
-          ),
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.fromLTRB(28, 32, 28, 28),
+        header: (ctx) => _header(card, green, dark, muted, surfaceAlt, fmt),
+        footer: (ctx) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            pw.Divider(color: divider, thickness: 0.5),
+            pw.SizedBox(height: 6),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'Educa360 — Boletín generado',
+                  style: const pw.TextStyle(fontSize: 8, color: muted),
+                ),
+                pw.Text(
+                  'Página ${ctx.pageNumber} de ${ctx.pagesCount}',
+                  style: const pw.TextStyle(fontSize: 8, color: muted),
+                ),
+              ],
+            ),
+          ],
+        ),
+        build: (ctx) => [
+          _summary(card, green, dark, muted, surfaceAlt),
+          pw.SizedBox(height: 18),
+          _subjectsTable(card, dark, muted, surfaceAlt, divider),
+          pw.SizedBox(height: 18),
+          _legend(dark, muted, divider),
         ],
       ),
-      build: (ctx) => [
-        _summary(card, green, dark, muted, surfaceAlt),
-        pw.SizedBox(height: 18),
-        _subjectsTable(card, dark, muted, surfaceAlt, divider),
-        pw.SizedBox(height: 18),
-        _legend(dark, muted, divider),
-      ],
-    ),);
+    );
 
     return doc.save();
   }
@@ -100,9 +104,10 @@ class ReportPdfService {
                 pw.Text(
                   card.institutionName,
                   style: pw.TextStyle(
-                      color: dark,
-                      fontSize: 14,
-                      fontWeight: pw.FontWeight.bold,),
+                    color: dark,
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
                 pw.Text(
                   'Boletín de calificaciones · ${card.periodName}',
@@ -130,17 +135,23 @@ class ReportPdfService {
     pw.Widget cell(String label, String value) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(label,
-                style: pw.TextStyle(
-                    fontSize: 8,
-                    color: muted,
-                    fontWeight: pw.FontWeight.bold,),),
+            pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 8,
+                color: muted,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
             pw.SizedBox(height: 2),
-            pw.Text(value,
-                style: pw.TextStyle(
-                    fontSize: 12,
-                    color: dark,
-                    fontWeight: pw.FontWeight.bold,),),
+            pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 12,
+                color: dark,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
           ],
         );
     return pw.Row(
@@ -156,26 +167,41 @@ class ReportPdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text(card.studentName,
-                    style: pw.TextStyle(
-                        fontSize: 16,
-                        color: dark,
-                        fontWeight: pw.FontWeight.bold,),),
+                pw.Text(
+                  card.studentName,
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    color: dark,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
                 pw.SizedBox(height: 2),
-                pw.Text(card.gradeLevel,
-                    style: pw.TextStyle(fontSize: 10, color: muted),),
+                pw.Text(
+                  card.gradeLevel,
+                  style: pw.TextStyle(fontSize: 10, color: muted),
+                ),
                 pw.SizedBox(height: 10),
-                pw.Row(children: [
-                  pw.Expanded(child: cell('Periodo', card.periodName)),
-                  pw.Expanded(
+                pw.Row(
+                  children: [
+                    pw.Expanded(child: cell('Periodo', card.periodName)),
+                    pw.Expanded(
                       child: cell(
-                          'Asistencia',
-                          '${card.attendancePct.toStringAsFixed(1)}%',),),
-                  pw.Expanded(
+                        'Asistencia',
+                        card.attendancePct == null
+                            ? '—'
+                            : '${card.attendancePct!.toStringAsFixed(1)}%',
+                      ),
+                    ),
+                    pw.Expanded(
                       child: cell(
-                          'Posición',
-                          '${card.rank} de ${card.totalPeers}',),),
-                ],),
+                        'Posición',
+                        card.rank == null || card.totalPeers == null
+                            ? 'No disponible'
+                            : '${card.rank} de ${card.totalPeers}',
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -192,26 +218,31 @@ class ReportPdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('Promedio general',
-                    style: pw.TextStyle(
-                        color: dark,
-                        fontSize: 9,
-                        fontWeight: pw.FontWeight.bold,),),
+                pw.Text(
+                  'Promedio general',
+                  style: pw.TextStyle(
+                    color: dark,
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
                 pw.SizedBox(height: 4),
                 pw.Text(
-                  card.overallAverage.toStringAsFixed(2),
+                  card.hasGrades ? card.overallAverage.toStringAsFixed(2) : '—',
                   style: pw.TextStyle(
-                      color: dark,
-                      fontSize: 32,
-                      fontWeight: pw.FontWeight.bold,),
+                    color: dark,
+                    fontSize: 32,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
                 if (card.overallLabel != null)
                   pw.Text(
                     card.overallLabel!,
                     style: pw.TextStyle(
-                        color: dark,
-                        fontSize: 10,
-                        fontWeight: pw.FontWeight.bold,),
+                      color: dark,
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
               ],
             ),
@@ -255,15 +286,31 @@ class ReportPdfService {
             children: [
               _cell(line.subjectName, dark, bold: true),
               _cell(line.teacherName, muted),
-              _cell(line.finalScore.toStringAsFixed(2), dark,
-                  align: pw.TextAlign.right, bold: true,),
-              _cell(line.qualitativeLabel ?? '—', muted,
-                  align: pw.TextAlign.right,),
-              _cell(line.passed ? 'Aprobado' : 'Reprobado',
-                  line.passed
-                      ? const PdfColor.fromInt(0xFF15803D)
-                      : const PdfColor.fromInt(0xFFB91C1C),
-                  align: pw.TextAlign.right, bold: true,),
+              _cell(
+                line.hasGrade ? line.finalScore.toStringAsFixed(2) : '—',
+                dark,
+                align: pw.TextAlign.right,
+                bold: true,
+              ),
+              _cell(
+                line.qualitativeLabel ?? '—',
+                muted,
+                align: pw.TextAlign.right,
+              ),
+              _cell(
+                !line.hasGrade
+                    ? 'Sin calificar'
+                    : line.passed
+                        ? 'Aprobado'
+                        : 'Reprobado',
+                !line.hasGrade
+                    ? muted
+                    : line.passed
+                        ? const PdfColor.fromInt(0xFF15803D)
+                        : const PdfColor.fromInt(0xFFB91C1C),
+                align: pw.TextAlign.right,
+                bold: true,
+              ),
             ],
           ),
       ],
@@ -277,14 +324,19 @@ class ReportPdfService {
           label,
           textAlign: align,
           style: pw.TextStyle(
-              color: color,
-              fontSize: 9,
-              fontWeight: pw.FontWeight.bold,),
+            color: color,
+            fontSize: 9,
+            fontWeight: pw.FontWeight.bold,
+          ),
         ),
       );
 
-  pw.Widget _cell(String value, PdfColor color,
-          {pw.TextAlign? align, bool bold = false,}) =>
+  pw.Widget _cell(
+    String value,
+    PdfColor color, {
+    pw.TextAlign? align,
+    bool bold = false,
+  }) =>
       pw.Padding(
         padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: pw.Text(
@@ -308,11 +360,14 @@ class ReportPdfService {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text('Observaciones',
-              style: pw.TextStyle(
-                  color: dark,
-                  fontSize: 9,
-                  fontWeight: pw.FontWeight.bold,),),
+          pw.Text(
+            'Observaciones',
+            style: pw.TextStyle(
+              color: dark,
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
           pw.SizedBox(height: 4),
           pw.Text(
             'Este boletín refleja el rendimiento académico del estudiante durante el periodo indicado. '

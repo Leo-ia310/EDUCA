@@ -1,3 +1,4 @@
+import {withRequestKey} from './request-keys.mjs';
 // E2E del flujo chat -> notificación real. Requiere una cuenta admin real:
 //   E2E_ADMIN_EMAIL=... E2E_ADMIN_PASSWORD=... [API=http://localhost:3001/api] \
 //     node scripts/chat_notifications_e2e.mjs
@@ -25,6 +26,7 @@ const login = async (email, password) => {
   return j.access_token;
 };
 const call = async (token, method, path, body) => {
+  body=withRequestKey(method,path,body);
   const r = await fetch(API + path, { method, headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
   return { status: r.status, j: await r.json().catch(() => ({})) };
 };

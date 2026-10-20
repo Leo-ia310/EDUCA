@@ -61,15 +61,15 @@ class BackendSyncRepository {
 
   Future<JsonMap> pullChanges({
     DateTime? since,
-    int page = 1,
-    int pageSize = 500,
+    String? cursor,
+    int limit = 100,
   }) async {
     final data = await _api.get(
       '/sync/changes',
       queryParameters: {
-        'since': since?.toIso8601String(),
-        'page': page,
-        'pageSize': pageSize,
+        'since': since?.toUtc().toIso8601String(),
+        'cursor': cursor,
+        'limit': limit,
       },
     );
     return (data as Map).cast<String, dynamic>();

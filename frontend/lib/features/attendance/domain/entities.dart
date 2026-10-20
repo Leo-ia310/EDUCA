@@ -96,6 +96,8 @@ class AttendanceRecord extends Equatable {
     required this.syncState,
     this.notes,
     this.classSessionId,
+    this.conflictStatus,
+    this.conflictNotes,
   });
 
   final String uuid;
@@ -106,6 +108,8 @@ class AttendanceRecord extends Equatable {
   final DateTime recordedAt;
   final String? notes;
   final SyncState syncState;
+  final AttendanceStatus? conflictStatus;
+  final String? conflictNotes;
 
   AttendanceRecord copyWith({
     AttendanceStatus? status,
@@ -122,6 +126,8 @@ class AttendanceRecord extends Equatable {
       status: status ?? this.status,
       recordedAt: recordedAt ?? this.recordedAt,
       notes: notes ?? this.notes,
+      conflictStatus: conflictStatus,
+      conflictNotes: conflictNotes,
       syncState: syncState ?? this.syncState,
     );
   }

@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/network/backend_api_client.dart';
 import '../domain/assignment_repository.dart';
+import '../domain/assignment_page.dart';
 import '../domain/entities.dart';
 
 /// Implementación Supabase del repositorio. Lee/escribe contra las tablas
@@ -19,82 +20,100 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
   final BackendApiClient _api;
   final int institutionId;
 
+  @override
+  Future<AssignmentPage> assignmentPage({
+    int? studentId,
+    AssignmentQuery query = const AssignmentQuery(),
+    String? cursor,
+    int limit = 50,
+  }) async {
+    if (query.kinds != null && query.kinds!.isEmpty) {
+      return const AssignmentPage(items: []);
+    }
+    final data = Map<String, dynamic>.from(
+      await _api.get(
+        studentId == null ? '/assignments/teacher' : '/assignments/student',
+        queryParameters: {
+          'studentId': studentId,
+          'classId': query.classId,
+          'search': query.search,
+          'onlyOpen': query.onlyOpen,
+          'subject': query.subject,
+          'kinds': query.kinds?.map((kind) => kind.name).join(','),
+          'cursor': cursor,
+          'limit': limit,
+        },
+      ) as Map,
+    );
+    return AssignmentPage(
+      items: (data['assignments'] as List)
+          .map(
+            (row) => _assignmentFromApi(Map<String, dynamic>.from(row as Map)),
+          )
+          .toList(),
+      nextCursor: data['nextCursor'] as String?,
+    );
+  }
+
   static const _assignmentSelect =
       'id, class_id, title, description, instructions, assigned_at, '
-      'due_at, max_score, allow_late, published, '
+      'due_at, kind, max_score, allow_late, published, '
       'classes(id, group_id, subjects(name), groups(name))';
 
   static const _submissionSelect =
       'id, assignment_id, student_id, submitted_at, student_notes, '
       'is_late, task_status_id, students(persons(first_name, last_name))';
 
-  Map<String, int>? _taskStatusCache;
-  Future<Map<String, int>> _taskStatusIds() async {
-    final cached = _taskStatusCache;
-    if (cached != null) return cached;
-    final rows = await _c.from('catalog_task_statuses').select('id, code');
-    final map = {
-      for (final r in (rows as List))
-        r['code'] as String: (r['id'] as num).toInt(),
-    };
-    _taskStatusCache = map;
-    return map;
-  }
-
-  Future<List<int>> _classIdsForStudent(int studentId) async {
-    final enrollments = await _c
-        .from('enrollments')
-        .select('group_id')
-        .eq('student_id', studentId)
-        .eq('institution_id', institutionId);
-    final groupIds = (enrollments as List)
-        .map((e) => (e['group_id'] as num?)?.toInt())
-        .whereType<int>()
-        .toSet()
-        .toList();
-    if (groupIds.isEmpty) return const [];
-    final classes = await _c
-        .from('classes')
-        .select('id')
-        .inFilter('group_id', groupIds)
-        .eq('institution_id', institutionId);
-    return (classes as List)
-        .map((c) => (c['id'] as num?)?.toInt())
-        .whereType<int>()
-        .toList();
+  Future<Map<String, int>>? _taskStatusRequest;
+  Future<Map<String, int>> _taskStatusIds() =>
+      _taskStatusRequest ??= _loadTaskStatuses();
+  Future<Map<String, int>> _loadTaskStatuses() async {
+    try {
+      final rows = await _c.from('catalog_task_statuses').select('id, code');
+      return {
+        for (final row in rows)
+          row['code'] as String: (row['id'] as num).toInt(),
+      };
+    } catch (_) {
+      _taskStatusRequest = null;
+      rethrow;
+    }
   }
 
   // ---------- Lectura ----------
-  @override
-  Future<List<Assignment>> assignmentsForTeacher({int? classId}) async {
-    var query = _c
-        .from('assignments')
-        .select(_assignmentSelect)
-        .eq('institution_id', institutionId)
-        .filter('deleted_at', 'is', null);
-    if (classId != null) query = query.eq('class_id', classId);
-    final rows = await query.order('due_at');
-    return Future.wait(
-      (rows as List).cast<Map<String, dynamic>>().map(_hydrateAssignment),
-    );
+  // Complete exports/counters retain the old list contract; interactive feeds
+  // call assignmentPage and append pages without refetching earlier items.
+  Future<List<Assignment>> _allAssignments({
+    int? studentId,
+    int? classId,
+  }) async {
+    final items = <Assignment>[];
+    String? cursor;
+    do {
+      final page = await assignmentPage(
+        studentId: studentId,
+        query: AssignmentQuery(classId: classId),
+        cursor: cursor,
+        limit: 100,
+      );
+      items.addAll(page.items);
+      cursor = page.nextCursor;
+    } while (cursor != null);
+    return items;
   }
 
   @override
+  Future<List<Assignment>> assignmentsForTeacher({int? classId}) =>
+      _allAssignments(classId: classId);
+
+  @override
   Future<List<Assignment>> assignmentsForStudent({int? studentId}) async {
-    if (studentId == null) return const [];
-    final classIds = await _classIdsForStudent(studentId);
-    if (classIds.isEmpty) return const [];
-    final rows = await _c
-        .from('assignments')
-        .select(_assignmentSelect)
-        .inFilter('class_id', classIds)
-        .eq('institution_id', institutionId)
-        .eq('published', true)
-        .filter('deleted_at', 'is', null)
-        .order('due_at');
-    return Future.wait(
-      (rows as List).cast<Map<String, dynamic>>().map(_hydrateAssignment),
-    );
+    final id =
+        studentId ?? (await _c.rpc('current_student_id') as num?)?.toInt();
+    if (id == null) {
+      throw StateError('Selecciona un estudiante para consultar sus tareas.');
+    }
+    return _allAssignments(studentId: id);
   }
 
   @override
@@ -112,17 +131,23 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
   Future<List<Submission>> submissionsForAssignment(
     String assignmentId,
   ) async {
-    final rows = await _c
-        .from('submissions')
-        .select(_submissionSelect)
-        .eq('assignment_id', assignmentId)
-        .eq('institution_id', institutionId);
-    final statuses = await _taskStatusIds();
-    return Future.wait(
-      (rows as List)
-          .cast<Map<String, dynamic>>()
-          .map((r) => _hydrateSubmission(r, statuses)),
+    final data = Map<String, dynamic>.from(
+      await _api.get('/assignments/$assignmentId/submissions') as Map,
     );
+    return (data['students'] as List)
+        .cast<Map<String, dynamic>>()
+        .where((row) => row['submissionId'] != null)
+        .map(
+          (row) => _submissionFromApi({
+            ...row,
+            'id': row['submissionId'],
+            'assignmentId': assignmentId,
+            'studentId': int.parse(row['studentId'].toString()),
+            'studentName': row['name'],
+            'studentNotes': row['notes'],
+          }),
+        )
+        .toList();
   }
 
   @override
@@ -222,50 +247,28 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
   // ---------- Counters ----------
   @override
   Future<({int pending, int submitted, int toGrade})> teacherCounters() async {
-    final assigns = await assignmentsForTeacher();
-    var pending = 0;
-    var submitted = 0;
-    var toGrade = 0;
-    for (final a in assigns) {
-      if (a.statusForNow(DateTime.now()) == AssignmentStatus.open) pending++;
-      submitted += a.submittedCount;
-      toGrade += (a.submittedCount - a.gradedCount).clamp(0, a.submittedCount);
-    }
-    return (pending: pending, submitted: submitted, toGrade: toGrade);
+    final data =
+        Map<String, dynamic>.from(await _c.rpc('assignment_counters') as Map);
+    return (
+      pending: (data['pending'] as num).toInt(),
+      submitted: (data['submitted'] as num).toInt(),
+      toGrade: (data['toGrade'] as num).toInt()
+    );
   }
 
   @override
   Future<({int pending, int submitted, int graded})> studentCounters({
     required int studentId,
   }) async {
-    final classIds = await _classIdsForStudent(studentId);
-    if (classIds.isEmpty) return (pending: 0, submitted: 0, graded: 0);
-
-    final assignments = await _c
-        .from('assignments')
-        .select('id')
-        .inFilter('class_id', classIds)
-        .eq('institution_id', institutionId)
-        .eq('published', true)
-        .filter('deleted_at', 'is', null);
-    final assignmentIds =
-        (assignments as List).map((a) => a['id'].toString()).toList();
-    if (assignmentIds.isEmpty) return (pending: 0, submitted: 0, graded: 0);
-
-    final submissions = await _c
-        .from('submissions')
-        .select('assignment_id, task_status_id')
-        .inFilter('assignment_id', assignmentIds)
-        .eq('student_id', studentId);
-    final statuses = await _taskStatusIds();
-    final gradedId = statuses['CALI'];
-    final submittedAssignmentIds =
-        (submissions as List).map((s) => s['assignment_id'].toString()).toSet();
-    final graded =
-        submissions.where((s) => s['task_status_id'] == gradedId).length;
-    final submitted = submittedAssignmentIds.length;
-    final pending = assignmentIds.length - submitted;
-    return (pending: pending, submitted: submitted, graded: graded);
+    final data = Map<String, dynamic>.from(
+      await _c.rpc('assignment_counters', params: {'p_student_id': studentId})
+          as Map,
+    );
+    return (
+      pending: (data['pending'] as num).toInt(),
+      submitted: (data['submitted'] as num).toInt(),
+      graded: (data['graded'] as num).toInt()
+    );
   }
 
   // ---------- Hidratación ----------
@@ -277,30 +280,23 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
     final group =
         (cls?['groups'] as Map<String, dynamic>?)?['name'] as String? ??
             'Grupo';
-    final groupId = (cls?['group_id'] as num?)?.toInt();
     final assignmentId = row['id'].toString();
-    final statuses = await _taskStatusIds();
-    final gradedId = statuses['CALI'];
-
     final results = await Future.wait([
       _attachmentsFor(
         table: 'assignment_files',
         column: 'assignment_id',
         id: assignmentId,
       ),
-      groupId == null
-          ? Future<List<dynamic>>.value(const [])
-          : _c.from('enrollments').select('id').eq('group_id', groupId),
-      _c
-          .from('submissions')
-          .select('id, task_status_id')
-          .eq('assignment_id', assignmentId),
+      _c.rpc(
+        'dashboard_assignment_counts',
+        params: {
+          'p_assignment_ids': [row['id']],
+        },
+      ).then<dynamic>((value) => value),
     ]);
     final attachments = results[0] as List<AssignmentAttachment>;
-    final totalStudents = results[1].length;
-    final submissionRows = results[2].cast<Map<String, dynamic>>();
-    final gradedCount =
-        submissionRows.where((s) => s['task_status_id'] == gradedId).length;
+    final counts = (results[1] as List).cast<Map<String, dynamic>>();
+    final stats = counts.isEmpty ? <String, dynamic>{} : counts.first;
 
     return Assignment(
       id: assignmentId,
@@ -312,15 +308,15 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
       instructions: row['instructions'] as String?,
       assignedAt: DateTime.tryParse(row['assigned_at'] as String? ?? '') ??
           DateTime.now(),
-      dueAt: DateTime.parse(row['due_at'] as String),
-      kind: AssignmentKind.homework,
+      dueAt: DateTime.tryParse(row['due_at'] as String? ?? ''),
+      kind: _kindFromApi(row['kind'] as String?),
       maxScore: (row['max_score'] as num?)?.toDouble() ?? 100,
       allowLate: row['allow_late'] as bool? ?? false,
       published: row['published'] as bool? ?? true,
       attachments: attachments,
-      totalStudents: totalStudents,
-      submittedCount: submissionRows.length,
-      gradedCount: gradedCount,
+      totalStudents: (stats['total'] as num?)?.toInt() ?? 0,
+      submittedCount: (stats['delivered'] as num?)?.toInt() ?? 0,
+      gradedCount: (stats['graded'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -349,6 +345,8 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
           .from('evaluations')
           .select('id')
           .eq('assignment_id', row['assignment_id'] as Object)
+          .order('id', ascending: false)
+          .limit(1)
           .maybeSingle();
       if (evaluation != null) {
         final grade = await _c
@@ -367,9 +365,11 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
       assignmentId: row['assignment_id'].toString(),
       studentId: (row['student_id'] as num).toInt(),
       studentName: fullName.isEmpty ? 'Estudiante' : fullName,
-      status: isGraded
-          ? SubmissionStatus.graded
-          : (isLate ? SubmissionStatus.late : SubmissionStatus.submitted),
+      status: taskStatusId == statuses['PEND']
+          ? SubmissionStatus.pending
+          : isGraded
+              ? SubmissionStatus.graded
+              : (isLate ? SubmissionStatus.late : SubmissionStatus.submitted),
       submittedAt: DateTime.tryParse(row['submitted_at'] as String? ?? ''),
       studentNotes: row['student_notes'] as String?,
       attachments: attachments,
@@ -413,7 +413,7 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
   Assignment _assignmentFromApi(Map<String, dynamic> row) {
     return Assignment(
       id: row['id'].toString(),
-      classId: (row['classId'] as num).toInt(),
+      classId: int.parse(row['classId'].toString()),
       subjectName: row['subjectName'] as String? ?? 'Materia',
       groupName: row['groupName'] as String? ?? 'Grupo',
       title: row['title'] as String? ?? '',
@@ -421,7 +421,7 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
       instructions: row['instructions'] as String?,
       assignedAt: DateTime.tryParse(row['assignedAt'] as String? ?? '') ??
           DateTime.now(),
-      dueAt: DateTime.tryParse(row['dueAt'] as String? ?? '') ?? DateTime.now(),
+      dueAt: DateTime.tryParse(row['dueAt'] as String? ?? ''),
       kind: _kindFromApi(row['kind'] as String?),
       maxScore: (row['maxScore'] as num?)?.toDouble() ?? 100,
       allowLate: row['allowLate'] as bool? ?? false,
@@ -431,6 +431,9 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
       submittedCount: (row['submittedCount'] as num?)?.toInt() ?? 0,
       gradedCount: (row['gradedCount'] as num?)?.toInt() ?? 0,
       teacherName: row['teacherName'] as String?,
+      progress: row['progress'] == null
+          ? null
+          : _progressFromApi(Map<String, dynamic>.from(row['progress'] as Map)),
     );
   }
 
@@ -440,6 +443,15 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
     }
     return AssignmentKind.homework;
   }
+
+  AssignmentProgress _progressFromApi(Map<String, dynamic> row) =>
+      AssignmentProgress(
+        status: row['status'] == null
+            ? null
+            : SubmissionStatus.values
+                .firstWhere((s) => s.name == row['status']),
+        score: (row['score'] as num?)?.toDouble(),
+      );
 
   Submission _submissionFromApi(Map<String, dynamic> row) {
     return Submission(

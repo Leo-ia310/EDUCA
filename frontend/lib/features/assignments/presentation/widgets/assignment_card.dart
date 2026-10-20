@@ -105,7 +105,9 @@ class AssignmentCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Entrega ${fmt.format(assignment.dueAt)}',
+                      assignment.dueAt == null
+                          ? 'Sin fecha de entrega'
+                          : 'Entrega ${fmt.format(assignment.dueAt!)}',
                       style: context.textTheme.labelSmall
                           ?.copyWith(color: inkMuted),
                     ),
@@ -210,7 +212,9 @@ class AssignmentCard extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                'Entrega ${fmt.format(assignment.dueAt)}',
+                assignment.dueAt == null
+                    ? 'Sin fecha de entrega'
+                    : 'Entrega ${fmt.format(assignment.dueAt!)}',
                 style: context.textTheme.labelSmall
                     ?.copyWith(color: palette.textMuted),
               ),

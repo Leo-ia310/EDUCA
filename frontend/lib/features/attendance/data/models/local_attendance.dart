@@ -18,6 +18,11 @@ class LocalAttendance {
     this.classSessionId,
     this.serverId,
     this.updatedAtMs,
+    this.serverVersion = 0,
+    this.operationId,
+    this.conflictStatusId,
+    this.conflictNotes,
+    this.classDate,
   });
 
   String uuid;
@@ -30,6 +35,11 @@ class LocalAttendance {
   String? notes;
   int syncStateIndex;
   int? serverId;
+  int serverVersion;
+  String? operationId;
+  int? conflictStatusId;
+  String? conflictNotes;
+  String? classDate;
 
   AttendanceRecord toEntity() => AttendanceRecord(
         uuid: uuid,
@@ -39,6 +49,10 @@ class LocalAttendance {
         status: AttendanceStatus.fromId(statusId),
         recordedAt: DateTime.fromMillisecondsSinceEpoch(recordedAtMs),
         notes: notes,
+        conflictStatus: conflictStatusId == null
+            ? null
+            : AttendanceStatus.fromId(conflictStatusId!),
+        conflictNotes: conflictNotes,
         syncState: SyncState.values[syncStateIndex],
       );
 
@@ -50,6 +64,8 @@ class LocalAttendance {
         statusId: r.status.id,
         recordedAtMs: r.recordedAt.millisecondsSinceEpoch,
         updatedAtMs: DateTime.now().millisecondsSinceEpoch,
+        classDate:
+            '${r.recordedAt.year.toString().padLeft(4, "0")}-${r.recordedAt.month.toString().padLeft(2, "0")}-${r.recordedAt.day.toString().padLeft(2, "0")}',
         notes: r.notes,
         syncStateIndex: r.syncState.index,
       );
@@ -77,13 +93,18 @@ class LocalAttendanceAdapter extends TypeAdapter<LocalAttendance> {
       notes: fields[7] as String?,
       syncStateIndex: fields[8] as int,
       serverId: fields[9] as int?,
+      serverVersion: fields[10] as int? ?? 0,
+      operationId: fields[11] as String?,
+      conflictStatusId: fields[12] as int?,
+      conflictNotes: fields[13] as String?,
+      classDate: fields[14] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, LocalAttendance obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.uuid)
       ..writeByte(1)
@@ -103,6 +124,16 @@ class LocalAttendanceAdapter extends TypeAdapter<LocalAttendance> {
       ..writeByte(8)
       ..write(obj.syncStateIndex)
       ..writeByte(9)
-      ..write(obj.serverId);
+      ..write(obj.serverId)
+      ..writeByte(10)
+      ..write(obj.serverVersion)
+      ..writeByte(11)
+      ..write(obj.operationId)
+      ..writeByte(12)
+      ..write(obj.conflictStatusId)
+      ..writeByte(13)
+      ..write(obj.conflictNotes)
+      ..writeByte(14)
+      ..write(obj.classDate);
   }
 }

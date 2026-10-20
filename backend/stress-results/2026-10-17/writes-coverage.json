@@ -1,0 +1,9 @@
+[
+  {
+    "path": "/api/assignments/teacher-classes",
+    "method": "POST",
+    "role": "teacher",
+    "status": 200,
+    "ms": 1099.2167
+  }
+]

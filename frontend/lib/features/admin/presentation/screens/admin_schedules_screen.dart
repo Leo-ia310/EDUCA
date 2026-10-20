@@ -11,6 +11,9 @@ import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/admin_schedule.dart';
 import '../../data/school_directory.dart';
+import '../../../../core/network/paginated_response.dart';
+import '../widgets/directory_picker.dart';
+import '../widgets/page_controls.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/schedule_form.dart';
 
@@ -26,15 +29,19 @@ class AdminSchedulesScreen extends ConsumerStatefulWidget {
 
 class _AdminSchedulesScreenState extends ConsumerState<AdminSchedulesScreen> {
   String? _groupId; // null = todos
+  int _page = 1;
   int? _weekday; // null = todos
 
   static const _title = 'Horarios';
 
   @override
   Widget build(BuildContext context) {
-    final schedules = ref.watch(adminSchedulesProvider);
-    final dir = ref.watch(adminSchoolDirectoryProvider).valueOrNull ??
-        const SchoolDirectory();
+    final schedules = ref.watch(adminSchedulesProvider(
+        (groupId: _groupId, weekdayId: _weekday, page: _page),),);
+    final connected = ref.watch(adminBackendRepositoryProvider) != null;
+    final dir = connected
+        ? const SchoolDirectory()
+        : ref.watch(schoolDirectoryProvider);
     final me = ref.watch(authControllerProvider).user;
     final canCreate = me?.can('schedules.create') ?? false;
     final canEdit = me?.can('schedules.edit') ?? false;
@@ -42,43 +49,18 @@ class _AdminSchedulesScreenState extends ConsumerState<AdminSchedulesScreen> {
     return StudentDetailScaffold(
       title: _title,
       bottomNav: false,
-      child: schedules.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 48),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        error: (e, _) => ErrorStateView(
-          message: '$e',
-          onRetry: () => ref.invalidate(adminSchedulesProvider),
-        ),
-        data: (all) => _content(context, all, dir, canCreate, canEdit),
-      ),
+      child: _content(context, schedules, dir, canCreate, canEdit, connected),
     );
   }
 
   Widget _content(
     BuildContext context,
-    List<AdminScheduleEntry> all,
+    AsyncValue<PaginatedResponse<AdminScheduleEntry>> schedules,
     SchoolDirectory dir,
     bool canCreate,
     bool canEdit,
+    bool connected,
   ) {
-    final palette = context.palette;
-    // Recesos de toda la institución (sin grupo) se muestran en cualquier grupo.
-    final shown = all
-        .where(
-          (s) =>
-              (_groupId == null || s.groupId == null || s.groupId == _groupId) &&
-              (_weekday == null || s.weekdayId == _weekday),
-        )
-        .toList()
-      ..sort((a, b) {
-        final byDay = a.weekdayId.compareTo(b.weekdayId);
-        return byDay != 0 ? byDay : a.startTime.compareTo(b.startTime);
-      });
-
-    final days = {for (final s in shown) s.weekdayId}.toList()..sort();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -96,25 +78,40 @@ class _AdminSchedulesScreenState extends ConsumerState<AdminSchedulesScreen> {
           const SizedBox(height: 16),
         ],
         const FormLabel('Grupo'),
-        Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: [
-            BrutalPill(
-              compact: true,
-              label: 'Todos',
-              selected: _groupId == null,
-              onTap: () => setState(() => _groupId = null),
-            ),
-            for (final g in dir.groups)
+        if (connected)
+          DirectoryPicker(
+              kind: 'groups',
+              selected: {if (_groupId != null) _groupId!},
+              onChanged: (ids) => setState(() {
+                    _groupId = ids.firstOrNull;
+                    _page = 1;
+                  }),)
+        else
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
               BrutalPill(
                 compact: true,
-                label: g.name,
-                selected: _groupId == g.id,
-                onTap: () => setState(() => _groupId = g.id),
+                label: 'Todos',
+                selected: _groupId == null,
+                onTap: () => setState(() {
+                  _groupId = null;
+                  _page = 1;
+                }),
               ),
-          ],
-        ),
+              for (final g in dir.groups)
+                BrutalPill(
+                  compact: true,
+                  label: g.name,
+                  selected: _groupId == g.id,
+                  onTap: () => setState(() {
+                    _groupId = g.id;
+                    _page = 1;
+                  }),
+                ),
+            ],
+          ),
         const FormLabel('Día'),
         Wrap(
           spacing: 4,
@@ -124,18 +121,38 @@ class _AdminSchedulesScreenState extends ConsumerState<AdminSchedulesScreen> {
               compact: true,
               label: 'Todos',
               selected: _weekday == null,
-              onTap: () => setState(() => _weekday = null),
+              onTap: () => setState(() {
+                _weekday = null;
+                _page = 1;
+              }),
             ),
             for (final d in scheduleWeekdays)
               BrutalPill(
                 compact: true,
                 label: d.$2,
                 selected: _weekday == d.$1,
-                onTap: () => setState(() => _weekday = d.$1),
+                onTap: () => setState(() {
+                  _weekday = d.$1;
+                  _page = 1;
+                }),
               ),
           ],
         ),
         const SizedBox(height: 12),
+        schedules.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => ErrorStateView(message: '$e', onRetry: () => ref.invalidate(adminSchedulesProvider)),
+          data: (result) => _rows(context, result, canEdit),
+        ),
+      ],
+    );
+  }
+  Widget _rows(BuildContext context, PaginatedResponse<AdminScheduleEntry> result, bool canEdit) {
+    final palette = context.palette;
+    final shown = result.items;
+    final days = {for (final s in shown) s.weekdayId}.toList()..sort();
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      PageControls(pageInfo: result.pageInfo, onPage: (page) => setState(() => _page = page)),
         if (shown.isEmpty)
           const EmptyState(
             icon: Icons.schedule_rounded,
@@ -164,11 +181,13 @@ class _AdminSchedulesScreenState extends ConsumerState<AdminSchedulesScreen> {
                 leadingIcon: s.isBreak
                     ? Icons.free_breakfast_rounded
                     : Icons.menu_book_rounded,
-                onTap: canEdit ? () => showScheduleSheet(context, existing: s) : null,
+                onTap: canEdit
+                    ? () => showScheduleSheet(context, existing: s)
+                    : null,
               ),
             const SizedBox(height: 10),
           ],
-      ],
-    );
+    ],);
   }
+
 }

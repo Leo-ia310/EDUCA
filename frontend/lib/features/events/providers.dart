@@ -1,3 +1,4 @@
+import 'presentation/announcement_feed_session.dart';
 import '../portal_access/providers.dart';
 import 'dart:async';
 import 'package:uuid/uuid.dart';
@@ -29,14 +30,26 @@ final eventsRepositoryProvider = Provider<EventsRepository>((ref) {
       auth.user == null) {
     throw StateError('Inicia sesión para consultar o publicar anuncios.');
   }
-  return SupabaseEventsRepository(api: api);
+  return SupabaseEventsRepository(
+    api: api,
+    realtime: client,
+    institutionId: auth.institution!.id,
+    userId: auth.user!.id,
+    admin: auth.user!.roles.any(
+      (role) => ['admin', 'coordinator', 'director'].contains(role.name),
+    ),
+  );
 });
 
-/// Server state is independent of optimistic drafts, which survive navigation.
-final announcementsProvider =
-    FutureProvider<List<domain.SchoolEvent>>((ref) async {
-  return ref.watch(eventsRepositoryProvider).published();
+final announcementFeedSessionProvider =
+    Provider.autoDispose<AnnouncementFeedSession>((ref) {
+  final session = AnnouncementFeedSession(ref.watch(eventsRepositoryProvider));
+  ref.onDispose(session.dispose);
+  return session;
 });
+final announcementsProvider = StreamProvider.autoDispose<AnnouncementFeedState>(
+  (ref) => ref.watch(announcementFeedSessionProvider).watch(),
+);
 
 final announcementPublisherProvider =
     StateNotifierProvider<AnnouncementPublisher, List<domain.SchoolEvent>>(
@@ -112,7 +125,7 @@ class AnnouncementPublisher extends StateNotifier<List<domain.SchoolEvent>> {
         for (final e in state)
           if (e.id == draft.id) saved else e,
       ];
-      ref.invalidate(announcementsProvider);
+      ref.invalidate(announcementFeedSessionProvider);
       ref.invalidate(adminDashboardProvider);
       ref.invalidate(teacherDashboardProvider);
       ref.invalidate(studentDashboardProvider);

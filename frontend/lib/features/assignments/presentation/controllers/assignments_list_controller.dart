@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/env.dart';
+import 'dart:async';
+import '../../domain/assignment_page.dart';
 import '../../domain/entities.dart';
 import '../../providers.dart';
 
@@ -51,52 +52,101 @@ class TasksDoneNotifier extends StateNotifier<Set<String>> {
   }
 }
 
-final tasksDoneProvider =
-    StateNotifierProvider<TasksDoneNotifier, Set<String>>(
+final tasksDoneProvider = StateNotifierProvider<TasksDoneNotifier, Set<String>>(
   (ref) => TasksDoneNotifier(),
 );
 
-/// Lista para el docente (todas las tareas que asigna, agnóstico al rol).
-final teacherAssignmentsProvider =
-    FutureProvider.autoDispose<List<Assignment>>((ref) async {
-  final repo = ref.watch(assignmentRepositoryProvider);
-  final filter = ref.watch(assignmentsFilterProvider);
-  final list = await repo.assignmentsForTeacher(classId: filter.classId);
-  return _applyFilters(list, filter);
-});
+/// Owns one cursor stream. Refresh invalidates this controller, so responses
+/// from a disposed query cannot overwrite a different student or filter.
+class AssignmentFeedController
+    extends StateNotifier<AsyncValue<List<Assignment>>> {
+  AssignmentFeedController(this._load) : super(const AsyncValue.loading()) {
+    unawaited(_initial());
+  }
+  final Future<AssignmentPage> Function(String? cursor) _load;
+  String? _nextCursor;
+  bool loadingMore = false;
+  Object? loadMoreError;
+  bool get hasMore => _nextCursor != null;
 
-/// Lista para el estudiante / padre (tareas asignadas a sus clases).
-final studentAssignmentsProvider =
-    FutureProvider.autoDispose<List<Assignment>>((ref) async {
-  final repo = ref.watch(assignmentRepositoryProvider);
-  final filter = ref.watch(assignmentsFilterProvider);
-  // En demo los datos son instantáneos: un breve retardo deja apreciar el
-  // estado de carga con shimmer (en backend real esto no aplica).
-  if (Env.isDemoMode) {
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+  Future<void> _initial() async {
+    try {
+      final page = await _load(null);
+      if (!mounted) return;
+      _nextCursor = page.nextCursor;
+      state = AsyncValue.data(List.unmodifiable(page.items));
+    } catch (error, stack) {
+      if (mounted) state = AsyncValue.error(error, stack);
+    }
   }
-  final list = await repo.assignmentsForStudent();
-  return _applyFilters(list, filter);
-});
 
-List<Assignment> _applyFilters(
-    List<Assignment> list, AssignmentsFilter filter,) {
-  final now = DateTime.now();
-  Iterable<Assignment> filtered = list;
-  if (filter.kind != null) {
-    filtered = filtered.where((a) => a.kind == filter.kind);
+  Future<void> loadMore() async {
+    final items = state.valueOrNull;
+    if (loadingMore || !hasMore || items == null) return;
+    final cursor = _nextCursor;
+    loadingMore = true;
+    loadMoreError = null;
+    state = AsyncValue.data(List.unmodifiable(items));
+    try {
+      final page = await _load(cursor);
+      if (!mounted) return;
+      if (page.nextCursor != null && page.nextCursor == cursor) {
+        throw StateError('El servidor no avanzó el cursor de tareas.');
+      }
+      _nextCursor = page.nextCursor;
+      loadingMore = false;
+      state = AsyncValue.data(List.unmodifiable({
+        for (final item in items) item.id: item,
+        for (final item in page.items) item.id: item,
+      }.values,),);
+    } catch (error) {
+      if (!mounted) return;
+      loadingMore = false;
+      loadMoreError = error;
+      state = AsyncValue.data(List.unmodifiable(items));
+    }
   }
-  if (filter.onlyOpen) {
-    filtered = filtered.where((a) {
-      final s = a.statusForNow(now);
-      return s == AssignmentStatus.open || s == AssignmentStatus.dueSoon;
-    });
-  }
-  final text = filter.searchText.trim().toLowerCase();
-  if (text.isNotEmpty) {
-    filtered = filtered.where((a) =>
-        a.title.toLowerCase().contains(text) ||
-        a.subjectName.toLowerCase().contains(text),);
-  }
-  return filtered.toList();
 }
+
+AssignmentQuery _query(AssignmentsFilter filter,
+    {String? subject, List<AssignmentKind>? kinds,}) {
+  final selected = filter.kind == null
+      ? kinds
+      : (kinds == null || kinds.contains(filter.kind)
+          ? [filter.kind!]
+          : <AssignmentKind>[]);
+  return AssignmentQuery(
+      classId: filter.classId,
+      kinds: selected,
+      onlyOpen: filter.onlyOpen,
+      search: filter.searchText,
+      subject: subject,);
+}
+
+final teacherAssignmentsProvider = StateNotifierProvider.autoDispose
+    .family<AssignmentFeedController, AsyncValue<List<Assignment>>, String?>(
+        (ref, subject) {
+  final repo = ref.watch(assignmentRepositoryProvider);
+  final query = _query(ref.watch(assignmentsFilterProvider), subject: subject);
+  return AssignmentFeedController(
+      (cursor) => repo.assignmentPage(query: query, cursor: cursor),);
+});
+
+typedef StudentAssignmentFeed = ({int studentId, bool exams, String? subject});
+final studentAssignmentsProvider = StateNotifierProvider.autoDispose.family<
+    AssignmentFeedController,
+    AsyncValue<List<Assignment>>,
+    StudentAssignmentFeed>((ref, feed) {
+  final repo = ref.watch(assignmentRepositoryProvider);
+  final query = _query(ref.watch(assignmentsFilterProvider),
+      subject: feed.subject,
+      kinds: feed.exams
+          ? [AssignmentKind.exam, AssignmentKind.quiz]
+          : [
+              AssignmentKind.homework,
+              AssignmentKind.project,
+              AssignmentKind.presentation,
+            ],);
+  return AssignmentFeedController((cursor) => repo.assignmentPage(
+      studentId: feed.studentId, query: query, cursor: cursor,),);
+});

@@ -29,7 +29,8 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen>
     with WidgetsBindingObserver {
   final _scrollCtrl = ScrollController();
-  int _lastCount = 0;
+  String? _lastMessageId;
+  bool _loadingOlder = false;
   String? _lastReadSignature;
   late final ConversationReadTracker _readTracker;
 
@@ -52,7 +53,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.conversationId != widget.conversationId) {
       _lastReadSignature = null;
-      _lastCount = 0;
+      _lastMessageId = null;
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _readVisibleMessages());
     }
@@ -117,6 +118,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         );
       }
     });
+  }
+
+  Future<void> _loadOlder() async {
+    if (_loadingOlder) return;
+    final previousHeight =
+        _scrollCtrl.hasClients ? _scrollCtrl.position.maxScrollExtent : 0.0;
+    final previousOffset = _scrollCtrl.hasClients ? _scrollCtrl.offset : 0.0;
+    setState(() => _loadingOlder = true);
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .loadOlderMessages(widget.conversationId);
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollCtrl.hasClients) {
+            _scrollCtrl.jumpTo((previousOffset +
+                    _scrollCtrl.position.maxScrollExtent -
+                    previousHeight)
+                .clamp(0, _scrollCtrl.position.maxScrollExtent),);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No se pudo cargar el historial: $e')),);
+      }
+    } finally {
+      if (mounted) setState(() => _loadingOlder = false);
+    }
   }
 
   @override
@@ -192,6 +223,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       ),
       body: Column(
         children: [
+          if (ref
+              .read(chatRepositoryProvider)
+              .hasOlderMessages(widget.conversationId))
+            TextButton(
+                onPressed: _loadingOlder ? null : _loadOlder,
+                child: Text(_loadingOlder
+                    ? 'Cargando…'
+                    : 'Cargar mensajes anteriores',),),
           Expanded(
             child: messages.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -200,10 +239,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 final ordered = [...list]..sort((a, b) {
                     final byDate = a.sentAt.compareTo(b.sentAt);
                     if (byDate != 0) return byDate;
-                    return a.id.compareTo(b.id);
+                    final aId = BigInt.tryParse(a.id), bId = BigInt.tryParse(b.id);
+                    return aId != null && bId != null ? aId.compareTo(bId) : a.id.compareTo(b.id);
                   });
-                if (ordered.length != _lastCount) {
-                  _lastCount = ordered.length;
+                if (ordered.isNotEmpty && ordered.last.id != _lastMessageId) {
+                  _lastMessageId = ordered.last.id;
                   _scrollToBottom();
                 }
                 if (ordered.isEmpty) {
@@ -221,14 +261,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               },
             ),
           ),
-          if (!ref.watch(portalCanProvider('messages.send'))) const PortalRestriction(message:'Tu institución ha deshabilitado el envío de mensajes. Puedes seguir leyendo la conversación.')
-          else ChatInput(
-            onSend: composerCtrl.send,
-            onPickAttachment: composerCtrl.pickAttachment,
-            pendingAttachment: composer.attachment,
-            onRemoveAttachment: composerCtrl.clearAttachment,
-            sending: composer.sending || composer.uploading,
-          ),
+          if (!ref.watch(portalCanProvider('messages.send')))
+            const PortalRestriction(
+                message:
+                    'Tu institución ha deshabilitado el envío de mensajes. Puedes seguir leyendo la conversación.',)
+          else
+            ChatInput(
+              onSend: composerCtrl.send,
+              onPickAttachment: composerCtrl.pickAttachment,
+              pendingAttachment: composer.attachment,
+              onRemoveAttachment: composerCtrl.clearAttachment,
+              sending: composer.sending || composer.uploading,
+            ),
         ],
       ),
     );
@@ -242,15 +286,11 @@ class _HeaderTitle extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
-    final convs = ref.watch(conversationsStreamProvider);
+    final convs = ref.watch(conversationDetailProvider(conversationId));
     return convs.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
-      data: (list) {
-        final conv = list.cast<Conversation?>().firstWhere(
-              (c) => c?.id == conversationId,
-              orElse: () => null,
-            );
+      data: (conv) {
         if (conv == null) return const SizedBox.shrink();
         final subtitle = conv.typing
             ? 'Escribiendo…'

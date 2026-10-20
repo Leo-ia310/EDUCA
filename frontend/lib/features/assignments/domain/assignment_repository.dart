@@ -1,8 +1,14 @@
 import 'entities.dart';
+import 'assignment_page.dart';
 
 /// Acceso a tareas y entregas. Multi-tenant: el `institutionId` lo resuelve
 /// la implementación a partir del usuario autenticado.
 abstract class AssignmentRepository {
+  Future<AssignmentPage> assignmentPage(
+      {int? studentId,
+      AssignmentQuery query = const AssignmentQuery(),
+      String? cursor,
+      int limit = 50,});
   // -------- Lectura --------
   Future<List<Assignment>> assignmentsForTeacher({int? classId});
   Future<List<Assignment>> assignmentsForStudent({int? studentId});

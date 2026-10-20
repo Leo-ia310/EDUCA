@@ -46,11 +46,12 @@ class ChatComposerController extends StateNotifier<ComposerState> {
   final String conversationId;
 
   Future<void> pickAttachment() async {
+    if (state.sending || state.uploading) return;
     final result = await FilePicker.platform.pickFiles(
       type: FileType.any,
       allowMultiple: false,
     );
-    if (result == null || result.files.isEmpty) return;
+    if (!mounted || result == null || result.files.isEmpty) return;
     final f = result.files.first;
     if (f.path == null) return;
     state = state.copyWith(uploading: true, clearError: true);
@@ -60,6 +61,7 @@ class ChatComposerController extends StateNotifier<ComposerState> {
         file: File(f.path!),
         folder: 'chat/$conversationId',
       );
+      if (!mounted) return;
       state = state.copyWith(
         attachment: MessageAttachment(
           id: assignment.id,
@@ -71,6 +73,7 @@ class ChatComposerController extends StateNotifier<ComposerState> {
         uploading: false,
       );
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(
         uploading: false,
         error: 'No se pudo adjuntar: $e',
@@ -78,21 +81,33 @@ class ChatComposerController extends StateNotifier<ComposerState> {
     }
   }
 
-  void clearAttachment() => state = state.copyWith(clearAttachment: true);
+  void clearAttachment() {
+    if (!state.sending && !state.uploading) {
+      state = state.copyWith(clearAttachment: true);
+    }
+  }
 
-  Future<void> send(String text) async {
-    if (text.trim().isEmpty && state.attachment == null) return;
+  Future<bool> send(String text) async {
+    if (state.sending ||
+        state.uploading ||
+        (text.trim().isEmpty && state.attachment == null)) {
+      return false;
+    }
     final attachment = state.attachment;
     state = state.copyWith(sending: true, clearError: true);
     try {
-      state = const ComposerState();
       await _ref.read(chatRepositoryProvider).sendMessage(
             conversationId: conversationId,
             content: text.trim().isEmpty ? null : text.trim(),
             attachment: attachment,
           );
+      if (mounted) state = const ComposerState();
+      return true;
     } catch (e) {
-      state = state.copyWith(sending: false, error: 'No se pudo enviar: $e');
+      if (mounted) {
+        state = state.copyWith(sending: false, error: 'No se pudo enviar: $e');
+      }
+      return false;
     }
   }
 }

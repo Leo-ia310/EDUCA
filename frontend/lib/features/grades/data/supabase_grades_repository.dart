@@ -2,6 +2,7 @@ import 'package:flutter/painting.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/network/backend_api_client.dart';
+import '../../../core/network/read_all.dart';
 import '../domain/entities.dart';
 import '../domain/grades_calculator.dart';
 import '../domain/grades_repository.dart';
@@ -180,53 +181,62 @@ class SupabaseGradesRepository implements GradesRepository {
   }
 
   // ---------- Evaluaciones y notas ----------
-  Future<List<int>> _classIdsForStudent(int studentId) async {
-    final enrollments = await _c
+  Future<List<Map<String, dynamic>>> _classesForStudent(int studentId) async {
+    final enrollment = await _c
         .from('enrollments')
-        .select('group_id')
+        .select(
+            'group_id, academic_year_id, academic_years!inner(is_current), catalog_enrollment_statuses!inner(code)',)
         .eq('student_id', studentId)
-        .eq('institution_id', institutionId);
-    final groupIds = (enrollments as List)
-        .map((e) => (e['group_id'] as num?)?.toInt())
-        .whereType<int>()
-        .toSet()
-        .toList();
-    if (groupIds.isEmpty) return const [];
-    final classes = await _c
+        .eq('institution_id', institutionId)
+        .eq('academic_years.is_current', true)
+        .eq('catalog_enrollment_statuses.code', 'ACT')
+        .maybeSingle();
+    if (enrollment == null) return [];
+    return readAllPages<Map<String, dynamic>>((from, to) async => await _c
         .from('classes')
-        .select('id')
-        .inFilter('group_id', groupIds)
-        .eq('institution_id', institutionId);
-    return (classes as List)
-        .map((c) => (c['id'] as num?)?.toInt())
-        .whereType<int>()
-        .toList();
+        .select('id, subjects(name), teachers(persons(first_name, last_name))')
+        .eq('group_id', enrollment['group_id'] as Object)
+        .eq('academic_year_id', enrollment['academic_year_id'] as Object)
+        .eq('institution_id', institutionId)
+        .eq('active', true)
+        .order('id')
+        .range(from, to),);
+  }
+
+  static const _evaluationSelect =
+      'id, class_id, title, date, max_score, weight, academic_period_id, '
+      'classes(subjects(name)), catalog_evaluation_types(code), academic_periods!inner(academic_years!inner(is_current))';
+
+  Future<List<Evaluation>> _evaluationsOfClasses(List<int> classIds,
+      {String? periodId,}) async {
+    final result = <Evaluation>[];
+    for (var i = 0; i < classIds.length; i += 150) {
+      final rows = await readAllPages<Map<String, dynamic>>((from, to) async {
+        var query = _c
+            .from('evaluations')
+            .select(_evaluationSelect)
+            .inFilter('class_id',
+                classIds.sublist(i, (i + 150).clamp(0, classIds.length)),)
+            .eq('institution_id', institutionId)
+            .eq('academic_periods.academic_years.is_current', true)
+            .eq('published', true);
+        if (periodId != null) query = query.eq('academic_period_id', periodId);
+        return await query.order('date').order('id').range(from, to);
+      });
+      result.addAll(rows.map(_evalFromRow));
+    }
+    return result;
   }
 
   @override
-  Future<List<Evaluation>> evaluationsFor({
-    required int studentId,
-    String? periodId,
-    int? classId,
-  }) async {
-    final classIds =
-        classId != null ? [classId] : await _classIdsForStudent(studentId);
-    if (classIds.isEmpty) return const [];
-    var query = _c
-        .from('evaluations')
-        .select(
-          'id, class_id, title, date, max_score, weight, academic_period_id, '
-          'classes(subjects(name)), catalog_evaluation_types(code)',
-        )
-        .inFilter('class_id', classIds)
-        .eq('institution_id', institutionId)
-        .eq('published', true);
-    if (periodId != null) query = query.eq('academic_period_id', periodId);
-    final rows = await query.order('date');
-    return (rows as List)
-        .cast<Map<String, dynamic>>()
-        .map(_evalFromRow)
-        .toList();
+  Future<List<Evaluation>> evaluationsFor(
+      {required int studentId, String? periodId, int? classId,}) async {
+    final ids = classId == null
+        ? (await _classesForStudent(studentId))
+            .map((r) => (r['id'] as num).toInt())
+            .toList()
+        : [classId];
+    return _evaluationsOfClasses(ids, periodId: periodId);
   }
 
   Evaluation _evalFromRow(Map<String, dynamic> row) {
@@ -251,40 +261,32 @@ class SupabaseGradesRepository implements GradesRepository {
     required int studentId,
     String? periodId,
   }) async {
-    final rows = await _c
-        .from('grades')
-        .select(
-          'evaluation_id, student_id, score, notes, evaluations!inner(academic_period_id)',
-        )
-        .eq('student_id', studentId)
-        .eq('institution_id', institutionId);
-    return (rows as List)
-        .cast<Map<String, dynamic>>()
-        .where((r) {
-          if (periodId == null) return true;
-          final evalPeriod =
-              (r['evaluations'] as Map?)?['academic_period_id']?.toString();
-          return evalPeriod == periodId;
-        })
-        .map(
-          (r) => GradeEntry(
+    final rows = await readAllPages<Map<String, dynamic>>((from, to) async {
+      var query = _c
+          .from('grades')
+          .select(
+              'evaluation_id, student_id, score, notes, evaluations!inner(academic_period_id, academic_periods!inner(academic_years!inner(is_current)))',)
+          .eq('student_id', studentId)
+          .eq('institution_id', institutionId)
+          .eq('evaluations.academic_periods.academic_years.is_current', true)
+          .not('score', 'is', null);
+      if (periodId != null) {
+        query = query.eq('evaluations.academic_period_id', periodId);
+      }
+      return await query.order('id').range(from, to);
+    });
+    return rows
+        .map((r) => GradeEntry(
             evaluationId: r['evaluation_id'].toString(),
             studentId: (r['student_id'] as num).toInt(),
-            rawScore: (r['score'] as num?)?.toDouble() ?? 0,
-            notes: r['notes'] as String?,
-          ),
-        )
+            rawScore: (r['score'] as num).toDouble(),
+            notes: r['notes'] as String?,),)
         .toList();
   }
 
   Future<List<({int classId, String name, String teacher})>>
       _subjectsForStudent(int studentId) async {
-    final classIds = await _classIdsForStudent(studentId);
-    if (classIds.isEmpty) return const [];
-    final rows = await _c
-        .from('classes')
-        .select('id, subjects(name), teachers(persons(first_name, last_name))')
-        .inFilter('id', classIds);
+    final rows = await _classesForStudent(studentId);
     return (rows as List).cast<Map<String, dynamic>>().map((r) {
       final subjectName =
           (r['subjects'] as Map?)?['name'] as String? ?? 'Materia';
@@ -304,21 +306,40 @@ class SupabaseGradesRepository implements GradesRepository {
     required int studentId,
     GradingScale? scale,
   }) async {
-    final s = scale ?? await defaultScale();
-    final periodsList = await periods();
-    final subjects = await _subjectsForStudent(studentId);
-    final myGrades = await gradesFor(studentId: studentId);
-    final gradesByEval = {for (final g in myGrades) g.evaluationId: g};
+    return _performance(studentId: studentId, scale: scale);
+  }
+
+  Future<List<SubjectPerformance>> _performance(
+      {required int studentId,
+      GradingScale? scale,
+      List<AcademicPeriod>? loadedPeriods,}) async {
+    final initial = await Future.wait<dynamic>([
+      scale == null ? defaultScale() : Future.value(scale),
+      loadedPeriods == null ? periods() : Future.value(loadedPeriods),
+      _subjectsForStudent(studentId),
+      gradesFor(studentId: studentId),
+    ]);
+    final s = initial[0] as GradingScale;
+    final periodsList = initial[1] as List<AcademicPeriod>;
+    final subjects =
+        initial[2] as List<({int classId, String name, String teacher})>;
+    final myGrades = initial[3] as List<GradeEntry>;
+    final gradesByEval = {
+      for (final grade in myGrades) grade.evaluationId: grade,
+    };
+    final byClassPeriod = <(int, String), List<Evaluation>>{};
+    for (final evaluation in await _evaluationsOfClasses(
+        subjects.map((s) => s.classId).toList(),)) {
+      byClassPeriod.putIfAbsent(
+          (evaluation.classId, evaluation.periodId), () => [],).add(evaluation);
+    }
 
     final result = <SubjectPerformance>[];
     for (final subj in subjects) {
       final periodGrades = <String, PeriodGrade>{};
       for (final p in periodsList) {
-        final evals = await evaluationsFor(
-          studentId: studentId,
-          periodId: p.id,
-          classId: subj.classId,
-        );
+        final evals =
+            byClassPeriod[(subj.classId, p.id)] ?? const <Evaluation>[];
         final matchingGrades = evals
             .where((e) => gradesByEval.containsKey(e.id))
             .map((e) => gradesByEval[e.id]!)
@@ -351,131 +372,62 @@ class SupabaseGradesRepository implements GradesRepository {
     String? periodId,
     GradingScale? scale,
   }) async {
-    final s = scale ?? await defaultScale();
-    final periodsList = await periods();
+    final initial = await Future.wait<dynamic>([
+      scale == null ? defaultScale() : Future.value(scale),
+      periods(),
+    ]);
+    final s = initial[0] as GradingScale,
+        periodsList = initial[1] as List<AcademicPeriod>;
     final targetPeriod = periodId == null
         ? null
         : periodsList.firstWhere((p) => p.id == periodId);
-    final performances =
-        await performanceForStudent(studentId: studentId, scale: s);
-
+    final values = await Future.wait<dynamic>([
+      _performance(studentId: studentId, scale: s, loadedPeriods: periodsList),
+      _c.rpc('student_report_context', params: {
+        'p_student_id': studentId,
+        'p_period_id': periodId,
+      },).then<dynamic>((value) => value),
+    ]);
+    final performances = values[0] as List<SubjectPerformance>;
+    final context = Map<String, dynamic>.from(values[1] as Map);
     final lines = <ReportCardLine>[];
     for (final perf in performances) {
       final score = targetPeriod == null
           ? perf.finalScore
           : (perf.periodScores[targetPeriod.id] ?? 0);
-      lines.add(
-        ReportCardLine(
+      final count = targetPeriod == null
+          ? perf.evaluationCount
+          : perf.periodEvaluationCounts[targetPeriod.id];
+      lines.add(ReportCardLine(
           subjectName: perf.subjectName,
           teacherName: perf.teacherName,
           finalScore: score,
-          qualitativeLabel: s.labelFor(score),
-          passed: s.isPassing(score),
-        ),
-      );
+          evaluationCount: count,
+          qualitativeLabel: count == 0 ? null : s.labelFor(score),
+          passed: count != 0 && s.isPassing(score),),);
     }
     final overall = targetPeriod == null
         ? _calc.overallAverage(performances)
-        : _averageOfLines(lines);
-
-    final info = await _studentInfo(studentId);
-    final attendancePct = await _attendancePct(studentId);
-    final totalPeers = await _peerCount(studentId);
-
+        : _calc.reportAverage(lines);
     return ReportCard(
-      studentId: studentId,
-      studentName: info.name,
-      institutionName: info.institutionName,
-      gradeLevel: info.gradeLevel,
-      periodName: targetPeriod?.name ?? 'Anual',
-      periodStart:
-          targetPeriod?.startDate ?? DateTime(DateTime.now().year, 1, 1),
-      periodEnd: targetPeriod?.endDate ?? DateTime(DateTime.now().year, 12, 31),
-      lines: lines,
-      overallAverage: overall,
-      overallLabel: s.labelFor(overall),
-      attendancePct: attendancePct,
-      // El ranking real entre compañeros de grupo requeriría un agregado
-      // `period_grades` (aún no poblado por ningún proceso) o una función
-      // RPC en Postgres — calcularlo aquí dispararía una consulta por
-      // compañero de clase. Se deja en 1 como placeholder honesto hasta que
-      // exista esa agregación.
-      rank: 1,
-      totalPeers: totalPeers,
-    );
-  }
-
-  Future<({String name, String institutionName, String gradeLevel})>
-      _studentInfo(int studentId) async {
-    final row = await _c
-        .from('students')
-        .select(
-          'persons(first_name, last_name), institutions(name), '
-          'enrollments(group_id, groups(name, grade_levels(name), sections(name)))',
-        )
-        .eq('id', studentId)
-        .single();
-    final person = row['persons'] as Map<String, dynamic>?;
-    final name =
-        '${person?['first_name'] ?? ''} ${person?['last_name'] ?? ''}'.trim();
-    final institutionName =
-        (row['institutions'] as Map?)?['name'] as String? ?? 'Colegio';
-    final enrollments =
-        (row['enrollments'] as List? ?? const []).cast<Map<String, dynamic>>();
-    final group = enrollments.isEmpty
-        ? null
-        : enrollments.first['groups'] as Map<String, dynamic>?;
-    final gradeLevel = group == null
-        ? '—'
-        : '${(group['grade_levels'] as Map?)?['name'] ?? ''} '
-                '${(group['sections'] as Map?)?['name'] ?? ''}'
-            .trim();
-    return (
-      name: name.isEmpty ? 'Estudiante' : name,
-      institutionName: institutionName,
-      gradeLevel: gradeLevel.isEmpty ? '—' : gradeLevel,
-    );
-  }
-
-  Future<double> _attendancePct(int studentId) async {
-    final rows = await _c
-        .from('attendances')
-        .select('catalog_attendance_statuses(counts_as_absent)')
-        .eq('student_id', studentId);
-    final list = (rows as List).cast<Map<String, dynamic>>();
-    if (list.isEmpty) return 100;
-    final absentCount = list
-        .where(
-          (r) =>
-              (r['catalog_attendance_statuses'] as Map?)?['counts_as_absent'] ==
-              true,
-        )
-        .length;
-    final presentPct = ((list.length - absentCount) / list.length) * 100;
-    return double.parse(presentPct.toStringAsFixed(1));
-  }
-
-  Future<int> _peerCount(int studentId) async {
-    final mine = await _c
-        .from('enrollments')
-        .select('group_id')
-        .eq('student_id', studentId)
-        .eq('institution_id', institutionId)
-        .maybeSingle();
-    final groupId = mine?['group_id'];
-    if (groupId == null) return 1;
-    final peers = await _c
-        .from('enrollments')
-        .select('id')
-        .eq('group_id', groupId as Object);
-    return (peers as List).length;
-  }
-
-  double _averageOfLines(List<ReportCardLine> lines) {
-    final valid = lines.where((l) => l.finalScore > 0).toList();
-    if (valid.isEmpty) return 0;
-    final sum = valid.fold<double>(0, (a, l) => a + l.finalScore);
-    return double.parse((sum / valid.length).toStringAsFixed(2));
+        studentId: studentId,
+        studentName: context['studentName'] as String? ?? 'Estudiante',
+        institutionName: context['institutionName'] as String? ?? 'Colegio',
+        gradeLevel: context['gradeLevel'] as String? ?? '—',
+        periodName: targetPeriod?.name ?? 'Anual',
+        periodStart: targetPeriod?.startDate ??
+            DateTime.tryParse(context['yearStart'] as String? ?? '') ??
+            DateTime(DateTime.now().year, 1, 1),
+        periodEnd: targetPeriod?.endDate ??
+            DateTime.tryParse(context['yearEnd'] as String? ?? '') ??
+            DateTime(DateTime.now().year, 12, 31),
+        lines: lines,
+        overallAverage: overall,
+        overallLabel:
+            lines.any((line) => line.hasGrade) ? s.labelFor(overall) : null,
+        attendancePct: (context['attendancePct'] as num?)?.toDouble(),
+        rank: (context['rank'] as num?)?.toInt(),
+        totalPeers: (context['totalPeers'] as num?)?.toInt(),);
   }
 
   // ---------- Gradebook ----------
@@ -484,76 +436,37 @@ class SupabaseGradesRepository implements GradesRepository {
     required int classId,
     required String periodId,
   }) async {
-    final evalRows = await _c
-        .from('evaluations')
-        .select(
-          'id, class_id, title, date, max_score, weight, academic_period_id, '
-          'classes(subjects(name)), catalog_evaluation_types(code)',
-        )
-        .eq('class_id', classId)
-        .eq('academic_period_id', periodId)
-        .eq('institution_id', institutionId)
-        .order('date');
-    final evaluations = (evalRows as List)
+    final data = Map<String, dynamic>.from(await _api.get('/grades/gradebook',
+        queryParameters: {'classId': classId, 'periodId': periodId},) as Map,);
+    final evaluations = (data['evaluations'] as List)
         .cast<Map<String, dynamic>>()
-        .map(_evalFromRow)
+        .map((row) => Evaluation(
+              id: row['id'].toString(),
+              classId: classId,
+              periodId: periodId,
+              subjectName: row['subjectName'] as String? ?? 'Materia',
+              title: row['title'] as String? ?? '',
+              date: DateTime.tryParse(row['date'] as String? ?? '') ??
+                  DateTime.now(),
+              maxScore: (row['maxScore'] as num?)?.toDouble() ?? 100,
+              weight: (row['weight'] as num?)?.toDouble() ?? 1,
+              kind: row['kind'] as String? ?? 'homework',
+            ),)
         .toList();
-
-    final classRow = await _c
-        .from('classes')
-        .select('group_id')
-        .eq('id', classId)
-        .eq('institution_id', institutionId)
-        .maybeSingle();
-    final groupId = classRow?['group_id'];
-    if (groupId == null) {
-      return GradebookMatrix(
-        evaluations: evaluations,
-        students: const [],
-        grades: const {},
-      );
-    }
-
-    final enrollments = await _c
-        .from('enrollments')
-        .select('student_id, students(id, persons(first_name, last_name))')
-        .eq('group_id', groupId as Object)
-        .eq('institution_id', institutionId);
-    final students =
-        (enrollments as List).cast<Map<String, dynamic>>().map((e) {
-      final person = (e['students'] as Map?)?['persons'] as Map?;
-      final name =
-          '${person?['first_name'] ?? ''} ${person?['last_name'] ?? ''}'.trim();
-      return (
-        studentId: (e['student_id'] as num).toInt(),
-        name: name.isEmpty ? 'Estudiante' : name,
-      );
-    }).toList();
-
-    final evaluationIds = evaluations.map((e) => e.id).toList();
-    final gradeRows = evaluationIds.isEmpty
-        ? const <Map<String, dynamic>>[]
-        : (await _c
-                .from('grades')
-                .select('evaluation_id, student_id, score')
-                .inFilter('evaluation_id', evaluationIds)
-                .eq('institution_id', institutionId) as List)
-            .cast<Map<String, dynamic>>();
-
-    final grades = <int, Map<String, double?>>{
-      for (final st in students)
-        st.studentId: {for (final e in evaluations) e.id: null},
-    };
-    for (final g in gradeRows) {
-      final sid = (g['student_id'] as num).toInt();
-      final eid = g['evaluation_id'].toString();
-      grades[sid]?[eid] = (g['score'] as num?)?.toDouble();
-    }
-
     return GradebookMatrix(
       evaluations: evaluations,
-      students: students,
-      grades: grades,
+      students: (data['students'] as List)
+          .cast<Map<String, dynamic>>()
+          .map((row) => (
+                studentId: int.parse(row['studentId'].toString()),
+                name: row['name'] as String
+              ),)
+          .toList(),
+      grades: (data['grades'] as Map<String, dynamic>).map((student, value) =>
+          MapEntry(
+              int.parse(student),
+              Map<String, dynamic>.from(value as Map).map((evaluation, score) =>
+                  MapEntry(evaluation, (score as num?)?.toDouble()),),),),
     );
   }
 

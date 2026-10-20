@@ -335,7 +335,7 @@ class AssignmentsMockSeed {
     if (isGraded) {
       status = SubmissionStatus.graded;
     } else if (isSubmitted) {
-      status = a.dueAt.isBefore(_now()) && a.allowLate
+      status = (a.dueAt?.isBefore(_now()) ?? false) && a.allowLate
           ? SubmissionStatus.late
           : SubmissionStatus.submitted;
     } else {
@@ -348,8 +348,9 @@ class AssignmentsMockSeed {
       studentId: studentId,
       studentName: name,
       status: status,
-      submittedAt:
-          isSubmitted ? a.dueAt.subtract(Duration(hours: index + 1)) : null,
+      submittedAt: isSubmitted
+          ? (a.dueAt ?? _now()).subtract(Duration(hours: index + 1))
+          : null,
       attachments: isSubmitted
           ? [
               AssignmentAttachment(
@@ -365,7 +366,8 @@ class AssignmentsMockSeed {
           ? (a.maxScore * (0.6 + (index % 5) * 0.08)).clamp(0, a.maxScore)
           : null,
       feedback: isGraded ? 'Buen trabajo, revisa el ejercicio 3.' : null,
-      gradedAt: isGraded ? a.dueAt.add(const Duration(days: 1)) : null,
+      gradedAt:
+          isGraded ? (a.dueAt ?? _now()).add(const Duration(days: 1)) : null,
       gradedBy: isGraded ? 'Prof. Elena Ramírez' : null,
     );
   }

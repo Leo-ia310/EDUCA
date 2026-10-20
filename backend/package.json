@@ -11,8 +11,10 @@
     "prebuild": "npm run docs:apis",
     "build": "tsc -p tsconfig.json",
     "pretest": "npm run docs:apis",
-    "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "test": "npm run typecheck && npm run test:unit && npm run test:integration",
+    "test:integration": "node --test --test-concurrency=1 test/*.integration.test.mjs",
+    "test:unit": "tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
@@ -29,10 +31,12 @@
     "@types/node": "^22.7.5",
     "@types/web-push": "^3.6.4",
     "ajv": "^8.20.0",
+    "embedded-postgres": "17.10.0-beta.17",
+    "pg": "8.13.1",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.3.0"
   }
 }

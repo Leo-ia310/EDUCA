@@ -1,6 +1,8 @@
 import 'package:uuid/uuid.dart';
+import 'dart:convert';
 
 import '../domain/assignment_repository.dart';
+import '../domain/assignment_page.dart';
 import '../domain/entities.dart';
 import 'mock_assignments_data.dart';
 
@@ -17,6 +19,102 @@ class MockAssignmentRepository implements AssignmentRepository {
 
   /// Cache de entregas creadas a demanda al pedir submissions de una tarea.
   final Map<String, List<Submission>> _submissionsByAssignment = {};
+
+  @override
+  Future<AssignmentPage> assignmentPage({
+    int? studentId,
+    AssignmentQuery query = const AssignmentQuery(),
+    String? cursor,
+    int limit = 50,
+  }) async {
+    if (limit < 1 || limit > 100) throw ArgumentError.value(limit, 'limit');
+    final initial = studentId == null
+        ? await assignmentsForTeacher(classId: query.classId)
+        : await assignmentsForStudent(studentId: studentId);
+    final source = studentId == null
+        ? initial
+        : await Future.wait(
+            initial.map((a) async {
+              final submission = await submissionForStudent(
+                assignmentId: a.id,
+                studentId: studentId,
+              );
+              final status = submission?.status;
+              return a.copyWith(
+                totalStudents: 1,
+                submittedCount:
+                    status != null && status != SubmissionStatus.pending
+                        ? 1
+                        : 0,
+                gradedCount: status == SubmissionStatus.graded ? 1 : 0,
+                progress: AssignmentProgress(
+                  status: status,
+                  score: submission?.score,
+                ),
+              );
+            }),
+          );
+    var rows = source
+        .where(
+          (a) =>
+              (studentId == null || a.published) &&
+              (query.classId == null || a.classId == query.classId) &&
+              (query.kinds == null || query.kinds!.contains(a.kind)) &&
+              (query.subject == null ||
+                  (a.subjectName
+                          .toLowerCase()
+                          .trim()
+                          .contains(query.subject!.toLowerCase().trim()) ||
+                      query.subject!
+                          .toLowerCase()
+                          .trim()
+                          .contains(a.subjectName.toLowerCase().trim()))) &&
+              ('${a.title} ${a.subjectName}'
+                  .toLowerCase()
+                  .contains(query.search.trim().toLowerCase())) &&
+              (!query.onlyOpen ||
+                  [AssignmentStatus.open, AssignmentStatus.dueSoon]
+                      .contains(a.statusForNow(DateTime.now()))),
+        )
+        .toList()
+      ..sort(Assignment.compareByDueDate);
+    if (cursor != null) {
+      final after =
+          jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(cursor))))
+              as Map<String, dynamic>;
+      final due = after['dueAt'] == null
+              ? null
+              : DateTime.parse(after['dueAt'] as String),
+          id = after['id'] as String;
+      rows = rows
+          .where(
+            (a) => due == null
+                ? a.dueAt == null &&
+                    a.id.compareTo(
+                          id,
+                        ) >
+                        0
+                : a.dueAt == null ||
+                    a.dueAt!.isAfter(due) ||
+                    (a.dueAt!.isAtSameMomentAs(due) && a.id.compareTo(id) > 0),
+          )
+          .toList();
+    }
+    final items = rows.take(limit).toList();
+    final next = rows.length <= limit
+        ? null
+        : base64Url
+            .encode(
+              utf8.encode(
+                jsonEncode({
+                  'id': items.last.id,
+                  'dueAt': items.last.dueAt?.toIso8601String(),
+                }),
+              ),
+            )
+            .replaceAll('=', '');
+    return AssignmentPage(items: List.unmodifiable(items), nextCursor: next);
+  }
 
   // ---------- Lectura ----------
   @override
@@ -36,7 +134,10 @@ class MockAssignmentRepository implements AssignmentRepository {
 
   @override
   Future<Assignment?> assignmentById(String id) async {
-    return _assignments.where((a) => a.id == id).cast<Assignment?>().firstOrNull;
+    return _assignments
+        .where((a) => a.id == id)
+        .cast<Assignment?>()
+        .firstOrNull;
   }
 
   @override
@@ -60,7 +161,10 @@ class MockAssignmentRepository implements AssignmentRepository {
     required int studentId,
   }) async {
     final list = await submissionsForAssignment(assignmentId);
-    return list.where((s) => s.studentId == studentId).cast<Submission?>().firstOrNull;
+    return list
+        .where((s) => s.studentId == studentId)
+        .cast<Submission?>()
+        .firstOrNull;
   }
 
   // ---------- Escritura docente ----------
@@ -141,8 +245,7 @@ class MockAssignmentRepository implements AssignmentRepository {
       }
       break;
     }
-    return updated ??
-        (throw StateError('Entrega $submissionId no encontrada'));
+    return updated ?? (throw StateError('Entrega $submissionId no encontrada'));
   }
 
   // ---------- Escritura estudiante ----------
@@ -157,7 +260,7 @@ class MockAssignmentRepository implements AssignmentRepository {
     final list = await submissionsForAssignment(assignmentId);
     final mutable = list.toList();
     final a = _assignments.firstWhere((x) => x.id == assignmentId);
-    final isLate = DateTime.now().isAfter(a.dueAt);
+    final isLate = a.dueAt != null && DateTime.now().isAfter(a.dueAt!);
     var idx = mutable.indexWhere((s) => s.studentId == studentId);
     final wasPending =
         idx == -1 || mutable[idx].status == SubmissionStatus.pending;
@@ -238,8 +341,7 @@ class MockAssignmentRepository implements AssignmentRepository {
 
   // ---------- Helpers ----------
   List<Assignment> _sorted(List<Assignment> list) {
-    final copy = list.toList()
-      ..sort((a, b) => a.dueAt.compareTo(b.dueAt));
+    final copy = list.toList()..sort(Assignment.compareByDueDate);
     return copy;
   }
 

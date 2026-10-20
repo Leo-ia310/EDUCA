@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { writeGenerated } from "./write-generated";
 import { join } from "node:path";
 
 import { apiManifest } from "../src/lib/api-manifest";
@@ -81,5 +81,5 @@ const document = {
 };
 
 const docsPath = join(process.cwd(), "..", "docs", "openapi.json");
-writeFileSync(docsPath, `${JSON.stringify(document, null, 2)}\n`, "utf8");
+writeGenerated(docsPath, `${JSON.stringify(document, null, 2)}\n`);
 console.log(`OpenAPI generated: ${docsPath}`);

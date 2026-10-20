@@ -77,6 +77,7 @@ class Assignment extends Equatable {
     this.description,
     this.instructions,
     this.teacherName,
+    this.progress,
     this.published = true,
   });
 
@@ -88,13 +89,17 @@ class Assignment extends Equatable {
   final String? description;
   final String? instructions;
   final DateTime assignedAt;
-  final DateTime dueAt;
+  final DateTime? dueAt;
   final AssignmentKind kind;
   final double maxScore;
   final bool allowLate;
   final bool published;
   final List<AssignmentAttachment> attachments;
   final String? teacherName;
+
+  /// Student-specific snapshot returned with a feed page. A null snapshot
+  /// means this read did not request the student's progress.
+  final AssignmentProgress? progress;
 
   /// Para la vista del docente.
   final int totalStudents;
@@ -106,8 +111,10 @@ class Assignment extends Equatable {
     if (gradedCount >= totalStudents && totalStudents > 0) {
       return AssignmentStatus.closed;
     }
-    if (now.isAfter(dueAt)) return AssignmentStatus.overdue;
-    if (dueAt.difference(now).inHours <= 48) return AssignmentStatus.dueSoon;
+    final due = dueAt;
+    if (due == null) return AssignmentStatus.open;
+    if (now.isAfter(due)) return AssignmentStatus.overdue;
+    if (due.difference(now).inHours <= 48) return AssignmentStatus.dueSoon;
     return AssignmentStatus.open;
   }
 
@@ -115,6 +122,14 @@ class Assignment extends Equatable {
       totalStudents == 0 ? 0 : submittedCount / totalStudents;
   double get gradingProgress =>
       submittedCount == 0 ? 0 : gradedCount / submittedCount;
+
+  static int compareByDueDate(Assignment a, Assignment b) {
+    final left = a.dueAt, right = b.dueAt;
+    if (left == null && right != null) return 1;
+    if (left != null && right == null) return -1;
+    final date = left == null ? 0 : left.compareTo(right!);
+    return date != 0 ? date : a.id.compareTo(b.id);
+  }
 
   Assignment copyWith({
     String? title,
@@ -129,6 +144,8 @@ class Assignment extends Equatable {
     List<AssignmentAttachment>? attachments,
     int? submittedCount,
     int? gradedCount,
+    int? totalStudents,
+    AssignmentProgress? progress,
   }) {
     return Assignment(
       id: id,
@@ -146,14 +163,24 @@ class Assignment extends Equatable {
       published: published ?? this.published,
       attachments: attachments ?? this.attachments,
       teacherName: teacherName,
-      totalStudents: totalStudents,
+      progress: progress ?? this.progress,
+      totalStudents: totalStudents ?? this.totalStudents,
       submittedCount: submittedCount ?? this.submittedCount,
       gradedCount: gradedCount ?? this.gradedCount,
     );
   }
 
   @override
-  List<Object?> get props => [id, title, dueAt, submittedCount, gradedCount];
+  List<Object?> get props =>
+      [id, title, dueAt, submittedCount, gradedCount, progress];
+}
+
+class AssignmentProgress extends Equatable {
+  const AssignmentProgress({this.status, this.score});
+  final SubmissionStatus? status;
+  final double? score;
+  @override
+  List<Object?> get props => [status, score];
 }
 
 /// Estado de entrega del estudiante.

@@ -33,6 +33,22 @@ class MockChatRepository implements ChatRepository {
   final _unreadController = StreamController<int>.broadcast();
 
   Timer? _autoResponder;
+  String _query = '';
+
+  @override
+  bool get hasMoreConversations => false;
+  @override
+  Future<void> loadMoreConversations() async {}
+  @override
+  Future<void> searchConversations(String query) async {
+    _query = query.trim().toLowerCase();
+    _emitConversations();
+  }
+
+  @override
+  bool hasOlderMessages(String conversationId) => false;
+  @override
+  Future<void> loadOlderMessages(String conversationId) async {}
 
   void _seed() {
     final initial = ChatMockSeed.initialConversations(
@@ -55,7 +71,11 @@ class MockChatRepository implements ChatRepository {
   }
 
   void _emitConversations() {
-    final sorted = _conversations.values.toList()
+    final sorted = _conversations.values
+        .where((c) =>
+            c.title.toLowerCase().contains(_query) ||
+            (c.lastMessage?.content?.toLowerCase().contains(_query) ?? false),)
+        .toList()
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     if (!_conversationsController.isClosed) {
       _conversationsController.add(List.unmodifiable(sorted));
@@ -85,8 +105,7 @@ class MockChatRepository implements ChatRepository {
   }
 
   @override
-  Future<Conversation?> conversationById(String id) async =>
-      _conversations[id];
+  Future<Conversation?> conversationById(String id) async => _conversations[id];
 
   @override
   Stream<List<Message>> watchMessages(String conversationId) async* {
@@ -246,7 +265,8 @@ class MockChatRepository implements ChatRepository {
         kind: ConversationKind.individual,
         title: otherName,
         participants: [
-          ChatParticipant(userId: meId, name: myName, role: myRoleCode, isMe: true),
+          ChatParticipant(
+              userId: meId, name: myName, role: myRoleCode, isMe: true,),
           ChatParticipant(
             userId: otherUserId,
             name: otherName,
@@ -266,20 +286,33 @@ class MockChatRepository implements ChatRepository {
   @override
   Future<List<ChatParticipant>> discoverableContacts({String? query}) async {
     final pool = <ChatParticipant>[
-      const ChatParticipant(userId: 'u-elena', name: 'Prof. Elena Ramírez', role: 'teacher'),
-      const ChatParticipant(userId: 'u-carlos', name: 'Prof. Carlos Mendoza', role: 'teacher'),
-      const ChatParticipant(userId: 'u-sara', name: 'Prof. Sara Núñez', role: 'teacher'),
-      const ChatParticipant(userId: 'u-coord', name: 'Coordinación Académica', role: 'coordinator'),
-      const ChatParticipant(userId: 'u-director', name: 'Dir. Roberto Castillo', role: 'director'),
-      const ChatParticipant(userId: 'u-marta', name: 'Marta Hernández (madre)', role: 'parent'),
-      const ChatParticipant(userId: 'u-javier', name: 'Javier Rojas (padre)', role: 'parent'),
+      const ChatParticipant(
+          userId: 'u-elena', name: 'Prof. Elena Ramírez', role: 'teacher',),
+      const ChatParticipant(
+          userId: 'u-carlos', name: 'Prof. Carlos Mendoza', role: 'teacher',),
+      const ChatParticipant(
+          userId: 'u-sara', name: 'Prof. Sara Núñez', role: 'teacher',),
+      const ChatParticipant(
+          userId: 'u-coord',
+          name: 'Coordinación Académica',
+          role: 'coordinator',),
+      const ChatParticipant(
+          userId: 'u-director',
+          name: 'Dir. Roberto Castillo',
+          role: 'director',),
+      const ChatParticipant(
+          userId: 'u-marta', name: 'Marta Hernández (madre)', role: 'parent',),
+      const ChatParticipant(
+          userId: 'u-javier', name: 'Javier Rojas (padre)', role: 'parent',),
     ];
     final q = query?.toLowerCase().trim() ?? '';
     if (q.isEmpty) return pool;
     return pool
-        .where((p) =>
-            p.name.toLowerCase().contains(q) ||
-            p.role.toLowerCase().contains(q),)
+        .where(
+          (p) =>
+              p.name.toLowerCase().contains(q) ||
+              p.role.toLowerCase().contains(q),
+        )
         .toList();
   }
 

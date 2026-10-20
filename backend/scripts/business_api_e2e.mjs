@@ -1,3 +1,4 @@
+import {withRequestKey} from './request-keys.mjs';
 // =============================================================================
 // business_api_e2e.mjs - E2E del backend Node contra Supabase real.
 //
@@ -98,6 +99,7 @@ async function login(email) {
 }
 
 async function callBusiness(token, action, payload = {}) {
+  payload=withRequestKey('POST','/api/business-api',{action,payload}).payload;
   return fetchJson(BUSINESS_API, {
     method: 'POST',
     headers: {

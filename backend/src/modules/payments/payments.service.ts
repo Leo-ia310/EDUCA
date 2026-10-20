@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { effectiveChargeStatus } from "./payment-status";
 
 import { assertNoDbError } from "../../lib/db";
 import { HttpError } from "../../lib/errors";
@@ -49,83 +50,23 @@ export class PaymentsService {
       );
     }
 
-    const charge = await this.repository.findChargeForPayment(
+    if (!Number.isFinite(amount) || Math.abs(amount * 100 - Math.round(amount * 100)) > 1e-7) {
+      throw new HttpError(400, "El monto debe tener como máximo dos decimales.", "validation_error");
+    }
+    const payment = await this.repository.registerChargePayment(
       chargeId,
-      ctx.institutionId,
-    );
-    const studentId = Number(charge.student_id);
-    if (!this.permissions.isAdmin(ctx)) {
-      await this.permissions.normalizeStudentId(ctx, studentId, "estudiante");
-    }
-    if (["paid", "cancelled"].includes(String(charge.status))) {
-      throw new HttpError(400, "Este cargo ya está cerrado.", "validation_error");
-    }
-
-    const total = charge.total_amount == null
-      ? Number(charge.amount ?? 0) - Number(charge.discount ?? 0) +
-        Number(charge.late_fee ?? 0)
-      : Number(charge.total_amount);
-    const paid = await this.paidByCharge(chargeId, ctx.institutionId);
-    const pending = Math.max(total - paid, 0);
-    if (amount > pending + 0.009) {
-      throw new HttpError(
-        400,
-        "El monto excede el saldo pendiente.",
-        "validation_error",
-      );
-    }
-
-    const parentId = ctx.roles.has("parent")
-      ? await this.permissions.currentParentId(ctx)
-      : null;
-    const paymentUuid = this.idempotencyKey(payload.idempotencyKey) ??
-      randomUUID();
-    const existing = await this.repository.findPaymentByUuid(
-      paymentUuid,
-      ctx.institutionId,
-    );
-    if (existing != null) {
-      return {
-        payment: await this.hydratePayment(ctx.institutionId, Number(existing.id), {
-          payerName: optionalString(payload.payerName, 150),
-          gatewayName: optionalString(payload.gatewayName, 100),
-        }),
-      };
-    }
-
-    const currencyId =
-      (charge.payment_concepts as Record<string, unknown> | null)
-        ?.currency_id ?? null;
-    const inserted = await this.repository.insertPayment({
-      uuid: paymentUuid,
-      institution_id: ctx.institutionId,
-      charge_id: chargeId,
-      student_id: studentId,
-      parent_id: parentId,
-      payment_method: this.methodFromPayload(payload.method),
       amount,
-      currency_id: currencyId,
-      reference: optionalString(payload.reference, 150),
-      receipt_number: `RC-${Date.now()}`,
-      status: "paid",
-      paid_at: new Date().toISOString(),
-      recorded_by: ctx.userId,
-    });
-
-    const newPaid = await this.paidByCharge(chargeId, ctx.institutionId);
-    const newStatus = newPaid >= total - 0.009 ? "paid" : "partial";
-    const { error } = await this.repository.updateChargeStatus(
-      chargeId,
-      ctx.institutionId,
-      newStatus,
+      this.methodFromPayload(payload.method),
+      optionalString(payload.reference, 150),
+      this.idempotencyKey(payload.idempotencyKey) ?? randomUUID(),
     );
-    assertNoDbError(error);
 
     return {
-      payment: await this.hydratePayment(ctx.institutionId, Number(inserted.id), {
+      payment: {
+        ...payment,
         payerName: optionalString(payload.payerName, 150),
         gatewayName: optionalString(payload.gatewayName, 100),
-      }),
+      },
     };
   }
 
@@ -139,10 +80,7 @@ export class PaymentsService {
     }
     this.permissions.requireAdminPermission(ctx, "payments.cancel");
     const chargeId = requiredId(payload.chargeId, "Cargo");
-    const { error } = await this.repository.cancelCharge(
-      chargeId,
-      ctx.institutionId,
-    );
+    const { error } = await this.repository.cancelCharge(chargeId);
     assertNoDbError(error);
     return { ok: true };
   }
@@ -159,47 +97,7 @@ export class PaymentsService {
   /** Resumen de recaudación y mora (mismo cálculo que la app). */
   async summary(ctx: AppContext) {
     this.requireAdminWith(ctx, "payments.view");
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const [charges, paidAll, paidMonth] = await Promise.all([
-      this.repository.listCharges(ctx.institutionId, null),
-      this.repository.paidPayments(ctx.institutionId),
-      this.repository.paidPayments(ctx.institutionId, monthStart.toISOString()),
-    ]);
-    const paidBy = this.sumByCharge(paidAll);
-
-    let currencyCode = "USD";
-    let overdueAmount = 0;
-    let overdueCount = 0;
-    let pendingAmount = 0;
-    let expectedThisMonth = 0;
-    const byStatus: Record<string, number> = {};
-    for (const c of charges as any[]) {
-      const code = c.payment_concepts?.catalog_currencies?.iso_code;
-      if (code) currencyCode = code;
-      const status = this.effectiveStatus(c);
-      byStatus[status] = (byStatus[status] ?? 0) + 1;
-      const total = this.totalOf(c);
-      const balance = Math.max(total - (paidBy.get(Number(c.id)) ?? 0), 0);
-      if (status === "overdue") {
-        overdueAmount += balance;
-        overdueCount++;
-      }
-      if (status === "pending" || status === "partial") pendingAmount += balance;
-      const due = c.due_at ? new Date(`${c.due_at}T00:00:00`) : null;
-      if (due && due >= monthStart && due < nextMonth && status !== "cancelled") expectedThisMonth += total;
-    }
-    const collectedThisMonth = paidMonth.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
-    return {
-      currencyCode,
-      collectedThisMonth: this.money(collectedThisMonth),
-      expectedThisMonth: this.money(expectedThisMonth),
-      overdueAmount: this.money(overdueAmount),
-      overdueCount,
-      pendingAmount: this.money(pendingAmount),
-      chargesByStatus: byStatus,
-    };
+    return this.repository.collectionSummary();
   }
 
   /** Cargos con alumno, pagado y saldo. Filtros: status (incluye overdue), studentId, groupId. */
@@ -214,11 +112,8 @@ export class PaymentsService {
       const inGroup = await this.repository.activeStudentIdsOfGroup(ctx.institutionId, groupId);
       studentIds = studentIds == null ? inGroup : inGroup.filter((id) => id === studentId);
     }
-    const [rows, paidAll] = await Promise.all([
-      this.repository.listCharges(ctx.institutionId, studentIds),
-      this.repository.paidPayments(ctx.institutionId),
-    ]);
-    const paidBy = this.sumByCharge(paidAll);
+    const rows = await this.repository.listCharges(ctx.institutionId, studentIds);
+    const paidBy = await this.repository.paidTotals(rows.map(c => Number(c.id)));
     const charges = (rows as any[])
       .map((c) => this.chargeView(c, paidBy.get(Number(c.id)) ?? 0))
       .filter((c) => status == null || c.status === status);
@@ -228,25 +123,22 @@ export class PaymentsService {
   /** Cargos de un hijo (padre) o propios (alumno), con lo pagado y el saldo. Solo lectura. */
   async chargesOfStudent(ctx: AppContext, query: Record<string, unknown>) {
     const studentId = await this.permissions.normalizeStudentId(ctx, query.studentId ?? query.student_id, "estudiante");
-    const [rows, paidAll] = await Promise.all([
-      this.repository.listCharges(ctx.institutionId, [studentId]),
-      this.repository.paidPayments(ctx.institutionId),
-    ]);
-    const paidBy = this.sumByCharge(paidAll);
+    const rows = await this.repository.listCharges(ctx.institutionId, [studentId]);
+    const paidBy = await this.repository.paidTotals(rows.map(c => Number(c.id)));
     return { charges: (rows as any[]).map((c) => this.chargeView(c, paidBy.get(Number(c.id)) ?? 0)) };
   }
 
   async getCharge(ctx: AppContext, idValue: unknown) {
     this.requireAdminWith(ctx, "payments.view");
     const id = requiredId(idValue, "Cargo");
-    const [row, paid] = await Promise.all([
+    const [row, paid, totals] = await Promise.all([
       this.repository.findCharge(ctx.institutionId, id),
-      this.repository.paidPayments(ctx.institutionId),
+      this.repository.paidPayments(ctx.institutionId, id),
+      this.repository.paidTotals([id]),
     ]);
-    const mine = paid.filter((p) => Number(p.charge_id) === id);
     return {
-      charge: this.chargeView(row as any, mine.reduce((sum, p) => sum + Number(p.amount ?? 0), 0)),
-      payments: mine.map((p) => ({
+      charge: this.chargeView(row as any, totals.get(id) ?? 0),
+      payments: paid.map((p) => ({
         id: String(p.id),
         amount: Number(p.amount ?? 0),
         method: String(p.payment_method ?? "cash"),
@@ -309,6 +201,8 @@ export class PaymentsService {
 
     const yearId = await this.repository.currentAcademicYearId(ctx.institutionId);
     const description = optionalString(payload.description, 150) ?? String(concept.name);
+    const requestKey=payload.requestId??randomUUID();
+    if(typeof requestKey!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestKey))throw new HttpError(400,"Clave de operación inválida.","validation_error");
     const ids = await this.repository.insertCharges(
       valid.map((studentId) => ({
         institution_id: ctx.institutionId,
@@ -322,34 +216,17 @@ export class PaymentsService {
         total_amount: this.money(amount - discount),
         due_at: dueAt,
         status: "pending",
-      })),
+      })),requestKey,
     );
     return { created: ids.length, chargeIds: ids.map(String) };
   }
 
   // ---------- Cálculo ----------
 
-  private sumByCharge(payments: Record<string, unknown>[]) {
-    const map = new Map<number, number>();
-    for (const p of payments) {
-      const id = Number(p.charge_id);
-      map.set(id, (map.get(id) ?? 0) + Number(p.amount ?? 0));
-    }
-    return map;
-  }
-
   private totalOf(c: any) {
     return c.total_amount == null
       ? Number(c.amount ?? 0) - Number(c.discount ?? 0) + Number(c.late_fee ?? 0)
       : Number(c.total_amount);
-  }
-
-  /** `overdue` si vence antes de hoy y no está cerrado (pagado o anulado), aunque el estado guardado sea otro. */
-  private effectiveStatus(c: any) {
-    const stored = String(c.status ?? "pending");
-    if (stored === "paid" || stored === "cancelled") return stored;
-    const due = c.due_at ? new Date(`${c.due_at}T23:59:59`) : null;
-    return due != null && due.getTime() < Date.now() ? "overdue" : stored;
   }
 
   private money(n: number) {
@@ -373,7 +250,7 @@ export class PaymentsService {
       paid: this.money(paid),
       balance: this.money(Math.max(total - paid, 0)),
       dueAt: c.due_at ?? null,
-      status: this.effectiveStatus(c),
+      status: effectiveChargeStatus(c),
       storedStatus: String(c.status ?? "pending"),
       currencyCode: String(c.payment_concepts?.catalog_currencies?.iso_code ?? "USD"),
     };
@@ -401,52 +278,6 @@ export class PaymentsService {
       );
     }
     return key;
-  }
-
-  private async paidByCharge(chargeId: number, institutionId: number) {
-    const { data, error } = await this.repository.paidPaymentsByCharge(
-      chargeId,
-      institutionId,
-    );
-    if (error) throw new HttpError(400, error.message, "db_error");
-    return (data ?? []).reduce(
-      (sum: number, row: Record<string, unknown>) =>
-        sum + Number(row.amount ?? 0),
-      0,
-    );
-  }
-
-  private async hydratePayment(
-    institutionId: number,
-    id: number,
-    extras: Record<string, unknown> = {},
-  ) {
-    const row = await this.repository.findPaymentForHydration(id, institutionId);
-    const person = ((row.students as Record<string, unknown> | null)?.persons ??
-      null) as Record<string, unknown> | null;
-    const charge = row.charges as Record<string, unknown> | null;
-    const conceptName =
-      (charge?.payment_concepts as Record<string, unknown> | null)?.name;
-    return {
-      id: String(row.id),
-      uuid: String(row.uuid),
-      chargeId: row.charge_id == null ? "" : String(row.charge_id),
-      chargeConcept: String(conceptName ?? charge?.description ?? "Pago"),
-      studentName:
-        `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim() ||
-        "Estudiante",
-      method: String(row.payment_method ?? "cash"),
-      amount: Number(row.amount ?? 0),
-      currencyCode: String(
-        (row.catalog_currencies as Record<string, unknown> | null)?.iso_code ??
-          "USD",
-      ),
-      status: String(row.status ?? "pending"),
-      paidAt: String(row.paid_at ?? new Date().toISOString()),
-      receiptNumber: String(row.receipt_number ?? ""),
-      reference: row.reference ?? null,
-      ...extras,
-    };
   }
 }
 

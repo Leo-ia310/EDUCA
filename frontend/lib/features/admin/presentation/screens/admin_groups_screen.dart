@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/network/paginated_response.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -16,6 +17,7 @@ import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/class_form.dart';
 import '../widgets/person_form.dart';
+import '../widgets/page_controls.dart';
 
 /// Salones / años: lista con su CRUD. Cada salón abre el detalle con la lista
 /// de sus estudiantes y de sus clases.
@@ -61,6 +63,7 @@ class AdminGroupsScreen extends ConsumerWidget {
           ? await repo.createGroup({'name': name})
           : await repo.updateGroup(group.id, {'name': name});
       ref.invalidate(adminSchoolDirectoryProvider);
+      ref.invalidate(adminCatalogProvider);
       return;
     }
     final store = ref.read(schoolDirectoryProvider.notifier);
@@ -71,21 +74,7 @@ class AdminGroupsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.watch(adminBackendRepositoryProvider);
     if (repo != null) {
-      final remote = ref.watch(adminSchoolDirectoryProvider);
-      return remote.when(
-        loading: () => const StudentDetailScaffold(
-          title: 'Salones y años',
-          bottomNav: false,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        error: (error, _) => StudentDetailScaffold(
-          title: 'Salones y años',
-          bottomNav: false,
-          child: ErrorStateView(message: '$error'),
-        ),
-        data: (dir) =>
-            _GroupsList(dir: dir, onNew: () => _editName(context, ref)),
-      );
+      return _RemoteGroupsList(onNew: () => _editName(context, ref));
     }
     final dir = ref.watch(schoolDirectoryProvider);
     return _GroupsList(dir: dir, onNew: () => _editName(context, ref));
@@ -93,10 +82,13 @@ class AdminGroupsScreen extends ConsumerWidget {
 }
 
 class _GroupsList extends ConsumerWidget {
-  const _GroupsList({required this.dir, required this.onNew});
+  const _GroupsList(
+      {required this.dir, required this.onNew, this.pageInfo, this.onPage,});
 
   final SchoolDirectory dir;
   final VoidCallback onNew;
+  final PageInfo? pageInfo;
+  final ValueChanged<int>? onPage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -128,12 +120,14 @@ class _GroupsList extends ConsumerWidget {
               AdminTile(
                 title: g.name,
                 subtitle:
-                    '${dir.studentsOfGroup(g.id).length} estudiantes · ${dir.classesOfGroup(g.id).length} clases',
+                    '${g.studentCount ?? dir.studentsOfGroup(g.id).length} estudiantes · ${g.classCount ?? dir.classesOfGroup(g.id).length} clases',
                 color: context.palette.mint,
                 leadingIcon: Icons.meeting_room_rounded,
                 trailing: _Chevron(),
                 onTap: () => context.push('${Routes.adminGroups}/${g.id}'),
               ),
+          if (pageInfo != null && onPage != null)
+            PageControls(pageInfo: pageInfo!, onPage: onPage!),
         ],
       ),
     );
@@ -167,32 +161,13 @@ class AdminGroupDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.watch(adminBackendRepositoryProvider);
-    final remote =
-        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
-    if (remote != null) {
-      return remote.when(
-        loading: () => const StudentDetailScaffold(
-          title: 'Salón',
-          bottomNav: false,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        error: (error, _) => StudentDetailScaffold(
-          title: 'Salón',
-          bottomNav: false,
-          child: ErrorStateView(message: '$error'),
-        ),
-        data: (dir) => _buildDetail(context, ref, dir),
-      );
-    }
+    if (repo != null) return _RemoteGroupDetail(groupId: groupId);
     final dir = ref.watch(schoolDirectoryProvider);
     return _buildDetail(context, ref, dir);
   }
 
-  Widget _buildDetail(
-    BuildContext context,
-    WidgetRef ref,
-    SchoolDirectory dir,
-  ) {
+  Widget _buildDetail(BuildContext context, WidgetRef ref, SchoolDirectory dir,
+      {PageInfo? pageInfo, ValueChanged<int>? onPage,}) {
     final group = dir.group(groupId);
     if (group == null) {
       return const StudentDetailScaffold(
@@ -251,6 +226,7 @@ class AdminGroupDetailScreen extends ConsumerWidget {
                         if (repo != null) {
                           await repo.archiveGroup(groupId);
                           ref.invalidate(adminSchoolDirectoryProvider);
+                          ref.invalidate(adminCatalogProvider);
                         } else {
                           store.removeGroup(groupId);
                         }
@@ -294,6 +270,8 @@ class AdminGroupDetailScreen extends ConsumerWidget {
                   ? () => showClassSheet(context, existing: c)
                   : null,
             ),
+          if (pageInfo != null && onPage != null)
+            PageControls(pageInfo: pageInfo, onPage: onPage),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -310,20 +288,138 @@ class AdminGroupDetailScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
-          if (students.isEmpty) const Text('Sin estudiantes en este salón.'),
-          for (final s in students)
-            AdminTile(
-              title: s.name,
-              subtitle: s.email,
-              color: roleColor(context, AppRole.student),
-              leadingText: s.initials,
-              dimmed: !s.active,
-              onTap: canEditStudent
-                  ? () => showPersonSheet(context, existing: s)
-                  : null,
-            ),
+          if (ref.watch(adminBackendRepositoryProvider) != null)
+            _GroupStudentsList(groupId: groupId, canEdit: canEditStudent)
+          else ...[
+            if (students.isEmpty) const Text('Sin estudiantes en este salón.'),
+            for (final s in students)
+              AdminTile(
+                title: s.name,
+                subtitle: s.email,
+                color: roleColor(context, AppRole.student),
+                leadingText: s.initials,
+                dimmed: !s.active,
+                onTap: canEditStudent
+                    ? () => showPersonSheet(context, existing: s)
+                    : null,
+              ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _RemoteGroupsList extends ConsumerStatefulWidget {
+  const _RemoteGroupsList({required this.onNew});
+  final VoidCallback onNew;
+  @override
+  ConsumerState<_RemoteGroupsList> createState() => _RemoteGroupsListState();
+}
+
+class _RemoteGroupsListState extends ConsumerState<_RemoteGroupsList> {
+  int _page = 1;
+  @override
+  Widget build(BuildContext context) {
+    final result = ref.watch(adminCatalogProvider(
+        (kind: 'groups', search: '', page: _page, groupId: null),),);
+    return result.when(
+      loading: () => const StudentDetailScaffold(
+          title: 'Salones y años',
+          bottomNav: false,
+          child: Center(child: CircularProgressIndicator()),),
+      error: (e, _) => StudentDetailScaffold(
+          title: 'Salones y años',
+          bottomNav: false,
+          child: ErrorStateView(
+              message: '$e',
+              onRetry: () => ref.invalidate(adminCatalogProvider),),),
+      data: (page) => _GroupsList(
+          dir: page.directory,
+          onNew: widget.onNew,
+          pageInfo: page.pageInfo,
+          onPage: (value) => setState(() => _page = value),),
+    );
+  }
+}
+
+class _RemoteGroupDetail extends ConsumerStatefulWidget {
+  const _RemoteGroupDetail({required this.groupId});
+  final String groupId;
+  @override
+  ConsumerState<_RemoteGroupDetail> createState() => _RemoteGroupDetailState();
+}
+
+class _RemoteGroupDetailState extends ConsumerState<_RemoteGroupDetail> {
+  int _page = 1;
+  @override
+  Widget build(BuildContext context) {
+    final result = ref.watch(adminCatalogProvider(
+        (kind: 'classes', search: '', page: _page, groupId: widget.groupId),),);
+    return result.when(
+      loading: () => const StudentDetailScaffold(
+          title: 'Salón',
+          bottomNav: false,
+          child: Center(child: CircularProgressIndicator()),),
+      error: (e, _) => StudentDetailScaffold(
+          title: 'Salón',
+          bottomNav: false,
+          child: ErrorStateView(
+              message: '$e',
+              onRetry: () => ref.invalidate(adminCatalogProvider),),),
+      data: (page) => AdminGroupDetailScreen(groupId: widget.groupId)
+          ._buildDetail(context, ref, page.directory,
+              pageInfo: page.pageInfo,
+              onPage: (value) => setState(() => _page = value),),
+    );
+  }
+}
+
+class _GroupStudentsList extends ConsumerStatefulWidget {
+  const _GroupStudentsList({required this.groupId, required this.canEdit});
+  final String groupId;
+  final bool canEdit;
+  @override
+  ConsumerState<_GroupStudentsList> createState() => _GroupStudentsListState();
+}
+
+class _GroupStudentsListState extends ConsumerState<_GroupStudentsList> {
+  int _page = 1;
+  @override
+  Widget build(BuildContext context) {
+    final result = ref.watch(adminDirectoryPeoplePageProvider((
+      role: AppRole.student,
+      search: '',
+      page: _page,
+      groupId: widget.groupId
+    ),),);
+    return result.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => ErrorStateView(
+          message: '$e',
+          onRetry: () => ref.invalidate(adminDirectoryPeoplePageProvider),),
+      data: (page) => Column(children: [
+        if (page.items.isEmpty) const Text('Sin estudiantes en este salón.'),
+        for (final student in page.items)
+          AdminTile(
+              title: student.name,
+              subtitle: student.email,
+              color: roleColor(context, AppRole.student),
+              leadingText: student.initials,
+              dimmed: !student.active,
+              onTap: widget.canEdit
+                  ? () async {
+                      await showPersonSheet(context, existing: student);
+                      if (mounted) {
+                        ref.invalidate(adminDirectoryPeoplePageProvider);
+                        ref.invalidate(adminCatalogProvider);
+                      }
+                    }
+                  : null,),
+        PageControls(
+            pageInfo: page.pageInfo,
+            onPage: (value) => setState(() => _page = value),),
+      ],),
     );
   }
 }

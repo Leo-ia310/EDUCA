@@ -38,9 +38,11 @@ class AdminDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user!;
     // Conectado: contadores del backend; demo: directorio en memoria.
-    final remote = ref.watch(adminSchoolDirectoryProvider);
-    final SchoolDirectory dir =
-        remote.valueOrNull ?? ref.watch(schoolDirectoryProvider);
+    final connected=ref.watch(adminBackendRepositoryProvider)!=null;
+    final counts=connected?ref.watch(adminDirectoryCountsProvider).valueOrNull:null;
+    final dir=connected?const SchoolDirectory():ref.watch(schoolDirectoryProvider);
+    String counter(String key,int demo)=>connected?(counts?[key]?.toString() ?? '—'):demo.toString();
+    final profiles=connected?(counts==null?'—':((counts['student']??0)+(counts['teacher']??0)+(counts['parent']??0)).toString()):dir.people.length.toString();
 
     Widget art(IconData a, IconData b) => ArtCluster([
           ArtItem.icon(a, size: 64, top: 4, right: 40, angle: 0.25),
@@ -51,7 +53,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       (
         icon: Icons.badge_rounded,
         title: 'Maestros',
-        subtitle: '${dir.byRole(AppRole.teacher).length} maestros y sus clases',
+        subtitle: '${counter('teacher',dir.byRole(AppRole.teacher).length)} maestros y sus clases',
         color: context.palette.accent,
         route: Routes.manageTeachers,
         art: art(Icons.school_rounded, Icons.edit_note_rounded),
@@ -60,7 +62,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       (
         icon: Icons.backpack_rounded,
         title: 'Alumnos',
-        subtitle: '${dir.byRole(AppRole.student).length} alumnos inscritos',
+        subtitle: '${counter('student',dir.byRole(AppRole.student).length)} alumnos inscritos',
         color: context.palette.sun,
         route: Routes.adminStudents,
         art: art(Icons.face_rounded, Icons.menu_book_rounded),
@@ -69,7 +71,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       (
         icon: Icons.family_restroom_rounded,
         title: 'Padres',
-        subtitle: '${dir.byRole(AppRole.parent).length} padres y tutores',
+        subtitle: '${counter('parent',dir.byRole(AppRole.parent).length)} padres y tutores',
         color: context.palette.grape,
         route: Routes.adminParents,
         art: art(Icons.favorite_rounded, Icons.face_3_rounded),
@@ -78,7 +80,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       (
         icon: Icons.meeting_room_rounded,
         title: 'Salones',
-        subtitle: '${dir.groups.length} salones y años',
+        subtitle: '${counter('group',dir.groups.length)} salones y años',
         color: context.palette.mint,
         route: Routes.adminGroups,
         art: art(Icons.groups_rounded, Icons.apartment_rounded),
@@ -87,7 +89,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       (
         icon: Icons.menu_book_rounded,
         title: 'Clases',
-        subtitle: '${dir.classes.length} clases y asignaciones',
+        subtitle: '${counter('class',dir.classes.length)} clases y asignaciones',
         color: context.palette.success,
         route: Routes.adminClasses,
         art: art(Icons.calculate_rounded, Icons.science_rounded),
@@ -105,7 +107,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       (
         icon: Icons.admin_panel_settings_rounded,
         title: 'Roles y perfiles',
-        subtitle: '${dir.people.length} perfiles registrados',
+        subtitle: '$profiles perfiles registrados',
         color: context.palette.coral,
         route: Routes.adminRoles,
         art: art(Icons.verified_user_rounded, Icons.key_rounded),

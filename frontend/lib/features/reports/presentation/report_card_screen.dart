@@ -267,7 +267,10 @@ class _Header extends StatelessWidget {
                   ],
                 ),
               ),
-              GradePill(score: card.overallAverage, scale: scale),
+              if (card.hasGrades)
+                GradePill(score: card.overallAverage, scale: scale)
+              else
+                const Text('Sin calificar'),
             ],
           ),
           const SizedBox(height: 14),
@@ -279,11 +282,15 @@ class _Header extends StatelessWidget {
               ),
               _HeaderStat(
                 label: 'Asistencia',
-                value: '${card.attendancePct.toStringAsFixed(1)}%',
+                value: card.attendancePct == null
+                    ? '—'
+                    : '${card.attendancePct!.toStringAsFixed(1)}%',
               ),
               _HeaderStat(
                 label: 'Posición',
-                value: '${card.rank}/${card.totalPeers}',
+                value: card.rank == null || card.totalPeers == null
+                    ? '—'
+                    : '${card.rank}/${card.totalPeers}',
               ),
             ],
           ),
@@ -374,7 +381,10 @@ class _SubjectLine extends StatelessWidget {
               ],
             ),
           ),
-          GradePill(score: line.finalScore, scale: scale),
+          if (line.hasGrade)
+            GradePill(score: line.finalScore, scale: scale)
+          else
+            const Text('Sin calificar'),
         ],
       ),
     );

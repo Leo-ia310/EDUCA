@@ -9,7 +9,7 @@ export function requestIdMiddleware(
   next: NextFunction,
 ) {
   const incoming = req.header("x-request-id")?.trim();
-  const requestId = incoming && incoming.length <= 120 ? incoming : randomUUID();
+  const requestId = incoming && /^[A-Za-z0-9_.:-]{1,120}$/.test(incoming) ? incoming : randomUUID();
   req.requestId = requestId;
   res.setHeader("x-request-id", requestId);
   next();

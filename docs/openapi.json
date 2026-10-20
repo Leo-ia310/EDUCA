@@ -20,13 +20,13 @@
     }
   },
   "paths": {
-    "/api/portal-access/me": {
+    "/health": {
       "get": {
         "tags": [
-          "portal-access"
+          "operations"
         ],
-        "summary": "Permisos efectivos y visibilidad de notas de la sesión",
-        "description": "Auth: usuario autenticado.\n\nNotas: Migraciones 0026 y 0027. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "summary": "Proceso HTTP activo",
+        "description": "Auth: público.\n\nNotas: Liveness sin consultar dependencias; no mide capacidad de negocio.\n\nFuente: backend/src/app.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -34,7 +34,115 @@
         ],
         "responses": {
           "200": {
-            "description": "{ permissions, students: [{ studentId, name, annualVisible, periods }], staff }",
+            "description": "{ ok: true, service }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "operations"
+        ],
+        "summary": "Disponibilidad de PostgreSQL y versión de contrato",
+        "description": "Auth: público.\n\nNotas: 200 listo; 503 durante cierre, caída de consulta o falta de migración 0053. Probe compartido y caché de 2 segundos; no expone detalles internos ni comprueba cada proveedor externo. Paquete manual completo: supabase/deploy/scalability-0029-0053.sql; requiere backup, revisión de horarios y base compatible con 0028. No activa 2FA.\n\nFuente: backend/src/app.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok, service, schemaVersion: 53 }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/internal/metrics": {
+      "get": {
+        "tags": [
+          "operations"
+        ],
+        "summary": "Contadores, latencia y concurrencia del proceso",
+        "description": "Auth: Authorization: Bearer INTERNAL_API_SECRET.\n\nNotas: Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Latencia de dependencia hasta cabeceras; solicitudes HTTP completas hasta finish/close.\n\nFuente: backend/src/app.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/portal-access/me": {
+      "get": {
+        "tags": [
+          "portal-access"
+        ],
+        "summary": "Permisos efectivos con roles vigentes de la institución y visibilidad de notas de la sesión",
+        "description": "Auth: usuario autenticado.\n\nNotas: Migraciones 0026, 0027 y 0039–0044. annualVisible corresponde al año actual; los documentos históricos conservan su autorización por año conocido y los anuales sin año mantienen la comprobación conservadora. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ permissions, students: [{ studentId, name, academicYearId, annualVisible, periods }], staff }",
             "content": {
               "application/json": {
                 "schema": {
@@ -98,7 +206,7 @@
           "portal-access"
         ],
         "summary": "Reglas institucionales y destinos disponibles",
-        "description": "Auth: admin, director o coordinator con roles.edit.\n\nNotas: Migraciones 0026 y 0027. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "description": "Auth: admin, director o coordinator con roles.edit.\n\nNotas: Migraciones 0026, 0027 y 0039–0044. annualVisible corresponde al año actual; los documentos históricos conservan su autorización por año conocido y los anuales sin año mantienen la comprobación conservadora. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -252,7 +360,7 @@
           "portal-access"
         ],
         "summary": "Guardar o quitar reglas de módulos y visibilidad de notas",
-        "description": "Auth: admin, director o coordinator con roles.edit.\n\nNotas: Migraciones 0026 y 0027. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "description": "Auth: admin, director o coordinator con roles.edit.\n\nNotas: Migraciones 0026, 0027 y 0039–0044. annualVisible corresponde al año actual; los documentos históricos conservan su autorización por año conocido y los anuales sin año mantienen la comprobación conservadora. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -304,7 +412,7 @@
           "portal-access"
         ],
         "summary": "Notas propias o de hijos vinculados por periodo",
-        "description": "Auth: student o parent; personal conserva sus permisos académicos.\n\nNotas: Migraciones 0026 y 0027. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "description": "Auth: student o parent; personal conserva sus permisos académicos.\n\nNotas: Migraciones 0026, 0027 y 0039–0044. annualVisible corresponde al año actual; los documentos históricos conservan su autorización por año conocido y los anuales sin año mantienen la comprobación conservadora. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -380,7 +488,7 @@
           "auth"
         ],
         "summary": "Login institucional por codigo de colegio, usuario/email y contraseña",
-        "description": "Auth: publico.\n\nNotas: Resuelve institutions.code + users.username/users.email y autentica contra Supabase Auth; solo pide 2FA cuando el usuario lo activo. 2FA esta disponible para todos los usuarios desde Cuenta > Seguridad 2FA. Los límites por IP contabilizan respuestas con error, no el uso exitoso. Las solicitudes autenticadas tienen un cupo separado por usuario validado (USER_RATE_LIMIT_MAX, 1200 por ventana por defecto); exceder ese cupo no consume el cupo por IP. Los contadores son locales a cada instancia del backend.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "description": "Auth: publico.\n\nNotas: Resuelve institutions.code + users.username/users.email y autentica contra Supabase Auth; solo pide 2FA cuando el usuario lo activo. 2FA esta disponible para todos los usuarios desde Cuenta > Seguridad 2FA. Los límites por IP contabilizan respuestas con error, no el uso exitoso. Las solicitudes autenticadas tienen un cupo separado por usuario validado (USER_RATE_LIMIT_MAX, 1200 por ventana por defecto); exceder ese cupo no consume el cupo por IP. El cupo de usuario se comparte en PostgreSQL; únicamente los límites de fallos por IP son locales a cada instancia.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [],
         "requestBody": {
           "required": false,
@@ -744,7 +852,7 @@
           "auth"
         ],
         "summary": "Consulta estado de 2FA del usuario autenticado",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Autorización de rutas protegidas: Auth verifica el bearer y la RPC privada 0035 valida cuenta, institución, sesión revocable, MFA, roles y cupo compartido por usuario. No hay caché entre peticiones; las consultas de negocio conservan el JWT/RLS del usuario. Headers x-user-ratelimit-* y Retry-After en 429. SERVICE_ROLE_KEY solo en backend; aplicar 0035 antes de publicar.\n\nFuente: backend/src/modules/auth/auth.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1626,7 +1734,7 @@
           "admin"
         ],
         "summary": "Crea usuario de aplicacion y asigna roles",
-        "description": "Auth: admin, super_admin.\n\nNotas: No crea contraseña; invitacion/credencial Supabase queda en flujo de correo/Auth.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0048: usuario y roles en una transacción; se verifica la identidad Auth preexistente si se vincula. Para crear accesos completos usar personas/perfiles. No crea contraseña; invitacion/credencial Supabase queda en flujo de correo/Auth.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1678,7 +1786,7 @@
           "admin"
         ],
         "summary": "Actualiza usuario institucional y roles",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0048: cuenta y roles se confirman juntos, con control SQL de permisos, identidad y escalamiento.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1783,8 +1891,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Devuelve directorio institucional para admin: personas, salones y clases",
-        "description": "Auth: admin, super_admin.\n\nNotas: Para estudiantes, classIds se deriva del salón/grupo inscrito en enrollments.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "summary": "Catálogo administrativo paginado de clases o salones del año actual",
+        "description": "Auth: admin, super_admin.\n\nNotas: RPC privada 0036. Se pagina la colección indicada por kind antes de hidratarla. Ya no devuelve todas las personas; usar /directory/people o /students, /teachers, /parents. Solo curso vigente; contadores completos en SQL. Grupos sin clases se incluyen al pedir groupId.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -1792,7 +1900,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ people: Person[] con groupId/classIds/childIds, groups: Group[], classes: Class[] }",
+            "description": "{ people: Teacher[] relacionados con la página, groups: Group[] con student_count/class_count, classes: Class[], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -1809,6 +1917,38 @@
                     "data": {
                       "type": "object",
                       "properties": {
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        },
                         "people": {
                           "type": "array",
                           "items": {
@@ -2058,9 +2198,445 @@
                         }
                       },
                       "required": [
+                        "pageInfo",
                         "people",
                         "groups",
                         "classes"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/directory/options": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Opciones paginadas para formularios administrativos",
+        "description": "Auth: administración con acceso al directorio.\n\nNotas: RPC privada 0036. Búsqueda antes de paginar; grupos/clases activos del año actual. Las selecciones se hidratan aparte y permanecen al cambiar de página/búsqueda. No descarga el directorio completo.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ items: [{ id, label, subtitle, groupId, teacherId, room }], selected: [{ id, label }], pageInfo }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "subtitle": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "groupId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "teacherId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "room": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "subtitle",
+                              "groupId",
+                              "teacherId",
+                              "room"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "selected": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "selected",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/directory/people": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Resumen de personas paginado para roles, salones y boletines",
+        "description": "Auth: administración con acceso al directorio.\n\nNotas: RPC privada 0036. Relaciones del año vigente, filtros antes de paginar; DTO sin datos médicos ni documentos. groupId acota a matrícula ACT del curso actual.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ items: [{ id, role, active, persons, group_id, group_name, class_ids, classes, child_ids, children }], pageInfo }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer"
+                              },
+                              "role": {
+                                "type": "string"
+                              },
+                              "active": {
+                                "type": "boolean"
+                              },
+                              "group_id": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "group_name": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "class_ids": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "child_ids": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "classes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "additionalProperties": true
+                                }
+                              },
+                              "children": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "additionalProperties": true
+                                }
+                              },
+                              "persons": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer"
+                                  },
+                                  "first_name": {
+                                    "type": "string"
+                                  },
+                                  "last_name": {
+                                    "type": "string"
+                                  },
+                                  "email": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "phone": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "first_name",
+                                  "last_name",
+                                  "email",
+                                  "phone"
+                                ],
+                                "additionalProperties": true
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "role",
+                              "active",
+                              "group_id",
+                              "group_name",
+                              "class_ids",
+                              "child_ids",
+                              "classes",
+                              "children",
+                              "persons"
+                            ],
+                            "additionalProperties": true
+                          }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "pageInfo"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/admin/directory/counts": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Contadores completos de roles sin descargar perfiles",
+        "description": "Auth: administración con dashboard.view o roles.view.\n\nNotas: RPC privada 0036. Cuenta entidades alumno/maestro/padre y perfiles administrativos sin tope de filas.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ counts: { [role]: number } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts"
                       ],
                       "additionalProperties": false
                     }
@@ -2632,7 +3208,7 @@
           "admin"
         ],
         "summary": "Lista perfiles administrativos con rol y permisos",
-        "description": "Auth: admin/coordinator/director con roles.view.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin/coordinator/director con roles.view.\n\nNotas: RPC privada 0036: filtra roles administrativos y búsqueda antes de paginar; no descarga usuarios para filtrarlos en memoria.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2640,7 +3216,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ profiles: [{ id, fullName, email, phone, active, roleCode, customized, permissions }] }",
+            "description": "{ profiles: [{ id, fullName, email, phone, active, roleCode, customized, permissions }], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -2657,6 +3233,38 @@
                     "data": {
                       "type": "object",
                       "properties": {
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        },
                         "profiles": {
                           "type": "array",
                           "items": {
@@ -2723,6 +3331,7 @@
                         }
                       },
                       "required": [
+                        "pageInfo",
                         "profiles"
                       ],
                       "additionalProperties": false
@@ -2748,7 +3357,7 @@
           "admin"
         ],
         "summary": "Crea perfil administrativo (cuenta de acceso + rol + permisos)",
-        "description": "Auth: admin/coordinator/director con roles.create; rol admin solo por admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin/coordinator/director con roles.create; rol admin solo por admin.\n\nNotas: 0050: reserva durable con UUID de Auth antes de crear acceso. requestId UUID obligatorio, mismo payload y contraseña en reintentos. No almacena contraseña en SQL. Persona, entidad, rol y vínculos se confirman juntos. 503 conserva la reserva; provisioning_review requiere conciliación privada. Nunca elimina Auth por una respuesta ambigua. Archivos/operación en ESCRITURAS_TRANSACCIONALES.md.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -2761,6 +3370,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
                   "fullName": {
                     "type": "string"
                   },
@@ -2795,6 +3408,7 @@
                   }
                 },
                 "required": [
+                  "requestId",
                   "fullName",
                   "email",
                   "password",
@@ -2805,7 +3419,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ fullName, email, password, roleCode: admin|coordinator|director, permissions: string[], phone?, username?, active? }"
+                  "value": "{ requestId: UUID, fullName, email, password, roleCode: admin|coordinator|director, permissions: string[], phone?, username?, active? }"
                 }
               }
             }
@@ -2841,7 +3455,7 @@
           "admin"
         ],
         "summary": "Actualiza rol, permisos y datos de un perfil administrativo",
-        "description": "Auth: admin/coordinator/director con roles.edit; no permite editar el propio acceso ni conceder permisos que no se tienen.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin/coordinator/director con roles.edit; no permite editar el propio acceso ni conceder permisos que no se tienen.\n\nNotas: 0048: datos, permisos y rol en una transacción; Auth metadata no se usa como autoridad de roles.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3225,7 +3839,7 @@
           "admin"
         ],
         "summary": "Lista estudiantes institucionales",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: RPC privada 0036: búsqueda antes de paginar; relaciones del año actual hidratadas solo para la página. Incluye group_id/group_name, class_ids/classes y child_ids/children. id opcional carga los vínculos completos de un perfil al editarlo.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3383,7 +3997,7 @@
           "admin"
         ],
         "summary": "Crea estudiante, persona y cuenta de acceso",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0050: reserva durable con UUID de Auth antes de crear acceso. requestId UUID obligatorio, mismo payload y contraseña en reintentos. No almacena contraseña en SQL. Persona, entidad, rol y vínculos se confirman juntos. 503 conserva la reserva; provisioning_review requiere conciliación privada. Nunca elimina Auth por una respuesta ambigua. Archivos/operación en ESCRITURAS_TRANSACCIONALES.md.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3396,6 +4010,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
                   "firstName": {
                     "type": "string"
                   },
@@ -3452,6 +4070,7 @@
                   }
                 },
                 "required": [
+                  "requestId",
                   "firstName",
                   "lastName",
                   "email",
@@ -3461,7 +4080,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, studentCode, groupId?, classId?/classIds?, ... }"
+                  "value": "{ requestId: UUID, institutionId? solo super_admin, firstName, lastName, email, password, username?, studentCode, groupId?, classId?/classIds?, ... }"
                 }
               }
             }
@@ -3497,7 +4116,7 @@
           "admin"
         ],
         "summary": "Actualiza estudiante, persona e inscripción por salón/clase",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0048: persona, entidad, matrícula actual y cuenta vinculada en una transacción; conserva años históricos.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3648,7 +4267,7 @@
           "admin"
         ],
         "summary": "Lista docentes institucionales",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: RPC privada 0036: búsqueda antes de paginar; relaciones del año actual hidratadas solo para la página. Incluye group_id/group_name, class_ids/classes y child_ids/children. id opcional carga los vínculos completos de un perfil al editarlo.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3817,7 +4436,7 @@
           "admin"
         ],
         "summary": "Crea docente, persona y cuenta de acceso",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0050: reserva durable con UUID de Auth antes de crear acceso. requestId UUID obligatorio, mismo payload y contraseña en reintentos. No almacena contraseña en SQL. Persona, entidad, rol y vínculos se confirman juntos. 503 conserva la reserva; provisioning_review requiere conciliación privada. Nunca elimina Auth por una respuesta ambigua. Archivos/operación en ESCRITURAS_TRANSACCIONALES.md.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -3830,6 +4449,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
                   "firstName": {
                     "type": "string"
                   },
@@ -3869,6 +4492,7 @@
                   }
                 },
                 "required": [
+                  "requestId",
                   "firstName",
                   "lastName",
                   "email",
@@ -3878,7 +4502,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, teacherCode, classIds?, ... }"
+                  "value": "{ requestId: UUID, institutionId? solo super_admin, firstName, lastName, email, password, username?, teacherCode, classIds?, ... }"
                 }
               }
             }
@@ -3914,7 +4538,7 @@
           "admin"
         ],
         "summary": "Actualiza docente, persona y clases asignadas",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0048: actualización y asignaciones actuales atómicas; conserva clases históricas/inactivas. Cambiar asignaciones requiere classes.edit. Conflictos de horarios revierten todo.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -4048,7 +4672,7 @@
           "admin"
         ],
         "summary": "Lista padres/acudientes institucionales",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: RPC privada 0036: búsqueda antes de paginar; relaciones del año actual hidratadas solo para la página. Incluye group_id/group_name, class_ids/classes y child_ids/children. id opcional carga los vínculos completos de un perfil al editarlo.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -4195,7 +4819,7 @@
           "admin"
         ],
         "summary": "Crea padre/acudiente, persona y cuenta de acceso",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0050: reserva durable con UUID de Auth antes de crear acceso. requestId UUID obligatorio, mismo payload y contraseña en reintentos. No almacena contraseña en SQL. Persona, entidad, rol y vínculos se confirman juntos. 503 conserva la reserva; provisioning_review requiere conciliación privada. Nunca elimina Auth por una respuesta ambigua. Archivos/operación en ESCRITURAS_TRANSACCIONALES.md.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -4208,6 +4832,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
                   "firstName": {
                     "type": "string"
                   },
@@ -4247,6 +4875,7 @@
                   }
                 },
                 "required": [
+                  "requestId",
                   "firstName",
                   "lastName",
                   "email",
@@ -4256,7 +4885,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ institutionId? solo super_admin, firstName, lastName, email, password, username?, occupation?, ... }"
+                  "value": "{ requestId: UUID, institutionId? solo super_admin, firstName, lastName, email, password, username?, occupation?, ... }"
                 }
               }
             }
@@ -4292,7 +4921,7 @@
           "admin"
         ],
         "summary": "Actualiza padre/acudiente y persona",
-        "description": "Auth: admin, super_admin.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0048: datos y vínculos de hijos en una transacción, sin borrado previo que deje relaciones parciales.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -5543,7 +6172,7 @@
           "assignments"
         ],
         "summary": "Lista las tareas del maestro con conteos de entregas",
-        "description": "Auth: teacher (admin tambien).\n\nNotas: Solo lectura para la web del maestro. RLS limita a clases propias y colaboraciones aceptadas. Sin borradas (deleted_at). Maximo 300, mas recientes primero.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: teacher (admin tambien).\n\nNotas: Migración 0032. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -5551,7 +6180,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { assignments: [{ id, classId, subjectName, groupName, title, description, instructions, assignedAt, dueAt, maxScore, allowLate, published, totalStudents, submittedCount, gradedCount }] } }",
+            "description": "{ ok: true, data: { assignments: [{ id, classId, subjectName, groupName, teacherName, title, description, instructions, assignedAt, dueAt, kind, maxScore, allowLate, published, attachments, totalStudents, submittedCount, gradedCount, progress }], nextCursor: string | null } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -5612,7 +6241,14 @@
                                 "type": "string"
                               },
                               "dueAt": {
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               },
                               "maxScore": {
                                 "type": "number"
@@ -5631,6 +6267,113 @@
                               },
                               "gradedCount": {
                                 "type": "integer"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "homework",
+                                  "exam",
+                                  "project",
+                                  "quiz",
+                                  "presentation"
+                                ]
+                              },
+                              "teacherName": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "attachments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "mimeType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name",
+                                    "url",
+                                    "sizeBytes",
+                                    "mimeType"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "progress": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "status": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "submitted",
+                                              "late",
+                                              "graded"
+                                            ]
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "score": {
+                                        "anyOf": [
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "status",
+                                      "score"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               }
                             },
                             "required": [
@@ -5648,14 +6391,297 @@
                               "published",
                               "totalStudents",
                               "submittedCount",
-                              "gradedCount"
+                              "gradedCount",
+                              "kind",
+                              "teacherName",
+                              "attachments",
+                              "progress"
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "nextCursor": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
-                        "assignments"
+                        "assignments",
+                        "nextCursor"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/assignments/student": {
+      "get": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "Tareas publicadas del alumno con su avance y paginación",
+        "description": "Auth: student o parent de un hijo vinculado; administración.\n\nNotas: Migración 0032. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ ok: true, data: { assignments: [tarea con progress: { status, score }], nextCursor: string | null } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "assignments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "classId": {
+                                "type": "string"
+                              },
+                              "subjectName": {
+                                "type": "string"
+                              },
+                              "groupName": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "instructions": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "assignedAt": {
+                                "type": "string"
+                              },
+                              "dueAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "maxScore": {
+                                "type": "number"
+                              },
+                              "allowLate": {
+                                "type": "boolean"
+                              },
+                              "published": {
+                                "type": "boolean"
+                              },
+                              "totalStudents": {
+                                "type": "integer"
+                              },
+                              "submittedCount": {
+                                "type": "integer"
+                              },
+                              "gradedCount": {
+                                "type": "integer"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "homework",
+                                  "exam",
+                                  "project",
+                                  "quiz",
+                                  "presentation"
+                                ]
+                              },
+                              "teacherName": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "attachments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "type": "string"
+                                    },
+                                    "sizeBytes": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "mimeType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name",
+                                    "url",
+                                    "sizeBytes",
+                                    "mimeType"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "progress": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "status": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "submitted",
+                                              "late",
+                                              "graded"
+                                            ]
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "score": {
+                                        "anyOf": [
+                                          {
+                                            "type": "number"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "status",
+                                      "score"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "classId",
+                              "subjectName",
+                              "groupName",
+                              "title",
+                              "description",
+                              "instructions",
+                              "assignedAt",
+                              "dueAt",
+                              "maxScore",
+                              "allowLate",
+                              "published",
+                              "totalStudents",
+                              "submittedCount",
+                              "gradedCount",
+                              "kind",
+                              "teacherName",
+                              "attachments",
+                              "progress"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "nextCursor": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "assignments",
+                        "nextCursor"
                       ],
                       "additionalProperties": false
                     }
@@ -6005,7 +7031,7 @@
           "assignments"
         ],
         "summary": "Crea o actualiza una tarea",
-        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Equivale a action assignments.upsert. Los adjuntos se ligan por id de archivo ya registrado (files/metadata); al editar solo se agregan.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Equivale a action assignments.upsert. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Los adjuntos se ligan por id de archivo ya registrado (files/metadata); al editar solo se agregan.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -6052,6 +7078,16 @@
                   },
                   "maxScore": {
                     "type": "number"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "homework",
+                      "exam",
+                      "project",
+                      "quiz",
+                      "presentation"
+                    ]
                   },
                   "allowLate": {
                     "type": "boolean"
@@ -6984,7 +8020,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { class: { id, subject, group }, date, sessionId | null, statuses: [{ id, name, code, countsAsAbsent, color }], students: [{ studentId, name, statusId | null, notes }] } }",
+            "description": "{ ok: true, data: { class: { id, subject, group }, date, sessionId | null, statuses: [{ id, name, code, countsAsAbsent, color }], students: [{ studentId, name, statusId | null, notes, attendanceId, uuid, version, recordedAt }] } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -7088,13 +8124,50 @@
                               },
                               "notes": {
                                 "type": "string"
+                              },
+                              "attendanceId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "uuid": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "version": {
+                                "type": "integer"
+                              },
+                              "recordedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               }
                             },
                             "required": [
                               "studentId",
                               "name",
                               "statusId",
-                              "notes"
+                              "notes",
+                              "attendanceId",
+                              "uuid",
+                              "version",
+                              "recordedAt"
                             ],
                             "additionalProperties": false
                           }
@@ -7130,7 +8203,7 @@
           "attendance"
         ],
         "summary": "Guarda de una vez la asistencia de una clase en una fecha",
-        "description": "Auth: teacher con attendance.write en la clase, admin.\n\nNotas: Crea o reutiliza la sesion (ensure_collaborative_class_session) y hace upsert por (sesion, alumno) conservando el uuid existente. source = web. Valida estados y matricula de cada alumno.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
+        "description": "Auth: teacher con attendance.write en la clase, admin.\n\nNotas: 0047: sesion y marcaciones en una transaccion; version optimista y recibos por operacion. Devuelve conflictos por marca sin sobrescribir otros cambios. recordedAt es obligatorio; repetir el mismo timestamp, claves y contenido. Backend y clientes web/Flutter deben actualizarse juntos.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7161,6 +8234,15 @@
                     "items": {
                       "type": "object",
                       "properties": {
+                        "operationId": {
+                          "type": "string"
+                        },
+                        "uuid": {
+                          "type": "string"
+                        },
+                        "expectedVersion": {
+                          "type": "integer"
+                        },
                         "studentId": {
                           "anyOf": [
                             {
@@ -7183,11 +8265,18 @@
                         },
                         "notes": {
                           "type": "string"
+                        },
+                        "recordedAt": {
+                          "type": "string"
                         }
                       },
                       "required": [
+                        "operationId",
+                        "uuid",
+                        "expectedVersion",
                         "studentId",
-                        "statusId"
+                        "statusId",
+                        "recordedAt"
                       ],
                       "additionalProperties": false
                     }
@@ -7200,7 +8289,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ date?: AAAA-MM-DD, marks: [{ studentId, statusId, notes? }] } (max 300; no admite fechas futuras)"
+                  "value": "{ date?: AAAA-MM-DD, marks: [{ operationId: UUID, uuid: UUID, expectedVersion, studentId, statusId, recordedAt, notes? }] } (max 100)"
                 }
               }
             }
@@ -7208,7 +8297,7 @@
         },
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { sessionId, saved } }",
+            "description": "{ ok: true, data: { sessionId, saved, conflicts, records } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -7226,15 +8315,34 @@
                       "type": "object",
                       "properties": {
                         "sessionId": {
-                          "type": "string"
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "saved": {
                           "type": "integer"
+                        },
+                        "conflicts": {
+                          "type": "integer"
+                        },
+                        "records": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
                         }
                       },
                       "required": [
                         "sessionId",
-                        "saved"
+                        "saved",
+                        "conflicts",
+                        "records"
                       ],
                       "additionalProperties": false
                     }
@@ -7261,7 +8369,7 @@
           "attendance"
         ],
         "summary": "Resumen de asistencia por salon en un rango de fechas",
-        "description": "Auth: admin con reports.view.\n\nNotas: Solo lectura para el panel web. rate = (marcas - ausencias) / marcas, donde ausencia es el estado con counts_as_absent. byStatus indexado por id de estado.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
+        "description": "Auth: admin con reports.view.\n\nNotas: Solo lectura para el panel web. Sesiones y marcas se recorren por páginas ordenadas para evitar truncar reportes de más de 1000 filas. rate = (marcas - ausencias) / marcas, donde ausencia es el estado con counts_as_absent. byStatus indexado por id de estado.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7443,7 +8551,7 @@
           "attendance"
         ],
         "summary": "Detalle de asistencia de un salon: sesiones y alumnos",
-        "description": "Auth: admin con reports.view.\n\nNotas: Alumnos activos matriculados en el salon, incluso sin marcas (rate null). 404 si el salon no existe en la institucion.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
+        "description": "Auth: admin con reports.view.\n\nNotas: Alumnos activos con matrícula ACT en el salón, sin duplicados entre años, incluso sin marcas (rate null). Reporte completo mediante páginas ordenadas. 404 si el salón no existe en la institución.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7736,7 +8844,7 @@
           "chat"
         ],
         "summary": "Lista las conversaciones del usuario",
-        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: Panel web (la app las lee directo de Supabase). unreadCount = mensajes ajenos sin registro en message_reads.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
+        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: Consulta agrupada por RPC 0034. No se descargan historiales para contar no leídos. Cursor por fecha/ID; conservar texto de la fecha con microsegundos. Total global independiente de la página y búsqueda.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7744,7 +8852,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { conversations: [{ id, kind, title, participants[], lastMessage, unreadCount, updatedAt }] } }",
+            "description": "{ ok: true, data: { conversations: [{ id, kind, title, participants[], lastMessage, unreadCount, updatedAt }], totalUnread, nextCursor: { updatedAt, id } | null } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -7841,13 +8949,69 @@
                                         "type": "string"
                                       },
                                       "content": {
-                                        "type": "string"
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
                                       },
                                       "hasAttachment": {
                                         "type": "boolean"
                                       },
                                       "sentAt": {
                                         "type": "string"
+                                      },
+                                      "attachment": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "id": {
+                                                "type": "string"
+                                              },
+                                              "name": {
+                                                "type": "string"
+                                              },
+                                              "url": {
+                                                "type": "string"
+                                              },
+                                              "sizeBytes": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "number"
+                                                  },
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ]
+                                              },
+                                              "mimeType": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "name",
+                                              "url",
+                                              "sizeBytes",
+                                              "mimeType"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
                                       }
                                     },
                                     "required": [
@@ -7856,7 +9020,8 @@
                                       "senderName",
                                       "content",
                                       "hasAttachment",
-                                      "sentAt"
+                                      "sentAt",
+                                      "attachment"
                                     ],
                                     "additionalProperties": false
                                   },
@@ -7877,10 +9042,38 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "totalUnread": {
+                          "type": "integer"
+                        },
+                        "nextCursor": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "updatedAt": {
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "updatedAt",
+                                "id"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
-                        "conversations"
+                        "conversations",
+                        "totalUnread",
+                        "nextCursor"
                       ],
                       "additionalProperties": false
                     }
@@ -7907,7 +9100,7 @@
           "chat"
         ],
         "summary": "Mensajes de una conversacion",
-        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: Los ultimos N en orden cronologico. read = algun otro participante lo leyo.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
+        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: Página inicial más reciente; beforeId recorre historial y afterId obtiene deltas. IDs como texto, orden de secuencia. read indica recibo de otro participante. RPC 0034 valida institución, actor activo, MFA y membresía.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7925,7 +9118,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { messages: [{ id, uuid, conversationId, senderId, senderName, sentAt, content, attachment, read }] } }",
+            "description": "{ ok: true, data: { messages: [{ id, uuid, conversationId, senderId, senderName, sentAt, content, attachment, read }], hasMore, nextBeforeId, nextAfterId } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -7966,7 +9159,14 @@
                                 "type": "string"
                               },
                               "content": {
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               },
                               "attachment": {
                                 "anyOf": [
@@ -8034,10 +9234,36 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        },
+                        "nextBeforeId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "nextAfterId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
-                        "messages"
+                        "messages",
+                        "hasMore",
+                        "nextBeforeId",
+                        "nextAfterId"
                       ],
                       "additionalProperties": false
                     }
@@ -8064,7 +9290,7 @@
           "chat"
         ],
         "summary": "Personas con las que se puede iniciar una conversacion",
-        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: Usuarios activos de la institucion, maximo 40.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
+        "description": "Auth: usuario autenticado (participante de la conversacion).\n\nNotas: RPC 0037: busca antes de limitar, incluyendo roles y sus nombres en español; solo usuarios activos de la institución. Flutter usa este endpoint con debounce, sin descargar y filtrar los primeros usuarios de Supabase.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -8156,7 +9382,7 @@
           "chat"
         ],
         "summary": "Envia un mensaje a una conversacion",
-        "description": "Auth: participante de la conversacion.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
+        "description": "Auth: participante de la conversacion.\n\nNotas: Mismo contrato transaccional 0052 que chat.sendMessage: UUID estable obligatorio y push en cola durable. Ver ESCRITURAS_TRANSACCIONALES.md.\n\nFuente: backend/src/modules/chats/chats.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -8169,6 +9395,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
                   "conversationId": {
                     "anyOf": [
                       {
@@ -8203,13 +9433,14 @@
                   }
                 },
                 "required": [
+                  "requestId",
                   "conversationId"
                 ],
                 "additionalProperties": false
               },
               "examples": {
                 "manifest": {
-                  "value": "{ conversationId, content?, attachment?: { id } }"
+                  "value": "{ requestId: UUID v4, conversationId, content?, attachment?: { id } }"
                 }
               }
             }
@@ -8561,7 +9792,7 @@
           "events"
         ],
         "summary": "Lista anuncios publicados de la institucion y audiencia del usuario",
-        "description": "Auth: usuario autenticado.\n\nNotas: Consulta announcements publicados, incluidos eventos pasados. Admin ve los anuncios institucionales; otros usuarios ven sus publicaciones y las dirigidas a sus roles/grupos. Propaga errores de BD; lista vacia solo en consultas exitosas sin resultados. Flutter invalida la lista al abrir y al recuperar actividad, y consulta cada 20 segundos sin trabajos activos para detectar anuncios de otras sesiones.\n\nFuente: backend/src/modules/events/events.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: 0046 filtra audiencia y grupos mediante RLS antes del limite SQL; cursor id descendente sin truncamiento de PostgREST. Protege tambien calendar_events y evita escrituras parciales directas. Flutter mantiene paginas, agrupa eventos Realtime y concilia cada 5 minutos con canal sano o cada 30 segundos con backoff; suspende temporizadores en segundo plano. Los trabajos activos consultan solo progreso.\n\nFuente: backend/src/modules/events/events.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -8569,7 +9800,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ announcements: [{ id, requestId, title, content, description, date, audience, publishedAt, createdBy, groupId, delivery: { status, phase, total, processed, notified, emailed, emailFailed, emailSkipped, pushFailed, error, completedAt } | null }] }",
+            "description": "{ announcements: [{ id, requestId, title, content, description, date, audience, publishedAt, createdBy, groupId, delivery: { status, phase, total, processed, notified, emailed, emailFailed, emailReview, emailSkipped, pushFailed, error, completedAt, updatedAt } | null }], hasMore, nextBeforeId: string | null }",
             "content": {
               "application/json": {
                 "schema": {
@@ -8689,6 +9920,9 @@
                                       "emailFailed": {
                                         "type": "integer"
                                       },
+                                      "emailReview": {
+                                        "type": "integer"
+                                      },
                                       "emailSkipped": {
                                         "type": "integer"
                                       },
@@ -8714,6 +9948,16 @@
                                             "type": "null"
                                           }
                                         ]
+                                      },
+                                      "updatedAt": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
                                       }
                                     },
                                     "required": [
@@ -8724,10 +9968,12 @@
                                       "notified",
                                       "emailed",
                                       "emailFailed",
+                                      "emailReview",
                                       "emailSkipped",
                                       "pushFailed",
                                       "error",
-                                      "completedAt"
+                                      "completedAt",
+                                      "updatedAt"
                                     ],
                                     "additionalProperties": false
                                   },
@@ -8752,10 +9998,99 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "hasMore": {
+                          "type": "boolean"
+                        },
+                        "nextBeforeId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
-                        "announcements"
+                        "announcements",
+                        "hasMore",
+                        "nextBeforeId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/events/announcements/status": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Consulta solo progreso de envios autorizados",
+        "description": "Auth: usuario autenticado; autor o administrador segun RLS.\n\nNotas: 0046; sin contenido ni destinatarios. Flutter agrupa hasta 100 trabajos activos por lectura, con respaldo de 2 segundos y eventos agrupados si Realtime esta sano. updatedAt permite descartar respuestas anteriores.\n\nFuente: backend/src/modules/events/events.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ deliveries: [{ announcementId: string, delivery }] }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "deliveries": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "announcementId": {
+                                "type": "string"
+                              },
+                              "delivery": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            },
+                            "required": [
+                              "announcementId",
+                              "delivery"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "deliveries"
                       ],
                       "additionalProperties": false
                     }
@@ -8782,7 +10117,7 @@
           "events"
         ],
         "summary": "Reintenta entregas fallidas de un anuncio guardado",
-        "description": "Auth: autor teacher o administrador de la institucion.\n\nNotas: Comprueba institucion y autor/admin antes de usar service role. Preserva correos enviados, reintenta fallidos y emite nueva notificacion final. Trabajos activos o completos no se duplican.\n\nFuente: backend/src/modules/events/events.routes.ts.",
+        "description": "Auth: autor teacher o administrador de la institucion.\n\nNotas: Comprueba institucion y autor/admin antes de usar service role. Preserva correos enviados y entregas que requieren revisión; reintenta fallidos y emite nueva notificacion final. Si solo quedan correos en revisión, conserva el estado sin reencolar. La conciliación con evidencia del proveedor es privada para operadores. Trabajos activos o completos no se duplican.\n\nFuente: backend/src/modules/events/events.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -9093,7 +10428,7 @@
           "grades"
         ],
         "summary": "Libro de calificaciones de una clase en un periodo (solo lectura)",
-        "description": "Auth: admin con reports.view, maestro de la clase o colaborador con class.view.\n\nNotas: Notas crudas; el promedio ponderado y la etiqueta se calculan con la escala (GET /api/grades/scales/default). Las notas se registran con grades.setGrade (solo maestro).\n\nFuente: backend/src/modules/grades/grades.routes.ts.",
+        "description": "Auth: admin con reports.view, maestro de la clase o colaborador con class.view.\n\nNotas: Notas crudas; se leen todas las páginas de evaluaciones y notas, incluso grids con más de 1000 celdas. Matrícula ACT del año de la clase y alumnos activos, sin duplicados. El promedio ponderado y la etiqueta se calculan con la escala (GET /api/grades/scales/default). Las notas se registran con grades.setGrade (solo maestro).\n\nFuente: backend/src/modules/grades/grades.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -9101,7 +10436,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { evaluations: [{ id, title, date, maxScore, weight, kind }], students: [{ studentId, name }], grades: { [studentId]: { [evaluationId]: number | null } } } }",
+            "description": "{ ok: true, data: { evaluations: [{ id, classId, periodId, subjectName, title, date, maxScore, weight, kind }], students: [{ studentId, name }], grades: { [studentId]: { [evaluationId]: number | null } } } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -9124,6 +10459,15 @@
                             "type": "object",
                             "properties": {
                               "id": {
+                                "type": "string"
+                              },
+                              "classId": {
+                                "type": "string"
+                              },
+                              "periodId": {
+                                "type": "string"
+                              },
+                              "subjectName": {
                                 "type": "string"
                               },
                               "title": {
@@ -9151,6 +10495,9 @@
                             },
                             "required": [
                               "id",
+                              "classId",
+                              "periodId",
+                              "subjectName",
                               "title",
                               "date",
                               "maxScore",
@@ -9679,7 +11026,7 @@
           "reports"
         ],
         "summary": "Lista boletines emitidos (el mas reciente por alumno y periodo)",
-        "description": "Auth: admin con reports.view; padre y alumno solo de un hijo vinculado (studentId obligatorio).\n\nNotas: Lo usa el panel web. groupId filtra por alumnos activos inscritos en el salon.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
+        "description": "Auth: admin con reports.view; padre y alumno solo de un hijo vinculado (studentId obligatorio).\n\nNotas: RPC 0037: DISTINCT ON en SQL antes de paginar, sin descargar historial para deduplicar. groupId usa matrícula ACT y alumnos activos del año actual. Padre/alumno solo del propio alumno o hijo vinculado; se excluyen periodos con notas ocultas. academicPeriodId es null para un boletín anual.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -9687,7 +11034,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { reportCards: [{ id, studentId, studentName, academicPeriodId, periodName, overallAverage, status, generatedAt, generalNotes }] } }",
+            "description": "{ ok: true, data: { reportCards: [{ id, studentId, studentName, academicPeriodId, periodName, overallAverage, status, generatedAt, generalNotes }], pageInfo } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -9704,6 +11051,38 @@
                     "data": {
                       "type": "object",
                       "properties": {
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
+                        },
                         "reportCards": {
                           "type": "array",
                           "items": {
@@ -9719,7 +11098,14 @@
                                 "type": "string"
                               },
                               "academicPeriodId": {
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               },
                               "periodName": {
                                 "anyOf": [
@@ -9781,6 +11167,7 @@
                         }
                       },
                       "required": [
+                        "pageInfo",
                         "reportCards"
                       ],
                       "additionalProperties": false
@@ -9806,7 +11193,7 @@
           "reports"
         ],
         "summary": "Genera y persiste boletin academico",
-        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nNotas: PDF binario queda fuera del MVP hasta definir plantilla/proveedor; devuelve pdfStatus.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
+        "description": "Auth: teacher, admin, coordinator, director, super_admin.\n\nNotas: 0049: genera cabecera y líneas desde una misma instantánea de notas autorizadas. Persiste año/matrícula reales. requestId UUID permite reintentar sin duplicar. RPC sin notas arbitrarias del cliente. PDF binario queda fuera del MVP hasta definir plantilla/proveedor; devuelve pdfStatus.\n\nFuente: backend/src/modules/reports/reports.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -9819,6 +11206,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "requestId": {
+                    "type": "string"
+                  },
                   "studentId": {
                     "anyOf": [
                       {
@@ -9851,7 +11241,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ studentId, academicPeriodId, generalNotes? }"
+                  "value": "{ requestId?: UUID, studentId, academicPeriodId, generalNotes? }"
                 }
               }
             }
@@ -10200,7 +11590,7 @@
           "notifications"
         ],
         "summary": "Ruta REST equivalente para guardar dispositivo Web Push",
-        "description": "Auth: usuario autenticado.\n\nFuente: backend/src/modules/notifications/notifications.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Valida JSON, claves y concordancia de endpoint, HTTPS/443 y proveedor permitido. El worker vuelve a validar al enviar, incluso ante cambios directos de devices. Suscripción inválida devuelve 400. Chat y anuncios usan la cola durable por dispositivo de 0052, con VAPID configurado en Node.\n\nFuente: backend/src/modules/notifications/notifications.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -10661,7 +12051,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ schedules: [{ id, kind, weekdayId, startTime, endTime, subject, groupName, teacher, room, shift }] }",
+            "description": "{ schedules: [{ id, kind, weekdayId, startTime, endTime, subject, groupName, teacher, room, shift }], pageInfo }",
             "content": {
               "application/json": {
                 "schema": {
@@ -10797,10 +12187,43 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "pageInfo": {
+                          "type": "object",
+                          "properties": {
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer"
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "hasNextPage": {
+                              "type": "boolean"
+                            },
+                            "hasPreviousPage": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "page",
+                            "pageSize",
+                            "total",
+                            "totalPages",
+                            "hasNextPage",
+                            "hasPreviousPage"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
-                        "schedules"
+                        "schedules",
+                        "pageInfo"
                       ],
                       "additionalProperties": false
                     }
@@ -10824,7 +12247,7 @@
         "tags": [
           "schedules"
         ],
-        "summary": "Crea horario de clase o receso (uno o varios dias) validando choques",
+        "summary": "Crea horarios de clase o receso en una transacción; exclusión concurrente de grupo, maestro y aula",
         "description": "Auth: admin/coordinator/director con schedules.create.\n\nFuente: backend/src/modules/schedules/schedules.routes.ts.",
         "security": [
           {
@@ -11294,8 +12717,8 @@
         "tags": [
           "sync"
         ],
-        "summary": "Encola asistencia offline para subir al recuperar conexion",
-        "description": "Auth: teacher.\n\nNotas: Solo para profesor tomando asistencia; el registro se guarda localmente en el telefono y se sube cuando vuelva la conexion.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
+        "summary": "Registra metadatos heredados de cola offline (sin ejecutar asistencia)",
+        "description": "Auth: teacher.\n\nNotas: Contrato heredado de telemetria; no confirma ni aplica una marcacion. El cliente actual usa /sync/attendance/batch. Los endpoints retry/failed solo modifican estos metadatos.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -11465,13 +12888,114 @@
         }
       }
     },
+    "/api/sync/attendance/batch": {
+      "post": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Confirma un lote offline de asistencia con versiones e idempotencia",
+        "description": "Auth: teacher activo con attendance.write en cada clase.\n\nNotas: 0047; sesión, marcas, cambios y recibos en una transacción. Invalidación de cualquier elemento revierte el lote; conflicto de versión retorna evidencia sin modificar esa marca. Cola local se conserva hasta confirmar commit. Reintentos repiten operationId y contenido; nueva edición requiere nueva clave. Hive separado por cuenta/institución; registros históricos sin autor conservados pero no subidos automáticamente.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{ sessions?: [{classId,date}], marks?: [{operationId: UUID,uuid: UUID,classId,date,studentId,statusId,expectedVersion,recordedAt,notes?}] }; max 100 por array"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ sessions: [{classId,date,id}], records: [{operationId,uuid,id,status: applied|conflict,version,classSessionId,statusId?,notes?}] }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "sessions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "classId": {
+                                "type": "string"
+                              },
+                              "date": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "classId",
+                              "date",
+                              "id"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "records": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        }
+                      },
+                      "required": [
+                        "sessions",
+                        "records"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/sync/changes": {
       "get": {
         "tags": [
           "sync"
         ],
-        "summary": "Lista cambios de asistencia desde una fecha",
-        "description": "Auth: teacher.\n\nNotas: Politica: teacher_attendance_upload_only. No se usa para pagos, chat, tareas o calificaciones.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
+        "summary": "Pagina cambios de asistencia autorizados con cursor de commit",
+        "description": "Auth: teacher.\n\nNotas: 0047: cursor (updated_at,id) conserva microsegundos; bloqueo por institucion evita saltar commits tardios. Solo clases autorizadas, sin datos de otros modulos. No avanzar por serverTime. Pull es incremental desde la migracion; el roster ofrece la instantanea inicial.\n\nFuente: backend/src/modules/sync/sync.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -11479,12 +13003,66 @@
         ],
         "responses": {
           "200": {
-            "description": "{ serverTime, changes: { items, pageInfo }, conflictPolicy, scope }",
+            "description": "{ serverTime, changes: { items, hasMore, nextCursor }, conflictPolicy, scope }",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": true
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "serverTime": {
+                          "type": "string"
+                        },
+                        "changes": {
+                          "type": "object",
+                          "properties": {
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            },
+                            "hasMore": {
+                              "type": "boolean"
+                            },
+                            "nextCursor": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "items",
+                            "hasMore",
+                            "nextCursor"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "conflictPolicy": {
+                          "type": "string"
+                        },
+                        "scope": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "serverTime",
+                        "changes",
+                        "conflictPolicy",
+                        "scope"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }
@@ -11507,7 +13085,7 @@
           "payments"
         ],
         "summary": "Resumen de recaudacion y mora",
-        "description": "Auth: admin, coordinator, director, super_admin con payments.view.\n\nNotas: Panel web. Mora = cargos abiertos con vencimiento anterior a hoy.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin con payments.view.\n\nNotas: Flutter dunningMetrics usa este resumen SQL (migración 0030). Mora calcula saldo pendiente después de abonos. Mes y vencimiento usan la zona horaria de la institución. byCurrency separa monedas sin sumarlas. Sin límite implícito de 1000 filas.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -11515,7 +13093,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { currencyCode, collectedThisMonth, expectedThisMonth, overdueAmount, overdueCount, pendingAmount, chargesByStatus } }",
+            "description": "{ ok: true, data: { currencyCode, collectedThisMonth, expectedThisMonth, overdueAmount, overdueCount, pendingAmount, chargesByStatus, byCurrency } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -11555,6 +13133,48 @@
                           "additionalProperties": {
                             "type": "integer"
                           }
+                        },
+                        "byCurrency": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "currencyCode": {
+                                "type": "string"
+                              },
+                              "collectedThisMonth": {
+                                "type": "number"
+                              },
+                              "expectedThisMonth": {
+                                "type": "number"
+                              },
+                              "overdueAmount": {
+                                "type": "number"
+                              },
+                              "overdueCount": {
+                                "type": "integer"
+                              },
+                              "pendingAmount": {
+                                "type": "number"
+                              },
+                              "chargesByStatus": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "required": [
+                              "currencyCode",
+                              "collectedThisMonth",
+                              "expectedThisMonth",
+                              "overdueAmount",
+                              "overdueCount",
+                              "pendingAmount",
+                              "chargesByStatus"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -11564,7 +13184,8 @@
                         "overdueAmount",
                         "overdueCount",
                         "pendingAmount",
-                        "chargesByStatus"
+                        "chargesByStatus",
+                        "byCurrency"
                       ],
                       "additionalProperties": false
                     }
@@ -11687,7 +13308,7 @@
           "payments"
         ],
         "summary": "Lista cargos con alumno, pagado y saldo",
-        "description": "Auth: admin, coordinator, director, super_admin con payments.view.\n\nNotas: status incluye overdue (derivado: abierto y vencido).\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin con payments.view.\n\nNotas: status incluye overdue (derivado: abierto y vencido en la zona institucional). Cargos recorridos por páginas ordenadas; lo pagado se agrega en SQL por los cargos solicitados.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -11835,7 +13456,7 @@
           "payments"
         ],
         "summary": "Crea cargos para varios alumnos o un salon",
-        "description": "Auth: admin con payments.create.\n\nNotas: amount por defecto = monto base del concepto. total = amount - discount. Estado inicial pending.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
+        "description": "Auth: admin con payments.create.\n\nNotas: 0049: alta masiva transaccional con validación SQL e IDs completos, incluso más de 1000. requestId UUID conserva los IDs en reintentos; no depende del límite de PostgREST. amount por defecto = monto base del concepto. total = amount - discount. Estado inicial pending.\n\nFuente: backend/src/modules/payments/payments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -11848,6 +13469,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "requestId": {
+                    "type": "string"
+                  },
                   "conceptId": {
                     "anyOf": [
                       {
@@ -11902,7 +13526,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ conceptId, studentIds?, groupId?, amount?, discount?, dueAt, description? }"
+                  "value": "{ requestId?: UUID, conceptId, studentIds?, groupId?, amount?, discount?, dueAt, description? }"
                 }
               }
             }
@@ -12521,7 +14145,7 @@
           "developer"
         ],
         "summary": "Lista usuarios visibles por RLS",
-        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: super_admin ve los usuarios de todas las instituciones; incluye institutions(name, code) y filtros por institucion y texto.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
+        "description": "Auth: admin, coordinator, director, super_admin.\n\nNotas: super_admin ve los usuarios de todas las instituciones; incluye institutions(name, code) con FK explícita users_institution_id_fkey para evitar ambigüedad tras instalar recibos transaccionales; filtros por institucion y texto.\n\nFuente: backend/src/modules/developer/developer.routes.ts.",
         "security": [
           {
             "bearerAuth": []

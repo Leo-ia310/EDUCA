@@ -127,7 +127,7 @@ export class DeveloperRepository {
     let query = this.db
       .from("users")
       .select(
-        "id, institution_id, email, full_name, active, last_sign_in, created_at, updated_at, institutions(name, code), user_roles(roles(code, name))",
+        "id, institution_id, email, full_name, active, last_sign_in, created_at, updated_at, institutions!users_institution_id_fkey(name, code), user_roles(roles(code, name))",
         { count: "exact" },
       )
       .is("deleted_at", null);

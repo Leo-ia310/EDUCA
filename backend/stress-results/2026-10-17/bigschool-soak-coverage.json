@@ -1,0 +1,363 @@
+[
+  {
+    "path": "/api/assignments/teacher-classes",
+    "method": "POST",
+    "role": "teacher",
+    "status": 200,
+    "ms": 1640.419
+  },
+  {
+    "path": "/api/portal-access/me",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 949.6958
+  },
+  {
+    "path": "/api/portal-access/config",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 582.8487
+  },
+  {
+    "path": "/api/portal-access/grades",
+    "method": "GET",
+    "role": "student",
+    "status": 200,
+    "ms": 1081.1841
+  },
+  {
+    "path": "/api/auth/2fa/status",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 592.7579
+  },
+  {
+    "path": "/api/admin/institutions",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 411.1391
+  },
+  {
+    "path": "/api/admin/users",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 472.4189
+  },
+  {
+    "path": "/api/admin/directory",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 510.2354
+  },
+  {
+    "path": "/api/admin/permissions/catalog",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 317.3146
+  },
+  {
+    "path": "/api/admin/profiles",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 419.9069
+  },
+  {
+    "path": "/api/admin/roles",
+    "method": "GET",
+    "role": "admin",
+    "status": 400,
+    "ms": 453.7274,
+    "error": "db_error",
+    "message": "column roles.updated_at does not exist"
+  },
+  {
+    "path": "/api/admin/students",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 457.3522
+  },
+  {
+    "path": "/api/admin/teachers",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 460.6669
+  },
+  {
+    "path": "/api/admin/parents",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 441.2819
+  },
+  {
+    "path": "/api/collaborations",
+    "method": "GET",
+    "role": "teacher",
+    "status": 200,
+    "ms": 712.8197
+  },
+  {
+    "path": "/api/family/children",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 1097.9118
+  },
+  {
+    "path": "/api/family/attendance",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 1376.465
+  },
+  {
+    "path": "/api/family/assignments",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 2123.7125
+  },
+  {
+    "path": "/api/payments/mine",
+    "method": "GET",
+    "role": "student",
+    "status": 200,
+    "ms": 794.1834
+  },
+  {
+    "path": "/api/assignments/teacher",
+    "method": "GET",
+    "role": "teacher",
+    "status": 200,
+    "ms": 1340.6634
+  },
+  {
+    "path": "/api/attendance/summary",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 1250.2213
+  },
+  {
+    "path": "/api/chats/conversations",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 781.4343
+  },
+  {
+    "path": "/api/chats/contacts",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 566.7878
+  },
+  {
+    "path": "/api/events/announcements",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 492.2222
+  },
+  {
+    "path": "/api/grades/scales/default",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 445.2494
+  },
+  {
+    "path": "/api/grades/periods",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 566.6053
+  },
+  {
+    "path": "/api/grades/gradebook",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 557.2213
+  },
+  {
+    "path": "/api/files",
+    "method": "GET",
+    "role": "admin",
+    "status": 400,
+    "ms": 441.6447,
+    "error": "db_error",
+    "message": "column files.updated_at does not exist"
+  },
+  {
+    "path": "/api/reports/report-cards",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 642.7435
+  },
+  {
+    "path": "/api/reports/report-cards/preview",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 499.4929
+  },
+  {
+    "path": "/api/notifications/preferences",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 432.3622
+  },
+  {
+    "path": "/api/notifications",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 485.9915
+  },
+  {
+    "path": "/api/schedules",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 701.4784
+  },
+  {
+    "path": "/api/schedules/mine",
+    "method": "GET",
+    "role": "student",
+    "status": 200,
+    "ms": 1263.3458
+  },
+  {
+    "path": "/api/sync/queue",
+    "method": "GET",
+    "role": "teacher",
+    "status": 200,
+    "ms": 478.2706
+  },
+  {
+    "path": "/api/sync/changes",
+    "method": "GET",
+    "role": "teacher",
+    "status": 400,
+    "ms": 428.876,
+    "error": "db_error",
+    "message": "column change_log.changed_at does not exist"
+  },
+  {
+    "path": "/api/payments/summary",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 693.075
+  },
+  {
+    "path": "/api/payments/concepts",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 423.1309
+  },
+  {
+    "path": "/api/payments/charges",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 656.0577
+  },
+  {
+    "path": "/api/developer/summary",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/developer/institutions",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/developer/users",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/developer/audit-events",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/developer/modules",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/developer/apis",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/developer/tasks",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/developer/feature-flags",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/developer/system-checks",
+    "skipped": "Requires developer account; institutional admin is insufficient"
+  },
+  {
+    "path": "/api/attendance/class/:classId",
+    "method": "GET",
+    "role": "teacher",
+    "status": 200,
+    "ms": 797.535
+  },
+  {
+    "path": "/api/attendance/groups/:groupId",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 603.6283
+  },
+  {
+    "path": "/api/assignments/:id/submissions",
+    "method": "GET",
+    "role": "teacher",
+    "status": 200,
+    "ms": 1682.8435
+  },
+  {
+    "path": "/api/chats/conversations/:conversationId/messages",
+    "method": "GET",
+    "role": "parent",
+    "status": 200,
+    "ms": 823.654
+  },
+  {
+    "path": "/api/files/:id/download-url",
+    "skipped": "No matching fixture"
+  },
+  {
+    "path": "/api/payments/charges/:chargeId",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 544.6333
+  },
+  {
+    "path": "/api/reports/report-cards/:id",
+    "method": "GET",
+    "role": "admin",
+    "status": 200,
+    "ms": 518.4233
+  }
+]

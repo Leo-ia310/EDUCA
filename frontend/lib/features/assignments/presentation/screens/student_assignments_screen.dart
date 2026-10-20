@@ -1,3 +1,4 @@
+import '../widgets/assignment_load_more.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -32,6 +33,10 @@ List<Assignment> _tasksOnly(List<Assignment> all, {bool exams = false}) => all
 
 /// Entregada = hay una entrega registrada (no pendiente).
 bool _delivered(WidgetRef ref, Assignment a, int studentId) {
+  if (a.progress != null) {
+    final status = a.progress!.status;
+    return status != null && status != SubmissionStatus.pending;
+  }
   final st = ref
       .watch(
         mySubmissionProvider((assignmentId: a.id, studentId: studentId)),
@@ -114,7 +119,11 @@ class _StudentAssignmentsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final list = ref.watch(studentAssignmentsProvider);
+    final provider = studentAssignmentsProvider(
+      (studentId: widget.studentId, exams: widget.exams, subject: null),
+    );
+    final list = ref.watch(provider);
+    final paging = ref.watch(provider.notifier);
     final palette = context.palette;
 
     return StudentDetailScaffold(
@@ -176,14 +185,16 @@ class _StudentAssignmentsScreenState
                       }
                       return RefreshIndicator(
                         color: palette.accentDeep,
-                        onRefresh: () async =>
-                            ref.invalidate(studentAssignmentsProvider),
+                        onRefresh: () async => ref.invalidate(provider),
                         child: ListView(
                           key: ValueKey(_bySubject),
                           padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-                          children: _bySubject
-                              ? _subjectCards(context, items)
-                              : _generalList(context, items),
+                          children: [
+                            ...(_bySubject
+                                ? _subjectCards(context, items)
+                                : _generalList(context, items)),
+                            AssignmentLoadMore(controller: paging),
+                          ],
                         ),
                       );
                     },
@@ -199,7 +210,7 @@ class _StudentAssignmentsScreenState
 
   /// Vista general: todas las tareas, por fecha de entrega.
   List<Widget> _generalList(BuildContext context, List<Assignment> items) {
-    final sorted = [...items]..sort((a, b) => a.dueAt.compareTo(b.dueAt));
+    final sorted = [...items]..sort(Assignment.compareByDueDate);
     return _sections(context, ref, sorted, widget.studentId);
   }
 
@@ -381,7 +392,11 @@ class SubjectAssignmentsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final list = ref.watch(studentAssignmentsProvider);
+    final provider = studentAssignmentsProvider(
+      (studentId: studentId, exams: exams, subject: subject),
+    );
+    final list = ref.watch(provider);
+    final paging = ref.watch(provider.notifier);
     return StudentDetailScaffold(
       title: subject,
       scrollable: false,
@@ -408,7 +423,10 @@ class SubjectAssignmentsScreen extends ConsumerWidget {
               }
               return ListView(
                 padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
-                children: _sections(context, ref, items, studentId),
+                children: [
+                  ..._sections(context, ref, items, studentId),
+                  AssignmentLoadMore(controller: paging),
+                ],
               );
             },
           ),
@@ -431,13 +449,18 @@ class _StudentTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mine = ref.watch(
-      mySubmissionProvider(
-        (assignmentId: assignment.id, studentId: studentId),
-      ),
-    );
-    final status = mine.asData?.value?.status;
-    final score = mine.asData?.value?.score;
+    final progress = assignment.progress;
+    final mine = progress == null
+        ? ref.watch(
+            mySubmissionProvider(
+              (assignmentId: assignment.id, studentId: studentId),
+            ),
+          )
+        : null;
+    final status =
+        progress != null ? progress.status : mine?.asData?.value?.status;
+    final score =
+        progress != null ? progress.score : mine?.asData?.value?.score;
     final done = ref.watch(tasksDoneProvider).contains(assignment.id);
     final palette = context.palette;
 

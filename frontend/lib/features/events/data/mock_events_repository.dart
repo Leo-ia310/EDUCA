@@ -6,7 +6,7 @@ import '../domain/events_repository.dart';
 const _uuid = Uuid();
 
 /// In-memory announcements used only in explicit demo mode.
-class MockEventsRepository implements EventsRepository {
+class MockEventsRepository extends EventsRepository {
   final List<SchoolEvent> _events = [
     SchoolEvent(
       id: _uuid.v4(),

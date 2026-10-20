@@ -37,7 +37,7 @@ export async function ensureIndividualConversation(
 }
 
 export async function listConversations(req: AppRequest, res: Response) {
-  const data = await chatsService.listConversations(requireAppContext(req));
+  const data = await chatsService.listConversations(requireAppContext(req), asRecord(req.query));
   return res.json({ ok: true, data });
 }
 

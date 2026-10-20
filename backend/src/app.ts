@@ -1,4 +1,9 @@
 import express from "express";
+import {timingSafeEqual} from "node:crypto";
+import {requestLifetime,requestRuntime} from "./lib/request-lifetime";
+import {operationalMetrics} from "./lib/operational-metrics";
+import {Readiness} from "./lib/readiness";
+import {supabasePublic} from "./lib/supabase";
 import { familyRoutes } from "./modules/family/family.routes";
 import { portalAccessRoutes } from "./modules/portal-access/portal-access.routes";
 
@@ -43,10 +48,27 @@ export function createApp() {
   app.use(corsMiddleware);
   app.use(noStore);
   app.use(generalRateLimit);
+  app.use(requestLifetime({maxConcurrent:env.maxConcurrentRequests,timeoutMs:env.requestTimeoutMs}));
   app.use(express.json({ limit: env.jsonLimit }));
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true, service: "educa360-backend" });
+  });
+
+  const readiness=new Readiness(async()=>{
+    const {data,error}=await supabasePublic.rpc("backend_readiness_v1");
+    return !error && data?.schemaVersion===53;
+  });
+  app.get("/ready",async(_req,res)=>{
+    const healthy=await readiness.check();
+    res.status(healthy?200:503).json({ok:healthy,service:"educa360-backend",schemaVersion:53});
+  });
+  app.get("/internal/metrics",(req,res)=>{
+    const provided=Buffer.from(req.header("authorization")??""),expected=Buffer.from(`Bearer ${env.internalApiSecret}`);
+    if(!env.internalApiSecret || provided.length!==expected.length || !timingSafeEqual(provided,expected)){
+      res.status(403).json({ok:false,error:{code:"forbidden",message:"Acceso denegado."}});return;
+    }
+    const state=requestRuntime();res.json({ok:true,data:operationalMetrics.snapshot(state.active,state.draining)});
   });
 
   app.use("/api/auth", authenticatedRateLimit, authRoutes);

@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/network/paginated_response.dart';
+import '../../../../core/routing/route_paths.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
@@ -15,9 +19,11 @@ import '../widgets/person_form.dart';
 
 /// CRUD de personas de un rol: Maestros, Alumnos o Padres/Tutores.
 class AdminPeopleScreen extends ConsumerStatefulWidget {
-  const AdminPeopleScreen({super.key, required this.role});
+  const AdminPeopleScreen(
+      {super.key, required this.role, this.reportCards = false,});
 
   final AppRole role;
+  final bool reportCards;
 
   @override
   ConsumerState<AdminPeopleScreen> createState() => _AdminPeopleScreenState();
@@ -25,13 +31,40 @@ class AdminPeopleScreen extends ConsumerStatefulWidget {
 
 class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
   String _query = '';
+  int _page = 1;
+  Timer? _searchTimer;
 
-  String get _title => switch (widget.role) {
-        AppRole.teacher => 'Maestros',
-        AppRole.student => 'Alumnos',
-        AppRole.parent => 'Padres y tutores',
-        _ => widget.role.label,
-      };
+  void _search(String value) {
+    _searchTimer?.cancel();
+    _searchTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _query = value.trim();
+          _page = 1;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _edit({Person? person}) async {
+    await showPersonSheet(context, existing: person, role: widget.role);
+    if (mounted) ref.invalidate(adminPeoplePageProvider);
+  }
+
+  String get _title => widget.reportCards
+      ? 'Boletines'
+      : switch (widget.role) {
+          AppRole.teacher => 'Maestros',
+          AppRole.student => 'Alumnos',
+          AppRole.parent => 'Padres y tutores',
+          _ => widget.role.label,
+        };
 
   String get _singular => switch (widget.role) {
         AppRole.teacher => 'maestro',
@@ -50,6 +83,9 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
   String _subtitle(Person p, SchoolDirectory dir) {
     switch (widget.role) {
       case AppRole.teacher:
+        if (p.classLabels.isNotEmpty) {
+          return '${p.classLabels.length} clases asignadas · ${p.classLabels.join(' · ')}';
+        }
         final cls = dir.classesOfTeacher(p.id);
         if (cls.isEmpty) return 'Sin clases asignadas';
         final countLabel = cls.length == 1
@@ -62,11 +98,12 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
             .join(' · ');
         return '$countLabel · $names';
       case AppRole.student:
-        final g = dir.group(p.groupId)?.name ?? 'Sin salón';
+        final g = p.groupName ?? dir.group(p.groupId)?.name ?? 'Sin salón';
         final count = _studentClassIds(p, dir).length;
         final label = count == 1 ? '1 clase' : '$count clases';
         return '$g · $label';
       case AppRole.parent:
+        if (p.childNames.isNotEmpty) return p.childNames.join(', ');
         final kids = p.childIds
             .map((id) => dir.person(id)?.name)
             .whereType<String>()
@@ -80,22 +117,18 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
   @override
   Widget build(BuildContext context) {
     final repo = ref.watch(adminBackendRepositoryProvider);
-    final remote =
-        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
-    if (remote != null) {
-      return remote.when(
-        loading: () => StudentDetailScaffold(
-          title: _title,
-          bottomNav: false,
-          child: const Center(child: CircularProgressIndicator()),
-        ),
-        error: (error, _) => StudentDetailScaffold(
-          title: _title,
-          bottomNav: false,
-          child: ErrorStateView(message: '$error'),
-        ),
-        data: (dir) => _buildList(context, dir.byRole(widget.role), dir),
-      );
+    if (repo != null) {
+      final result = ref.watch(widget.reportCards
+          ? adminDirectoryPeoplePageProvider(
+              (role: widget.role, search: _query, page: _page, groupId: null),)
+          : adminPeoplePageProvider(
+              (role: widget.role, search: _query, page: _page),),);
+      return _buildList(
+          context, result.valueOrNull?.items ?? [], const SchoolDirectory(),
+          remote: true,
+          loading: result.isLoading,
+          error: result.error,
+          pageInfo: result.valueOrNull?.pageInfo,);
     }
     final dir = ref.watch(schoolDirectoryProvider);
     final people = dir.byRole(widget.role)
@@ -106,15 +139,21 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
   Widget _buildList(
     BuildContext context,
     List<Person> list,
-    SchoolDirectory dir,
-  ) {
+    SchoolDirectory dir, {
+    bool remote = false,
+    bool loading = false,
+    Object? error,
+    PageInfo? pageInfo,
+  }) {
     final user = ref.watch(authControllerProvider).user;
     final module = widget.role == AppRole.teacher ? 'teachers' : 'students';
-    final canCreate = user?.can('$module.create') ?? false;
+    final canCreate =
+        !widget.reportCards && (user?.can('$module.create') ?? false);
     final canEdit = user?.can('$module.edit') ?? false;
     final q = _query.trim().toLowerCase();
-    final sorted = [...list]..sort((a, b) => a.name.compareTo(b.name));
-    final shown = q.isEmpty
+    final sorted =
+        remote ? list : ([...list]..sort((a, b) => a.name.compareTo(b.name)));
+    final shown = remote || q.isEmpty
         ? sorted
         : sorted
             .where(
@@ -134,7 +173,7 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
           if (canCreate) ...[
             BrutalButton(
               expand: true,
-              onTap: () => showPersonSheet(context, role: widget.role),
+              onTap: () => _edit(),
               icon: Icons.person_add_alt_1_rounded,
               label: 'Nuevo $_singular',
             ),
@@ -142,20 +181,27 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
           ],
           AdminSearchField(
             hint: 'Buscar por nombre o correo…',
-            onChanged: (v) => setState(() => _query = v),
+            onChanged: _search,
           ),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
-              '${list.length} registrados',
+              '${pageInfo?.total ?? list.length} ${q.isEmpty ? 'registrados' : 'resultados'}',
               style: context.textTheme.labelMedium?.copyWith(
                 color: context.palette.textMuted,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          if (shown.isEmpty)
+          if (loading)
+            const Center(child: CircularProgressIndicator())
+          else if (error != null) ...[
+            ErrorStateView(message: '$error'),
+            TextButton(
+                onPressed: () => ref.invalidate(adminPeoplePageProvider),
+                child: const Text('Reintentar'),),
+          ] else if (shown.isEmpty)
             const EmptyState(
               icon: Icons.search_off_rounded,
               title: 'Sin resultados',
@@ -170,10 +216,29 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
                 color: color,
                 leadingText: p.initials,
                 dimmed: !p.active,
-                onTap: canEdit
-                    ? () => showPersonSheet(context, existing: p)
-                    : null,
+                onTap: widget.reportCards
+                    ? () => context.push(
+                        '${Routes.reports}?studentId=${Uri.encodeComponent(p.id)}',)
+                    : canEdit
+                        ? () => _edit(person: p)
+                        : null,
               ),
+          if (pageInfo != null && pageInfo.totalPages > 1)
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              IconButton(
+                  tooltip: 'Página anterior',
+                  onPressed: loading || !pageInfo.hasPreviousPage
+                      ? null
+                      : () => setState(() => _page--),
+                  icon: const Icon(Icons.chevron_left_rounded),),
+              Text('${pageInfo.page} / ${pageInfo.totalPages}'),
+              IconButton(
+                  tooltip: 'Página siguiente',
+                  onPressed: loading || !pageInfo.hasNextPage
+                      ? null
+                      : () => setState(() => _page++),
+                  icon: const Icon(Icons.chevron_right_rounded),),
+            ],),
         ],
       ),
     );

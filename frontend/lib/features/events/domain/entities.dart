@@ -50,24 +50,66 @@ class AnnouncementDelivery extends Equatable {
     this.processed = 0,
     this.emailed = 0,
     this.emailFailed = 0,
+    this.emailReview = 0,
+    this.pushFailed = 0,
     this.emailSkipped = 0,
+    this.updatedAt,
   });
+  final DateTime? updatedAt;
   final String status;
   final String phase;
-  final int total, processed, emailed, emailFailed, emailSkipped;
+  final int total,
+      processed,
+      emailed,
+      emailFailed,
+      emailSkipped,
+      emailReview,
+      pushFailed;
   bool get active => ['publishing', 'queued', 'processing'].contains(status);
-  bool get canRetry => ['failed', 'completed_with_errors'].contains(status);
+  bool get canRetry =>
+      ['failed', 'completed_with_errors'].contains(status) &&
+      !(emailReview > 0 &&
+          emailFailed <= emailReview &&
+          pushFailed == 0 &&
+          processed >= total);
   factory AnnouncementDelivery.fromJson(Map<String, dynamic> json) =>
       AnnouncementDelivery(
         status: json['status'] as String,
+        updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? ''),
         phase: json['phase'] as String? ?? 'queued',
         total: (json['total'] as num?)?.toInt() ?? 0,
         processed: (json['processed'] as num?)?.toInt() ?? 0,
         emailed: (json['emailed'] as num?)?.toInt() ?? 0,
         emailFailed: (json['emailFailed'] as num?)?.toInt() ?? 0,
+        emailReview: (json['emailReview'] as num?)?.toInt() ?? 0,
+        pushFailed: (json['pushFailed'] as num?)?.toInt() ?? 0,
         emailSkipped: (json['emailSkipped'] as num?)?.toInt() ?? 0,
       );
   @override
-  List<Object?> get props =>
-      [status, phase, total, processed, emailed, emailFailed, emailSkipped];
+  List<Object?> get props => [
+        status,
+        phase,
+        total,
+        processed,
+        emailed,
+        emailFailed,
+        emailSkipped,
+        emailReview,
+        pushFailed,
+      ];
+}
+
+class AnnouncementPage {
+  const AnnouncementPage(this.items, {this.nextBeforeId, this.hasMore = false});
+  final List<SchoolEvent> items;
+  final String? nextBeforeId;
+  final bool hasMore;
+}
+
+enum AnnouncementSignalKind { publication, progress, connection }
+
+class AnnouncementSignal {
+  const AnnouncementSignal(this.kind, {this.healthy = false});
+  final AnnouncementSignalKind kind;
+  final bool healthy;
 }

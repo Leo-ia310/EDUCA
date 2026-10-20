@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { paginationFromQuery } from "../../lib/pagination";
 import { HttpError } from "../../lib/errors";
 import { portalAccessService } from "../portal-access/portal-access.service";
 import type { AppContext } from "../../types/app-context";
@@ -33,33 +35,7 @@ export class ReportsService {
       this.permissions.requireAdminPermission(ctx, "reports.view");
     }
 
-    let studentIds: number[] | null = studentId == null ? null : [studentId];
-    if (groupId != null) {
-      const inGroup = await this.repository.activeStudentIdsOfGroup(ctx.institutionId, groupId);
-      studentIds = studentIds == null ? inGroup : inGroup.filter((id) => id === studentId);
-    }
-    const rows = await this.repository.listReportCards(ctx.institutionId, { academicPeriodId, studentIds });
-
-    const seen = new Set<string>();
-    const reportCards = [];
-    for (const row of rows as any[]) {
-      const key = `${row.student_id}:${row.academic_period_id}`;
-      if (seen.has(key)) continue; // ya viene ordenado: el primero es el más reciente
-      seen.add(key);
-      const person = row.students?.persons;
-      reportCards.push({
-        id: String(row.id),
-        studentId: String(row.student_id),
-        studentName: `${person?.first_name ?? ""} ${person?.last_name ?? ""}`.trim(),
-        academicPeriodId: String(row.academic_period_id),
-        periodName: row.academic_periods?.name ?? null,
-        overallAverage: row.overall_average == null ? null : Number(row.overall_average),
-        status: String(row.status ?? "generated"),
-        generatedAt: row.generated_at ?? null,
-        generalNotes: row.general_notes ?? null,
-      });
-    }
-    return { reportCards };
+    return this.repository.listReportCards({academicPeriodId,studentId,groupId},paginationFromQuery(query));
   }
 
   async previewReportCard(ctx: AppContext, query: Record<string, unknown>) {
@@ -86,31 +62,14 @@ export class ReportsService {
       payload.academicPeriodId ?? payload.academic_period_id,
       "Periodo académico",
     );
-    const report = await this.buildReport(ctx, studentId, academicPeriodId);
-    const card = await this.repository.createReportCard({
-      institution_id: ctx.institutionId,
-      student_id: studentId,
-      academic_period_id: academicPeriodId,
-      overall_average: report.overallAverage,
-      general_notes: optionalString(payload.generalNotes ?? payload.general_notes, 2000),
-      status: "generated",
-      generated_at: new Date().toISOString(),
-    });
-    const lines = await this.repository.insertReportCardLines(
-      report.lines.map((line: ReportLine) => ({
-        report_card_id: card.id,
-        subject_id: line.subjectId,
-        final_score: line.finalScore,
-        qualitative_label: line.qualitativeLabel,
-        passed: line.passed,
-        notes: line.notes,
-        teacher_id: line.teacherId,
-      })),
-    );
+    const key=payload.requestId??randomUUID();
+    if(typeof key!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(key))throw new HttpError(400,"Clave de operación inválida.","validation_error");
+    const card=await this.repository.generateReportCard(studentId,academicPeriodId,
+      optionalString(payload.generalNotes??payload.general_notes,2000),key);
     return {
       reportCard: {
         ...card,
-        lines,
+        lines: card.lines,
         pdfStatus: "not_generated",
         pdfScope:
           "La generación binaria de PDF queda fuera del MVP backend actual; el cálculo oficial y persistencia del boletín ya están centralizados.",

@@ -1,91 +1,58 @@
+import {databaseError} from "../../lib/database-error";
+import { transactionRpc } from "../../lib/transaction-rpc";
 import { assertNoDbError, expectSingle } from "../../lib/db";
 import { supabaseAdmin } from "../../lib/supabase";
+import { HttpError } from "../../lib/errors";
+import { readAllPages } from "../../lib/read-all";
 
 const db = supabaseAdmin as any;
 
 export class PaymentsRepository {
-  async paidPaymentsByCharge(chargeId: number, institutionId: number) {
-    return db
-      .from("payments")
-      .select("amount")
-      .eq("charge_id", chargeId)
-      .eq("institution_id", institutionId)
-      .eq("status", "paid");
+  private assertPaymentError(error: { code?: string; message: string } | null) {
+    if (!error) return;
+    throw databaseError(error);
   }
 
-  async findPaymentForHydration(id: number, institutionId: number) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("payments")
-        .select(
-          "id, uuid, charge_id, student_id, payment_method, amount, reference, receipt_number, status, paid_at, " +
-            "catalog_currencies(iso_code), charges(description, payment_concepts(name)), students(persons(first_name, last_name))",
-        )
-        .eq("id", id)
-        .eq("institution_id", institutionId)
-        .single(),
-      "Pago no encontrado.",
-    );
+  async registerChargePayment(chargeId: number, amount: number, method: string, reference: string | null, uuid: string) {
+    const { data, error } = await db.rpc("register_charge_payment", {
+      p_charge_id: chargeId, p_amount: amount, p_method: method, p_reference: reference, p_uuid: uuid,
+    });
+    this.assertPaymentError(error);
+    if (data == null) throw new HttpError(503, "No se pudo confirmar el pago.", "payment_unavailable");
+    return data as Record<string, unknown>;
   }
 
-  async findPaymentByUuid(uuid: string, institutionId: number) {
-    const { data } = await db
-      .from("payments")
-      .select("id")
-      .eq("uuid", uuid)
-      .eq("institution_id", institutionId)
-      .maybeSingle();
-    return data == null ? null : data as Record<string, unknown>;
+  async cancelCharge(chargeId: number) {
+    // The RPC derives institution and actor from the verified JWT, never input.
+    const { error } = await db.rpc("cancel_unpaid_charge", { p_charge_id: chargeId });
+    this.assertPaymentError(error);
+    return { error: null };
   }
 
-  async findChargeForPayment(chargeId: number, institutionId: number) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("charges")
-        .select(
-          "id, student_id, amount, discount, late_fee, total_amount, status, payment_concepts(currency_id)",
-        )
-        .eq("id", chargeId)
-        .eq("institution_id", institutionId)
-        .single(),
-      "Cargo no encontrado.",
-    );
+  async collectionSummary() {
+    const { data, error } = await db.rpc("payment_collection_summary");
+    assertNoDbError(error);
+    return data;
   }
 
-  async insertPayment(payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db.from("payments").insert(payload).select("id").single(),
-      "No se pudo registrar el pago.",
-    );
-  }
-
-  async updateChargeStatus(
-    chargeId: number,
-    institutionId: number,
-    status: string,
-  ) {
-    return db
-      .from("charges")
-      .update({ status })
-      .eq("id", chargeId)
-      .eq("institution_id", institutionId);
-  }
-
-  async cancelCharge(chargeId: number, institutionId: number) {
-    return db
-      .from("charges")
-      .update({ status: "cancelled" })
-      .eq("id", chargeId)
-      .eq("institution_id", institutionId);
+  async paidTotals(chargeIds: number[]) {
+    const totals = new Map<number, number>();
+    for (let i = 0; i < chargeIds.length; i += 200) {
+      const { data, error } = await db.rpc("payment_charge_totals", { p_charge_ids: chargeIds.slice(i, i + 200) });
+      assertNoDbError(error);
+      for (const row of data ?? []) totals.set(Number(row.charge_id), Number(row.paid));
+    }
+    return totals;
   }
 
   // ---------- Administración (panel web) ----------
 
   private readonly chargeSelect =
-    "id, student_id, concept_id, description, amount, discount, late_fee, total_amount, due_at, status, created_at, students(persons(first_name, last_name)), payment_concepts(name, catalog_currencies(iso_code))";
+    "id, student_id, concept_id, description, amount, discount, late_fee, total_amount, due_at, status, created_at, institutions!charges_institution_id_fkey(timezone), students(persons(first_name, last_name)), payment_concepts(name, catalog_currencies(iso_code))";
 
   async listCharges(institutionId: number, studentIds: number[] | null) {
     if (studentIds != null && studentIds.length === 0) return [] as Record<string, unknown>[];
+    return readAllPages<Record<string, unknown>>((from, to) => {
     let query = db
       .from("charges")
       .select(this.chargeSelect)
@@ -93,9 +60,8 @@ export class PaymentsRepository {
       .order("due_at", { ascending: false })
       .order("id", { ascending: false });
     if (studentIds != null) query = query.in("student_id", studentIds);
-    const { data, error } = await query;
-    assertNoDbError(error);
-    return (data ?? []) as Record<string, unknown>[];
+    return query.range(from, to);
+    });
   }
 
   async findCharge(institutionId: number, id: number) {
@@ -105,29 +71,26 @@ export class PaymentsRepository {
     );
   }
 
-  /** Pagos cobrados (status paid) de la institución; si se indica, desde una fecha. */
-  async paidPayments(institutionId: number, sinceIso?: string) {
-    let query = db
+  /** Historial completo de un cargo, sin descargar pagos de otros alumnos. */
+  async paidPayments(institutionId: number, chargeId: number) {
+    return readAllPages<Record<string, unknown>>((from, to) => db
       .from("payments")
       .select("id, charge_id, amount, payment_method, receipt_number, reference, paid_at, status")
       .eq("institution_id", institutionId)
       .eq("status", "paid")
-      .order("paid_at", { ascending: false });
-    if (sinceIso) query = query.gte("paid_at", sinceIso);
-    const { data, error } = await query;
-    assertNoDbError(error);
-    return (data ?? []) as Record<string, unknown>[];
+      .eq("charge_id", chargeId)
+      .order("paid_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to));
   }
 
   async listConcepts(institutionId: number) {
-    const { data, error } = await db
+    return readAllPages<Record<string, unknown>>((from, to) => db
       .from("payment_concepts")
       .select("id, name, description, base_amount, recurring, periodicity, catalog_currencies(iso_code)")
       .eq("institution_id", institutionId)
       .eq("active", true)
-      .order("name");
-    assertNoDbError(error);
-    return (data ?? []) as Record<string, unknown>[];
+      .order("name").order("id").range(from, to));
   }
 
   async findConcept(institutionId: number, id: number) {
@@ -150,32 +113,31 @@ export class PaymentsRepository {
 
   /** Alumnos activos de la institución (para validar altas de cargos). */
   async activeStudentIds(institutionId: number, ids: number[]) {
-    if (ids.length === 0) return [] as number[];
-    const { data, error } = await db
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < ids.length; i += 150) {
+    rows.push(...await readAllPages<Record<string, unknown>>((from, to) => db
       .from("students")
       .select("id")
       .eq("institution_id", institutionId)
       .eq("active", true)
-      .in("id", ids);
-    assertNoDbError(error);
-    return ((data ?? []) as Record<string, unknown>[]).map((r) => Number(r.id));
+      .in("id", ids.slice(i, i + 150)).order("id").range(from, to)));
+    }
+    return rows.map(row => Number(row.id));
   }
 
   async activeStudentIdsOfGroup(institutionId: number, groupId: number) {
-    const { data, error } = await db
+    const rows = await readAllPages<Record<string, unknown>>((from, to) => db
       .from("enrollments")
-      .select("student_id, students!inner(active)")
+      .select("student_id, students!inner(active), academic_years!inner(is_current), catalog_enrollment_statuses!inner(code)")
       .eq("institution_id", institutionId)
       .eq("group_id", groupId)
-      .eq("students.active", true);
-    assertNoDbError(error);
-    return ((data ?? []) as Record<string, unknown>[]).map((r) => Number(r.student_id));
+      .eq("students.active", true).eq("academic_years.is_current", true)
+      .eq("catalog_enrollment_statuses.code", "ACT").order("id").range(from, to));
+    return [...new Set(rows.map(row => Number(row.student_id)))];
   }
 
-  async insertCharges(rows: Record<string, unknown>[]) {
-    const { data, error } = await db.from("charges").insert(rows).select("id");
-    assertNoDbError(error);
-    return ((data ?? []) as Record<string, unknown>[]).map((r) => Number(r.id));
+  async insertCharges(rows: Record<string, unknown>[],key:string) {
+    return transactionRpc<string[]>(db,"charges_create_batch",{p_rows:rows,p_key:key});
   }
 }
 

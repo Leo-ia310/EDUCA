@@ -1,5 +1,7 @@
+import { transactionRpc } from "../../lib/transaction-rpc";
 import { assertNoDbError, expectSingle } from "../../lib/db";
 import { supabaseAdmin } from "../../lib/supabase";
+import { readAllPages } from "../../lib/read-all";
 
 const db = supabaseAdmin as any;
 
@@ -28,41 +30,8 @@ export class GradesRepository {
     return data?.value == null ? null : String(data.value);
   }
 
-  async insertScale(payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db.from("grading_scales").insert(payload).select("id").single(),
-      "No se pudo crear la escala.",
-    );
-  }
-
-  async updateScale(
-    id: number,
-    institutionId: number,
-    payload: Record<string, unknown>,
-  ) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("grading_scales")
-        .update(payload)
-        .eq("id", id)
-        .eq("institution_id", institutionId)
-        .select("id")
-        .single(),
-      "No se pudo actualizar la escala.",
-    );
-  }
-
-  async deleteScaleRanges(scaleId: number) {
-    const { error } = await db
-      .from("grading_scale_ranges")
-      .delete()
-      .eq("scale_id", scaleId);
-    assertNoDbError(error);
-  }
-
-  async insertScaleRanges(rows: Array<Record<string, unknown>>) {
-    const { error } = await db.from("grading_scale_ranges").insert(rows);
-    assertNoDbError(error);
+  async writeScale(id:number|null,header:Record<string,unknown>,ranges:Record<string,unknown>[],key:string) {
+    return transactionRpc(this.client,"grading_scale_write",{p_id:id,p_header:header,p_ranges:ranges,p_key:key});
   }
 
   async findScaleForHydration(institutionId: number, scaleId: number) {
@@ -124,37 +93,41 @@ export class GradesRepository {
   }
 
   async gradebookEvaluations(institutionId: number, classId: number, periodId: number) {
-    const { data, error } = await this.client
+    return readAllPages<Record<string, unknown>>((from, to) => this.client
       .from("evaluations")
-      .select("id, title, date, max_score, weight, catalog_evaluation_types(code)")
+      .select("id, title, date, max_score, weight, catalog_evaluation_types(code), classes(subjects(name))")
       .eq("institution_id", institutionId)
       .eq("class_id", classId)
       .eq("academic_period_id", periodId)
-      .order("date");
-    assertNoDbError(error);
-    return (data ?? []) as Array<Record<string, unknown>>;
+      .order("date").order("id").range(from, to));
   }
 
-  async enrolledStudents(institutionId: number, groupId: number) {
-    const { data, error } = await this.client
+  async enrolledStudents(institutionId: number, groupId: number, academicYearId: number | null) {
+    const rows = await readAllPages<Record<string, unknown>>((from, to) => {
+      let query = this.client
       .from("enrollments")
-      .select("student_id, students!inner(id, active, persons(first_name, last_name))")
+      .select("student_id, students!inner(id, active, persons(first_name, last_name)), academic_years!inner(is_current), catalog_enrollment_statuses!inner(code)")
       .eq("institution_id", institutionId)
       .eq("group_id", groupId)
+      .eq("catalog_enrollment_statuses.code", "ACT")
       .eq("students.active", true);
-    assertNoDbError(error);
-    return (data ?? []) as Array<Record<string, unknown>>;
+      query = academicYearId == null ? query.eq("academic_years.is_current", true) : query.eq("academic_year_id", academicYearId);
+      return query.order("id").range(from, to);
+    });
+    return [...new Map(rows.map(row => [Number(row.student_id), row])).values()];
   }
 
   async gradesOfEvaluations(institutionId: number, evaluationIds: number[]) {
-    if (evaluationIds.length === 0) return [] as Array<Record<string, unknown>>;
-    const { data, error } = await this.client
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < evaluationIds.length; i += 150) {
+    rows.push(...await readAllPages<Record<string, unknown>>((from, to) => this.client
       .from("grades")
       .select("evaluation_id, student_id, score")
       .eq("institution_id", institutionId)
-      .in("evaluation_id", evaluationIds);
-    assertNoDbError(error);
-    return (data ?? []) as Array<Record<string, unknown>>;
+      .in("evaluation_id", evaluationIds.slice(i, i + 150))
+      .order("id").range(from, to)));
+    }
+    return rows;
   }
 
   async findEvaluationForGrade(institutionId: number, evaluationId: number) {

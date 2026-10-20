@@ -1,26 +1,21 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'attendance_local_datasource.dart';
 
 import '../../../../core/network/backend_api_client.dart';
 import '../../domain/entities.dart';
 import '../models/local_attendance.dart';
-import '../models/local_class_session.dart';
-import '../models/sync_entry.dart';
 import '../repositories/backend_sync_repository.dart';
 
-/// Acceso a las tablas `class_sessions` y `attendances` de Supabase. Diseñado
-/// para idempotencia: si el `uuid` ya existe en el server, hace UPDATE.
+/// Lecturas autorizadas y lotes de asistencia con versiones e idempotencia.
 class AttendanceRemoteDataSource {
-  AttendanceRemoteDataSource(this._api, this._client)
-      : _sync = BackendSyncRepository(_api);
+  AttendanceRemoteDataSource(this._api) : _sync = BackendSyncRepository(_api);
 
   final BackendApiClient _api;
-  final SupabaseClient _client;
+
   final BackendSyncRepository _sync;
 
   Future<List<ClassSessionBrief>> todaysClasses({
     required int teacherId,
   }) async {
-    if (teacherId <= 0) return const [];
     final response = await _api.call('assignments.teacherClasses');
     return ((response as List?) ?? const [])
         .map((row) => _classFromMap(Map<String, dynamic>.from(row as Map)))
@@ -28,70 +23,55 @@ class AttendanceRemoteDataSource {
         .toList();
   }
 
-  Future<List<StudentBrief>> classRoster({
-    required int classId,
-    required int institutionId,
-  }) async {
-    final classRow = await _client
-        .from('classes')
-        .select('group_id')
-        .eq('id', classId)
-        .eq('institution_id', institutionId)
-        .single();
-    final groupId = (classRow['group_id'] as num).toInt();
-    final rows = await _client
-        .from('enrollments')
-        .select(
-          'students(id, student_code, persons(first_name, last_name, photo_url))',
-        )
-        .eq('group_id', groupId)
-        .eq('institution_id', institutionId);
-    final students = (rows as List)
-        .map((row) => _studentFromMap(Map<String, dynamic>.from(row as Map)))
-        .whereType<StudentBrief>()
-        .toList()
-      ..sort((a, b) => a.fullName.compareTo(b.fullName));
-    return students;
+  Future<List<StudentBrief>> classRoster(
+      {required int classId,
+      required int institutionId,
+      required DateTime date,
+      required AttendanceLocalDataSource local,}) async {
+    final response = Map<String, dynamic>.from(await _api.get(
+        '/attendance/class/$classId',
+        queryParameters: {'date': dayKey(date)},) as Map,);
+    final result = <StudentBrief>[];
+    final hydrated = <LocalAttendance>[];
+    for (final raw in response['students'] as List) {
+      final row = Map<String, dynamic>.from(raw as Map),
+          id = int.parse(row['studentId'].toString());
+      result.add(StudentBrief(id: id, fullName: row['name'] as String));
+      final previous =
+          local.recordFor(classId: classId, studentId: id, date: date);
+      if (previous != null && previous.syncStateIndex != 1) continue;
+      if (row['statusId'] == null) {
+        if (previous != null) await local.removeRecord(previous.uuid);
+        continue;
+      }
+      final record = LocalAttendance(
+          uuid: previous?.uuid ?? row['uuid'] as String,
+          classDate: dayKey(date),
+          classId: classId,
+          studentId: id,
+          statusId: int.parse(row['statusId'].toString()),
+          recordedAtMs: date.millisecondsSinceEpoch,
+          syncStateIndex: 1,
+          notes: row['notes'] as String?,
+          serverId: int.parse(row['attendanceId'].toString()),
+          serverVersion: (row['version'] as num).toInt(),
+          classSessionId: response['sessionId'] == null
+              ? null
+              : int.parse(response['sessionId'].toString()),);
+      hydrated.add(record);
+    }
+    await local.upsertRecords(hydrated);
+    return result;
   }
 
-  /// Sube (insert/update) una sesión. Devuelve el id del server.
-  Future<int> upsertClassSession({
-    required LocalClassSession session,
-    required int institutionId,
-  }) async {
-    final response = await _api.call('attendance.upsertClassSession', {
-      'uuid': session.uuid,
-      'classId': session.classId,
-      'dateMs': session.dateMs,
-      'teacherId': session.teacherId,
-      'createdAtMs': session.createdAtMs,
-    });
-    final data = Map<String, dynamic>.from(response as Map);
-    return (data['id'] as num).toInt();
-  }
+  Future<Map<String, dynamic>> uploadBatch(
+          {required List<Map<String, dynamic>> sessions,
+          required List<Map<String, dynamic>> marks,}) async =>
+      Map<String, dynamic>.from(await _api.post('/sync/attendance/batch',
+          data: {'sessions': sessions, 'marks': marks},) as Map,);
 
-  /// Sube (insert/update) un registro de asistencia identificado por uuid.
-  Future<int> upsertAttendance({
-    required LocalAttendance record,
-    required int institutionId,
-    int? classSessionServerId,
-  }) async {
-    final response = await _api.call('attendance.upsertAttendance', {
-      'uuid': record.uuid,
-      'classId': record.classId,
-      'classSessionId': classSessionServerId ?? record.classSessionId,
-      'studentId': record.studentId,
-      'statusId': record.statusId,
-      'recordedAtMs': record.recordedAtMs,
-      'notes': record.notes,
-    });
-    final data = Map<String, dynamic>.from(response as Map);
-    return (data['id'] as num).toInt();
-  }
-
-  Future<void> enqueueSyncEntry(SyncEntry entry) async {
-    await _sync.enqueue(entry);
-  }
+  static String dayKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
   Future<List<Map<String, dynamic>>> syncQueue({String? status}) async {
     final page = await _sync.listQueue(status: status);
@@ -120,22 +100,6 @@ class AttendanceRemoteDataSource {
       endTime: row['endTime'] as String? ?? '',
       studentCount: (row['studentCount'] as num?)?.toInt() ?? 0,
       classroom: row['classroom'] as String?,
-    );
-  }
-
-  StudentBrief? _studentFromMap(Map<String, dynamic> enrollment) {
-    final student = enrollment['students'];
-    if (student is! Map) return null;
-    final person = student['persons'];
-    final personMap = person is Map ? person : const {};
-    final first = personMap['first_name'] as String? ?? '';
-    final last = personMap['last_name'] as String? ?? '';
-    final name = '$first $last'.trim();
-    return StudentBrief(
-      id: (student['id'] as num).toInt(),
-      fullName: name.isEmpty ? 'Estudiante' : name,
-      studentCode: student['student_code'] as String?,
-      avatarUrl: personMap['photo_url'] as String?,
     );
   }
 }

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { HttpError } from "../../lib/errors";
 import {
   asList,
@@ -80,42 +81,10 @@ export class GradesService {
       );
     }
 
-    const row = id == null
-      ? await this.repository.insertScale({
-        institution_id: ctx.institutionId,
-        name,
-        scale_type: type,
-        min_value: minValue,
-        max_value: maxValue,
-        pass_value: passValue,
-        decimals,
-        active: true,
-      })
-      : await this.repository.updateScale(id, ctx.institutionId, {
-        name,
-        scale_type: type,
-        min_value: minValue,
-        max_value: maxValue,
-        pass_value: passValue,
-        decimals,
-        active: true,
-      });
-    const scaleId = Number(row.id);
-
-    const ranges = asList(payload.ranges).map((range) => ({
-      scale_id: scaleId,
-      ...this.normalizeScaleRange(range, minValue, maxValue),
-    }));
-    await this.repository.deleteScaleRanges(scaleId);
-    if (ranges.length > 0) {
-      await this.repository.insertScaleRanges(ranges);
-    }
-
-    const scale = await this.repository.findScaleForHydration(
-      ctx.institutionId,
-      scaleId,
-    );
-    return { scale };
+    const ranges=asList(payload.ranges).map(range=>this.normalizeScaleRange(range,minValue,maxValue));
+    const key=writeKey(payload.requestId);
+    const scale=await this.repository.writeScale(id,{name,scale_type:type,min_value:minValue,max_value:maxValue,pass_value:passValue,decimals},ranges,key);
+    return {scale};
   }
 
   async setDefaultScale(ctx: AppContext, payload: Record<string, unknown>) {
@@ -159,7 +128,7 @@ export class GradesService {
 
     const [evaluations, enrollments] = await Promise.all([
       this.repository.gradebookEvaluations(ctx.institutionId, classId, periodId),
-      this.repository.enrolledStudents(ctx.institutionId, Number(cls.group_id)),
+      this.repository.enrolledStudents(ctx.institutionId, Number(cls.group_id), cls.academic_year_id == null ? null : Number(cls.academic_year_id)),
     ]);
     const gradeRows = await this.repository.gradesOfEvaluations(
       ctx.institutionId,
@@ -182,6 +151,9 @@ export class GradesService {
     return {
       evaluations: evaluations.map((e: any) => ({
         id: String(e.id),
+        classId: String(classId),
+        periodId: String(periodId),
+        subjectName: String(e.classes?.subjects?.name ?? "Materia"),
         title: String(e.title ?? ""),
         date: e.date ?? null,
         maxScore: Number(e.max_score ?? 100),
@@ -281,3 +253,8 @@ export class GradesService {
 
 export const gradesService = new GradesService();
 
+
+function writeKey(value:unknown):string {
+ if(value==null)return randomUUID();
+ if(typeof value!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))throw new HttpError(400,"Clave de operación inválida.","validation_error");return value;
+}

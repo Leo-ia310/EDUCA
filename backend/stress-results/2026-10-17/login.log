@@ -1,0 +1,5 @@
+time="2026-10-17T10:52:36-06:00" level=info msg="{\"login\":\"admin\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"BIGSCHOOL\"}" source=console
+time="2026-10-17T10:52:37-06:00" level=info msg="{\"login\":\"teacher\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"BIGSCHOOL\"}" source=console
+time="2026-10-17T10:52:38-06:00" level=info msg="{\"login\":\"student\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"BIGSCHOOL\"}" source=console
+time="2026-10-17T10:52:39-06:00" level=info msg="{\"login\":\"parent\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"BIGSCHOOL\"}" source=console
+time="2026-10-17T10:53:10-06:00" level=info msg="RECOVERY {\"status\":200,\"ms\":126.5619}" source=console

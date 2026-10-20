@@ -80,8 +80,7 @@ class GradesCalculator {
     required GradingScale scale,
   }) {
     final scores = <String, double>{
-      for (final p in periods)
-        p.id: periodGrades[p.id]?.score ?? 0,
+      for (final p in periods) p.id: periodGrades[p.id]?.score ?? 0,
     };
     double weighted = 0;
     double totalWeight = 0;
@@ -106,6 +105,9 @@ class GradesCalculator {
       qualitativeLabel: scale.labelFor(finalScore),
       passed: scale.isPassing(finalScore),
       evaluationCount: evaluationCount,
+      periodEvaluationCounts: {
+        for (final p in periods) p.id: periodGrades[p.id]?.evaluationCount ?? 0,
+      },
     );
   }
 
@@ -115,5 +117,14 @@ class GradesCalculator {
     if (valid.isEmpty) return 0;
     final sum = valid.fold<double>(0, (a, s) => a + s.finalScore);
     return double.parse((sum / valid.length).toStringAsFixed(2));
+  }
+
+  double reportAverage(Iterable<ReportCardLine> lines) {
+    final graded = lines.where((line) => line.hasGrade).toList();
+    if (graded.isEmpty) return 0;
+    return double.parse(
+        (graded.fold<double>(0, (sum, line) => sum + line.finalScore) /
+                graded.length)
+            .toStringAsFixed(2),);
   }
 }

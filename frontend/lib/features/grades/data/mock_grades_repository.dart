@@ -1,7 +1,8 @@
 import '../domain/entities.dart';
 import '../domain/grades_calculator.dart';
 import '../domain/grades_repository.dart';
-import '../../assignments/data/mock_assignments_data.dart' show AssignmentsMockSeed;
+import '../../assignments/data/mock_assignments_data.dart'
+    show AssignmentsMockSeed;
 import 'mock_grades_data.dart';
 
 class MockGradesRepository implements GradesRepository {
@@ -82,7 +83,8 @@ class MockGradesRepository implements GradesRepository {
             .map((e) => e.id)
             .toSet();
     return _grades
-        .where((g) => g.studentId == studentId && validIds.contains(g.evaluationId))
+        .where((g) =>
+            g.studentId == studentId && validIds.contains(g.evaluationId),)
         .toList();
   }
 
@@ -118,13 +120,15 @@ class MockGradesRepository implements GradesRepository {
           scale: s,
         );
       }
-      result.add(_calc.computeSubjectPerformance(
-        subjectName: subj.name,
-        teacherName: subj.teacher,
-        periodGrades: periodGrades,
-        periods: periods,
-        scale: s,
-      ),);
+      result.add(
+        _calc.computeSubjectPerformance(
+          subjectName: subj.name,
+          teacherName: subj.teacher,
+          periodGrades: periodGrades,
+          periods: periods,
+          scale: s,
+        ),
+      );
     }
     return result;
   }
@@ -137,9 +141,8 @@ class MockGradesRepository implements GradesRepository {
   }) async {
     final s = scale ?? await defaultScale();
     final periods = GradesMockSeed.periods;
-    final targetPeriod = periodId == null
-        ? null
-        : periods.firstWhere((p) => p.id == periodId);
+    final targetPeriod =
+        periodId == null ? null : periods.firstWhere((p) => p.id == periodId);
     final performances = await performanceForStudent(
       studentId: studentId,
       scale: s,
@@ -150,30 +153,37 @@ class MockGradesRepository implements GradesRepository {
       final score = targetPeriod == null
           ? perf.finalScore
           : perf.periodScores[targetPeriod.id] ?? 0;
-      lines.add(ReportCardLine(
-        subjectName: perf.subjectName,
-        teacherName: perf.teacherName,
-        finalScore: score,
-        qualitativeLabel: s.labelFor(score),
-        passed: s.isPassing(score),
-      ),);
+      final count = targetPeriod == null
+          ? perf.evaluationCount
+          : perf.periodEvaluationCounts[targetPeriod.id];
+      lines.add(
+        ReportCardLine(
+          subjectName: perf.subjectName,
+          teacherName: perf.teacherName,
+          finalScore: score,
+          evaluationCount: count,
+          qualitativeLabel: count == 0 ? null : s.labelFor(score),
+          passed: count != 0 && s.isPassing(score),
+        ),
+      );
     }
     final overall = targetPeriod == null
         ? _calc.overallAverage(performances)
-        : _averageOfLines(lines);
+        : _calc.reportAverage(lines);
 
     return ReportCard(
       studentId: studentId,
-      studentName:
-          AssignmentsMockSeed.studentNames[studentId] ?? 'Estudiante',
+      studentName: AssignmentsMockSeed.studentNames[studentId] ?? 'Estudiante',
       institutionName: 'Colegio Demo Educa360',
       gradeLevel: '4° Grado A',
       periodName: targetPeriod?.name ?? 'Anual',
-      periodStart: targetPeriod?.startDate ?? DateTime(DateTime.now().year, 1, 1),
+      periodStart:
+          targetPeriod?.startDate ?? DateTime(DateTime.now().year, 1, 1),
       periodEnd: targetPeriod?.endDate ?? DateTime(DateTime.now().year, 12, 31),
       lines: lines,
       overallAverage: overall,
-      overallLabel: s.labelFor(overall),
+      overallLabel:
+          lines.any((line) => line.hasGrade) ? s.labelFor(overall) : null,
       attendancePct: 96.5,
       rank: 3,
       totalPeers: 24,
@@ -197,7 +207,10 @@ class MockGradesRepository implements GradesRepository {
         final g = _grades.firstWhere(
           (gg) => gg.studentId == id && gg.evaluationId == e.id,
           orElse: () => const GradeEntry(
-              evaluationId: '', studentId: -1, rawScore: -1,),
+            evaluationId: '',
+            studentId: -1,
+            rawScore: -1,
+          ),
         );
         grades[id]![e.id] = g.studentId == -1 ? null : g.rawScore;
       }
@@ -205,8 +218,10 @@ class MockGradesRepository implements GradesRepository {
     return GradebookMatrix(
       evaluations: evaluations,
       students: studentIds
-          .map((id) =>
-              (studentId: id, name: AssignmentsMockSeed.studentNames[id]!),)
+          .map(
+            (id) =>
+                (studentId: id, name: AssignmentsMockSeed.studentNames[id]!),
+          )
           .toList(),
       grades: grades,
     );
@@ -233,13 +248,5 @@ class MockGradesRepository implements GradesRepository {
     } else {
       _grades[idx] = entry;
     }
-  }
-
-  // ---------- helpers ----------
-  double _averageOfLines(List<ReportCardLine> lines) {
-    final valid = lines.where((l) => l.finalScore > 0).toList();
-    if (valid.isEmpty) return 0;
-    final sum = valid.fold<double>(0, (a, l) => a + l.finalScore);
-    return double.parse((sum / valid.length).toStringAsFixed(2));
   }
 }

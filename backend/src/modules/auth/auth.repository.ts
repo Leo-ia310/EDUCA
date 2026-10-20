@@ -1,6 +1,6 @@
 import { assertNoDbError, expectSingle } from "../../lib/db";
 import { HttpError } from "../../lib/errors";
-import { supabaseAdmin } from "../../lib/supabase";
+import { supabaseAdmin, requireSupabaseServiceRole } from "../../lib/supabase";
 
 const db = supabaseAdmin as any;
 
@@ -14,50 +14,53 @@ export class AuthRepository {
     return db.auth.getUser(token);
   }
 
-  async findAppUserByAuthUserId(authUserId: string) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("users")
-        .select(
-          "id, institution_id, person_id, full_name, admin_permissions, user_roles(roles(code))",
-        )
-        .eq("auth_user_id", authUserId)
-        .eq("active", true)
-        .is("deleted_at", null)
-        .single(),
-      "Usuario de aplicación no encontrado.",
-    );
+  async requestContext(authUserId: string, sessionId: string, windowMs: number, limit: number) {
+    const {data, error} = await requireSupabaseServiceRole().rpc("backend_request_context", {
+      p_auth_user_id: authUserId, p_session_id: sessionId, p_window_ms: windowMs, p_limit: limit,
+    });
+    if (error) {
+      if (error.code === "28000") throw new HttpError(401,"Sesión inválida o revocada.","unauthorized");
+      if (error.code === "42501") throw new HttpError(403,
+        error.details === "two_factor_required" ? "Completa la verificación de seguridad e inicia sesión nuevamente." : "Cuenta no disponible o sin roles asignados.",
+        error.details === "two_factor_required" ? "two_factor_required" : "forbidden");
+      throw new HttpError(503,"No se pudo verificar tu acceso. Intenta nuevamente.","authorization_unavailable");
+    }
+    if (data == null) throw new HttpError(503,"No se pudo verificar tu acceso.","authorization_unavailable");
+    return data as Record<string, unknown>;
   }
 
   async findTeacherIdByPerson(institutionId: number, personId: number) {
-    const { data } = await db
+    const { data , error: queryError_1} = await db
       .from("teachers")
       .select("id")
       .eq("person_id", personId)
       .eq("institution_id", institutionId)
       .eq("active", true)
       .maybeSingle();
+    assertNoDbError(queryError_1);
     return data == null ? null : Number(data.id);
   }
 
   async findStudentIdByPerson(institutionId: number, personId: number) {
-    const { data } = await db
+    const { data , error: queryError_2} = await db
       .from("students")
       .select("id")
       .eq("person_id", personId)
       .eq("institution_id", institutionId)
       .eq("active", true)
       .maybeSingle();
+    assertNoDbError(queryError_2);
     return data == null ? null : Number(data.id);
   }
 
   async findParentIdByPerson(institutionId: number, personId: number) {
-    const { data } = await db
+    const { data , error: queryError_3} = await db
       .from("parents")
       .select("id")
       .eq("person_id", personId)
       .eq("institution_id", institutionId)
       .maybeSingle();
+    assertNoDbError(queryError_3);
     return data == null ? null : Number(data.id);
   }
 
@@ -68,7 +71,7 @@ export class AuthRepository {
   async findClassForPermission(institutionId: number, classId: number) {
     const { data, error } = await db
       .from("classes")
-      .select("id, group_id, teacher_id, institution_id")
+      .select("id, group_id, teacher_id, institution_id, academic_year_id")
       .eq("id", classId)
       .eq("institution_id", institutionId)
       .eq("active", true)
@@ -108,13 +111,14 @@ export class AuthRepository {
     studentId: number,
     groupId: number,
   ) {
-    const { data } = await db
+    const { data , error: queryError_4} = await db
       .from("enrollments")
       .select("id")
       .eq("student_id", studentId)
       .eq("group_id", groupId)
       .eq("institution_id", institutionId)
       .limit(1);
+    assertNoDbError(queryError_4);
     return Array.isArray(data) && data.length > 0;
   }
 
@@ -123,7 +127,7 @@ export class AuthRepository {
     parentId: number,
     studentId: number,
   ) {
-    const { data } = await db
+    const { data , error: queryError_5} = await db
       .from("parent_students")
       .select("id, parents!inner(institution_id), students!inner(institution_id)")
       .eq("parent_id", parentId)
@@ -131,6 +135,7 @@ export class AuthRepository {
       .eq("parents.institution_id", institutionId)
       .eq("students.institution_id", institutionId)
       .limit(1);
+    assertNoDbError(queryError_5);
     return Array.isArray(data) && data.length > 0;
   }
 }

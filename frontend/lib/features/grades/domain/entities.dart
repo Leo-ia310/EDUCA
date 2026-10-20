@@ -85,8 +85,7 @@ class GradingScale extends Equatable {
   bool isPassing(double value) => value >= passValue;
 
   @override
-  List<Object?> get props =>
-      [id, name, type, minValue, maxValue, passValue];
+  List<Object?> get props => [id, name, type, minValue, maxValue, passValue];
 }
 
 extension _Let<T> on T {
@@ -187,7 +186,15 @@ class PeriodGrade extends Equatable {
   final int evaluationCount;
 
   @override
-  List<Object?> get props => [studentId, subjectName, periodId, score];
+  List<Object?> get props => [
+        studentId,
+        subjectName,
+        periodId,
+        score,
+        evaluationCount,
+        qualitativeLabel,
+        passed,
+      ];
 }
 
 /// Rendimiento consolidado de un estudiante en una materia a lo largo del
@@ -201,6 +208,7 @@ class SubjectPerformance extends Equatable {
     required this.qualitativeLabel,
     required this.passed,
     required this.evaluationCount,
+    this.periodEvaluationCounts = const {},
   });
 
   final String subjectName;
@@ -210,14 +218,26 @@ class SubjectPerformance extends Equatable {
   final String? qualitativeLabel;
   final bool passed;
   final int evaluationCount;
+  final Map<String, int> periodEvaluationCounts;
 
-  double get bestPeriod =>
-      periodScores.values.isEmpty ? 0 : periodScores.values.reduce((a, b) => a > b ? a : b);
-  double get worstPeriod =>
-      periodScores.values.isEmpty ? 0 : periodScores.values.reduce((a, b) => a < b ? a : b);
+  double get bestPeriod => periodScores.values.isEmpty
+      ? 0
+      : periodScores.values.reduce((a, b) => a > b ? a : b);
+  double get worstPeriod => periodScores.values.isEmpty
+      ? 0
+      : periodScores.values.reduce((a, b) => a < b ? a : b);
 
   @override
-  List<Object?> get props => [subjectName, finalScore, periodScores];
+  List<Object?> get props => [
+        subjectName,
+        teacherName,
+        finalScore,
+        periodScores,
+        evaluationCount,
+        periodEvaluationCounts,
+        qualitativeLabel,
+        passed,
+      ];
 }
 
 /// Boletín consolidado del estudiante para un periodo (o anual si
@@ -249,13 +269,27 @@ class ReportCard extends Equatable {
   final List<ReportCardLine> lines;
   final double overallAverage;
   final String? overallLabel;
-  final double attendancePct;
-  final int rank;
-  final int totalPeers;
+  final double? attendancePct;
+  final int? rank;
+  final int? totalPeers;
+  bool get hasGrades => lines.any((line) => line.hasGrade);
 
   @override
-  List<Object?> get props =>
-      [studentId, periodName, overallAverage, lines];
+  List<Object?> get props => [
+        studentId,
+        studentName,
+        institutionName,
+        gradeLevel,
+        periodName,
+        periodStart,
+        periodEnd,
+        overallAverage,
+        overallLabel,
+        attendancePct,
+        rank,
+        totalPeers,
+        lines,
+      ];
 }
 
 class ReportCardLine extends Equatable {
@@ -266,6 +300,7 @@ class ReportCardLine extends Equatable {
     required this.qualitativeLabel,
     required this.passed,
     this.notes,
+    this.evaluationCount,
   });
 
   final String subjectName;
@@ -275,6 +310,18 @@ class ReportCardLine extends Equatable {
   final bool passed;
   final String? notes;
 
+  /// Null preserves a supplied legacy grade; zero explicitly means ungraded.
+  final int? evaluationCount;
+  bool get hasGrade => evaluationCount == null || evaluationCount! > 0;
+
   @override
-  List<Object?> get props => [subjectName, finalScore, passed];
+  List<Object?> get props => [
+        subjectName,
+        teacherName,
+        finalScore,
+        qualitativeLabel,
+        passed,
+        evaluationCount,
+        notes,
+      ];
 }

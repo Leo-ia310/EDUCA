@@ -48,6 +48,16 @@ void main() {
     final past = DateTime(2020, 1, 1);
     final future = DateTime(2999, 1, 1);
 
+    test('vence después del día completo, no al comenzar el vencimiento', () {
+      final charge = _charge(dueDate: DateTime(2026, 10, 18));
+      expect(charge.isOverdueOn(DateTime(2026, 10, 18, 23, 59)), isFalse);
+      expect(charge.isOverdueOn(DateTime(2026, 10, 19)), isTrue);
+    });
+
+    test('un cargo anulado no cuenta como mora', () {
+      expect(_charge(dueDate: past, status: ChargeStatus.cancelled).isOverdue, isFalse);
+    });
+
     test('vencido: pasada la fecha y sin pagar', () {
       expect(_charge(dueDate: past, status: ChargeStatus.pending).isOverdue,
           isTrue,);

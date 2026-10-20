@@ -18,6 +18,9 @@ import {
   createRole,
   createUser,
   directory,
+  directoryOptions,
+  directoryPeoplePage,
+  directoryCounts,
   listInstitutions,
   listPeople,
   listRoles,
@@ -51,6 +54,9 @@ adminRoutes.patch("/users/:id", can("roles.edit"), asyncHandler(updateUser));
 adminRoutes.delete("/users/:id", can("roles.delete"), asyncHandler(archiveUser));
 
 adminRoutes.get("/directory", can("dashboard.view", "students.view", "teachers.view", "classes.view", "roles.view", "reports.view", "payments.view"), asyncHandler(directory));
+adminRoutes.get("/directory/options", can("dashboard.view", "students.view", "teachers.view", "classes.view", "roles.view", "reports.view", "payments.view"), asyncHandler(directoryOptions));
+adminRoutes.get("/directory/people", can("students.view", "teachers.view", "classes.view", "roles.view", "reports.view", "payments.view"), asyncHandler(directoryPeoplePage));
+adminRoutes.get("/directory/counts", can("dashboard.view", "roles.view"), asyncHandler(directoryCounts));
 
 adminRoutes.post("/groups", can("classes.create"), asyncHandler(createGroup));
 adminRoutes.patch("/groups/:id", can("classes.edit"), asyncHandler(updateGroup));

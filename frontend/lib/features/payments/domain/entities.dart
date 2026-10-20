@@ -96,8 +96,11 @@ class Charge extends Equatable {
 
   double get totalAmount => amount - discount + lateFee;
   double get pending => (totalAmount - paidAmount).clamp(0, double.infinity);
-  bool get isOverdue =>
-      status != ChargeStatus.paid && DateTime.now().isAfter(dueDate);
+  bool get isOverdue => isOverdueOn(DateTime.now());
+  bool isOverdueOn(DateTime date) =>
+      status != ChargeStatus.paid && status != ChargeStatus.cancelled &&
+      DateTime(dueDate.year, dueDate.month, dueDate.day)
+          .isBefore(DateTime(date.year, date.month, date.day));
   int get daysToDue => dueDate.difference(DateTime.now()).inDays;
 
   Charge copyWith({

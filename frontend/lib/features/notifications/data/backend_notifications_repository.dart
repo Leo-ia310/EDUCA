@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/network/backend_api_client.dart';
+import '../../../core/network/adaptive_refresh.dart';
 import '../domain/entities.dart';
 import '../domain/notifications_repository.dart';
 
@@ -15,7 +16,8 @@ import '../domain/notifications_repository.dart';
 /// - **Tiempo real**: suscripción de Supabase Realtime a la tabla
 ///   `notifications` del usuario (llega al instante, p. ej. un mensaje de chat).
 /// - **Al volver a la app** (resume) y al abrir la pantalla de alertas.
-/// - **Sondeo** cada 20 s como respaldo si el canal realtime se cae.
+/// - Respaldo adaptativo con backoff si falla la red y conciliación espaciada
+///   si Realtime funciona. Se suspende en segundo plano.
 class BackendNotificationsRepository
     with WidgetsBindingObserver
     implements NotificationsRepository {
@@ -23,16 +25,21 @@ class BackendNotificationsRepository
     this._api, {
     SupabaseClient? realtime,
     String? userId,
-    Duration pollEvery = const Duration(seconds: 20),
+    Duration pollEvery = const Duration(seconds: 30),
   }) {
     WidgetsBinding.instance.addObserver(this);
-    _timer = Timer.periodic(pollEvery, (_) => refresh());
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _foreground = lifecycle == null || lifecycle == AppLifecycleState.resumed;
+    _refreshDriver = AdaptiveRefresh(
+        read: _refreshOnce, fallbackEvery: pollEvery, foreground: _foreground,);
     if (realtime != null && userId != null) _listenRealtime(realtime, userId);
-    refresh();
+    unawaited(refresh());
   }
 
   final BackendApiClient _api;
-  Timer? _timer;
+  late final AdaptiveRefresh _refreshDriver;
+  bool _disposed = false;
+  bool _foreground = true;
   SupabaseClient? _client;
   RealtimeChannel? _channel;
   final _ctrl = StreamController<List<AppNotification>>.broadcast();
@@ -41,6 +48,7 @@ class BackendNotificationsRepository
   final _known = <String>{};
   final DateTime _securityPromptAt = DateTime.now();
   bool _loaded = false;
+  bool _hasRemoteSnapshot = false;
   bool _securityPromptRead = false;
   bool _securityPromptHidden = false;
   bool _twoFactorEnabled = false;
@@ -64,17 +72,20 @@ class BackendNotificationsRepository
               column: 'user_id',
               value: userId,
             ),
-            callback: (_) => refresh(),
+            callback: (_) => _refreshDriver.notifyEvent(),
           )
-          .subscribe();
+          .subscribe((status, error) => _refreshDriver.setRealtimeHealthy(
+              status == RealtimeSubscribeStatus.subscribed,),);
     } catch (_) {
       // Sin realtime queda el sondeo y el refresco al volver a la app.
     }
   }
 
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
+    _refreshDriver.dispose();
     final channel = _channel;
     if (channel != null) _client?.removeChannel(channel);
     _ctrl.close();
@@ -83,62 +94,64 @@ class BackendNotificationsRepository
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) refresh();
+    _foreground = state == AppLifecycleState.resumed;
+    if (_foreground) _twoFactorCheckedAt = null;
+    _refreshDriver.setForeground(_foreground);
   }
-
-  bool _refreshing = false;
-  bool _refreshAgain = false;
 
   @override
   Future<void> refresh() async {
-    if (_refreshing) {
-      _refreshAgain = true;
-      return;
-    }
-    _refreshing = true;
+    await _refreshDriver.refresh();
+  }
+
+  Future<void> _refreshOnce() async {
     await _refreshTwoFactorStatus();
+    if (_disposed || !_foreground) return;
     try {
       final raw = await _api.get('/notifications');
+      if (_disposed || !_foreground) return;
       final list = raw is List ? raw : const [];
       final items = [
         for (final e in list)
           if (e is Map) _parse(Map<String, dynamic>.from(e)),
       ];
-      if (_loaded) {
+      if (_hasRemoteSnapshot) {
         for (final n in items) {
           if (!n.read && !_known.contains(n.id) && !_arrivals.isClosed) {
             _arrivals.add(n);
           }
         }
       }
-      _known
-        ..clear()
-        ..addAll(items.map((n) => n.id));
+      _known.addAll(items.map((n) => n.id));
+      while (_known.length > 1000) {
+        _known.remove(_known.first);
+      }
+      _hasRemoteSnapshot = true;
       _items = _withSecurityPrompt(items);
     } catch (_) {
       // Sin red o sin sesión: se conserva lo último cargado y el aviso local
       // de seguridad sigue visible.
       _items = _withSecurityPrompt(_items);
-    } finally {
-      _refreshing = false;
+      _loaded = true;
+      if (!_disposed && _foreground) _emit();
+      rethrow;
     }
     _loaded = true;
     _emit();
-    if (_refreshAgain && !_ctrl.isClosed) {
-      _refreshAgain = false;
-      await refresh();
-    }
   }
 
-  /// Consulta si el 2FA ya está activo (máx. una vez por minuto). Si falla,
+  /// Consulta el aviso de 2FA como máximo cada cinco minutos y al volver a
+  /// primer plano. La pantalla de seguridad invalida el repositorio al cambiarlo.
+  /// Si falla,
   /// se conserva el último valor conocido.
   Future<void> _refreshTwoFactorStatus() async {
     final at = _twoFactorCheckedAt;
-    if (at != null && DateTime.now().difference(at).inSeconds < 60) return;
+    if (at != null && DateTime.now().difference(at).inMinutes < 5) return;
+    _twoFactorCheckedAt = DateTime.now();
     try {
       final raw = await _api.get('/auth/2fa/status');
+      if (_disposed || !_foreground) return;
       _twoFactorEnabled = raw is Map && raw['enabled'] == true;
-      _twoFactorCheckedAt = DateTime.now();
     } catch (_) {}
   }
 
@@ -189,11 +202,14 @@ class BackendNotificationsRepository
   }
 
   void _emit() {
-    if (!_ctrl.isClosed) _ctrl.add(List.unmodifiable(_items));
+    if (!_disposed && _foreground && !_ctrl.isClosed) {
+      _ctrl.add(List.unmodifiable(_items));
+    }
   }
 
   Stream<T> _watch<T>(T Function() read) async* {
     if (!_loaded) await refresh();
+    if (_disposed) return;
     yield read();
     yield* _ctrl.stream.map((_) => read());
   }

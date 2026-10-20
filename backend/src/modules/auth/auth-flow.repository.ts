@@ -5,17 +5,18 @@ import { requireSupabaseServiceRole } from "../../lib/supabase";
 const loginSelect =
   "id, auth_user_id, institution_id, person_id, username, email, full_name, admin_permissions, active, locked_until, two_factor, user_roles(roles(code, name))";
 
-const loginSelectWithInstitution = `${loginSelect}, institutions(id, code, name, commercial_name, active)`;
+const loginSelectWithInstitution = `${loginSelect}, institutions!users_institution_id_fkey(id, code, name, commercial_name, active)`;
 
 export class AuthFlowRepository {
   async findInstitutionByCode(code: string) {
     const db = requireSupabaseServiceRole();
-    const { data } = await db
+    const { data , error: queryError_1} = await db
       .from("institutions")
       .select("id, code, name, commercial_name, active")
       .ilike("code", code)
       .is("deleted_at", null)
       .maybeSingle();
+    assertNoDbError(queryError_1);
     return data == null ? null : (data as Record<string, unknown>);
   }
 
@@ -28,6 +29,7 @@ export class AuthFlowRepository {
       .ilike("username", username)
       .is("deleted_at", null)
       .maybeSingle();
+    assertNoDbError(byUsername.error);
     if (byUsername.data != null) {
       return byUsername.data as Record<string, unknown>;
     }
@@ -38,6 +40,7 @@ export class AuthFlowRepository {
       .ilike("email", username)
       .is("deleted_at", null)
       .maybeSingle();
+    assertNoDbError(byEmail.error);
     return byEmail.data == null
       ? null
       : (byEmail.data as Record<string, unknown>);

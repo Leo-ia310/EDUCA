@@ -1,3 +1,5 @@
+import {randomUUID} from 'node:crypto';
+import {withRequestKey} from './request-keys.mjs';
 // =============================================================================
 // check_api_schemas.mjs - verifica que las respuestas REALES del backend cumplan los esquemas tipados
 // de backend/src/lib/api-schemas.ts (los que van en docs/openapi.json y de los que la web genera tipos).
@@ -23,6 +25,7 @@ if (!USER || !PASS) { console.error('Define CHECK_USER y CHECK_PASSWORD (una cue
 
 const spec = JSON.parse(readFileSync(join(BACKEND_DIR, '..', 'docs', 'openapi.json'), 'utf8'));
 const ajv = new Ajv({ strict: false, allErrors: false });
+ajv.addFormat('uuid',/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 
 /** key «MÉTODO /api/ruta/:param» -> esquema del cuerpo 200 (respuesta) y del cuerpo de la petición */
 const typed = new Map();
@@ -73,6 +76,7 @@ const checkedRequests = new Set();
 /** Escritura: valida el cuerpo que se envía contra su esquema, hace la llamada y valida la respuesta. */
 async function write(role, key, path, body) {
   const [method] = key.split(' ');
+  body=withRequestKey(method,path,body);
   const reqSchema = typedRequest.get(key);
   if (reqSchema) {
     checkedRequests.add(key);
@@ -121,7 +125,7 @@ try {
   const asg = (await write('teacher', 'POST /api/assignments/upsert', '/assignments/upsert', { classId: Number(klass.id), title: 'Tarea CHK', dueAt: due, maxScore: 20, allowLate: true, published: true, attachments: [{ id: Number(file.id) }] })).assignment;
   const submitted = await write('student', 'POST /api/assignments/submit', '/assignments/submit', { assignmentId: Number(asg.id), notes: 'chk' });
   const today = new Date().toLocaleDateString('en-CA');
-  await write('teacher', 'POST /api/attendance/class/:classId', `/attendance/class/${klass.id}`, { date: today, marks: students.map((s, i) => ({ studentId: Number(s.id), statusId: i === 0 ? 2 : 1 })) });
+  await write('teacher', 'POST /api/attendance/class/:classId', `/attendance/class/${klass.id}`, { date: today, marks: students.map((s, i) => ({ operationId:randomUUID(),uuid:randomUUID(),expectedVersion:0,recordedAt:new Date().toISOString(),studentId: Number(s.id), statusId: i === 0 ? 2 : 1 })) });
   // calificar la entrega crea la evaluación; luego se corrige otra nota con set-grade y se oculta/publica la tarea
   await write('teacher', 'PATCH /api/assignments/submissions/:submissionId/grade', `/assignments/submissions/${submitted.submission.id}/grade`, { score: 15, feedback: 'ok' });
   await write('teacher', 'PATCH /api/assignments/:id/publish', `/assignments/${asg.id}/publish`, { published: false });

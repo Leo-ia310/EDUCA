@@ -1,3 +1,4 @@
+import { decodeAssignmentCursor, encodeAssignmentCursor, AssignmentCursor } from "./assignment-cursor";
 import { collaborationService } from "../collaborations/collaborations.service";
 import { assertNoDbError } from "../../lib/db";
 import { HttpError } from "../../lib/errors";
@@ -30,38 +31,15 @@ export class AssignmentsService {
 
   async teacherClasses(ctx: AppContext) {
     this.permissions.requireRole(ctx, ["teacher"]);
-    let teacherId: number | null = null;
-    if (!this.permissions.isAdmin(ctx)) {
-      teacherId = await this.permissions.currentTeacherId(ctx);
-      if (teacherId == null) return [];
-    }
+    if (!this.permissions.isAdmin(ctx) && await this.permissions.currentTeacherId(ctx) == null) return [];
 
-    const workspace = await collaborationService.workspace(ctx);
+    const [workspace, result] = await Promise.all([
+      collaborationService.workspace(ctx), this.repository.teacherClassRows(ctx.institutionId),
+    ]);
     const access = new Map<number, any>((workspace.classes ?? []).map((item: any) => [Number(item.classId), item]));
-    const { data, error } = await this.repository.teacherClassRows(
-      ctx.institutionId,
-      teacherId,
-    );
-    if (error) throw new HttpError(400, error.message, "db_error");
-
-    const rows = (data ?? []) as Array<Record<string, unknown>>;
-    const groupIds = [
-      ...new Set(
-        rows.map((row) => Number(row.group_id)).filter(Number.isFinite),
-      ),
-    ];
-    const studentCounts = new Map<number, number>();
-    if (groupIds.length > 0) {
-      const { data: enrollments } =
-        await this.repository.enrollmentsByGroupIds(
-          ctx.institutionId,
-          groupIds,
-        );
-      for (const enrollment of enrollments ?? []) {
-        const groupId = Number((enrollment as Record<string, unknown>).group_id);
-        studentCounts.set(groupId, (studentCounts.get(groupId) ?? 0) + 1);
-      }
-    }
+    assertNoDbError(result.error);
+    const rows = result.data;
+    const studentCounts = await this.repository.classEnrollmentCounts(rows.map(row => Number(row.id)));
 
     return rows.map((row) => {
       const groupId = Number(row.group_id);
@@ -78,35 +56,42 @@ export class AssignmentsService {
         ),
         startTime: "",
         endTime: "",
-        studentCount: studentCounts.get(groupId) ?? 0,
+        studentCount: studentCounts.get(Number(row.id)) ?? 0,
       };
     });
+  }
+
+  async studentAssignments(ctx: AppContext, query: Record<string, unknown>) {
+    this.permissions.requireRole(ctx, ["parent", "student"]);
+    const studentId = await this.permissions.normalizeStudentId(ctx, query.studentId ?? query.student_id);
+    return this.feed(query, studentId);
+  }
+
+  private async feed(query: Record<string, unknown>, studentId: number | null) {
+    const limit = query.limit == null ? 50 : requiredId(query.limit, "Límite");
+    if (limit > 100) throw new HttpError(400, "Máximo 100 tareas por página.", "validation_error");
+    const cursor = decodeAssignmentCursor(query.cursor);
+    const onlyOpen = query.onlyOpen ?? false;
+    if (![true, false, "true", "false"].includes(onlyOpen as boolean)) {
+      throw new HttpError(400, "Filtro de tareas inválido.", "validation_error");
+    }
+    const kinds = optionalString(query.kinds, 100)?.split(",").filter(Boolean) ?? null;
+    if (kinds?.some(kind => !["homework", "exam", "project", "quiz", "presentation"].includes(kind))) {
+      throw new HttpError(400, "Tipo de tarea inválido.", "validation_error");
+    }
+    const data = await this.repository.feed({
+      p_student_id: studentId, p_class_id: optionalId(query.classId ?? query.class_id),
+      p_search: optionalString(query.search, 150), p_subject: optionalString(query.subject, 100),
+      p_only_open: onlyOpen === true || onlyOpen === "true", p_kinds: kinds,
+      p_after_due_at: cursor?.dueAt ?? null, p_after_id: cursor?.id ?? null, p_limit: limit,
+    });
+    return { assignments: data.assignments, nextCursor: encodeAssignmentCursor(data.nextCursor as AssignmentCursor | null) };
   }
 
   /** Tareas visibles para el maestro (RLS limita a sus clases y colaboraciones), con conteos de entregas. */
   async listAssignments(ctx: AppContext, query: Record<string, unknown>) {
     this.permissions.requireRole(ctx, ["teacher"]);
-    const classId = optionalId(query.classId ?? query.class_id);
-    const rows = await this.repository.assignmentsForList(ctx.institutionId, classId);
-    const groupIds = [...new Set(rows.map((r: any) => Number(r.classes?.group_id)).filter(Number.isFinite))];
-    const studentsByGroup = new Map<number, number>();
-    if (groupIds.length > 0) {
-      const { data } = await this.repository.enrollmentsByGroupIds(ctx.institutionId, groupIds);
-      for (const e of (data ?? []) as Array<Record<string, unknown>>) {
-        const g = Number(e.group_id);
-        studentsByGroup.set(g, (studentsByGroup.get(g) ?? 0) + 1);
-      }
-    }
-    const graded = await this.repository.taskStatusId("CALI").catch(() => null);
-    const subs = await this.repository.submissionStatusByAssignmentIds(ctx.institutionId, rows.map((r) => Number(r.id)));
-    const counts = new Map<number, { submitted: number; graded: number }>();
-    for (const s of subs) {
-      const c = counts.get(Number(s.assignment_id)) ?? { submitted: 0, graded: 0 };
-      c.submitted += 1;
-      if (graded != null && Number(s.task_status_id) === graded) c.graded += 1;
-      counts.set(Number(s.assignment_id), c);
-    }
-    return { assignments: rows.map((r: any) => mapListed(r, studentsByGroup, counts)) };
+    return this.feed(query, null);
   }
 
   /** Alumnos del salón con el estado de su entrega, nota y comentarios (permiso `assignments.review`). */
@@ -116,12 +101,14 @@ export class AssignmentsService {
     await this.permissions.assertTeacherCanUseAssignment(ctx, id, "assignments.review");
     const row: any = await this.repository.findAssignmentForHydration(id, ctx.institutionId);
     const groupId = Number(row.classes?.group_id);
-    const [students, subs, graded, evaluation] = await Promise.all([
-      this.repository.activeStudentsOfGroup(ctx.institutionId, groupId),
+    const [students, allSubs, graded, evaluation] = await Promise.all([
+      this.repository.activeStudentsOfGroup(ctx.institutionId, groupId, row.classes?.academic_year_id == null ? null : Number(row.classes.academic_year_id)),
       this.repository.submissionsOfAssignment(ctx.institutionId, id),
       this.repository.taskStatusId("CALI").catch(() => null),
       this.repository.findEvaluationByAssignmentId(ctx.institutionId, id),
     ]);
+    const roster = new Set(students.map(student => Number(student.student_id)));
+    const subs = allSubs.filter(submission => roster.has(Number(submission.student_id)));
     const grades = evaluation ? await this.repository.gradesOfEvaluation(ctx.institutionId, evaluation.id) : [];
     const gradeOf = new Map(grades.map((g) => [Number(g.student_id), g]));
     const files = await this.repository.submissionAttachments(subs.map((s) => Number(s.id)));
@@ -151,7 +138,7 @@ export class AssignmentsService {
             studentId: String(e.student_id),
             name,
             submissionId: sub ? String(sub.id) : null,
-            status: !sub ? "pending" : isGraded ? "graded" : sub.is_late ? "late" : "submitted",
+            status: !sub || sub.catalog_task_statuses?.code === "PEND" ? "pending" : isGraded ? "graded" : sub.is_late ? "late" : "submitted",
             submittedAt: sub?.submitted_at ?? null,
             notes: sub?.student_notes ?? null,
             attachments: sub ? (filesOf.get(Number(sub.id)) ?? []) : [],
@@ -168,6 +155,10 @@ export class AssignmentsService {
     const title = requiredString(payload.title, "Título", 200);
     const dueAt = requiredDate(payload.dueAt, "Fecha de entrega");
     const maxScore = requiredNumber(payload.maxScore, "Puntaje máximo");
+    const kind = optionalString(payload.kind, 20);
+    if (kind != null && !["homework", "exam", "project", "quiz", "presentation"].includes(kind)) {
+      throw new HttpError(400, "Tipo de tarea inválido.", "validation_error");
+    }
     if (maxScore <= 0) {
       throw new HttpError(
         400,
@@ -196,6 +187,7 @@ export class AssignmentsService {
       class_id: Number(classRow.id),
       academic_period_id: academicPeriodId,
       title,
+      ...(kind == null ? {} : { kind }),
       description: optionalString(payload.description),
       instructions: optionalString(payload.instructions),
       due_at: dueAt.toISOString(),
@@ -430,24 +422,11 @@ export class AssignmentsService {
       ? null
       : `${teacherPerson.first_name ?? ""} ${teacherPerson.last_name ?? ""}`
         .trim();
-    const groupId = cls?.group_id == null ? null : Number(cls.group_id);
 
-    const attachments = await this.attachmentRows(
-      "assignment_files",
-      "assignment_id",
-      id,
-    );
-    const { data: enrollmentRows } = groupId == null
-      ? { data: [] as unknown[] }
-      : await this.repository.enrollmentsByGroupId(ctx.institutionId, groupId);
-    const { data: submissionRows } =
-      await this.repository.submissionsByAssignmentId(ctx.institutionId, id);
-    const cali = await this.repository.taskStatusId("CALI").catch(() => null);
-    const submissions = (submissionRows ?? []) as Array<Record<string, unknown>>;
-    const gradedCount = cali == null
-      ? 0
-      : submissions.filter((item) => Number(item.task_status_id) === cali)
-        .length;
+    const [attachments, counts] = await Promise.all([
+      this.attachmentRows('assignment_files', 'assignment_id', id),
+      this.repository.assignmentCounts(id),
+    ]);
 
     return {
       id: String(row.id),
@@ -461,15 +440,15 @@ export class AssignmentsService {
         row.assigned_at ?? row.created_at ?? new Date().toISOString(),
       ),
       dueAt: String(row.due_at ?? new Date().toISOString()),
-      kind: "homework",
+      kind: String(row.kind ?? "homework"),
       maxScore: Number(row.max_score ?? 100),
       allowLate: Boolean(row.allow_late),
       published: row.published == null ? true : Boolean(row.published),
       attachments,
       teacherName: teacherName && teacherName.length > 0 ? teacherName : null,
-      totalStudents: enrollmentRows?.length ?? 0,
-      submittedCount: submissions.length,
-      gradedCount,
+      totalStudents: Number(counts.total ?? 0),
+      submittedCount: Number(counts.delivered ?? 0),
+      gradedCount: Number(counts.graded ?? 0),
     };
   }
 

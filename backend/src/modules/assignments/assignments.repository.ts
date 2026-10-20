@@ -1,12 +1,21 @@
 import { assertNoDbError, expectSingle } from "../../lib/db";
 import { supabaseAdmin } from "../../lib/supabase";
 import { dateOnly } from "../../validators/common.validators";
+import { readAllPages } from "../../lib/read-all";
 
 const db = supabaseAdmin as any;
 
 export class AssignmentsRepository {
+  async feed(parameters: Record<string, unknown>) {
+    return expectSingle<Record<string, unknown>>(db.rpc("assignment_feed", parameters), "No se pudieron cargar las tareas.");
+  }
+  async assignmentCounts(id: number) {
+    const { data, error } = await db.rpc("dashboard_assignment_counts", { p_assignment_ids: [id] });
+    assertNoDbError(error);
+    return (data?.[0] ?? { total: 0, delivered: 0, graded: 0 }) as Record<string, unknown>;
+  }
   async currentAcademicPeriodId(institutionId: number, dueAt: Date) {
-    const { data } = await db
+    const { data , error: queryError_1} = await db
       .from("academic_periods")
       .select("id")
       .eq("institution_id", institutionId)
@@ -15,6 +24,7 @@ export class AssignmentsRepository {
       .order("display_order")
       .limit(1)
       .maybeSingle();
+    assertNoDbError(queryError_1);
     return data == null ? null : Number(data.id);
   }
 
@@ -38,13 +48,14 @@ export class AssignmentsRepository {
   }
 
   async findInstitutionFile(institutionId: number, fileId: number) {
-    const { data } = await db
+    const { data , error: queryError_2} = await db
       .from("files")
       .select("id")
       .eq("id", fileId)
       .eq("institution_id", institutionId)
       .is("deleted_at", null)
       .maybeSingle();
+    assertNoDbError(queryError_2);
     return data;
   }
 
@@ -71,30 +82,14 @@ export class AssignmentsRepository {
       db
         .from("assignments")
         .select(
-          "id, class_id, title, description, instructions, assigned_at, due_at, max_score, allow_late, published, created_at, " +
-            "classes(id, group_id, subjects(name), groups(name), teachers(persons(first_name, last_name)))",
+          "id, class_id, title, description, instructions, kind, assigned_at, due_at, max_score, allow_late, published, created_at, " +
+            "classes(id, group_id, academic_year_id, subjects(name), groups(name), teachers(persons(first_name, last_name)))",
         )
         .eq("id", id)
         .eq("institution_id", institutionId)
         .single(),
       "Tarea no encontrada.",
     );
-  }
-
-  async enrollmentsByGroupId(institutionId: number, groupId: number) {
-    return db
-      .from("enrollments")
-      .select("id")
-      .eq("institution_id", institutionId)
-      .eq("group_id", groupId);
-  }
-
-  async submissionsByAssignmentId(institutionId: number, assignmentId: number) {
-    return db
-      .from("submissions")
-      .select("id, task_status_id")
-      .eq("institution_id", institutionId)
-      .eq("assignment_id", assignmentId);
   }
 
   async findSubmissionForHydration(id: number, institutionId: number) {
@@ -115,13 +110,14 @@ export class AssignmentsRepository {
     institutionId: number,
     assignmentId: unknown,
   ) {
-    const { data } = await db
+    const { data , error: queryError_3} = await db
       .from("evaluations")
       .select("id")
       .eq("institution_id", institutionId)
       .eq("assignment_id", assignmentId)
       .limit(1)
       .maybeSingle();
+    assertNoDbError(queryError_3);
     return data;
   }
 
@@ -130,32 +126,32 @@ export class AssignmentsRepository {
     evaluationId: unknown,
     studentId: unknown,
   ) {
-    const { data } = await db
+    const { data , error: queryError_4} = await db
       .from("grades")
       .select("score, notes")
       .eq("institution_id", institutionId)
       .eq("evaluation_id", evaluationId)
       .eq("student_id", studentId)
       .maybeSingle();
+    assertNoDbError(queryError_4);
     return data;
   }
 
-  async teacherClassRows(institutionId: number, teacherId: number | null) {
-    let query = db
-      .from("classes")
-      .select("id, group_id, subjects(name), groups(name)")
-      .eq("institution_id", institutionId)
-      .eq("active", true);
-    // RLS includes owned classes and accepted class-scoped collaborations.
-    return query.order("id");
+  async teacherClassRows(institutionId: number) {
+    const data = await readAllPages<Record<string, unknown>>((from, to) => db
+      .from('classes').select('id, group_id, subjects(name), groups(name), academic_years!inner(is_current)')
+      .eq('institution_id', institutionId).eq('active', true).eq('academic_years.is_current', true).order('id').range(from, to));
+    return { data, error: null };
   }
 
-  async enrollmentsByGroupIds(institutionId: number, groupIds: number[]) {
-    return db
-      .from("enrollments")
-      .select("group_id")
-      .in("group_id", groupIds)
-      .eq("institution_id", institutionId);
+  async classEnrollmentCounts(classIds: number[]) {
+    const counts = new Map<number, number>();
+    for (let i = 0; i < classIds.length; i += 200) {
+      const { data, error } = await db.rpc('class_enrollment_counts', { p_class_ids: classIds.slice(i, i + 200) });
+      assertNoDbError(error);
+      for (const row of data ?? []) counts.set(Number(row.class_id), Number(row.total));
+    }
+    return counts;
   }
 
   async insertAssignment(payload: Record<string, unknown>) {
@@ -182,76 +178,45 @@ export class AssignmentsRepository {
     );
   }
 
-  async assignmentsForList(institutionId: number, classId: number | null) {
-    let query = db
-      .from("assignments")
-      .select(
-        "id, class_id, title, description, instructions, assigned_at, due_at, max_score, allow_late, published, created_at, " +
-          "classes(group_id, subjects(name), groups(name))",
-      )
-      .eq("institution_id", institutionId)
-      .is("deleted_at", null)
-      .order("due_at", { ascending: false })
-      .limit(300);
-    if (classId != null) query = query.eq("class_id", classId);
-    const { data, error } = await query;
-    assertNoDbError(error);
-    return (data ?? []) as Array<Record<string, unknown>>;
-  }
-
-  async submissionStatusByAssignmentIds(institutionId: number, assignmentIds: number[]) {
-    const rows: Array<Record<string, unknown>> = [];
-    for (let i = 0; i < assignmentIds.length; i += 100) {
-      const { data, error } = await db
-        .from("submissions")
-        .select("assignment_id, task_status_id")
-        .eq("institution_id", institutionId)
-        .in("assignment_id", assignmentIds.slice(i, i + 100));
-      assertNoDbError(error);
-      rows.push(...((data ?? []) as Array<Record<string, unknown>>));
-    }
-    return rows;
-  }
-
   async submissionsOfAssignment(institutionId: number, assignmentId: number) {
-    const { data, error } = await db
+    return readAllPages<Record<string, unknown>>((from, to) => db
       .from("submissions")
-      .select("id, student_id, submitted_at, student_notes, is_late, task_status_id")
+      .select("id, student_id, submitted_at, student_notes, is_late, task_status_id, catalog_task_statuses(code)")
       .eq("institution_id", institutionId)
-      .eq("assignment_id", assignmentId);
-    assertNoDbError(error);
-    return (data ?? []) as Array<Record<string, unknown>>;
+      .eq("assignment_id", assignmentId).order("id").range(from, to));
   }
 
-  async activeStudentsOfGroup(institutionId: number, groupId: number) {
-    const { data, error } = await db
+  async activeStudentsOfGroup(institutionId: number, groupId: number, academicYearId: number | null) {
+    const rows = await readAllPages<Record<string, unknown>>((from, to) => {
+    let query = db
       .from("enrollments")
-      .select("student_id, students!inner(id, active, persons(first_name, last_name))")
+      .select("student_id, students!inner(id, active, persons(first_name, last_name)), academic_years!inner(is_current), catalog_enrollment_statuses!inner(code)")
       .eq("institution_id", institutionId)
       .eq("group_id", groupId)
-      .eq("students.active", true);
-    assertNoDbError(error);
-    return (data ?? []) as Array<Record<string, unknown>>;
+      .eq("students.active", true).eq("catalog_enrollment_statuses.code", "ACT");
+    query = academicYearId == null ? query.eq("academic_years.is_current", true) : query.eq("academic_year_id", academicYearId);
+    return query.order("id").range(from, to);
+    });
+    return [...new Map(rows.map(row => [Number(row.student_id), row])).values()];
   }
 
   async gradesOfEvaluation(institutionId: number, evaluationId: unknown) {
-    const { data, error } = await db
+    return readAllPages<Record<string, unknown>>((from, to) => db
       .from("grades")
       .select("student_id, score, notes")
       .eq("institution_id", institutionId)
-      .eq("evaluation_id", evaluationId);
-    assertNoDbError(error);
-    return (data ?? []) as Array<Record<string, unknown>>;
+      .eq("evaluation_id", evaluationId).order("id").range(from, to));
   }
 
   async submissionAttachments(submissionIds: number[]) {
-    if (submissionIds.length === 0) return [] as Array<Record<string, unknown>>;
-    const { data, error } = await db
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < submissionIds.length; i += 150) {
+    rows.push(...await readAllPages<Record<string, unknown>>((from, to) => db
       .from("submission_files")
       .select("submission_id, files(id, original_name, url, size_bytes, mime_type)")
-      .in("submission_id", submissionIds);
-    assertNoDbError(error);
-    return (data ?? []) as Array<Record<string, unknown>>;
+      .in("submission_id", submissionIds.slice(i, i + 150)).order("id").range(from, to)));
+    }
+    return rows;
   }
 
   async softDeleteAssignment(

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,49 +40,8 @@ class AnnouncementsScreen extends ConsumerStatefulWidget {
       _AnnouncementsScreenState();
 }
 
-class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
-    with WidgetsBindingObserver {
-  Timer? _poll;
-
-  bool _active = true;
-
+class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
   final _retrying = <String>{};
-
-  @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) { if(mounted) ref.invalidate(announcementsProvider); });
-
-    _poll = Timer.periodic(const Duration(seconds: 2), (_) {
-      final saved = ref.read(announcementsProvider);
-
-      final drafts = ref.read(announcementPublisherProvider);
-
-      if (_active &&
-          !saved.isLoading &&
-          ([...?saved.valueOrNull, ...drafts].any((e) => e.isPublishing) || _poll!.tick % 10 == 0)) {
-        ref.invalidate(announcementsProvider);
-      }
-    });
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    _active = state == AppLifecycleState.resumed;
-
-    if (_active) ref.invalidate(announcementsProvider);
-  }
-
-  @override
-  void dispose() {
-    _poll?.cancel();
-
-    WidgetsBinding.instance.removeObserver(this);
-
-    super.dispose();
-  }
 
   Future<void> _retry(SchoolEvent event) async {
     if (event.publicationError != null) {
@@ -98,7 +55,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
     try {
       await ref.read(eventsRepositoryProvider).retryDelivery(event.id);
 
-      ref.invalidate(announcementsProvider);
+      await ref.read(announcementFeedSessionProvider).reload();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +76,8 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
 
     final drafts = ref.watch(announcementPublisherProvider);
 
-    final saved = announcements.valueOrNull ?? <SchoolEvent>[];
+    final feed = announcements.isReloading ? null : announcements.valueOrNull;
+    final saved = feed?.items ?? <SchoolEvent>[];
 
     final events = [
       ...drafts.where(
@@ -156,9 +114,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
       title: 'Anuncios',
       showBack: false,
       onRefresh: () async {
-        ref.invalidate(announcementsProvider);
-
-        await ref.read(announcementsProvider.future);
+        await ref.read(announcementFeedSessionProvider).reload();
       },
       fab: isAdmin
           ? FloatingActionButton(
@@ -170,6 +126,12 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (feed?.hasNewItems ?? false)
+            TextButton(
+              onPressed: () =>
+                  ref.read(announcementFeedSessionProvider).reload(),
+              child: const Text('Hay anuncios nuevos · Actualizar'),
+            ),
           for (final event in events)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -179,13 +141,30 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen>
                 onRetry: () => _retry(event),
               ),
             ),
-          if (announcements.hasError)
+          if (feed?.hasMore ?? false)
+            Center(
+              child: TextButton(
+                onPressed: (feed?.loadingMore ?? false)
+                    ? null
+                    : () =>
+                        ref.read(announcementFeedSessionProvider).loadMore(),
+                child: Text(
+                  (feed?.loadingMore ?? false)
+                      ? 'Cargando…'
+                      : feed?.moreError != null
+                          ? 'Reintentar cargar más'
+                          : 'Cargar más anuncios',
+                ),
+              ),
+            ),
+          if (announcements.hasError || feed?.error != null)
             ErrorStateView(
               message:
-                  'No se pudieron cargar los anuncios. ${announcements.error}',
-              onRetry: () => ref.invalidate(announcementsProvider),
+                  'No se pudieron cargar los anuncios. ${announcements.error ?? feed?.error}',
+              onRetry: () => ref.read(announcementFeedSessionProvider).reload(),
             )
-          else if (events.isEmpty && announcements.isLoading)
+          else if (events.isEmpty &&
+              (announcements.isLoading || (feed?.loading ?? false)))
             const SkeletonList()
           else if (events.isEmpty)
             const Padding(
@@ -340,12 +319,15 @@ class _DeliveryStatus extends StatelessWidget {
     final label = event.publicationError ??
         switch (d?.status) {
           'publishing' => 'Publicando…',
-          'queued' => 'Preparando envío…',
+          'queued' => d?.phase == 'email'
+              ? 'Envío en cola · ${d!.processed}/${d.total}'
+              : 'Preparando envío…',
           'processing' => d?.phase == 'email'
               ? 'Enviando correos… ${d!.processed}/${d.total}'
               : 'Notificando…',
-          'completed_with_errors' =>
-            'Publicado con incidencias · ${d!.emailFailed} correos pendientes',
+          'completed_with_errors' => d!.emailReview > 0 && !d.canRetry
+              ? 'Publicado · correos por revisar: ${d.emailReview}'
+              : 'Publicado con incidencias · ${d.emailFailed} correos · ${d.pushFailed} avisos',
           'failed' => 'Publicado · no se pudo completar el envío',
           _ => 'Publicado',
         };
@@ -366,7 +348,9 @@ class _DeliveryStatus extends StatelessWidget {
               )
             else
               Icon(
-                event.publicationError != null || (d?.canRetry ?? false)
+                event.publicationError != null ||
+                        (d?.canRetry ?? false) ||
+                        (d?.emailReview ?? 0) > 0
                     ? Icons.info_outline_rounded
                     : Icons.check_circle_rounded,
                 size: 17,

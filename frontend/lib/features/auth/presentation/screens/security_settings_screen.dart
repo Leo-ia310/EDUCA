@@ -238,10 +238,12 @@ class _SecuritySettingsScreenState
                           child: CircularProgressIndicator(strokeWidth: 2.5),
                         ),
                         const SizedBox(width: 14),
-                        Text(
-                          'Consultando el estado de seguridad…',
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            color: context.palette.textMuted,
+                        Expanded(
+                          child: Text(
+                            'Consultando el estado de seguridad…',
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: context.palette.textMuted,
+                            ),
                           ),
                         ),
                       ],
@@ -384,10 +386,12 @@ class _SecuritySettingsScreenState
               children: [
                 Icon(Icons.tune_rounded, color: context.palette.accentDeep),
                 const SizedBox(width: 9),
-                Text(
-                  'Elige cómo verificar',
-                  style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Text(
+                    'Elige cómo verificar',
+                    style: context.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],

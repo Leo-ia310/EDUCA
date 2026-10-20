@@ -1,3 +1,5 @@
+import {assertAuthAvailable} from "../../lib/auth-error";
+import {dependencyFetch} from "../../lib/dependency-fetch";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
@@ -22,6 +24,7 @@ export class AuthFlowService {
     private readonly auth: typeof supabasePublic.auth = supabasePublic.auth,
     private readonly passwordAuth = () => createClient(env.supabaseUrl, env.supabaseAnonKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global:{fetch:dependencyFetch},
     }).auth,
   ) {}
 
@@ -61,6 +64,8 @@ export class AuthFlowService {
       email: String(appUser.email),
       password,
     });
+    assertAuthAvailable(error);
+    if (!error && (data.session==null||data.user==null))throw new HttpError(503,"No se pudo confirmar el inicio de sesión.","authentication_unavailable",2);
     if (error || data.session == null || data.user == null) {
       await this.repository.incrementFailedAttempts(Number(appUser.id));
       throw new HttpError(
@@ -151,8 +156,8 @@ export class AuthFlowService {
       });
       if (error) {
         throw new HttpError(
-          400,
-          error.message,
+          503,
+          "No se pudo preparar el enlace de recuperación. Intenta nuevamente.",
           "password_recovery_link_failed",
         );
       }
@@ -234,6 +239,7 @@ export class AuthFlowService {
     }
     const verifier = this.passwordAuth();
     const { data, error } = await verifier.signInWithPassword({ email, password: current });
+    assertAuthAvailable(error);
     if (error || data.user?.id !== authUserId) {
       throw new HttpError(400, "La contrasena actual no es correcta.", "invalid_credentials");
     }
@@ -241,7 +247,8 @@ export class AuthFlowService {
     const admin = requireSupabaseServiceRole();
     const { error: updateError } = await admin.auth.admin.updateUserById(authUserId, { password: next });
     if (updateError) {
-      throw new HttpError(400, updateError.message || "No se pudo cambiar la contrasena.", "password_change_failed");
+      assertAuthAvailable(updateError);
+      throw new HttpError(400,"Auth rechazó el cambio de contraseña. Revisa sus requisitos.","password_change_failed");
     }
     return { ok: true };
   }
@@ -327,7 +334,7 @@ export class AuthFlowService {
       p_recovery_codes:recoveryCodes.map(c=>this.hashSecret(c)),p_session_id:sessionId ?? null});
   }
   async logout(accessToken: string) {
-    const response = await fetch(`${env.supabaseUrl}/auth/v1/logout`, {
+    const response = await dependencyFetch(`${env.supabaseUrl}/auth/v1/logout`, {
       method: "POST",
       headers: {
         apikey: env.supabaseAnonKey,
@@ -335,7 +342,7 @@ export class AuthFlowService {
       },
     });
     if (!response.ok && response.status !== 401) {
-      throw new HttpError(400, "No se pudo cerrar sesion.", "logout_failed");
+      throw new HttpError(503, "No se pudo confirmar el cierre de sesión. Intenta nuevamente.", "logout_failed");
     }
     return { ok: true };
   }

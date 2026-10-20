@@ -28,6 +28,7 @@ class BackendReportsRepository {
     required int studentId,
     required int academicPeriodId,
     String? generalNotes,
+    required String requestId,
   }) async {
     final data = await _api.post(
       '/reports/report-cards',
@@ -35,6 +36,7 @@ class BackendReportsRepository {
         'studentId': studentId,
         'academicPeriodId': academicPeriodId,
         'generalNotes': generalNotes,
+        'requestId': requestId,
       },
     );
     final map = (data as Map).cast<String, dynamic>();

@@ -11,6 +11,10 @@ export class PortalAccessService {
   private staff(ctx: AppContext) { return [...ctx.roles].some((role) => ["teacher","admin","coordinator","director","super_admin"].includes(role)); }
   async require(ctx: AppContext, permission: string) {
     if (this.staff(ctx)) return;
+    if (ctx.portalPermissions != null && Object.hasOwn(ctx.portalPermissions,permission)) {
+      if (ctx.portalPermissions[permission] !== true) throw new HttpError(403,"Esta sección está restringida por tu institución.","portal_access_restricted");
+      return;
+    }
     const {data,error} = await this.client.rpc("portal_can", {p_permission:permission});
     assertNoDbError(error);
     if (data !== true) throw new HttpError(403,"Esta sección está restringida por tu institución.","portal_access_restricted");

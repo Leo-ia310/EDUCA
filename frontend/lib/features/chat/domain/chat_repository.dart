@@ -9,14 +9,21 @@ abstract class ChatRepository {
   /// `updatedAt` descendente.
   Stream<List<Conversation>> watchConversations();
 
+  bool get hasMoreConversations;
+  Future<void> loadMoreConversations();
+  Future<void> searchConversations(String query);
+
   Future<Conversation?> conversationById(String id);
 
   /// Mensajes de una conversación (histórico + entrantes en tiempo real).
   Stream<List<Message>> watchMessages(String conversationId);
 
+  bool hasOlderMessages(String conversationId);
+  Future<void> loadOlderMessages(String conversationId);
+
   // ---------- Escritura ----------
   /// Envía un mensaje. Devuelve el mensaje ya con `status = sent`. En modo
-  /// offline queda con `sending` y la cola lo reintenta.
+  /// Si falla conserva su UUID para el reintento explícito del mismo contenido.
   Future<Message> sendMessage({
     required String conversationId,
     String? content,

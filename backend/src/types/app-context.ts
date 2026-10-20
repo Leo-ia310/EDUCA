@@ -13,6 +13,8 @@ export type AppContext = {
   teacherId?: number | null;
   studentId?: number | null;
   parentId?: number | null;
+  /** Snapshot for this request only; never reused across bearer tokens. */
+  portalPermissions?: Record<string, boolean>;
 };
 
 export interface AppRequest extends Request {

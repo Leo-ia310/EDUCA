@@ -16,31 +16,43 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);
   if (user == null) {
-    return MockChatRepository(
+    final repository = MockChatRepository(
       meId: 'demo',
       myName: 'Invitado',
       myRoleCode: 'student',
     );
+    ref.onDispose(repository.dispose);
+    return repository;
   }
   if (client == null || api == null || auth.institution == null) {
-    return MockChatRepository(
+    final repository = MockChatRepository(
       meId: user.id,
       myName: user.fullName,
       myRoleCode: user.activeRole.code,
     );
+    ref.onDispose(repository.dispose);
+    return repository;
   }
-  return SupabaseChatRepository(
+  final repository = SupabaseChatRepository(
     client: client,
     api: api,
     meUserId: user.id,
     myName: user.fullName,
     institutionId: auth.institution!.id,
   );
+  ref.onDispose(repository.dispose);
+  return repository;
 });
 
 /// Lista viva de conversaciones del usuario actual.
 final conversationsStreamProvider = StreamProvider<List<Conversation>>((ref) {
   return ref.watch(chatRepositoryProvider).watchConversations();
+});
+
+final conversationDetailProvider = FutureProvider.autoDispose.family<Conversation?, String>((ref, id) async {
+  final repository = ref.watch(chatRepositoryProvider);
+  final cached = ref.watch(conversationsStreamProvider).valueOrNull?.where((c) => c.id == id).firstOrNull;
+  return cached ?? await repository.conversationById(id);
 });
 
 /// Mensajes de una conversación puntual.

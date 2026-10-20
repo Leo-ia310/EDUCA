@@ -18,6 +18,9 @@ class Person {
     this.groupId,
     this.classIds = const {},
     this.childIds = const {},
+    this.groupName,
+    this.classLabels = const [],
+    this.childNames = const [],
   });
 
   final String id;
@@ -35,6 +38,9 @@ class Person {
 
   /// Padre/tutor: alumnos a su cargo.
   final Set<String> childIds;
+  final String? groupName;
+  final List<String> classLabels;
+  final List<String> childNames;
 
   String get initials {
     final parts = name.trim().split(RegExp(r'\s+'));
@@ -65,14 +71,23 @@ class Person {
         groupId: clearGroup ? null : (groupId ?? this.groupId),
         classIds: classIds ?? this.classIds,
         childIds: childIds ?? this.childIds,
+        groupName: groupName,
+        classLabels: classLabels,
+        childNames: childNames,
       );
 }
 
 /// Salón / año ("4° Grado A").
 class SchoolGroup {
-  const SchoolGroup({required this.id, required this.name});
+  const SchoolGroup(
+      {required this.id,
+      required this.name,
+      this.studentCount,
+      this.classCount,});
   final String id;
   final String name;
+  final int? studentCount;
+  final int? classCount;
 }
 
 /// Clase: materia dictada en un salón por un maestro.

@@ -1,3 +1,5 @@
+import '../../../../core/network/backend_api_client.dart';
+import '../../../../core/constants/env.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/attendance_repository.dart';
@@ -36,9 +38,19 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required int teacherId,
   }) async {
     if (remote != null && institutionId > 0) {
-      return remote!.todaysClasses(teacherId: teacherId);
+      try {
+        final rows=await remote!.todaysClasses(teacherId:teacherId);
+        await local.cacheCatalog('classes',[for(final row in rows) _classJson(row)]);
+        return rows;
+      } on BackendApiException catch(error) {
+        final cached=local.cachedCatalog('classes');
+        if(!error.retryable || cached==null) rethrow;
+        return cached.map(_cachedClass).toList();
+      }
     }
-    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (!Env.isDemoMode) {
+      throw StateError('Inicia sesión para consultar tus clases.');
+    }
     return AttendanceMock.todaysClasses;
   }
 
@@ -47,13 +59,22 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required int classId,
     required DateTime date,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 200));
-    final students = remote != null && institutionId > 0
-        ? await remote!.classRoster(
-            classId: classId,
-            institutionId: institutionId,
-          )
-        : AttendanceMock.studentsOf(classId);
+    if (remote == null && !Env.isDemoMode) {
+      throw StateError('Inicia sesión para consultar asistencia.');
+    }
+    List<StudentBrief> students;
+    if(remote!=null && institutionId>0) {
+      try {
+        students=await remote!.classRoster(classId:classId,institutionId:institutionId,date:date,local:local);
+        await local.cacheCatalog('roster/$classId',[for(final student in students)
+          {'id':student.id,'fullName':student.fullName,'studentCode':student.studentCode,'avatarUrl':student.avatarUrl},]);
+      } on BackendApiException catch(error) {
+        final cached=local.cachedCatalog('roster/$classId');
+        if(!error.retryable || cached==null) rethrow;
+        students=cached.map((row)=>StudentBrief(id:row['id'] as int,fullName:row['fullName'] as String,
+          studentCode:row['studentCode'] as String?,avatarUrl:row['avatarUrl'] as String?,),).toList();
+      }
+    } else { students=AttendanceMock.studentsOf(classId); }
     return students.map((s) {
       final existing = local.recordFor(
         classId: classId,
@@ -74,6 +95,11 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     final uuid = existing?.uuid ?? record.uuid;
     final merged = record.copyWith().toMutableUuid(uuid);
     final localModel = LocalAttendance.fromEntity(merged);
+    localModel.serverVersion = existing?.serverVersion ?? 0;
+    localModel.serverId = existing?.serverId;
+    localModel.classSessionId =
+        existing?.classSessionId ?? record.classSessionId;
+    localModel.operationId = _uuid.v4();
     await local.upsertRecord(localModel);
 
     // Encolar para sincronizar (solo si todavía no está sincronizado).
@@ -85,6 +111,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           recordUuid: merged.uuid,
           operation: 'upsert',
           payload: {
+            'operationId': localModel.operationId,
             'uuid': merged.uuid,
             'classId': merged.classId,
             'classSessionId': merged.classSessionId,
@@ -113,6 +140,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           uuid: sessionUuid,
           classId: classId,
           dateMs: date.millisecondsSinceEpoch,
+          classDate: AttendanceRemoteDataSource.dayKey(date),
           teacherId: teacherId,
           createdAtMs: DateTime.now().millisecondsSinceEpoch,
         );
@@ -174,8 +202,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
             late++;
             break;
         }
-        if (r.syncStateIndex == SyncState.pendingSync.index ||
-            r.syncStateIndex == SyncState.error.index) {
+        if (r.syncStateIndex != SyncState.synced.index) {
           pending++;
         }
       }
@@ -183,8 +210,10 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         AttendanceSessionSummary(
           sessionUuid: s.uuid,
           classId: s.classId,
-          subjectName: AttendanceMock.subjectOf(s.classId),
-          groupName: AttendanceMock.groupOf(s.classId),
+          subjectName: Env.isDemoMode
+              ? AttendanceMock.subjectOf(s.classId)
+              : 'Clase ${s.classId}',
+          groupName: Env.isDemoMode ? AttendanceMock.groupOf(s.classId) : '',
           date: s.date,
           totalStudents: records.length,
           present: present,
@@ -219,3 +248,12 @@ extension on AttendanceRecord {
     );
   }
 }
+
+Map<String,dynamic> _classJson(ClassSessionBrief c) => {'classId':c.classId,'groupId':c.groupId,
+ 'subjectName':c.subjectName,'groupName':c.groupName,'startTime':c.startTime,'endTime':c.endTime,
+ 'studentCount':c.studentCount,'classroom':c.classroom,'isOwner':c.isOwner,'permissions':c.permissions?.toList(),};
+ClassSessionBrief _cachedClass(Map<String,dynamic> row) => ClassSessionBrief(classId:row['classId'] as int,
+ groupId:row['groupId'] as int,subjectName:row['subjectName'] as String,groupName:row['groupName'] as String,
+ startTime:row['startTime'] as String,endTime:row['endTime'] as String,studentCount:row['studentCount'] as int,
+ classroom:row['classroom'] as String?,isOwner:row['isOwner']==true,
+ permissions:row['permissions']==null?null:Set<String>.from(row['permissions'] as List),);

@@ -32,7 +32,7 @@ backend/
 ├─ seed_auth_users.sql
 └─ functions/
    ├─ business-api/    Edge Function legacy temporal
-   └─ send-push/       Edge Function independiente para Web Push
+   └─ send-push/       Entrada interna que encola Web Push
 ```
 
 Flujo de una escritura de negocio:
@@ -61,18 +61,18 @@ del proyecto o el panel de Supabase). No subas `.env` al repo.
 | `JSON_BODY_LIMIT` | Limite del body JSON. Default actual: `512kb`. |
 | `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX` | Ventana y máximo global de respuestas con error por IP. Las respuestas exitosas no consumen cupo. |
 | `AUTH_RATE_LIMIT_MAX` | Máximo de respuestas con error por IP en rutas `/api`. Excluye los 429 del cupo individual autenticado. |
-| `USER_RATE_LIMIT_MAX` | Cupo por usuario tras validar su token. Default: `1200` por ventana; contadores en memoria por instancia. |
+| `USER_RATE_LIMIT_MAX` | Cupo por usuario tras validar su token. Default: `1200` por ventana; contador atómico compartido en PostgreSQL (0035), máximo configurable 1000000. Usar el mismo valor en todas las instancias. |
 | `FILE_UPLOAD_MAX_BYTES` | Tamano maximo permitido para subidas firmadas a Storage. |
 | `FILE_ALLOWED_MIME_TYPES` | Allowlist de MIME para archivos separados por coma. |
 | `PASSWORD_RESET_REDIRECT_URL` | Redirect opcional para recuperacion de contraseña Supabase Auth. |
-| `SEND_PUSH_URL` | URL opcional de la Edge Function `send-push`; si falta se deriva de `SUPABASE_URL`. |
+| `SEND_PUSH_URL` | Retirado: los envíos se encolan en SQL y los procesa el worker Node por dispositivo. |
 | `EMAIL_PROVIDER` | Proveedor de correo. Valor previsto: `resend`. |
 | `RESEND_API_KEY` | API key de Resend. Nunca va al repo ni al cliente. |
 | `RESEND_FROM_EMAIL` | Remitente transaccional. Default: `no-reply@nivramop.com`. |
 | `BACKEND_API_BASE_URL` | Base publica que recibe Flutter, por ejemplo `http://localhost:3000/api`. |
 | `SUPABASE_URL` | URL del proyecto Supabase. |
 | `SUPABASE_ANON_KEY` | Clave publica para Flutter y smoke tests. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta opcional para tareas server-side/admin. Nunca va al frontend. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta requerida para verificar contexto/cupo de rutas protegidas (0035) y tareas server-side/admin. Nunca va al frontend. |
 | `SUPABASE_DB_*` | Conexion directa para `backend/scripts`. |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web Push (VAPID) enviado directo desde este backend, sin Edge Function: llega al navegador aunque la app esté cerrada. La pública también va al frontend (`frontend/.env`, misma clave). La privada nunca va al cliente. Generar el par con `npx web-push generate-vapid-keys`; si se cambia, los navegadores se vuelven a suscribir solos en su próximo inicio de sesión. |
 | `INTERNAL_API_SECRET` | Secreto servidor a servidor para funciones sensibles como `send-push`. |
@@ -254,11 +254,17 @@ envian `{ action, payload }`.
 
 ## Edge Functions Conservadas
 
-`supabase/functions/business-api` se conserva temporalmente como respaldo hasta
-confirmar que no hay frontend, webhook ni servicio externo llamandola.
+`supabase/functions/business-api` ahora es únicamente un proxy al Node actualizado,
+con el JWT original y sin ejecutar los módulos antiguos con service role. Configurar
+`BACKEND_API_BASE_URL=https://<backend>/api` y `CORS_ORIGIN` también en esa función.
+Sin destino válido responde 503. Desplegar esta función o retirarla al actualizar:
+una copia antigua desplegada seguiría siendo una ruta de acceso con políticas anteriores.
+Los módulos históricos quedan como referencia sin importarse en el entry point.
 
-`supabase/functions/send-push` se conserva como Edge Function real porque envia
-Web Push de forma independiente a partir de `notifications`.
+`supabase/functions/send-push` conserva el contrato interno `notificationId`, pero
+ahora solo encola el lote idempotente mediante SQL. La entrega de chat y anuncios
+la procesa el worker Node por dispositivo. Configurar VAPID en Node y actualizar
+ambas funciones legacy al desplegar; ya no dependen del SDK web-push en Edge.
 
 ## Scripts
 
@@ -292,3 +298,10 @@ cd backend
 docker build -t nivra-backend .
 docker run --env-file .env -p 3000:3000 nivra-backend
 ```
+
+
+## Escrituras y operación escalable
+
+El runtime requiere Node >=20.3.0 por la composición de señales de cancelación; CI verifica Node 22. Contratos de recuperación y actualización coordinada en [ESCRITURAS_TRANSACCIONALES](../docs/ESCRITURAS_TRANSACCIONALES.md) y presupuestos, readiness, métricas y SIGTERM en [OPERACION_BACKEND](../docs/OPERACION_BACKEND.md). La lista de bloques y su evidencia está en [ESCALABILIDAD_IMPLEMENTACION](../docs/ESCALABILIDAD_IMPLEMENTACION.md).
+
+`npm test` genera documentación, comprueba TypeScript de aplicación y pruebas y ejecuta regresiones unitarias/SQL aisladas. El harness de `test/` crea PostgreSQL temporal en loopback, sin leer `.env` ni usar servicios remotos. Los scripts E2E históricos sí requieren una instalación y credenciales explícitas; no se ejecutan en CI. Los scripts de carga se ejecutan aparte y no demuestran capacidad hasta medir el despliegue real.

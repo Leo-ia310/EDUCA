@@ -11,6 +11,7 @@ class LocalClassSession {
     required this.createdAtMs,
     this.serverId,
     this.synced = false,
+    this.classDate,
   });
 
   String uuid;
@@ -20,8 +21,9 @@ class LocalClassSession {
   int createdAtMs;
   int? serverId;
   bool synced;
+  String? classDate;
 
-  DateTime get date => DateTime.fromMillisecondsSinceEpoch(dateMs);
+  DateTime get date => classDate == null ? DateTime.fromMillisecondsSinceEpoch(dateMs) : DateTime.parse(classDate!);
 }
 
 class LocalClassSessionAdapter extends TypeAdapter<LocalClassSession> {
@@ -42,13 +44,14 @@ class LocalClassSessionAdapter extends TypeAdapter<LocalClassSession> {
       createdAtMs: fields[4] as int,
       serverId: fields[5] as int?,
       synced: fields[6] as bool? ?? false,
+      classDate: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, LocalClassSession obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.uuid)
       ..writeByte(1)
@@ -62,6 +65,7 @@ class LocalClassSessionAdapter extends TypeAdapter<LocalClassSession> {
       ..writeByte(5)
       ..write(obj.serverId)
       ..writeByte(6)
-      ..write(obj.synced);
+      ..write(obj.synced)
+      ..writeByte(7)..write(obj.classDate);
   }
 }

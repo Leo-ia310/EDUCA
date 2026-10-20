@@ -1,3 +1,4 @@
+import '../widgets/assignment_load_more.dart';
 import '../../../collaborations/providers.dart';
 import '../../../../core/constants/env.dart';
 import 'package:flutter/material.dart';
@@ -61,14 +62,17 @@ class _TeacherAssignmentsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final list = ref.watch(teacherAssignmentsProvider);
+    final provider = teacherAssignmentsProvider(null);
+    final list = ref.watch(provider);
+    final paging = ref.watch(provider.notifier);
     final palette = context.palette;
     final canCreate = Env.isDemoMode ||
         ((ref.watch(collaborationWorkspaceProvider).valueOrNull?['classes']
                     as List?) ??
                 [])
-            .any((c) =>
-                (c['permissions'] as List).contains('assignments.create'),);
+            .any(
+          (c) => (c['permissions'] as List).contains('assignments.create'),
+        );
 
     return StudentDetailScaffold(
       title: 'Tareas y Exámenes',
@@ -137,8 +141,7 @@ class _TeacherAssignmentsScreenState
                     }
                     return RefreshIndicator(
                       color: palette.accentDeep,
-                      onRefresh: () async =>
-                          ref.invalidate(teacherAssignmentsProvider),
+                      onRefresh: () async => ref.invalidate(provider),
                       child: ListView(
                         key: ValueKey(_bySubject),
                         padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
@@ -158,6 +161,7 @@ class _TeacherAssignmentsScreenState
                             ..._subjectCards(context, subjects, mine)
                           else
                             ..._generalList(context, mine),
+                          AssignmentLoadMore(controller: paging),
                         ],
                       ),
                     );
@@ -209,8 +213,16 @@ class TeacherSubjectAssignmentsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final list = ref.watch(teacherAssignmentsProvider);
-    final canCreate = Env.isDemoMode || ((ref.watch(collaborationWorkspaceProvider).valueOrNull?['classes'] as List?) ?? []).any((c) => _sameSubject(c['subjectName'] as String, subject) && (c['permissions'] as List).contains('assignments.create'));
+    final provider = teacherAssignmentsProvider(subject);
+    final list = ref.watch(provider);
+    final paging = ref.watch(provider.notifier);
+    final canCreate = Env.isDemoMode ||
+        ((ref.watch(collaborationWorkspaceProvider).valueOrNull?['classes']
+                    as List?) ??
+                [])
+            .any((c) =>
+                _sameSubject(c['subjectName'] as String, subject) &&
+                (c['permissions'] as List).contains('assignments.create'),);
     return StudentDetailScaffold(
       title: subject,
       scrollable: false,
@@ -228,15 +240,16 @@ class TeacherSubjectAssignmentsScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
               children: [
-                if (canCreate) Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: BrutalButton(
-                    expand: true,
-                    onTap: () => context.push('${Routes.assignments}/new'),
-                    icon: Icons.add,
-                    label: 'Nueva tarea o examen',
+                if (canCreate)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: BrutalButton(
+                      expand: true,
+                      onTap: () => context.push('${Routes.assignments}/new'),
+                      icon: Icons.add,
+                      label: 'Nueva tarea o examen',
+                    ),
                   ),
-                ),
                 if (items.isEmpty)
                   const Padding(
                     padding: EdgeInsets.only(top: 24),
@@ -249,6 +262,7 @@ class TeacherSubjectAssignmentsScreen extends ConsumerWidget {
                 else
                   for (final (i, a) in items.indexed)
                     entranceItem(context, i, _AssignmentTile(assignment: a)),
+                AssignmentLoadMore(controller: paging),
               ],
             );
           },

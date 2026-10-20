@@ -1,9 +1,12 @@
+import '../widgets/admin_profiles_list.dart';
+import 'dart:async';
 import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/network/paginated_response.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -13,8 +16,6 @@ import '../../../../shared/models/app_role.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../data/admin_backend_repository.dart';
-import '../../data/admin_permissions.dart';
-import '../../data/admin_profile.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_profile_form.dart';
 import '../widgets/admin_widgets.dart';
@@ -46,6 +47,10 @@ class AdminRolesScreen extends ConsumerStatefulWidget {
 class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
   AppRole? _filter;
   String _query = '';
+  int _page = 1;
+  Timer? _searchTimer;
+  @override
+  void dispose(){_searchTimer?.cancel();super.dispose();}
 
   Future<void> _openPersonSheet(
     BuildContext context, {
@@ -54,43 +59,30 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
     await showPersonSheet(context, existing: existing, pickRole: true);
     if (!mounted) return;
     ref.invalidate(adminSchoolDirectoryProvider);
-    await ref.read(adminSchoolDirectoryProvider.future);
+    ref.invalidate(adminDirectoryPeoplePageProvider);
+    ref.invalidate(adminDirectoryCountsProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     final repo = ref.watch(adminBackendRepositoryProvider);
-    final remote =
-        repo == null ? null : ref.watch(adminSchoolDirectoryProvider);
-    final fallbackDir = ref.watch(schoolDirectoryProvider);
-
-    if (remote != null) {
-      return remote.when(
-        loading: () => const StudentDetailScaffold(
-          title: 'Roles y perfiles',
-          bottomNav: false,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        error: (error, _) => StudentDetailScaffold(
-          title: 'Roles y perfiles',
-          bottomNav: false,
-          child: ErrorStateView(message: '$error'),
-        ),
-        data: (dir) => _buildContent(context, dir),
-      );
+    if (repo != null) {
+      final result=ref.watch(adminDirectoryPeoplePageProvider((role:_filter,search:_query,page:_page,groupId:null)));
+      final counts=ref.watch(adminDirectoryCountsProvider);
+      return _buildContent(context,SchoolDirectory(people:result.valueOrNull?.items ?? []),
+        loading:result.isLoading,error:result.error,pageInfo:result.valueOrNull?.pageInfo,counts:counts.valueOrNull,);
     }
-
-    return _buildContent(context, fallbackDir);
+    return _buildContent(context, ref.watch(schoolDirectoryProvider));
   }
 
-  Widget _buildContent(BuildContext context, SchoolDirectory dir) {
+  Widget _buildContent(BuildContext context, SchoolDirectory dir,{bool loading=false,Object? error,PageInfo? pageInfo,Map<String,int>? counts}) {
     final palette = context.palette;
     final connected = ref.watch(adminBackendRepositoryProvider) != null;
     final me = ref.watch(authControllerProvider).user;
     final canCreate = me?.can('roles.create') ?? false;
     final canEdit = me?.can('roles.edit') ?? false;
     final q = _query.trim().toLowerCase();
-    final profiles = dir.people
+    final profiles = connected ? dir.people : (dir.people
         .where((p) => _filter == null || p.role == _filter)
         .where(
           (p) =>
@@ -99,7 +91,7 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
               p.email.toLowerCase().contains(q),
         )
         .toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+      ..sort((a, b) => a.name.compareTo(b.name)));
 
     return StudentDetailScaffold(
       title: 'Roles y perfiles',
@@ -109,9 +101,10 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
         children: [
           if (canEdit) ...[
             FilledButton.icon(
-                onPressed: () => context.push(Routes.adminAccess),
-                icon: const Icon(Icons.lock_person_rounded),
-                label: const Text('Accesos de padres, alumnos y notas'),),
+              onPressed: () => context.push(Routes.adminAccess),
+              icon: const Icon(Icons.lock_person_rounded),
+              label: const Text('Accesos de padres, alumnos y notas'),
+            ),
             const SizedBox(height: 16),
           ],
           if (canCreate) ...[
@@ -131,17 +124,17 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
               accent: false,
             ),
             const SizedBox(height: 8),
-            _AdminProfilesList(canEdit: canEdit, meId: me?.id),
+            AdminProfilesList(canEdit: canEdit),
             const SizedBox(height: 20),
           ],
           const SectionHeader(title: 'Roles', accent: false),
           const SizedBox(height: 8),
-          for (final r in AppRole.values)
+          for (final r in connected ? [AppRole.teacher,AppRole.student,AppRole.parent] : AppRole.values)
             _RoleCard(
               role: r,
-              count: dir.byRole(r).length,
+              count: connected ? (counts?[r.code]) : dir.byRole(r).length,
               selected: _filter == r,
-              onTap: () => setState(() => _filter = _filter == r ? null : r),
+              onTap: () => setState(() { _filter = _filter == r ? null : r; _page=1; }),
             ),
           const SizedBox(height: 14),
           Row(
@@ -151,7 +144,7 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
               ),
               if (_filter != null)
                 TextButton(
-                  onPressed: () => setState(() => _filter = null),
+                  onPressed: () => setState(() { _filter = null; _page=1; }),
                   child: Text('Ver todos (${_filter!.label})'),
                 ),
             ],
@@ -159,10 +152,12 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
           const SizedBox(height: 8),
           AdminSearchField(
             hint: 'Buscar perfil…',
-            onChanged: (v) => setState(() => _query = v),
+            onChanged: (v) { _searchTimer?.cancel(); _searchTimer=Timer(const Duration(milliseconds:300),(){if(mounted)setState((){_query=v.trim();_page=1;});}); },
           ),
           const SizedBox(height: 12),
-          if (profiles.isEmpty)
+          if(loading) const Center(child:CircularProgressIndicator())
+          else if(error!=null) ErrorStateView(message:'$error',onRetry:()=>ref.invalidate(adminDirectoryPeoplePageProvider))
+          else if (profiles.isEmpty)
             const EmptyState(
               icon: Icons.search_off_rounded,
               title: 'Sin perfiles',
@@ -181,6 +176,11 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
                     ? () => _openPersonSheet(context, existing: p)
                     : null,
               ),
+          if(pageInfo!=null&&pageInfo.totalPages>1) Row(mainAxisAlignment:MainAxisAlignment.center,children:[
+            IconButton(tooltip:'Página anterior',onPressed:pageInfo.hasPreviousPage?()=>setState(()=>_page--):null,icon:const Icon(Icons.chevron_left_rounded)),
+            Text('${pageInfo.page} / ${pageInfo.totalPages}'),
+            IconButton(tooltip:'Página siguiente',onPressed:pageInfo.hasNextPage?()=>setState(()=>_page++):null,icon:const Icon(Icons.chevron_right_rounded)),
+          ],),
           const SizedBox(height: 4),
           Text(
             'Los roles son fijos de la plataforma; aquí controlas qué perfiles '
@@ -203,7 +203,7 @@ class _RoleCard extends StatelessWidget {
   });
 
   final AppRole role;
-  final int count;
+  final int? count;
   final bool selected;
   final VoidCallback onTap;
 
@@ -261,7 +261,7 @@ class _RoleCard extends StatelessWidget {
                 border: Border.all(color: ink, width: Brutal.border),
               ),
               child: Text(
-                '$count',
+                count?.toString() ?? '—',
                 style: context.textTheme.titleSmall?.copyWith(
                   color: Colors.black,
                   fontWeight: FontWeight.w800,
@@ -273,67 +273,4 @@ class _RoleCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Perfiles con acceso al dashboard admin (administrador, supervisor /
-/// coordinador, director) y cuántos permisos tiene cada uno.
-class _AdminProfilesList extends ConsumerWidget {
-  const _AdminProfilesList({required this.canEdit, required this.meId});
-
-  final bool canEdit;
-  final String? meId;
-
-  static String _roleLabel(String code) => adminProfileRoles
-      .firstWhere((r) => r.$1 == code, orElse: () => (code, code))
-      .$2;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final profiles = ref.watch(adminProfilesProvider);
-    return profiles.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, _) => ErrorStateView(
-        message: '$e',
-        onRetry: () => ref.invalidate(adminProfilesProvider),
-      ),
-      data: (list) {
-        if (list.isEmpty) {
-          return const EmptyState(
-            icon: Icons.admin_panel_settings_rounded,
-            title: 'Sin perfiles administrativos',
-            subtitle: 'Crea el primero con "Nuevo perfil".',
-          );
-        }
-        return Column(
-          children: [
-            for (final p in list)
-              AdminTile(
-                title: p.fullName,
-                subtitle: p.email,
-                caption:
-                    '${_roleLabel(p.roleCode)} · ${_summary(p)}${p.active ? '' : ' · Inactivo'}',
-                color: roleColor(context, _appRole(p.roleCode)),
-                leadingText: p.initials,
-                dimmed: !p.active,
-                onTap: canEdit
-                    ? () => showAdminProfileSheet(context, existing: p)
-                    : null,
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  static String _summary(AdminProfile p) =>
-      p.customized ? '${p.permissions.length} permisos' : 'Acceso completo';
-
-  static AppRole _appRole(String code) => switch (code) {
-        'coordinator' => AppRole.coordinator,
-        'director' => AppRole.director,
-        _ => AppRole.admin,
-      };
 }
