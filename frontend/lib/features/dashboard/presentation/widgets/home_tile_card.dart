@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 
@@ -40,14 +41,23 @@ class HomeOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onTap != null;
     final ink = Brutal.ink(context);
-    // Texto claro u oscuro según la luminosidad de la tarjeta.
-    final fg = color.computeLuminance() > 0.3 ? Colors.black : Colors.white;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // En oscuro la tarjeta se tiñe con su color de categoría (20 %) sobre la
+    // superficie y la tinta es clara; en claro, texto negro o blanco según la
+    // luminosidad del color.
+    final cardColor = dark
+        ? Color.alphaBlend(color.withValues(alpha: 0.20), AppColors.darkSurface)
+        : color;
+    final fg = dark
+        ? Color.lerp(Colors.white, color, 0.22)!
+        : (color.computeLuminance() > 0.3 ? Colors.black : Colors.white);
+    final artColor = dark ? color.withValues(alpha: 0.38) : Colors.white;
 
     return Opacity(
       opacity: enabled ? 1 : 0.6,
       child: BrutalBox(
         onTap: onTap,
-        color: color,
+        color: cardColor,
         radius: Radii.lg,
         clip: true,
         child: LayoutBuilder(
@@ -69,7 +79,14 @@ class HomeOptionCard extends StatelessWidget {
                       width: half - 10,
                       child: FittedBox(
                         fit: BoxFit.contain,
-                        child: SizedBox(width: 112, height: 108, child: art!),
+                        child: SizedBox(
+                          width: 112,
+                          height: 108,
+                          child: IconTheme(
+                            data: IconThemeData(color: artColor),
+                            child: art!,
+                          ),
+                        ),
                       ),
                     ),
                   // Ícono en la esquina superior izquierda.
@@ -230,6 +247,7 @@ class ArtCluster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -243,7 +261,8 @@ class ArtCluster extends StatelessWidget {
                   ? Icon(
                       it.icon,
                       size: it.size,
-                      color: Colors.white.withValues(alpha: it.opacity),
+                      color: (IconTheme.of(context).color ?? Colors.white)
+                          .withValues(alpha: dark ? 1 : it.opacity),
                     )
                   : Opacity(
                       opacity: it.opacity,
@@ -252,7 +271,7 @@ class ArtCluster extends StatelessWidget {
                         style: TextStyle(
                           fontSize: it.size,
                           fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                          color: IconTheme.of(context).color ?? Colors.white,
                           height: 1,
                         ),
                       ),

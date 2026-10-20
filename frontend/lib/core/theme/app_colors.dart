@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 /// Dos identidades, una por tema:
 /// - **Claro: azul y blanco.** Azul real (`#2563EB`) como color de marca sobre
 ///   blanco, con un azul marino como tinta (texto, bordes y sombras duras).
-/// - **Oscuro: negro y verde.** Negro con un leve matiz verde como fondo y un
-///   verde esmeralda como marca.
+/// - **Oscuro: «Grafito azul».** Casi negro azulado como fondo, gris azulado
+///   claro para bordes y sombras duras, y un único acento azul. Las tarjetas por
+///   categoría se tiñen con su color al 20 % sobre la superficie.
 ///
 /// Para que la interfaz no quede en solo dos colores, cada tema trae cuatro
 /// **acentos de contraste** (sol, coral, menta y uva) que se usan en tarjetas,
@@ -40,28 +41,28 @@ class AppColors {
   static const Color mintLight = Color(0xFF0FB5A0);
   static const Color grapeLight = Color(0xFF7C5CFA);
 
-  // ── Oscuro · marca verde ──────────────────────────────────────────────────
-  static const Color accentDark = Color(0xFF22C55E); // rellenos y botones
-  static const Color accentDeepDark = Color(0xFF4ADE80); // sobre negro
-  static const Color accentSoftDark = Color(0xFF0E2A1B);
-  static const Color barDark = Color(0xFF15803D); // barras (texto blanco)
-  static const Color barDeepDark = Color(0xFF0F5F2E);
-  static const Color onAccentDark = Color(0xFF04130A); // texto sobre verde
+  // ── Oscuro · marca azul ───────────────────────────────────────────────────
+  static const Color accentDark = Color(0xFF4F8CFF); // rellenos y botones
+  static const Color accentDeepDark = Color(0xFF4F8CFF); // sobre fondo oscuro
+  static const Color accentSoftDark = Color(0xFF172746);
+  static const Color barDark = Color(0xFF1B2A4A); // barras (texto claro)
+  static const Color barDeepDark = Color(0xFF151E33);
+  static const Color onAccentDark = Color(0xFF0D1017); // texto sobre azul
 
-  // ── Oscuro · neutros (negro con matiz verde) ─────────────────────────────
-  static const Color darkBg = Color(0xFF050807);
-  static const Color darkSurface = Color(0xFF0D1210);
-  static const Color darkSurfaceAlt = Color(0xFF141B18);
-  static const Color textDark = Color(0xFFE8F5EE);
-  static const Color textDarkMuted = Color(0xFF8DA397);
-  static const Color lineDark = Color(0xFF22302A);
-  static const Color inkDark = Color(0xFFE8F5EE); // bordes y sombra dura
+  // ── Oscuro · neutros (casi negro azulado) ────────────────────────────────
+  static const Color darkBg = Color(0xFF0D1017);
+  static const Color darkSurface = Color(0xFF151A23);
+  static const Color darkSurfaceAlt = Color(0xFF1D2430);
+  static const Color textDark = Color(0xFFEEF2FA);
+  static const Color textDarkMuted = Color(0xFF93A0B8);
+  static const Color lineDark = Color(0xFF2A3345);
+  static const Color inkDark = Color(0xFFDCE4F5); // bordes y sombra dura
 
   // ── Oscuro · acentos de contraste ────────────────────────────────────────
-  static const Color sunDark = Color(0xFFFACC15);
-  static const Color coralDark = Color(0xFFFB7185);
-  static const Color mintDark = Color(0xFF2DD4BF);
-  static const Color grapeDark = Color(0xFFA78BFA);
+  static const Color sunDark = Color(0xFFF5B63D);
+  static const Color coralDark = Color(0xFFFF7A63);
+  static const Color mintDark = Color(0xFF2EC4B6);
+  static const Color grapeDark = Color(0xFF9B87F5);
 
   // ── Semánticos ───────────────────────────────────────────────────────────
   // Claro.
@@ -69,10 +70,9 @@ class AppColors {
   static const Color warning = Color(0xFFF59E0B);
   static const Color danger = Color(0xFFE5484D);
   static const Color info = Color(0xFF0EA5E9);
-  // Oscuro (más luminosos). En oscuro la marca ya es verde, así que el éxito
-  // usa un esmeralda más frío para distinguirse.
-  static const Color successDark = Color(0xFF34D399);
-  static const Color warningDark = Color(0xFFFBBF24);
+  // Oscuro (más luminosos y con la misma saturación que los acentos).
+  static const Color successDark = Color(0xFF3DC98A);
+  static const Color warningDark = Color(0xFFF5B63D);
   static const Color dangerDark = Color(0xFFF87171);
   static const Color infoDark = Color(0xFF38BDF8);
 

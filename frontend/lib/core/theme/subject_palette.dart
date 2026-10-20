@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
+
 /// Paleta **curada y armónica** de acentos por materia (Educa v3). Tonos
 /// vibrantes pero de saturación/brillo emparentados, para que convivan sin
 /// chocar. Cada materia conocida recibe un color con sentido; las demás caen de
@@ -119,14 +121,11 @@ PastelSurface pastelSurface(Color base,
       .withLightness(0.56)
       .toColor();
   if (brightness == Brightness.dark) {
-    final surface = hsl
-        .withSaturation(hsl.saturation.clamp(0.30, 0.55))
-        .withLightness(0.20)
-        .toColor();
-    final ink = hsl
-        .withSaturation(hsl.saturation.clamp(0.25, 0.60))
-        .withLightness(0.90)
-        .toColor();
+    final surface = Color.alphaBlend(
+      base.withValues(alpha: 0.20),
+      AppColors.darkSurface,
+    );
+    final ink = Color.lerp(Colors.white, base, 0.22)!;
     return PastelSurface(
       vivid: vivid,
       surface: surface,

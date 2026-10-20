@@ -402,7 +402,7 @@ class AppTheme {
         AppPalette(
           surfaceAlt: AppColors.darkSurfaceAlt,
           cardElevated: AppColors.darkSurface,
-          cardContrast: Color(0xFF020403),
+          cardContrast: Color(0xFF14213D),
           textMuted: AppColors.textDarkMuted,
           success: AppColors.successDark,
           warning: AppColors.warningDark,
