@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import '../../../portal_access/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +29,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user!;
-    final data = ref.watch(parentDashboardProvider).valueOrNull ??
+    final data = ref.watch(parentDashboardProvider).scopedValue ??
         ParentDashboardData.empty();
 
     return AppScaffold(

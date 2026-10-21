@@ -305,3 +305,26 @@ docker run --env-file .env -p 3000:3000 nivra-backend
 El runtime requiere Node >=20.3.0 por la composición de señales de cancelación; CI verifica Node 22. Contratos de recuperación y actualización coordinada en [ESCRITURAS_TRANSACCIONALES](../docs/ESCRITURAS_TRANSACCIONALES.md) y presupuestos, readiness, métricas y SIGTERM en [OPERACION_BACKEND](../docs/OPERACION_BACKEND.md). La lista de bloques y su evidencia está en [ESCALABILIDAD_IMPLEMENTACION](../docs/ESCALABILIDAD_IMPLEMENTACION.md).
 
 `npm test` genera documentación, comprueba TypeScript de aplicación y pruebas y ejecuta regresiones unitarias/SQL aisladas. El harness de `test/` crea PostgreSQL temporal en loopback, sin leer `.env` ni usar servicios remotos. Los scripts E2E históricos sí requieren una instalación y credenciales explícitas; no se ejecutan en CI. Los scripts de carga se ejecutan aparte y no demuestran capacidad hasta medir el despliegue real.
+
+
+## Redis opcional para catálogos
+
+Configurar únicamente en el backend:
+
+```dotenv
+UPSTASH_REDIS_REST_URL=https://<instancia>.upstash.io
+UPSTASH_REDIS_REST_TOKEN=<token REST con lectura y escritura>
+CACHE_NAMESPACE=nivra:production
+# Opcional; 2000 por defecto, entre 100 y 5000:
+REDIS_TIMEOUT_MS=2000
+```
+
+Sin URL y token, se consulta la base normalmente. Nunca enviar el token a Flutter ni versionar `.env`. Las claves incluyen proyecto Supabase e institución. Solo se cachean la escala institucional (30 s, invalidación por revisión al editar) y tipos de estado de asistencia (60 s, L1 10 s/máximo 128 instituciones). El catálogo de estados no tiene edición mediante API; cambios externos por SQL pueden tardar hasta unos 70 s en reflejarse. No se cachean alumnos, marcas, calificaciones, chat, pagos ni permisos. Redis falla hacia la base con circuito de 30 s.
+
+Verificar conexión y lectura/escritura/invalidación entre clientes, sin consultar datos escolares:
+
+```powershell
+npx tsx scripts/verify-redis.ts
+```
+
+El probe usa un namespace único, limpia sus claves y no imprime secretos. El endpoint privado `/internal/metrics` añade `catalogCache` con contadores por proceso y sin claves o credenciales. Consultar [el informe de caché](../docs/INFORME_CACHE_NAVEGACION.md) para mediciones, límites y rollback. Reiniciar el proceso al cambiar variables; en Render se configuran en el entorno del servicio.

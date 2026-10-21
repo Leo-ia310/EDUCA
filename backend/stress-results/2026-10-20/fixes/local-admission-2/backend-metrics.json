@@ -1,0 +1,509 @@
+{
+  "ok": true,
+  "data": {
+    "scope": "process",
+    "uptimeSeconds": 281,
+    "activeRequests": 0,
+    "draining": false,
+    "latencyBucketUpperMs": [
+      100,
+      300,
+      1000,
+      3000,
+      10000,
+      30000,
+      60000,
+      null
+    ],
+    "requests": {
+      "POST /api/auth/login 200": {
+        "count": 8,
+        "errors": 0,
+        "totalMs": 14510.60459999999,
+        "maxMs": 2578.8140000000003,
+        "latencyBuckets": [
+          0,
+          0,
+          0,
+          8,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/auth/2fa/status 200": {
+        "count": 46,
+        "errors": 0,
+        "totalMs": 42388.70280000004,
+        "maxMs": 3141.7650999999896,
+        "latencyBuckets": [
+          0,
+          0,
+          40,
+          5,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/portal-access/me 200": {
+        "count": 46,
+        "errors": 0,
+        "totalMs": 49195.08410000001,
+        "maxMs": 3174.6477000000014,
+        "latencyBuckets": [
+          0,
+          0,
+          27,
+          18,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/notifications/ 200": {
+        "count": 46,
+        "errors": 0,
+        "totalMs": 31141.30470000012,
+        "maxMs": 2246.65459999998,
+        "latencyBuckets": [
+          0,
+          0,
+          44,
+          2,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/chats/conversations 200": {
+        "count": 46,
+        "errors": 0,
+        "totalMs": 31926.880000000005,
+        "maxMs": 1511.4369000000006,
+        "latencyBuckets": [
+          0,
+          0,
+          42,
+          4,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/events/announcements 200": {
+        "count": 46,
+        "errors": 0,
+        "totalMs": 36237.620299999995,
+        "maxMs": 1964.4015999999829,
+        "latencyBuckets": [
+          0,
+          0,
+          41,
+          5,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/admin/directory/counts 200": {
+        "count": 8,
+        "errors": 0,
+        "totalMs": 5201.549299999968,
+        "maxMs": 840.2375000000011,
+        "latencyBuckets": [
+          0,
+          0,
+          8,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/admin/directory/people 200": {
+        "count": 16,
+        "errors": 0,
+        "totalMs": 11172.161099999936,
+        "maxMs": 928.7798999999941,
+        "latencyBuckets": [
+          0,
+          0,
+          16,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/admin/directory 200": {
+        "count": 8,
+        "errors": 0,
+        "totalMs": 9859.673300000066,
+        "maxMs": 4223.896599999993,
+        "latencyBuckets": [
+          0,
+          0,
+          6,
+          1,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/admin/profiles 200": {
+        "count": 8,
+        "errors": 0,
+        "totalMs": 7775.926099999997,
+        "maxMs": 3356.987799999988,
+        "latencyBuckets": [
+          0,
+          0,
+          7,
+          0,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/admin/roles 200": {
+        "count": 8,
+        "errors": 0,
+        "totalMs": 4714.553500000013,
+        "maxMs": 678.1140000000014,
+        "latencyBuckets": [
+          0,
+          0,
+          8,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/schedules/ 200": {
+        "count": 6,
+        "errors": 0,
+        "totalMs": 3749.1970999999958,
+        "maxMs": 786.7384000000002,
+        "latencyBuckets": [
+          0,
+          0,
+          6,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/payments/charges 200": {
+        "count": 6,
+        "errors": 0,
+        "totalMs": 14916.340799999985,
+        "maxMs": 3239.8608999999997,
+        "latencyBuckets": [
+          0,
+          0,
+          0,
+          5,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/payments/summary 200": {
+        "count": 6,
+        "errors": 0,
+        "totalMs": 3858.110400000023,
+        "maxMs": 770.5976000000082,
+        "latencyBuckets": [
+          0,
+          0,
+          6,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/grades/periods 200": {
+        "count": 16,
+        "errors": 0,
+        "totalMs": 13441.176899999977,
+        "maxMs": 1152.3616000000038,
+        "latencyBuckets": [
+          0,
+          0,
+          14,
+          2,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/grades/scales/default 200": {
+        "count": 16,
+        "errors": 0,
+        "totalMs": 17138.253500000013,
+        "maxMs": 3813.3835999999865,
+        "latencyBuckets": [
+          0,
+          0,
+          11,
+          4,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/reports/report-cards 200": {
+        "count": 6,
+        "errors": 0,
+        "totalMs": 4397.70310000001,
+        "maxMs": 1090.661300000007,
+        "latencyBuckets": [
+          0,
+          0,
+          5,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/assignments/teacher 200": {
+        "count": 10,
+        "errors": 0,
+        "totalMs": 12446.008200000026,
+        "maxMs": 1954.3991999999998,
+        "latencyBuckets": [
+          0,
+          0,
+          3,
+          7,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/schedules/mine 200": {
+        "count": 22,
+        "errors": 0,
+        "totalMs": 17649.30959999999,
+        "maxMs": 2306.4602000000014,
+        "latencyBuckets": [
+          0,
+          0,
+          20,
+          2,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/sync/changes 200": {
+        "count": 10,
+        "errors": 0,
+        "totalMs": 7616.931200000032,
+        "maxMs": 1413.1191000000108,
+        "latencyBuckets": [
+          0,
+          0,
+          8,
+          2,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/assignments/student 200": {
+        "count": 12,
+        "errors": 0,
+        "totalMs": 16341.763200000009,
+        "maxMs": 1865.1540000000095,
+        "latencyBuckets": [
+          0,
+          0,
+          0,
+          12,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/payments/mine 200": {
+        "count": 12,
+        "errors": 0,
+        "totalMs": 20665.114399999984,
+        "maxMs": 2236.1826999999903,
+        "latencyBuckets": [
+          0,
+          0,
+          0,
+          12,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/portal-access/grades 200": {
+        "count": 12,
+        "errors": 0,
+        "totalMs": 13716.928599999992,
+        "maxMs": 2130.1419000000024,
+        "latencyBuckets": [
+          0,
+          0,
+          3,
+          9,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/family/children 200": {
+        "count": 12,
+        "errors": 0,
+        "totalMs": 11197.86220000004,
+        "maxMs": 1768.930800000002,
+        "latencyBuckets": [
+          0,
+          0,
+          11,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/family/attendance 200": {
+        "count": 12,
+        "errors": 0,
+        "totalMs": 13630.029100000065,
+        "maxMs": 1630.5765000000247,
+        "latencyBuckets": [
+          0,
+          0,
+          4,
+          8,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "GET /api/family/assignments 200": {
+        "count": 12,
+        "errors": 0,
+        "totalMs": 24273.662299999974,
+        "maxMs": 2598.5436999999947,
+        "latencyBuckets": [
+          0,
+          0,
+          0,
+          12,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "dependencies": {
+      "database 200": {
+        "count": 1508,
+        "errors": 0,
+        "totalMs": 416547.24109999946,
+        "maxMs": 1745.356299999985,
+        "latencyBuckets": [
+          0,
+          1216,
+          259,
+          33,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "auth 200": {
+        "count": 456,
+        "errors": 0,
+        "totalMs": 108601.08750000014,
+        "maxMs": 2564.839300000007,
+        "latencyBuckets": [
+          0,
+          420,
+          30,
+          6,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "database 204": {
+        "count": 8,
+        "errors": 0,
+        "totalMs": 2131.898099999996,
+        "maxMs": 682.3668000000034,
+        "latencyBuckets": [
+          0,
+          7,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "dependencyConcurrency": {
+      "active": 1,
+      "pending": 0,
+      "limit": 8,
+      "queueLimit": 100,
+      "rejected": 0,
+      "cancelled": 0,
+      "waited": 0,
+      "totalWaitMs": 0,
+      "maxWaitMs": 0,
+      "database": {
+        "active": 1,
+        "pending": 0,
+        "limit": 4,
+        "queueLimit": 100,
+        "rejected": 0,
+        "cancelled": 0,
+        "waited": 53,
+        "totalWaitMs": 7925.825999999957,
+        "maxWaitMs": 690.6396999999997
+      }
+    }
+  }
+}

@@ -24,7 +24,7 @@ const businessSource = "backend/src/modules/business-api/business-api.handlers.t
 export const apiManifest: ApiManifestEntry[] = [
   api({module:"operations",method:"GET",path:"/health",summary:"Proceso HTTP activo",auth:"público",frontendStatus:"not_needed",request:"sin body",response:"{ ok: true, service }",source:"backend/src/app.ts",notes:"Liveness sin consultar dependencias; no mide capacidad de negocio."}),
   api({module:"operations",method:"GET",path:"/ready",summary:"Disponibilidad de PostgreSQL y versión de contrato",auth:"público",frontendStatus:"not_needed",request:"sin body",response:"{ ok, service, schemaVersion: 53, assignmentWriteVersion: 1 }",source:"backend/src/app.ts",notes:"200 listo; 503 durante cierre, caída de consulta o falta de migraciones 0053–0055. La capacidad aditiva assignmentWriteVersion=1 permite desplegar SQL antes del backend sin romper la versión anterior. Probe compartido y caché de 2 segundos; no expone detalles internos ni comprueba cada proveedor externo. Paquete inicial: supabase/deploy/scalability-0029-0053.sql; completar con supabase/deploy/assignment-performance-0054-0055.sql antes de publicar este backend. Requiere backup y, para el paquete inicial, revisión de horarios y base compatible con 0028. No activa 2FA."}),
-  api({module:"operations",method:"GET",path:"/internal/metrics",summary:"Contadores, latencia y concurrencia del proceso",auth:"Authorization: Bearer INTERNAL_API_SECRET",frontendStatus:"not_needed",request:"sin body",response:"{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies, dependencyConcurrency } }",source:"backend/src/app.ts",notes:"Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Auth y PostgREST comparten admisión FIFO por proceso: SUPABASE_MAX_CONCURRENT_REQUESTS=8, SUPABASE_MAX_DATABASE_REQUESTS=4 y SUPABASE_MAX_PENDING_REQUESTS=100 por defecto. Las consultas SQL adquieren primero su límite propio para dejar capacidad compartida a Auth. La espera usa el deadline existente y se cancela al desconectar; no cachea permisos. dependencyConcurrency informa active, pending, limit, queueLimit, rejected, cancelled y tiempos de espera, además del límite SQL anidado en database. Latencia de dependencia incluye cola y llega hasta cabeceras; solicitudes HTTP completas hasta finish/close. Storage conserva su transporte y deadline sin usar esta cola."}),
+  api({module:"operations",method:"GET",path:"/internal/metrics",summary:"Contadores, latencia y concurrencia del proceso",auth:"Authorization: Bearer INTERNAL_API_SECRET",frontendStatus:"not_needed",request:"sin body",response:"{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies, dependencyConcurrency, catalogCache } }",source:"backend/src/app.ts",notes:"Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. catalogCache muestra enabled, circuitOpen, localEntries, hits, localHits, misses, joins y failures; nunca secretos ni claves. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Auth y PostgREST comparten admisión FIFO por proceso: SUPABASE_MAX_CONCURRENT_REQUESTS=8, SUPABASE_MAX_DATABASE_REQUESTS=4 y SUPABASE_MAX_PENDING_REQUESTS=100 por defecto. Las consultas SQL adquieren primero su límite propio para dejar capacidad compartida a Auth. La espera usa el deadline existente y se cancela al desconectar; no cachea permisos. dependencyConcurrency informa active, pending, limit, queueLimit, rejected, cancelled y tiempos de espera, además del límite SQL anidado en database. Latencia de dependencia incluye cola y llega hasta cabeceras; solicitudes HTTP completas hasta finish/close. Storage conserva su transporte y deadline sin usar esta cola."}),
   api({
     module: "portal-access",
     method: "GET",
@@ -937,7 +937,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: date? (AAAA-MM-DD; por defecto hoy)",
     response: "{ ok: true, data: { class: { id, subject, group }, date, sessionId | null, statuses: [{ id, name, code, countsAsAbsent, color }], students: [{ studentId, name, statusId | null, notes, attendanceId, uuid, version, recordedAt }] } }",
     source: "backend/src/modules/attendance/attendance.routes.ts",
-    notes: "Solo lectura para la web del maestro. No crea la sesion de clase. Alumnos activos matriculados en el salon de la clase.",
+    notes: "Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Solo lectura para la web del maestro. No crea la sesion de clase. Alumnos activos matriculados en el salon de la clase.",
   }),
   api({
     module: "attendance",
@@ -961,7 +961,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: from?, to? (AAAA-MM-DD; por defecto ultimos 30 dias)",
     response: "{ ok: true, data: { from, to, statuses: [{ id, name, code, countsAsAbsent, color }], groups: [{ groupId, name, sessions, marks, absent, rate | null, byStatus }], total } }",
     source: "backend/src/modules/attendance/attendance.routes.ts",
-    notes: "Solo lectura para el panel web. Sesiones y marcas se recorren por páginas ordenadas para evitar truncar reportes de más de 1000 filas. rate = (marcas - ausencias) / marcas, donde ausencia es el estado con counts_as_absent. byStatus indexado por id de estado.",
+    notes: "Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Solo lectura para el panel web. Sesiones y marcas se recorren por páginas ordenadas para evitar truncar reportes de más de 1000 filas. rate = (marcas - ausencias) / marcas, donde ausencia es el estado con counts_as_absent. byStatus indexado por id de estado.",
   }),
   api({
     module: "attendance",
@@ -973,7 +973,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: from?, to? (AAAA-MM-DD)",
     response: "{ ok: true, data: { from, to, group: { id, name }, statuses, sessions: [{ id, date, classId, subject, topic, marks, absent, rate, byStatus }], students: [{ studentId, name, marks, absent, rate, byStatus }] } }",
     source: "backend/src/modules/attendance/attendance.routes.ts",
-    notes: "Alumnos activos con matrícula ACT en el salón, sin duplicados entre años, incluso sin marcas (rate null). Reporte completo mediante páginas ordenadas. 404 si el salón no existe en la institución.",
+    notes: "Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Alumnos activos con matrícula ACT en el salón, sin duplicados entre años, incluso sin marcas (rate null). Reporte completo mediante páginas ordenadas. 404 si el salón no existe en la institución.",
   }),
   api({
     module: "attendance",
@@ -1172,7 +1172,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "sin parametros; institucion de la sesion",
     response: "{ ok: true, data: { scale: object | null, status: configured | not_configured } }",
     source: "backend/src/modules/grades/grades.routes.ts",
-    notes: "Sin filtro de periodo. Usa la escala predeterminada activa de la institucion o la primera activa por id; sin escalas devuelve HTTP 200 con scale null.",
+    notes: "Sin filtro de periodo. Usa la escala predeterminada activa de la institucion o la primera activa por id; sin escalas devuelve HTTP 200 con scale null. Cache Upstash opcional exclusivamente del catalogo institucional (30s), con revision por institucion invalidada al configurar escalas por REST o business-api. Autenticacion vigente en cada peticion; fallback a DB si Redis falla. Nunca almacena notas ni permisos.",
   }),
   api({
     module: "grades",

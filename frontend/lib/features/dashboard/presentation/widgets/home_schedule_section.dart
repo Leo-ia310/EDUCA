@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/network/provider_cache.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/motion.dart';
@@ -36,7 +37,7 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
 
   /// Horario real (o de ejemplo en demo); vacío mientras carga.
   Map<int, List<ClassSlot>> get _byDay =>
-      ref.read(weeklySlotsProvider).valueOrNull ?? const {};
+      ref.read(weeklySlotsProvider).scopedValue ?? const {};
 
   /// Lun–Vie siempre; sábado/domingo solo si el admin los programó.
   int get _dayCount => _dayCountOf(_byDay);
@@ -110,7 +111,7 @@ class _HomeScheduleSectionState extends ConsumerState<HomeScheduleSection> {
       }
     });
     final schedule = ref.watch(weeklySlotsProvider);
-    if (schedule.isLoading || schedule.hasError) {
+    if ((schedule.isLoading && !schedule.isRefreshing) || schedule.hasError) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

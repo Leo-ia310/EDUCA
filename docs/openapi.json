@@ -98,7 +98,7 @@
           "operations"
         ],
         "summary": "Contadores, latencia y concurrencia del proceso",
-        "description": "Auth: Authorization: Bearer INTERNAL_API_SECRET.\n\nNotas: Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Auth y PostgREST comparten admisión FIFO por proceso: SUPABASE_MAX_CONCURRENT_REQUESTS=8, SUPABASE_MAX_DATABASE_REQUESTS=4 y SUPABASE_MAX_PENDING_REQUESTS=100 por defecto. Las consultas SQL adquieren primero su límite propio para dejar capacidad compartida a Auth. La espera usa el deadline existente y se cancela al desconectar; no cachea permisos. dependencyConcurrency informa active, pending, limit, queueLimit, rejected, cancelled y tiempos de espera, además del límite SQL anidado en database. Latencia de dependencia incluye cola y llega hasta cabeceras; solicitudes HTTP completas hasta finish/close. Storage conserva su transporte y deadline sin usar esta cola.\n\nFuente: backend/src/app.ts.",
+        "description": "Auth: Authorization: Bearer INTERNAL_API_SECRET.\n\nNotas: Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. catalogCache muestra enabled, circuitOpen, localEntries, hits, localHits, misses, joins y failures; nunca secretos ni claves. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Auth y PostgREST comparten admisión FIFO por proceso: SUPABASE_MAX_CONCURRENT_REQUESTS=8, SUPABASE_MAX_DATABASE_REQUESTS=4 y SUPABASE_MAX_PENDING_REQUESTS=100 por defecto. Las consultas SQL adquieren primero su límite propio para dejar capacidad compartida a Auth. La espera usa el deadline existente y se cancela al desconectar; no cachea permisos. dependencyConcurrency informa active, pending, limit, queueLimit, rejected, cancelled y tiempos de espera, además del límite SQL anidado en database. Latencia de dependencia incluye cola y llega hasta cabeceras; solicitudes HTTP completas hasta finish/close. Storage conserva su transporte y deadline sin usar esta cola.\n\nFuente: backend/src/app.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -106,7 +106,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies, dependencyConcurrency } }",
+            "description": "{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies, dependencyConcurrency, catalogCache } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -8005,7 +8005,7 @@
           "attendance"
         ],
         "summary": "Lista de asistencia de una clase en una fecha (alumnos y marcas guardadas)",
-        "description": "Auth: teacher con attendance.write en la clase, admin.\n\nNotas: Solo lectura para la web del maestro. No crea la sesion de clase. Alumnos activos matriculados en el salon de la clase.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
+        "description": "Auth: teacher con attendance.write en la clase, admin.\n\nNotas: Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Solo lectura para la web del maestro. No crea la sesion de clase. Alumnos activos matriculados en el salon de la clase.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -8372,7 +8372,7 @@
           "attendance"
         ],
         "summary": "Resumen de asistencia por salon en un rango de fechas",
-        "description": "Auth: admin con reports.view.\n\nNotas: Solo lectura para el panel web. Sesiones y marcas se recorren por páginas ordenadas para evitar truncar reportes de más de 1000 filas. rate = (marcas - ausencias) / marcas, donde ausencia es el estado con counts_as_absent. byStatus indexado por id de estado.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
+        "description": "Auth: admin con reports.view.\n\nNotas: Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Solo lectura para el panel web. Sesiones y marcas se recorren por páginas ordenadas para evitar truncar reportes de más de 1000 filas. rate = (marcas - ausencias) / marcas, donde ausencia es el estado con counts_as_absent. byStatus indexado por id de estado.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -8554,7 +8554,7 @@
           "attendance"
         ],
         "summary": "Detalle de asistencia de un salon: sesiones y alumnos",
-        "description": "Auth: admin con reports.view.\n\nNotas: Alumnos activos con matrícula ACT en el salón, sin duplicados entre años, incluso sin marcas (rate null). Reporte completo mediante páginas ordenadas. 404 si el salón no existe en la institución.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
+        "description": "Auth: admin con reports.view.\n\nNotas: Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Alumnos activos con matrícula ACT en el salón, sin duplicados entre años, incluso sin marcas (rate null). Reporte completo mediante páginas ordenadas. 404 si el salón no existe en la institución.\n\nFuente: backend/src/modules/attendance/attendance.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -10182,7 +10182,7 @@
           "grades"
         ],
         "summary": "Resuelve escala activa institucional para todos los periodos",
-        "description": "Auth: usuario autenticado.\n\nNotas: Sin filtro de periodo. Usa la escala predeterminada activa de la institucion o la primera activa por id; sin escalas devuelve HTTP 200 con scale null.\n\nFuente: backend/src/modules/grades/grades.routes.ts.",
+        "description": "Auth: usuario autenticado.\n\nNotas: Sin filtro de periodo. Usa la escala predeterminada activa de la institucion o la primera activa por id; sin escalas devuelve HTTP 200 con scale null. Cache Upstash opcional exclusivamente del catalogo institucional (30s), con revision por institucion invalidada al configurar escalas por REST o business-api. Autenticacion vigente en cada peticion; fallback a DB si Redis falla. Nunca almacena notas ni permisos.\n\nFuente: backend/src/modules/grades/grades.routes.ts.",
         "security": [
           {
             "bearerAuth": []

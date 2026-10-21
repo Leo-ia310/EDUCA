@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -70,8 +71,8 @@ class MyTeachersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(studentDashboardProvider).valueOrNull ??
-        StudentDashboardData.mock();
+    final data = ref.watch(studentDashboardProvider).scopedValue ??
+        StudentDashboardData.empty();
     final teachers = teachersFrom(data);
 
     return StudentDetailScaffold(

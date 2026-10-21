@@ -1,3 +1,4 @@
+import '../../../core/network/provider_cache.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/routing/route_paths.dart';
 import '../../portal_access/providers.dart';
@@ -26,7 +27,7 @@ class StudentProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user;
     final institution = ref.watch(authControllerProvider).institution;
-    final data = ref.watch(studentDashboardProvider).valueOrNull ??
+    final data = ref.watch(studentDashboardProvider).scopedValue ??
         StudentDashboardData.empty();
 
     return AppScaffold(

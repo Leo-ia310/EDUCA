@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-10-20T18:13:00.443Z",
+  "migrations": [
+    "0054_batched_academic_rls.sql",
+    "0055_atomic_assignment_write.sql"
+  ],
+  "backupSha256": "1386b167b84a4e1a062daf0d50bbffc95239f7f93a1afb74672fda635231f7d2",
+  "previous": {
+    "schemaVersion": 53
+  },
+  "academicIntegrityUnchanged": true,
+  "integrity": {
+    "students": {
+      "rows": 180,
+      "hash": "75b66fbf7dd25a13c39d7ec6606e909f"
+    },
+    "parents": {
+      "rows": 63,
+      "hash": "c6ff922f2d34e069a9d0eeda018d23e4"
+    },
+    "persons": {
+      "rows": 316,
+      "hash": "d8bd16e54298aa7893b17724b998fc4d"
+    },
+    "enrollments": {
+      "rows": 149,
+      "hash": "3a692fd11627576ab0b8ef13f77725b4"
+    },
+    "parent_students": {
+      "rows": 69,
+      "hash": "a86640128ae62d99d87c6572917eef92"
+    },
+    "schedules": {
+      "rows": 29,
+      "hash": "b59155af216e87984c69a9d20efa373c"
+    }
+  },
+  "unprotectedTables": 0,
+  "installed": {
+    "schemaVersion": 53,
+    "assignmentWriteVersion": 1
+  },
+  "completedAt": "2026-10-20T18:13:05.435Z",
+  "committed": true
+}

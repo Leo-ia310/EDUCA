@@ -6,6 +6,7 @@ import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
 import '../../core/services/hive_init.dart';
 import '../auth/presentation/auth_controller.dart';
+import '../auth/presentation/query_auth_provider.dart';
 import 'data/backend_notifications_repository.dart';
 import 'data/demo_push_service.dart';
 import 'data/hive_notifications_repository.dart';
@@ -37,7 +38,7 @@ final notificationsRepositoryProvider =
     Provider<NotificationsRepository>((ref) {
   ref.watch(portalFingerprintProvider);
   final api = ref.watch(backendApiClientProvider);
-  final userId = ref.watch(authControllerProvider.select((a) => a.user?.id));
+  final userId = ref.watch(queryAuthProvider).user?.id;
   if (!Env.isDemoMode && api != null && userId != null) {
     final repo = BackendNotificationsRepository(
       api,

@@ -1,0 +1,136 @@
+{
+  "at": "2026-10-20T19:01:38.951Z",
+  "scope": "disposable local PostgreSQL with production rows",
+  "tables": 95,
+  "cases": [
+    {
+      "phase": "before",
+      "role": "admin",
+      "institution": "2",
+      "ms": 683.4469000000026,
+      "count": 13,
+      "hash": "17324160fc467118719c1dbed7dd55cb8138a51603db6cd7c8658357b16301f4"
+    },
+    {
+      "phase": "before",
+      "role": "teacher",
+      "institution": "2",
+      "ms": 522.2669999999998,
+      "count": 4,
+      "hash": "3583c0cb5c2fca3d71ddbda96bc7b2a30f2aa42b8537e87b95518d94f2d381ce"
+    },
+    {
+      "phase": "before",
+      "role": "student",
+      "institution": "2",
+      "ms": 777.5704999999944,
+      "count": 4,
+      "hash": "eff9bc49c5db4665d6e5fb7aa0d71fa6dc341796bc4f71d772e459f34a9f5927"
+    },
+    {
+      "phase": "before",
+      "role": "parent",
+      "institution": "2",
+      "ms": 1072.5036999999938,
+      "count": 4,
+      "hash": "2c320f3e0b405f36335baaffa01c577178420fce85a879fecca62d27d5afd810"
+    },
+    {
+      "phase": "before",
+      "role": "admin",
+      "institution": "1",
+      "ms": 651.625,
+      "count": 7,
+      "hash": "883780c5fda5376b31d7e91f52d392346fd86e955cfca76a91757de304dc05af"
+    },
+    {
+      "phase": "before",
+      "role": "teacher",
+      "institution": "1",
+      "ms": 970.8086000000039,
+      "count": 7,
+      "hash": "883780c5fda5376b31d7e91f52d392346fd86e955cfca76a91757de304dc05af"
+    },
+    {
+      "phase": "before",
+      "role": "student",
+      "institution": "1",
+      "ms": 1101.4927000000025,
+      "count": 7,
+      "hash": "f3851ff993c16827cf92e0cc0eb741539711783f0566fb59d1ba4b373e29232f"
+    },
+    {
+      "phase": "before",
+      "role": "parent",
+      "institution": "1",
+      "ms": 1101.6814000000013,
+      "count": 7,
+      "hash": "f3851ff993c16827cf92e0cc0eb741539711783f0566fb59d1ba4b373e29232f"
+    },
+    {
+      "phase": "after",
+      "role": "admin",
+      "institution": "2",
+      "ms": 513.3852000000043,
+      "count": 13,
+      "hash": "17324160fc467118719c1dbed7dd55cb8138a51603db6cd7c8658357b16301f4"
+    },
+    {
+      "phase": "after",
+      "role": "teacher",
+      "institution": "2",
+      "ms": 316.19230000000243,
+      "count": 4,
+      "hash": "3583c0cb5c2fca3d71ddbda96bc7b2a30f2aa42b8537e87b95518d94f2d381ce"
+    },
+    {
+      "phase": "after",
+      "role": "student",
+      "institution": "2",
+      "ms": 372.7269000000015,
+      "count": 4,
+      "hash": "eff9bc49c5db4665d6e5fb7aa0d71fa6dc341796bc4f71d772e459f34a9f5927"
+    },
+    {
+      "phase": "after",
+      "role": "parent",
+      "institution": "2",
+      "ms": 549.6702000000005,
+      "count": 4,
+      "hash": "2c320f3e0b405f36335baaffa01c577178420fce85a879fecca62d27d5afd810"
+    },
+    {
+      "phase": "after",
+      "role": "admin",
+      "institution": "1",
+      "ms": 555.5963000000047,
+      "count": 7,
+      "hash": "883780c5fda5376b31d7e91f52d392346fd86e955cfca76a91757de304dc05af"
+    },
+    {
+      "phase": "after",
+      "role": "teacher",
+      "institution": "1",
+      "ms": 488.1622999999963,
+      "count": 7,
+      "hash": "883780c5fda5376b31d7e91f52d392346fd86e955cfca76a91757de304dc05af"
+    },
+    {
+      "phase": "after",
+      "role": "student",
+      "institution": "1",
+      "ms": 556.5180000000037,
+      "count": 7,
+      "hash": "f3851ff993c16827cf92e0cc0eb741539711783f0566fb59d1ba4b373e29232f"
+    },
+    {
+      "phase": "after",
+      "role": "parent",
+      "institution": "1",
+      "ms": 556.6631000000052,
+      "count": 7,
+      "hash": "f3851ff993c16827cf92e0cc0eb741539711783f0566fb59d1ba4b373e29232f"
+    }
+  ],
+  "identicalOutputs": true
+}

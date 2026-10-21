@@ -1,0 +1,181 @@
+00:00 +0: loading C:/Users/Maykel/Desktop/EDUCA/frontend/test/adaptive_refresh_test.dart
+00:00 +0: C:/Users/Maykel/Desktop/EDUCA/frontend/test/adaptive_refresh_test.dart: continuous progress events refresh within a fixed coalescing window
+00:02 +1: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_creation_retry_test.dart: creation key and generated code survive repository recreation; preferences never contain the password
+00:02 +2: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_creation_retry_test.dart: creation key and generated code survive repository recreation; preferences never contain the password
+00:02 +3: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_creation_retry_test.dart: creation key and generated code survive repository recreation; preferences never contain the password
+00:02 +4: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_creation_retry_test.dart: creation key and generated code survive repository recreation; preferences never contain the password
+00:02 +5: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_creation_retry_test.dart: pending requests are isolated by account and cannot be overwritten with another key
+00:02 +6: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_creation_retry_test.dart: only an explicit Auth rejection retires a key; editing an existing person adds no creation fields
+00:02 +7: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_creation_retry_test.dart: a disposed repository cannot send a creation under another session
+00:06 +8: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:09 +9: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +10: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +11: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +12: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +13: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +14: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +15: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +16: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +17: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:12 +18: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:14 +19: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:15 +20: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:18 +21: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:18 +22: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:18 +23: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:19 +24: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:19 +25: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:19 +26: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:19 +27: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:20 +28: C:/Users/Maykel/Desktop/EDUCA/frontend/test/admin_directory_paging_test.dart: schedule filters reset server pages and keep the searchable group picker alive
+00:22 +29: C:/Users/Maykel/Desktop/EDUCA/frontend/test/assignment_feed_test.dart: student list renders progress and loads next page without per-card reads
+00:23 +30: C:/Users/Maykel/Desktop/EDUCA/frontend/test/assignment_feed_test.dart: student list renders progress and loads next page without per-card reads
+00:27 +31: C:/Users/Maykel/Desktop/EDUCA/frontend/test/assignment_feed_test.dart: student list renders progress and loads next page without per-card reads
+00:31 +32: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: a lost response retains the queue and reuses the persisted operation after service restart
+00:31 +33: C:/Users/Maykel/Desktop/EDUCA/frontend/test/backend_api_client_test.dart: login network failure DioExceptionType.connectionError has no raw browser diagnostics
+00:32 +34: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: 205 pending records use three bounded requests and no per-row telemetry requests
+00:32 +35: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: 205 pending records use three bounded requests and no per-row telemetry requests
+00:32 +36: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: 205 pending records use three bounded requests and no per-row telemetry requests
+00:32 +37: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: 205 pending records use three bounded requests and no per-row telemetry requests
+00:32 +38: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: 205 pending records use three bounded requests and no per-row telemetry requests
+00:32 +39: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: 205 pending records use three bounded requests and no per-row telemetry requests
+00:32 +40: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: 205 pending records use three bounded requests and no per-row telemetry requests
+00:33 +41: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: an edit during upload remains pending with the acknowledged base version
+00:33 +42: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: conflicts retain the local choice and remote evidence without automatic overwrite
+00:34 +43: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: account scopes hide other users and preserve unattributed legacy rows without uploading them
+00:34 +44: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: cached class and roster snapshots work after transport failure but never bypass a forbidden response
+00:34 +45: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: roster hydration updates a synced local UUID instead of duplicating the same student and day
+00:34 +46: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: unmarked students are not counted present; finishing requires an explicit selection
+00:35 +47: C:/Users/Maykel/Desktop/EDUCA/frontend/test/attendance_sync_test.dart: disposal during upload leaves durable local work for the original account
+00:35 +48: C:/Users/Maykel/Desktop/EDUCA/frontend/test/chat_query_budget_test.dart: list and badge share one request; load-more preserves cursor precision and global unread
+00:37 +49: C:/Users/Maykel/Desktop/EDUCA/frontend/test/chat_query_budget_test.dart: history appends older pages and polling reads only deltas; cancellation stops polling
+00:38 +50: C:/Users/Maykel/Desktop/EDUCA/frontend/test/chat_query_budget_test.dart: late response after disposal closes without emitting data or scheduling work
+00:38 +51: C:/Users/Maykel/Desktop/EDUCA/frontend/test/chat_send_retry_test.dart: lost response preserves only fingerprint/UUID across repository recreation; a new identical message gets another UUID
+00:39 +52: C:/Users/Maykel/Desktop/EDUCA/frontend/test/chat_send_retry_test.dart: lost response preserves only fingerprint/UUID across repository recreation; a new identical message gets another UUID
+00:40 +53: C:/Users/Maykel/Desktop/EDUCA/frontend/test/checkout_retry_test.dart: lost response retries same payment after leaving checkout, without a second gateway call
+00:40 +54: C:/Users/Maykel/Desktop/EDUCA/frontend/test/checkout_retry_test.dart: lost response retries same payment after leaving checkout, without a second gateway call
+00:40 +55: C:/Users/Maykel/Desktop/EDUCA/frontend/test/checkout_retry_test.dart: lost response retries same payment after leaving checkout, without a second gateway call
+00:40 +56: C:/Users/Maykel/Desktop/EDUCA/frontend/test/checkout_retry_test.dart: lost response retries same payment after leaving checkout, without a second gateway call
+00:40 +57: C:/Users/Maykel/Desktop/EDUCA/frontend/test/checkout_retry_test.dart: lost response retries same payment after leaving checkout, without a second gateway call
+00:40 +58: C:/Users/Maykel/Desktop/EDUCA/frontend/test/checkout_retry_test.dart: lost response retries same payment after leaving checkout, without a second gateway call
+00:40 +59: C:/Users/Maykel/Desktop/EDUCA/frontend/test/chat_send_retry_test.dart: input retains failed text, prevents double submit and clears only on confirmation
+00:41 +60: C:/Users/Maykel/Desktop/EDUCA/frontend/test/chat_send_retry_test.dart: input retains failed text, prevents double submit and clears only on confirmation
+00:50 +61: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:50 +62: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:50 +63: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:50 +64: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:50 +65: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:50 +66: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:50 +67: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:52 +68: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:52 +69: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 360px
+00:55 +70: C:/Users/Maykel/Desktop/EDUCA/frontend/test/core/not_found_screen_test.dart: 404 se muestra sin overflow en 1280px
+00:56 +71: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/assignments/assignment_status_test.dart: Assignment.statusForNow no publicada -> draft
+00:56 +72: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/assignments/assignment_status_test.dart: Assignment.statusForNow todas calificadas -> closed
+00:56 +73: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/assignments/assignment_status_test.dart: Assignment.statusForNow pasada la fecha -> overdue
+00:56 +74: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/assignments/assignment_status_test.dart: Assignment.statusForNow vence en <= 48h -> dueSoon
+00:56 +75: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/assignments/assignment_status_test.dart: Assignment.statusForNow vence lejos -> open
+00:56 +76: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/assignments/assignment_status_test.dart: Assignment.statusForNow closed tiene prioridad sobre overdue
+00:56 +77: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/assignments/assignment_status_test.dart: Assignment progreso submissionProgress y gradingProgress
+00:56 +78: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/assignments/assignment_status_test.dart: Assignment progreso sin estudiantes/entregas devuelve 0 (sin dividir por cero)
+00:56 +79: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/admin/admin_profile_creation_test.dart: Nuevo perfil selects admin and submits its permissions
+00:59 +80: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/admin/admin_profile_creation_test.dart: Nuevo perfil selects admin and submits its permissions
+01:07 +81: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/admin/admin_profile_creation_test.dart: Nuevo perfil selects admin and submits its permissions
+01:08 +82: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/admin/admin_profile_creation_test.dart: Nuevo perfil selects coordinator and submits its permissions
+01:10 +83: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/admin/admin_profile_creation_test.dart: backend rejection stays visible without closing the form
+01:12 +84: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/admin/admin_profile_creation_test.dart: a list failure does not turn a successful save into an error
+01:43 +85: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/password_security_test.dart: recovery submits anonymously and returns to login after success
+01:47 +86: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/password_security_test.dart: recovery submits anonymously and returns to login after success
+01:47 +87: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/password_security_test.dart: recovery submits anonymously and returns to login after success
+01:52 +88: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/two_factor_methods_test.dart: authenticator enrollment shows a local QR and manual secret, validates errors and active method
+01:53 +89: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/two_factor_methods_test.dart: authenticator enrollment shows a local QR and manual secret, validates errors and active method
+01:53 +90: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/two_factor_methods_test.dart: authenticator enrollment shows a local QR and manual secret, validates errors and active method
+01:54 +91: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/two_factor_methods_test.dart: authenticator enrollment shows a local QR and manual secret, validates errors and active method
+01:54 +92: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/chat/chat_read_badge_test.dart: admin reads chat; other unread=0, retry=false
+01:55 +93: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/password_security_test.dart: signed-in change sends the current password and enforces 8 characters
+01:55 +94: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+01:56 +95: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+01:56 +96: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+01:57 +97: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+01:59 +98: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+01:59 +99: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+01:59 +100: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+02:00 +101: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+02:01 +102: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+02:02 +103: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: read-only collaborative class hides write and management actions
+02:02 +104: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/auth/two_factor_methods_test.dart: login uses the configured email method and verifies before navigation
+02:02 +105: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: invites a teacher to multiple classes with explicit permissions
+02:06 +106: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: invites a teacher to multiple classes with explicit permissions
+02:06 +107: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: invites a teacher to multiple classes with explicit permissions
+02:06 +108: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: invites a teacher to multiple classes with explicit permissions
+02:06 +109: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: invites a teacher to multiple classes with explicit permissions
+02:06 +110: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: invites a teacher to multiple classes with explicit permissions
+02:08 +111: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/collaborations/collaborations_test.dart: pending recipient can accept but cannot edit permissions
+02:09 +112: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:13 +113: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:13 +114: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:13 +115: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:13 +116: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:13 +117: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:13 +118: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:13 +119: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:16 +120: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:16 +121: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:16 +122: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:16 +123: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:16 +124: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:16 +125: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: review-only deliveries show their state without offering a blind resend
+02:16 +126: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:16 +127: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:17 +128: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:17 +129: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:17 +130: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:17 +131: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:17 +132: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:17 +133: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:17 +134: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:17 +135: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+02:18 +136: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: refreshes a cached empty list on return and polls external publications
+02:18 +137: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles scale errors
+02:19 +138: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: listing failure shows an error and retry, with no mock or empty fallback
+02:19 +139: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: publication appears immediately after save; retry=false
+02:22 +140: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: publication appears immediately after save; retry=true
+02:24 +141: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/events/announcements_screen_test.dart: closes form while request is pending and keeps progress across navigation
+02:25 +142: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: idle access does not poll and unchanged background updates do not reload consumers
+02:26 +143: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:28 +144: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:28 +145: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:28 +146: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:29 +147: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:30 +148: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:30 +149: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:30 +150: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:31 +151: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:31 +152: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can find one student among 1000 by typing without accents
+02:36 +153: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: a hidden period blocks annual summaries without hiding other periods
+02:36 +154: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: a blocked deep link shows restriction and never builds the data screen
+02:36 +155: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: a hidden annual report keeps the period selector usable and does not request hidden grades
+02:37 +156: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: a hidden annual report keeps the period selector usable and does not request hidden grades
+02:37 +157: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: a hidden annual report keeps the period selector usable and does not request hidden grades
+02:37 +158: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: a hidden annual report keeps the period selector usable and does not request hidden grades
+02:37 +159: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: a hidden annual report keeps the period selector usable and does not request hidden grades
+02:37 +160: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin saves a parent-specific permission with an explicit disabled state
+02:39 +161: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can hide a group only during a selected trimester
+02:40 +162: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can hide a group only during a selected trimester
+02:40 +163: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can hide a group only during a selected trimester
+02:40 +164: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can hide a group only during a selected trimester
+02:40 +165: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can hide a group only during a selected trimester
+02:40 +166: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can hide a group only during a selected trimester
+02:40 +167: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can hide a group only during a selected trimester
+02:40 +168: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/portal_access/portal_access_test.dart: admin can hide a group only during a selected trimester
+02:42 +169: C:/Users/Maykel/Desktop/EDUCA/frontend/test/shared/app_role_test.dart: AppRole.sortedByPriority elige administración antes que estudiante cuando ambos existen
+02:42 +170: C:/Users/Maykel/Desktop/EDUCA/frontend/test/shared/app_role_test.dart: AppRole.sortedByPriority elimina roles duplicados y mantiene prioridad estable
+02:46 +171: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: demo examples are disabled by default even without credentials
+02:46 +172: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: empty real API stays empty and uses authenticated mine endpoint
+02:46 +173: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: only returned classes appear and auth loading changes do not reload them
+02:46 +174: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: missing API/session and backend errors never fall back to examples
+02:46 +175: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: malformed API response is an error instead of an empty timetable
+02:46 +176: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: home distinguishes loading, no schedule and API failure with retry
+02:51 +177: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: home distinguishes loading, no schedule and API failure with retry
+02:52 +178: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: detail shows no assigned schedule and keeps errors separate
+02:54 +179: All tests passed!

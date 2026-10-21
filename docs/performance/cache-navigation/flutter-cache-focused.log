@@ -1,0 +1,21 @@
+00:00 +0: loading C:/Users/Maykel/Desktop/EDUCA/frontend/test/provider_cache_test.dart
+00:00 +0: C:/Users/Maykel/Desktop/EDUCA/frontend/test/provider_cache_test.dart: disposed dependency chains never start another data request
+00:00 +1: C:/Users/Maykel/Desktop/EDUCA/frontend/test/provider_cache_test.dart: UI cannot reuse previous data across dependency or permission reloads
+00:00 +2: C:/Users/Maykel/Desktop/EDUCA/frontend/test/provider_cache_test.dart: retains pending reads across route removal and expires inactive data
+00:01 +3: C:/Users/Maykel/Desktop/EDUCA/frontend/test/provider_cache_test.dart: active expiry retains previous value during revalidation
+00:01 +4: C:/Users/Maykel/Desktop/EDUCA/frontend/test/provider_cache_test.dart: scope changes discard old account/institution/role values and late results
+00:01 +5: C:/Users/Maykel/Desktop/EDUCA/frontend/test/provider_cache_test.dart: failed reads retry on navigation; invalidation targets one family
+00:02 +6: C:/Users/Maykel/Desktop/EDUCA/frontend/test/grades_navigation_cache_test.dart: grade navigation and concurrent consumers share scale and performance reads
+00:02 +7: C:/Users/Maykel/Desktop/EDUCA/frontend/test/grades_navigation_cache_test.dart: grade save invalidates affected student and class, preserves unrelated data
+00:06 +8: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: role changes reload timetable and logout cannot return retained data
+00:07 +9: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: three route visits reuse one timetable request
+00:07 +10: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: demo examples are disabled by default even without credentials
+00:07 +11: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: empty real API stays empty and uses authenticated mine endpoint
+00:07 +12: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: only returned classes appear and auth loading changes do not reload them
+00:07 +13: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: missing API/session and backend errors never fall back to examples
+00:07 +14: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: malformed API response is an error instead of an empty timetable
+00:07 +15: C:/Users/Maykel/Desktop/EDUCA/frontend/test/student_schedule_test.dart: home distinguishes loading, no schedule and API failure with retry
+00:13 +16: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+00:16 +17: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles missing scale
+00:17 +18: C:/Users/Maykel/Desktop/EDUCA/frontend/test/features/grades/gradebook_empty_scale_test.dart: Term 2 handles scale errors
+00:18 +19: All tests passed!

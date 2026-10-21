@@ -1,3 +1,4 @@
+import '../auth/presentation/query_auth_provider.dart';
 import 'presentation/announcement_feed_session.dart';
 import '../portal_access/providers.dart';
 import 'dart:async';
@@ -18,7 +19,7 @@ import 'domain/events_repository.dart';
 /// en demo mantiene estado en memoria durante la sesión.
 final eventsRepositoryProvider = Provider<EventsRepository>((ref) {
   ref.watch(portalFingerprintProvider);
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);
   if (Env.isDemoMode) {

@@ -6,6 +6,7 @@ import '../../domain/entities.dart';
 import '../../providers.dart';
 import 'assignment_detail_controller.dart';
 import 'assignments_list_controller.dart';
+import '../../../dashboard/providers.dart';
 
 class SubmissionFormState {
   const SubmissionFormState({
@@ -112,6 +113,7 @@ class SubmissionController extends StateNotifier<SubmissionFormState> {
       ),),);
       _ref.invalidate(assignmentByIdProvider(state.assignmentId));
       _ref.invalidate(studentAssignmentsProvider);
+      _ref.invalidate(studentDashboardProvider);
       state = state.copyWith(saving: false);
       return result;
     } catch (e) {

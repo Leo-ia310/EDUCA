@@ -1,0 +1,55 @@
+{
+  "time": "2026-10-20T17:28:34.213Z",
+  "queries": [
+    {
+      "queryid": "5173971353534478741",
+      "calls": "14",
+      "total_exec_time": 40076.832475,
+      "mean_exec_time": 2862.63089107143,
+      "max_exec_time": 6072.378763,
+      "rows": "14",
+      "query": "WITH pgrst_source AS (SELECT pgrst_call.pgrst_scalar FROM (SELECT $1 AS json_data) pgrst_payload, LATERAL (SELECT \"p_student_id\", \"p_class_id\", \"p_sea"
+    },
+    {
+      "queryid": "-5248282834852189096",
+      "calls": "677",
+      "total_exec_time": 35900.651148,
+      "mean_exec_time": 53.0290268064992,
+      "max_exec_time": 3549.037274,
+      "rows": "677",
+      "query": "WITH pgrst_source AS (SELECT pgrst_call.pgrst_scalar FROM (SELECT $1 AS json_data) pgrst_payload, LATERAL (SELECT \"p_auth_user_id\", \"p_session_id\", \"p"
+    }
+  ],
+  "activity": [
+    {
+      "state": "active",
+      "wait_event_type": "Client",
+      "wait_event": "WalSenderWaitForWal",
+      "count": 1
+    },
+    {
+      "state": "active",
+      "wait_event_type": null,
+      "wait_event": null,
+      "count": 4
+    },
+    {
+      "state": "idle",
+      "wait_event_type": "Client",
+      "wait_event": "ClientRead",
+      "count": 27
+    },
+    {
+      "state": "idle",
+      "wait_event_type": "Extension",
+      "wait_event": "Extension",
+      "count": 1
+    },
+    {
+      "state": null,
+      "wait_event_type": "Extension",
+      "wait_event": "Extension",
+      "count": 1
+    }
+  ]
+}

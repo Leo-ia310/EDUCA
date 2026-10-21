@@ -1,0 +1,32 @@
+{
+  "at": "2026-10-20T17:32:19.298Z",
+  "backendRequests": 1,
+  "dependencyRequests": 5,
+  "calls": [
+    {
+      "i": 1,
+      "status": 200,
+      "ms": 7723.377299999999,
+      "resultCount": 4
+    },
+    {
+      "i": 2,
+      "status": 200,
+      "ms": 8092.588599999999,
+      "resultCount": 4
+    },
+    {
+      "i": 3,
+      "status": 200,
+      "ms": 8381.6252,
+      "resultCount": 4
+    },
+    {
+      "i": 0,
+      "status": 200,
+      "ms": 8617.7579,
+      "resultCount": 4
+    }
+  ],
+  "sessionClosed": true
+}

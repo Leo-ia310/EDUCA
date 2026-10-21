@@ -1,9 +1,9 @@
+import '../auth/presentation/query_auth_provider.dart';
 import '../portal_access/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
-import '../auth/presentation/auth_controller.dart';
 import 'data/demo_payment_gateway.dart';
 import 'data/mock_payments_repository.dart';
 import 'data/supabase_payments_repository.dart';
@@ -15,7 +15,7 @@ import 'domain/payments_repository.dart';
 /// persistan entre navegaciones (no hay backend detrás).
 final paymentsRepositoryProvider = Provider<PaymentsRepository>((ref) {
   ref.watch(portalFingerprintProvider);
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);
   if (client == null || api == null || auth.institution == null) {

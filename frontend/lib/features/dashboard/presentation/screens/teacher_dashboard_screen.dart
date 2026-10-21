@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,8 +31,8 @@ class _TeacherDashboardScreenState
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user!;
-    final data = ref.watch(teacherDashboardProvider).valueOrNull ??
-        TeacherDashboardData.mock();
+    final data = ref.watch(teacherDashboardProvider).scopedValue ??
+        TeacherDashboardData.empty();
 
     return AppScaffold(
       padding: EdgeInsets.zero,

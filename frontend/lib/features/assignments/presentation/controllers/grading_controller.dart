@@ -4,6 +4,7 @@ import '../../domain/entities.dart';
 import '../../providers.dart';
 import 'assignment_detail_controller.dart';
 import 'assignments_list_controller.dart';
+import '../../../dashboard/providers.dart';
 
 /// Acción puntual: calificar una entrega.
 class GradingController extends StateNotifier<AsyncValue<Submission>?> {
@@ -28,6 +29,7 @@ class GradingController extends StateNotifier<AsyncValue<Submission>?> {
       _ref.invalidate(submissionsForAssignmentProvider(assignmentId));
       _ref.invalidate(assignmentByIdProvider(assignmentId));
       _ref.invalidate(teacherAssignmentsProvider);
+      _ref.invalidate(teacherDashboardProvider);
       return result;
     } catch (e, st) {
       state = AsyncValue.error(e, st);

@@ -1,0 +1,21 @@
+time="2026-10-20T12:18:25-06:00" level=info msg="{\"login\":\"admin\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"EDU360\"}" source=console
+time="2026-10-20T12:18:26-06:00" level=info msg="{\"login\":\"teacher\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"EDU360\"}" source=console
+time="2026-10-20T12:18:28-06:00" level=info msg="{\"login\":\"student\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"EDU360\"}" source=console
+time="2026-10-20T12:18:30-06:00" level=info msg="{\"login\":\"parent\",\"status\":200,\"authenticated\":true,\"institutionCode\":\"EDU360\"}" source=console
+time="2026-10-20T12:18:32-06:00" level=info msg="COVERAGE [{\"path\":\"/api/assignments/teacher-classes\",\"method\":\"POST\",\"role\":\"teacher\",\"status\":200,\"ms\":2037.7474}]" source=console
+time="2026-10-20T12:18:32-06:00" level=info msg="FIXTURE_RUN {\"prefix\":\"K6-STRESS-1792520312047-\",\"institution\":\"EDU360\"}" source=console
+time="2026-10-20T12:18:38-06:00" level=info msg="FIXTURES [{\"id\":\"115\",\"title\":\"K6-STRESS-1792520312047-0\"},{\"id\":\"116\",\"title\":\"K6-STRESS-1792520312047-1\"},{\"id\":\"117\",\"title\":\"K6-STRESS-1792520312047-2\"},{\"id\":\"118\",\"title\":\"K6-STRESS-1792520312047-3\"},{\"id\":\"119\",\"title\":\"K6-STRESS-1792520312047-4\"},{\"id\":\"120\",\"title\":\"K6-STRESS-1792520312047-5\"},{\"id\":\"121\",\"title\":\"K6-STRESS-1792520312047-6\"},{\"id\":\"122\",\"title\":\"K6-STRESS-1792520312047-7\"}]" source=console
+time="2026-10-20T12:19:25-06:00" level=info msg="CLEANUP {\"id\":\"115\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-20T12:19:26-06:00" level=info msg="CLEANUP {\"id\":\"116\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-20T12:19:27-06:00" level=info msg="CLEANUP {\"id\":\"117\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-20T12:19:27-06:00" level=info msg="CLEANUP {\"id\":\"118\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-20T12:19:28-06:00" level=info msg="CLEANUP {\"id\":\"119\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-20T12:19:29-06:00" level=info msg="CLEANUP {\"id\":\"120\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-20T12:19:30-06:00" level=info msg="CLEANUP {\"id\":\"121\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-20T12:19:31-06:00" level=info msg="CLEANUP {\"id\":\"122\",\"status\":200,\"softDelete\":true}" source=console
+time="2026-10-20T12:19:32-06:00" level=info msg="CLEANUP_VERIFIED {\"status\":200,\"remaining\":[],\"verified\":true}" source=console
+time="2026-10-20T12:19:32-06:00" level=info msg="RECOVERY {\"status\":200,\"ms\":2.2288}" source=console
+time="2026-10-20T12:19:33-06:00" level=info msg="SESSION_CLOSED {\"role\":\"parent\",\"status\":204,\"ok\":true}" source=console
+time="2026-10-20T12:19:33-06:00" level=info msg="SESSION_CLOSED {\"role\":\"student\",\"status\":204,\"ok\":true}" source=console
+time="2026-10-20T12:19:33-06:00" level=info msg="SESSION_CLOSED {\"role\":\"teacher\",\"status\":204,\"ok\":true}" source=console
+time="2026-10-20T12:19:33-06:00" level=info msg="SESSION_CLOSED {\"role\":\"admin\",\"status\":204,\"ok\":true}" source=console

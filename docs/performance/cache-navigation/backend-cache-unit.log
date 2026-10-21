@@ -1,0 +1,428 @@
+
+> educa360-backend@0.1.0 test:unit
+> tsx --test test/*.test.ts
+
+TAP version 13
+# Subtest: a lost Auth response resumes the reserved UUID without creating or deleting another account
+ok 1 - a lost Auth response resumes the reserved UUID without creating or deleting another account
+  ---
+  duration_ms: 524.166
+  type: 'test'
+  ...
+# Subtest: a lost SQL response returns its durable completed result without deleting Auth
+ok 2 - a lost SQL response returns its durable completed result without deleting Auth
+  ---
+  duration_ms: 470.643
+  type: 'test'
+  ...
+# Subtest: explicit provider rejection retires only an uncreated reservation; transient failures remain pending
+ok 3 - explicit provider rejection retires only an uncreated reservation; transient failures remain pending
+  ---
+  duration_ms: 747.7352
+  type: 'test'
+  ...
+# Subtest: an existing Auth identity with another provenance is never adopted
+ok 4 - an existing Auth identity with another provenance is never adopted
+  ---
+  duration_ms: 371.7628
+  type: 'test'
+  ...
+# Subtest: concurrent retries materialize one account and return the same result
+ok 5 - concurrent retries materialize one account and return the same result
+  ---
+  duration_ms: 395.8155
+  type: 'test'
+  ...
+# Subtest: announcement pages preserve bigint cursors and reject malformed IDs before querying
+ok 6 - announcement pages preserve bigint cursors and reject malformed IDs before querying
+  ---
+  duration_ms: 18.0078
+  type: 'test'
+  ...
+# Subtest: announcement query errors are sanitized and null data cannot masquerade as an empty feed
+ok 7 - announcement query errors are sanitized and null data cannot masquerade as an empty feed
+  ---
+  duration_ms: 2.8305
+  type: 'test'
+  ...
+# { event: 'announcement_delivery_finished', announcementId: 2 }
+# { event: 'announcement_delivery_finished', announcementId: 1 }
+# { event: 'announcement_delivery_finished', announcementId: 1 }
+# { event: 'announcement_delivery_finished', announcementId: 1 }
+# { event: 'announcement_delivery_finished', announcementId: 2 }
+# { event: 'announcement_delivery_finished', announcementId: 1 }
+# Subtest: bounded slices yield to another institution instead of draining the first job
+ok 8 - bounded slices yield to another institution instead of draining the first job
+  ---
+  duration_ms: 16.7933
+  type: 'test'
+  ...
+# Subtest: overlapping wakes and stop do not duplicate an in-flight provider request; its checkpoint survives
+ok 9 - overlapping wakes and stop do not duplicate an in-flight provider request; its checkpoint survives
+  ---
+  duration_ms: 3.8589
+  type: 'test'
+  ...
+# Subtest: a lost provider response keeps the same key and does not replay a confirmed push
+ok 10 - a lost provider response keeps the same key and does not replay a confirmed push
+  ---
+  duration_ms: 4.6649
+  type: 'test'
+  ...
+# Subtest: rate backpressure yields without starting an email attempt or exhausting retries
+ok 11 - rate backpressure yields without starting an email attempt or exhausting retries
+  ---
+  duration_ms: 9.5172
+  type: 'test'
+  ...
+# Subtest: revoked recipients never reach providers and invalid idempotency payloads require review
+ok 12 - revoked recipients never reach providers and invalid idempotency payloads require review
+  ---
+  duration_ms: 16.619
+  type: 'test'
+  ...
+# Subtest: pending device delivery yields without failing or blocking other recipient emails
+ok 13 - pending device delivery yields without failing or blocking other recipient emails
+  ---
+  duration_ms: 5.8191
+  type: 'test'
+  ...
+# Subtest: real app separates liveness, cached readiness and authenticated metrics without using a remote dependency
+ok 14 - real app separates liveness, cached readiness and authenticated metrics without using a remote dependency
+  ---
+  duration_ms: 213.0639
+  type: 'test'
+  ...
+# Subtest: cursor round trip preserves PostgreSQL microseconds and bigint precision
+ok 15 - cursor round trip preserves PostgreSQL microseconds and bigint precision
+  ---
+  duration_ms: 9.4862
+  type: 'test'
+  ...
+# Subtest: malformed, oversized and out-of-range cursors fail validation
+ok 16 - malformed, oversized and out-of-range cursors fail validation
+  ---
+  duration_ms: 4.9708
+  type: 'test'
+  ...
+# Subtest: assignment save makes one repository call with a stable receipt key and canonical attachment IDs
+ok 17 - assignment save makes one repository call with a stable receipt key and canonical attachment IDs
+  ---
+  duration_ms: 18.1593
+  type: 'test'
+  ...
+# Subtest: malformed attachments cannot silently become an empty replacement or cause a partial write
+ok 18 - malformed attachments cannot silently become an empty replacement or cause a partial write
+  ---
+  duration_ms: 6.1855
+  type: 'test'
+  ...
+# Subtest: attachment response failures retain dependency status and never expose database details
+ok 19 - attachment response failures retain dependency status and never expose database details
+  ---
+  duration_ms: 3.0191
+  type: 'test'
+  ...
+# Subtest: one sync request contains the complete bounded batch and validates keys and versions before SQL
+ok 20 - one sync request contains the complete bounded batch and validates keys and versions before SQL
+  ---
+  duration_ms: 27.6139
+  type: 'test'
+  ...
+# Subtest: incremental cursors preserve microseconds and bigint IDs and never advance from serverTime
+ok 21 - incremental cursors preserve microseconds and bigint IDs and never advance from serverTime
+  ---
+  duration_ms: 5.6196
+  type: 'test'
+  ...
+# Subtest: sync failures preserve conflict and permission semantics without exposing database details
+ok 22 - sync failures preserve conflict and permission semantics without exposing database details
+  ---
+  duration_ms: 3.6686
+  type: 'test'
+  ...
+# Subtest: protected request uses one Auth verification and one context/quota RPC; cached portal grants are request-local
+ok 23 - protected request uses one Auth verification and one context/quota RPC; cached portal grants are request-local
+  ---
+  duration_ms: 43.3251
+  type: 'test'
+  ...
+# Subtest: invalid bearer never reaches privileged context, and Auth outages are not credential failures
+ok 24 - invalid bearer never reaches privileged context, and Auth outages are not credential failures
+  ---
+  duration_ms: 15.1121
+  type: 'test'
+  ...
+# Subtest: shared quota denial carries Retry-After and does not authorize a handler
+ok 25 - shared quota denial carries Retry-After and does not authorize a handler
+  ---
+  duration_ms: 12.6031
+  type: 'test'
+  ...
+# Subtest: Auth outages and rate limits do not increment password failure counters
+ok 26 - Auth outages and rate limits do not increment password failure counters
+  ---
+  duration_ms: 19.0826
+  type: 'test'
+  ...
+# Subtest: push admission is single-flight, bounded to two sends and shutdown awaits checkpoints
+ok 27 - push admission is single-flight, bounded to two sends and shutdown awaits checkpoints
+  ---
+  duration_ms: 58.2096
+  type: 'test'
+  ...
+# Subtest: provider retry-after, permanent errors and expired subscriptions have distinct checkpoints
+ok 28 - provider retry-after, permanent errors and expired subscriptions have distinct checkpoints
+  ---
+  duration_ms: 5.2214
+  type: 'test'
+  ...
+# Subtest: fast completions cannot grow one slice or retain unbounded completed promises
+ok 29 - fast completions cannot grow one slice or retain unbounded completed promises
+  ---
+  duration_ms: 2.7981
+  type: 'test'
+  ...
+# Subtest: dependency pressure remains bounded, admits queued requests fairly and never double-releases a slot
+ok 30 - dependency pressure remains bounded, admits queued requests fairly and never double-releases a slot
+  ---
+  duration_ms: 26.6632
+  type: 'test'
+  ...
+# Subtest: aborted queued work is removed and cannot consume a later slot or block healthy requests
+ok 31 - aborted queued work is removed and cannot consume a later slot or block healthy requests
+  ---
+  duration_ms: 5.7032
+  type: 'test'
+  ...
+# Subtest: transport failure and deadline expiry release pressure without starting abandoned dependency requests
+ok 32 - transport failure and deadline expiry release pressure without starting abandoned dependency requests
+  ---
+  duration_ms: 2.9198
+  type: 'test'
+  ...
+# Subtest: Supabase transport shares admission across Auth and REST, preserves responses and skips cancelled queued fetches
+ok 33 - Supabase transport shares admission across Auth and REST, preserves responses and skips cancelled queued fetches
+  ---
+  duration_ms: 434.0442
+  type: 'test'
+  ...
+# Subtest: database backlog leaves shared capacity for Auth and releases both admissions on cancellation
+ok 34 - database backlog leaves shared capacity for Auth and releases both admissions on cancellation
+  ---
+  duration_ms: 18.48
+  type: 'test'
+  ...
+# Subtest: a SQL request cancelled while waiting for shared capacity releases its database reservation
+ok 35 - a SQL request cancelled while waiting for shared capacity releases its database reservation
+  ---
+  duration_ms: 14.1125
+  type: 'test'
+  ...
+# Subtest: provider backpressure bounds waits and never falls back to an unshared local quota
+ok 36 - provider backpressure bounds waits and never falls back to an unshared local quota
+  ---
+  duration_ms: 15.4195
+  type: 'test'
+  ...
+# Subtest: a shared slot is awaited before the fenced email checkpoint and provider dispatch
+ok 37 - a shared slot is awaited before the fenced email checkpoint and provider dispatch
+  ---
+  duration_ms: 19.1709
+  type: 'test'
+  ...
+# Subtest: budget rejection or a cancelled checkpoint cannot send or start an email attempt
+ok 38 - budget rejection or a cancelled checkpoint cannot send or start an email attempt
+  ---
+  duration_ms: 7.2252
+  type: 'test'
+  ...
+# Subtest: provider Retry-After is shared, quota exhaustion is distinct and private errors are sanitized
+ok 39 - provider Retry-After is shared, quota exhaustion is distinct and private errors are sanitized
+  ---
+  duration_ms: 7.2358
+  type: 'test'
+  ...
+# Subtest: lost or invalid provider confirmations remain retryable with the original key
+ok 40 - lost or invalid provider confirmations remain retryable with the original key
+  ---
+  duration_ms: 8.1204
+  type: 'test'
+  ...
+# Subtest: 20 repeated institutional reads reduce catalog DB queries from 40 to 2, expire and isolate tenants
+ok 41 - 20 repeated institutional reads reduce catalog DB queries from 40 to 2, expire and isolate tenants
+  ---
+  duration_ms: 262.1553
+  type: 'test'
+  ...
+# Subtest: in-flight reads join and a mutation makes old loads unreachable
+ok 42 - in-flight reads join and a mutation makes old loads unreachable
+  ---
+  duration_ms: 32.5498
+  type: 'test'
+  ...
+# Subtest: no credentials makes no Redis requests; errors are not cached
+ok 43 - no credentials makes no Redis requests; errors are not cached
+  ---
+  duration_ms: 3.1495
+  type: 'test'
+  ...
+# Subtest: Redis failure falls back to DB and opens a 30s circuit
+ok 44 - Redis failure falls back to DB and opens a 30s circuit
+  ---
+  duration_ms: 3.6883
+  type: 'test'
+  ...
+# Subtest: failed DB loads are evicted from single flight
+ok 45 - failed DB loads are evicted from single flight
+  ---
+  duration_ms: 19.9886
+  type: 'test'
+  ...
+# Subtest: service invalidates institutional catalog after both scale mutations and retains public response
+ok 46 - service invalidates institutional catalog after both scale mutations and retains public response
+  ---
+  duration_ms: 1141.8256
+  type: 'test'
+  ...
+# Subtest: SDK reads keep the direct institution relationship when receipt junctions add alternate paths
+ok 47 - SDK reads keep the direct institution relationship when receipt junctions add alternate paths
+  ---
+  duration_ms: 60.6597
+  type: 'test'
+  ...
+# Subtest: legacy entry point fails closed without a Node target and rejects recursive/wrong origins
+ok 48 - legacy entry point fails closed without a Node target and rejects recursive/wrong origins
+  ---
+  duration_ms: 127.212
+  type: 'test'
+  ...
+# Subtest: proxy forwards original JWT and operation key, preserving denial, retry and correlation
+ok 49 - proxy forwards original JWT and operation key, preserving denial, retry and correlation
+  ---
+  duration_ms: 32.3338
+  type: 'test'
+  ...
+# Subtest: proxy bounds bodies and timeouts before exposing transport errors
+ok 50 - proxy bounds bodies and timeouts before exposing transport errors
+  ---
+  duration_ms: 33.9958
+  type: 'test'
+  ...
+# Subtest: legacy push is authenticated and enqueues bigint IDs without calling a provider
+ok 51 - legacy push is authenticated and enqueues bigint IDs without calling a provider
+  ---
+  duration_ms: 183.0666
+  type: 'test'
+  ...
+# Subtest: database failures preserve HTTP semantics without disclosing SQL details
+ok 52 - database failures preserve HTTP semantics without disclosing SQL details
+  ---
+  duration_ms: 7.299
+  type: 'test'
+  ...
+# Subtest: operational SQL errors log only a safe code and correlation ID
+ok 53 - operational SQL errors log only a safe code and correlation ID
+  ---
+  duration_ms: 269.7674
+  type: 'test'
+  ...
+# Subtest: IDs reject coercions/precision loss and dates reject normalized impossible days
+ok 54 - IDs reject coercions/precision loss and dates reject normalized impossible days
+  ---
+  duration_ms: 11.0444
+  type: 'test'
+  ...
+# Subtest: readiness coalesces simultaneous probes and caches both success and failures briefly
+ok 55 - readiness coalesces simultaneous probes and caches both success and failures briefly
+  ---
+  duration_ms: 3.6375
+  type: 'test'
+  ...
+# Subtest: malformed/oversized bodies and overload return controlled status and request IDs
+ok 56 - malformed/oversized bodies and overload return controlled status and request IDs
+  ---
+  duration_ms: 669.1748
+  type: 'test'
+  ...
+# Subtest: request deadline aborts dependency context and releases admission without leaking a body
+ok 57 - request deadline aborts dependency context and releases admission without leaking a body
+  ---
+  duration_ms: 69.2713
+  type: 'test'
+  ...
+# Subtest: a charge due today is open through the school's calendar day
+ok 58 - a charge due today is open through the school's calendar day
+  ---
+  duration_ms: 311.911
+  type: 'test'
+  ...
+# Subtest: closed charges and undated charges keep their state
+ok 59 - closed charges and undated charges keep their state
+  ---
+  duration_ms: 0.9113
+  type: 'test'
+  ...
+# Subtest: portal permission queries distinguish dependency faults from invalid input without leaking SQL
+ok 60 - portal permission queries distinguish dependency faults from invalid input without leaking SQL
+  ---
+  duration_ms: 10.3896
+  type: 'test'
+  ...
+# Subtest: push allows provider HTTPS endpoints and rejects injected/internal destinations and invalid keys
+ok 61 - push allows provider HTTPS endpoints and rejects injected/internal destinations and invalid keys
+  ---
+  duration_ms: 12.9845
+  type: 'test'
+  ...
+# Subtest: complete grid reads continue past short server-capped pages and 1000 rows
+ok 62 - complete grid reads continue past short server-capped pages and 1000 rows
+  ---
+  duration_ms: 10.6431
+  type: 'test'
+  ...
+# Subtest: a later page failure rejects rather than returning incomplete totals
+ok 63 - a later page failure rejects rather than returning incomplete totals
+  ---
+  duration_ms: 4.1548
+  type: 'test'
+  ...
+# Subtest: empty domain results finish on the first request
+ok 64 - empty domain results finish on the first request
+  ---
+  duration_ms: 1.0324
+  type: 'test'
+  ...
+# Subtest: schedule reads send validated filters to one SQL RPC and patches avoid stale pre-reads
+ok 65 - schedule reads send validated filters to one SQL RPC and patches avoid stale pre-reads
+  ---
+  duration_ms: 10.2795
+  type: 'test'
+  ...
+# Subtest: schedule SQL errors retain conflict semantics without exposing database internals
+ok 66 - schedule SQL errors retain conflict semantics without exposing database internals
+  ---
+  duration_ms: 3.5627
+  type: 'test'
+  ...
+# Subtest: shutdown closes admission and waits for provider checkpoints before completing
+ok 67 - shutdown closes admission and waits for provider checkpoints before completing
+  ---
+  duration_ms: 72.2264
+  type: 'test'
+  ...
+# Subtest: shutdown has a bounded deadline when a provider cannot drain
+ok 68 - shutdown has a bounded deadline when a provider cannot drain
+  ---
+  duration_ms: 40.304
+  type: 'test'
+  ...
+1..68
+# tests 68
+# suites 0
+# pass 68
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15480.3443

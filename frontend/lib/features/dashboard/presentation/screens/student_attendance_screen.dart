@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -33,8 +34,8 @@ class StudentAttendanceScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(studentDashboardProvider).valueOrNull ??
-        StudentDashboardData.mock();
+    final data = ref.watch(studentDashboardProvider).scopedValue ??
+        StudentDashboardData.empty();
     final pct = percentOverride?.round() ?? (data.attendanceRate * 100).round();
 
     return StudentDetailScaffold(

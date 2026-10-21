@@ -9,16 +9,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Headers;
 
 class _Adapter implements HttpClientAdapter {
+  int calls = 0;
   final started = Completer<RequestOptions>();
   final response = Completer<ResponseBody>();
   @override
-  Future<ResponseBody> fetch(RequestOptions options,
-      Stream<Uint8List>? requestStream, Future<void>? cancelFuture,) {
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) {
+    calls++;
     if (!started.isCompleted) started.complete(options);
     cancelFuture?.then((_) {
       if (!response.isCompleted) {
-        response.completeError(DioException(
-            requestOptions: options, type: DioExceptionType.cancel,),);
+        response.completeError(
+          DioException(
+            requestOptions: options,
+            type: DioExceptionType.cancel,
+          ),
+        );
       }
     });
     return response.future;
@@ -41,6 +50,51 @@ void main() {
   tearDown(() async {
     api.dispose();
     await supabase.dispose();
+  });
+
+  test('concurrent equivalent GETs share transport, completed reads do not',
+      () async {
+    final adapter = _Adapter();
+    dio.httpClientAdapter = adapter;
+    final first = api.get(
+      '/catalog',
+      authenticated: false,
+      queryParameters: {'a': 1, 'b': 2, 'unused': null},
+    );
+    final second = api.get(
+      '/catalog',
+      authenticated: false,
+      queryParameters: {'b': 2, 'a': 1},
+    );
+    await adapter.started.future;
+    expect(adapter.calls, 1);
+    adapter.response.complete(
+      ResponseBody.fromString(
+        '{"ok":true,"data":{"value":1}}',
+        200,
+        headers: {
+          'content-type': ['application/json'],
+        },
+      ),
+    );
+    expect(await first, await second);
+    final nextAdapter = _Adapter();
+    dio.httpClientAdapter = nextAdapter;
+    nextAdapter.response.complete(
+      ResponseBody.fromString(
+        '{"ok":true,"data":{"value":2}}',
+        200,
+        headers: {
+          'content-type': ['application/json'],
+        },
+      ),
+    );
+    await api.get(
+      '/catalog',
+      authenticated: false,
+      queryParameters: {'a': 1, 'b': 2},
+    );
+    expect(nextAdapter.calls, 1);
   });
 
   for (final type in [
@@ -162,16 +216,22 @@ void main() {
     expect(options.connectTimeout, const Duration(seconds: 15));
     expect(options.receiveTimeout, const Duration(seconds: 75));
     final failed = expectLater(
-        pending,
-        throwsA(isA<BackendApiException>()
+      pending,
+      throwsA(
+        isA<BackendApiException>()
             .having((e) => e.code, 'code', 'request_cancelled')
-            .having((e) => e.retryable, 'retryable', false),),);
+            .having((e) => e.retryable, 'retryable', false),
+      ),
+    );
     api.dispose();
     await failed;
     await expectLater(
-        api.get('/anything', authenticated: false),
-        throwsA(isA<BackendApiException>()
-            .having((e) => e.code, 'code', 'request_cancelled'),),);
+      api.get('/anything', authenticated: false),
+      throwsA(
+        isA<BackendApiException>()
+            .having((e) => e.code, 'code', 'request_cancelled'),
+      ),
+    );
   });
   test('sign out cancels requests for the previous account', () async {
     api.dispose();
@@ -202,10 +262,15 @@ void main() {
         request: request,
       ),
     );
-    supabase = SupabaseClient('https://fixture.supabase.co', 'public-fixture',
-        httpClient: client,);
+    supabase = SupabaseClient(
+      'https://fixture.supabase.co',
+      'public-fixture',
+      httpClient: client,
+    );
     await supabase.auth.signInWithPassword(
-        email: 'fixture@school.invalid', password: 'fixture',);
+      email: 'fixture@school.invalid',
+      password: 'fixture',
+    );
     dio = Dio();
     final adapter = _Adapter();
     dio.httpClientAdapter = adapter;
@@ -213,9 +278,12 @@ void main() {
     final pending = api.get('/chats/conversations');
     await adapter.started.future;
     final failed = expectLater(
-        pending,
-        throwsA(isA<BackendApiException>()
-            .having((e) => e.code, 'code', 'request_cancelled'),),);
+      pending,
+      throwsA(
+        isA<BackendApiException>()
+            .having((e) => e.code, 'code', 'request_cancelled'),
+      ),
+    );
     await supabase.auth.signOut();
     await failed;
     client.close();

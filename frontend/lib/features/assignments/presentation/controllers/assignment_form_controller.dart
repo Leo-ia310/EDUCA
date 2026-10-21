@@ -8,6 +8,7 @@ import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../../core/network/backend_api_client.dart';
+import '../../../dashboard/providers.dart';
 
 class AssignmentFormState {
   AssignmentFormState({
@@ -204,6 +205,7 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
       _releasePending ??= _keepPending();
       final created = await repo.upsertAssignment(_pendingSaveDraft!);
       if (!mounted) return null;
+      _ref.invalidate(teacherDashboardProvider);
       _pendingSaveDraft = null;
       _pendingSaveFingerprint = null;
       _hasUncertainSave = false;

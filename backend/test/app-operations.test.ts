@@ -26,7 +26,12 @@ test('real app separates liveness, cached readiness and authenticated metrics wi
         assert.equal((await fetch(url + '/internal/metrics')).status, 403);
         const metrics = await fetch(url + '/internal/metrics', { headers: { authorization: 'Bearer fixture-metrics-secret' } });
         assert.equal(metrics.status, 200);
-        assert.equal((await metrics.json() as any).data.scope, 'process');
+        const data = (await metrics.json() as any).data;
+        assert.equal(data.scope, 'process');
+        assert.equal(typeof data.catalogCache.enabled, 'boolean');
+        assert.equal(typeof data.catalogCache.localHits, 'number');
+        assert.equal('token' in data.catalogCache, false);
+        assert.equal('url' in data.catalogCache, false);
     }
     finally {
         rpc.mock.restore();

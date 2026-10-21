@@ -2,6 +2,7 @@ import express from "express";
 import {timingSafeEqual} from "node:crypto";
 import {requestLifetime,requestRuntime} from "./lib/request-lifetime";
 import {operationalMetrics} from "./lib/operational-metrics";
+import {institutionCatalogCache} from "./lib/catalog-cache";
 import {dependencyAdmission,databaseAdmission} from './lib/dependency-admission';
 import {Readiness} from "./lib/readiness";
 import {supabasePublic} from "./lib/supabase";
@@ -69,7 +70,7 @@ export function createApp() {
     if(!env.internalApiSecret || provided.length!==expected.length || !timingSafeEqual(provided,expected)){
       res.status(403).json({ok:false,error:{code:"forbidden",message:"Acceso denegado."}});return;
     }
-    const state=requestRuntime();res.json({ok:true,data:{...operationalMetrics.snapshot(state.active,state.draining),dependencyConcurrency:{...dependencyAdmission.snapshot(),database:databaseAdmission.snapshot()}}});
+    const state=requestRuntime();res.json({ok:true,data:{...operationalMetrics.snapshot(state.active,state.draining),catalogCache:institutionCatalogCache.snapshot(),dependencyConcurrency:{...dependencyAdmission.snapshot(),database:databaseAdmission.snapshot()}}});
   });
 
   app.use("/api/auth", authenticatedRateLimit, authRoutes);

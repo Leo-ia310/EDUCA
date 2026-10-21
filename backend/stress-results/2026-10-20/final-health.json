@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-20T17:38:37.145Z",
+  "rows": [
+    {
+      "path": "/health",
+      "status": 200,
+      "ms": 543.7905000000001,
+      "body": {
+        "ok": true,
+        "service": "educa360-backend"
+      }
+    },
+    {
+      "path": "/ready",
+      "status": 200,
+      "ms": 501.02720000000005,
+      "body": {
+        "ok": true,
+        "service": "educa360-backend",
+        "schemaVersion": 53
+      }
+    }
+  ]
+}

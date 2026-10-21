@@ -1,3 +1,4 @@
+import '../auth/presentation/query_auth_provider.dart';
 import '../portal_access/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,7 +6,6 @@ import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
 import '../attendance/data/mock_attendance_data.dart';
 import '../attendance/domain/entities.dart';
-import '../auth/presentation/auth_controller.dart';
 import 'data/mock_assignment_repository.dart';
 import 'data/supabase_assignment_repository.dart';
 import 'data/supabase_file_upload_service.dart';
@@ -17,7 +17,7 @@ import 'domain/file_upload_service.dart';
 /// volver al feed).
 final assignmentRepositoryProvider = Provider<AssignmentRepository>((ref) {
   ref.watch(portalFingerprintProvider);
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);
   if (client == null || api == null || auth.institution == null) {
@@ -37,7 +37,7 @@ final assignmentRepositoryProvider = Provider<AssignmentRepository>((ref) {
 /// demo devuelve las clases mock. Nunca hardcodea IDs en la UI.
 final teacherClassesProvider =
     FutureProvider<List<ClassSessionBrief>>((ref) async {
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   final api = ref.watch(backendApiClientProvider);
   if (api == null || auth.institution == null) {
     return AttendanceMock.todaysClasses;
@@ -60,7 +60,7 @@ final teacherClassesProvider =
 });
 
 final fileUploadServiceProvider = Provider<FileUploadService>((ref) {
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);
   if (client == null || api == null || auth.institution == null) {

@@ -41,6 +41,10 @@ function optionalInteger(name: string, fallback: number, max = 2147483647, min =
 const nodeEnv = optional("NODE_ENV", "development");
 export const env = {
     nodeEnv,
+    upstashRedisRestUrl: optional("UPSTASH_REDIS_REST_URL"),
+    upstashRedisRestToken: optional("UPSTASH_REDIS_REST_TOKEN"),
+    cacheNamespace: optional("CACHE_NAMESPACE", `nivra:${nodeEnv}`),
+    redisTimeoutMs: optionalInteger("REDIS_TIMEOUT_MS", 2000, 5000, 100),
     isProduction: nodeEnv === "production",
     port: optionalInteger("PORT", 3000, 65535),
     dependencyTimeoutMs: optionalInteger("DEPENDENCY_TIMEOUT_MS", 15000, 60000),

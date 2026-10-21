@@ -1,0 +1,79 @@
+{
+  "rows": [
+    {
+      "name": "sessions-8-summary.json",
+      "http": 121,
+      "business": 121,
+      "p95": 2415.6676,
+      "p99": 3658.2205999999996,
+      "errors": 0,
+      "rate": 1.2526008133714726,
+      "dropped": 0,
+      "durationMs": 96599.0112,
+      "operational": 0,
+      "probeMetrics": {}
+    },
+    {
+      "name": "reads-5rps-summary.json",
+      "http": 67,
+      "business": 60,
+      "p95": 9100.89181499998,
+      "p99": 15339.622053,
+      "errors": 3,
+      "rate": 2.3080919449352963,
+      "dropped": 20,
+      "durationMs": 25995.4982,
+      "operational": 7,
+      "probeMetrics": {}
+    },
+    {
+      "name": "recovery-2rps-summary.json",
+      "http": 142,
+      "business": 120,
+      "p95": 8564.855904999999,
+      "p99": 10134.433151000001,
+      "errors": 2,
+      "rate": 1.95307635428475,
+      "dropped": 0,
+      "durationMs": 61441.5303,
+      "operational": 22,
+      "probeMetrics": {}
+    },
+    {
+      "name": "writes-summary.json",
+      "http": 26,
+      "business": 3,
+      "p95": 10267.47007,
+      "p99": 10308.388654,
+      "errors": 3,
+      "rate": 0.038007698859751804,
+      "dropped": 7,
+      "durationMs": 78931.3768,
+      "operational": 0,
+      "probeMetrics": {}
+    },
+    {
+      "name": "soak/soak-1rps-summary.json",
+      "http": 249,
+      "business": 181,
+      "p95": 3702.2094,
+      "p99": 6238.854179999995,
+      "errors": 0,
+      "rate": 0.9856325384950945,
+      "dropped": 0,
+      "durationMs": 183638.4179,
+      "operational": 68,
+      "probeMetrics": {}
+    }
+  ],
+  "k6Http": 605,
+  "business": 485,
+  "backend503": 8,
+  "runnerRequests": 192,
+  "dependencyDiagnosticBackendLogins": 2,
+  "backendRecorded": 799,
+  "supabaseDiagnosticHttp": 30,
+  "initialOperationalProbes": 2,
+  "finalOperationalProbes": 2,
+  "backendIncludingManualProbes": 803
+}
