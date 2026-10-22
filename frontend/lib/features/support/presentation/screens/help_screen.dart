@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_scaffold.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../../../core/widgets/edu_card.dart';
 import '../../../../core/widgets/section_header.dart';
 
@@ -42,19 +41,12 @@ class HelpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('Ayuda y soporte'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-      ),
+    return StudentDetailScaffold(
+      title: 'Ayuda y soporte',
+      bottomNav: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
           const SectionHeader(title: 'Preguntas frecuentes'),
           const SizedBox(height: 8),
           EduCard(

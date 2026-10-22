@@ -24,7 +24,7 @@ class ErrorStateView extends StatelessWidget {
                 color: context.palette.danger, size: 56,),
             const SizedBox(height: 12),
             Text(
-              message,
+              friendlyErrorMessage(message),
               textAlign: TextAlign.center,
               style: context.textTheme.bodyMedium,
             ),
@@ -37,4 +37,20 @@ class ErrorStateView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Quita los prefijos técnicos de Dart («Exception: », «Bad state: ») y evita
+/// mostrar volcados de excepciones de red o de base de datos al usuario.
+String friendlyErrorMessage(String raw) {
+  var text = raw.trim();
+  for (final prefix in const ['Exception: ', 'Bad state: ', 'Invalid argument(s): ']) {
+    if (text.contains(prefix)) text = text.replaceFirst(prefix, '');
+  }
+  final technical = RegExp(
+    r'(SocketException|ClientException|DioException|PostgrestException|AuthException|HandshakeException|TimeoutException|FormatException|XMLHttpRequest)',
+  );
+  if (technical.hasMatch(text)) {
+    return 'No se pudo completar la operación. Revisa tu conexión e inténtalo otra vez.';
+  }
+  return text.isEmpty ? 'Ocurrió un error inesperado.' : text;
 }

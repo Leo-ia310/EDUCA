@@ -64,7 +64,7 @@ class _EduCardState extends State<EduCard> {
               ]
             : null,
       ),
-      child: widget.child,
+      child: Material(type: MaterialType.transparency, child: widget.child),
     );
 
     if (widget.onTap == null) return card;

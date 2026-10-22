@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/brutal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -101,6 +102,10 @@ class StudentTopBar extends ConsumerWidget {
     return Container(
       // Borde inferior recto: el panel se monta encima y aporta la curva.
       padding: EdgeInsets.fromLTRB(12, topInset + 10, 12, 30),
+      // Misma altura con o sin flecha de regreso (en las pantallas raíz del
+      // navbar no hay flecha y el título quedaba pegado al borde superior).
+      alignment: Alignment.centerLeft,
+      constraints: BoxConstraints(minHeight: topInset + 10 + 45 + 30),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -145,16 +150,19 @@ class StudentTopBar extends ConsumerWidget {
                   height: 42,
                   margin: const EdgeInsets.only(right: 3, bottom: 3),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.paper,
                     borderRadius: BorderRadius.circular(Radii.md),
-                    border: Border.all(color: Colors.black, width: 2),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black, offset: Offset(3, 3)),
+                    border: Border.all(color: Brutal.ink(context), width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Brutal.ink(context),
+                        offset: const Offset(3, 3),
+                      ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_rounded,
-                    color: Colors.black,
+                    color: context.onPaper,
                     size: 24,
                   ),
                 ),

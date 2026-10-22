@@ -256,10 +256,7 @@ class _MetricsBlock extends StatelessWidget {
     );
   }
 
-  String _short(double v, String code) {
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k $code';
-    return '${v.toStringAsFixed(0)} $code';
-  }
+  String _short(double v, String code) => Money.compact(v, code);
 }
 
 /// Mini-KPI pastel (superficie tintada + ícono en círculo vívido) para las

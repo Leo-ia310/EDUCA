@@ -395,7 +395,7 @@ class _DayPill extends StatelessWidget {
             height: 70,
             decoration: Brutal.decoration(
               context,
-              color: selected ? palette.accentDeep : palette.cardElevated,
+              color: selected ? context.buttonFill : palette.cardElevated,
               radius: Radii.md,
               offset: 3,
             ),
@@ -510,7 +510,7 @@ class _ClassCard extends StatelessWidget {
                       vertical: 9,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.paper,
                       borderRadius: BorderRadius.circular(Radii.pill),
                       border: Border.all(
                         color: Brutal.ink(context),
@@ -531,7 +531,7 @@ class _ClassCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: context.textTheme.titleSmall?.copyWith(
-                              color: const Color(0xFF16202E),
+                              color: context.onPaper,
                               fontWeight: FontWeight.w700,
                             ),
                           ),

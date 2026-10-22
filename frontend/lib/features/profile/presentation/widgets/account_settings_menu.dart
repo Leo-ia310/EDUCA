@@ -44,16 +44,16 @@ class AccountSettingsMenu extends ConsumerWidget {
               height: 46,
               margin: const EdgeInsets.only(right: 3, bottom: 3),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.paper,
                 borderRadius: BorderRadius.circular(Radii.md),
                 border: Border.all(color: Colors.black, width: 2),
                 boxShadow: const [
                   BoxShadow(color: Colors.black, offset: Offset(3, 3)),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.settings_rounded,
-                color: Colors.black,
+                color: context.onPaper,
                 size: 26,
               ),
             )
@@ -242,13 +242,13 @@ class _SettingsRow extends StatelessWidget {
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.paper,
                 borderRadius: BorderRadius.circular(Radii.sm),
                 border: Border.all(color: ink, width: Brutal.border),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.chevron_right_rounded,
-                color: Colors.black,
+                color: context.onPaper,
                 size: 22,
               ),
             ),

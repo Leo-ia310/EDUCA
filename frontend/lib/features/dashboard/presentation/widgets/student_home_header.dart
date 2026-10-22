@@ -121,14 +121,14 @@ class _CircleAction extends StatelessWidget {
                 height: 46,
                 margin: const EdgeInsets.only(right: 3, bottom: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.paper,
                   borderRadius: BorderRadius.circular(Radii.md),
                   border: Border.all(color: Colors.black, width: 2),
                   boxShadow: const [
                     BoxShadow(color: Colors.black, offset: Offset(3, 3)),
                   ],
                 ),
-                child: Icon(icon, size: 26, color: Colors.black),
+                child: Icon(icon, size: 26, color: context.onPaper),
               ),
             ),
           )
@@ -197,7 +197,7 @@ class _Avatar extends StatelessWidget {
     final label = Text(
       initials,
       style: context.textTheme.titleMedium?.copyWith(
-        color: brutal ? Colors.black : barColor,
+        color: brutal ? context.onPaper : barColor,
         fontWeight: FontWeight.w800,
       ),
     );
@@ -208,7 +208,7 @@ class _Avatar extends StatelessWidget {
       margin: brutal ? const EdgeInsets.only(right: 3, bottom: 3) : null,
       decoration: brutal
           ? BoxDecoration(
-              color: Colors.white,
+              color: context.paper,
               borderRadius: BorderRadius.circular(Radii.md),
               border: Border.all(color: Colors.black, width: 2),
               boxShadow: const [

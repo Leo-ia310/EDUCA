@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/provider_cache.dart';
 
 import '../../../../core/widgets/brutal.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -95,7 +97,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     decoration: Brutal.decoration(
                       context,
                       color:
-                          selected ? palette.accentDeep : palette.cardElevated,
+                          selected ? context.buttonFill : palette.cardElevated,
                       radius: Radii.md,
                       offset: 3,
                     ),
@@ -259,7 +261,16 @@ class _SlotCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardFill = Color.lerp(slot.color, Colors.white, 0.72)!;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final pastel = context.pastel(slot.color);
+    // En oscuro la tarjeta se tiñe como el resto de la app (color al 20 % sobre
+    // la superficie) con tinta clara; en claro conserva el pastel de siempre.
+    final cardFill = dark ? pastel.surface : Color.lerp(slot.color, Colors.white, 0.72)!;
+    final ink = dark ? pastel.ink : _ink;
+    final inkMuted = dark ? pastel.inkMuted : _ink.withValues(alpha: 0.62);
+    final diamondBg = dark
+        ? Color.alphaBlend(slot.color.withValues(alpha: 0.28), AppColors.darkSurface)
+        : _diamondBg;
     final glyph = Color.lerp(slot.color, Colors.white, 0.28)!;
 
     return IntrinsicHeight(
@@ -285,7 +296,7 @@ class _SlotCard extends StatelessWidget {
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            color: _diamondBg,
+                            color: diamondBg,
                             borderRadius: BorderRadius.circular(Radii.sm),
                             border: Border.all(
                               color: Brutal.ink(context),
@@ -310,7 +321,7 @@ class _SlotCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: context.textTheme.titleMedium?.copyWith(
-                            color: _ink,
+                            color: ink,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -320,7 +331,7 @@ class _SlotCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: context.textTheme.bodySmall?.copyWith(
-                            color: _ink.withValues(alpha: 0.62),
+                            color: inkMuted,
                           ),
                         ),
                       ],

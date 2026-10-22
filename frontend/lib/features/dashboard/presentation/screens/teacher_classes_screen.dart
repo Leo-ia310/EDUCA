@@ -136,8 +136,8 @@ class _ClassTile extends StatelessWidget {
                           teacherClass.isOwner
                               ? 'Clase propia'
                               : 'Clase colaborativa',
-                          style: context.textTheme.labelSmall
-                              ?.copyWith(color: s.vivid),),
+                          style: context.textTheme.labelSmall?.copyWith(
+                              color: s.inkMuted, fontWeight: FontWeight.w700,),),
                       const SizedBox(height: 3),
                       Text(
                         teacherClass.room,
@@ -152,13 +152,13 @@ class _ClassTile extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.paper,
                     borderRadius: BorderRadius.circular(Radii.sm),
                     border: Border.all(color: ink, width: Brutal.border),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.chevron_right_rounded,
-                    color: Colors.black,
+                    color: context.onPaper,
                     size: 24,
                   ),
                 ),

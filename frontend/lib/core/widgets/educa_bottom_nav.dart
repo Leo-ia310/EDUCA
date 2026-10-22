@@ -221,7 +221,9 @@ class _BrutalSlot extends StatelessWidget {
               height: 48,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: active ? Colors.white : Colors.transparent,
+                color: active
+                    ? (context.isDarkTheme ? context.palette.accent : Colors.white)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(Radii.md),
                 border: Border.all(
                   color: active ? ink : Colors.transparent,
@@ -235,7 +237,9 @@ class _BrutalSlot extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: 24,
-                  color: active ? Colors.black : Colors.white,
+                  color: active
+                      ? (context.isDarkTheme ? context.palette.onAccent : Colors.black)
+                      : (context.isDarkTheme ? context.palette.textMuted : Colors.white),
                 ),
               ),
             ),

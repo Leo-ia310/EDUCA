@@ -262,14 +262,14 @@ class AdminTile extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.paper,
                           borderRadius: BorderRadius.circular(Radii.pill),
                           border: Border.all(color: ink, width: 1.5),
                         ),
                         child: Text(
                           caption!,
                           style: context.textTheme.labelSmall?.copyWith(
-                            color: Colors.black,
+                            color: context.onPaper,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -284,13 +284,13 @@ class AdminTile extends StatelessWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.paper,
                       borderRadius: BorderRadius.circular(Radii.sm),
                       border: Border.all(color: ink, width: Brutal.border),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.edit_rounded,
-                      color: Colors.black,
+                      color: context.onPaper,
                       size: 18,
                     ),
                   ),

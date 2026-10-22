@@ -116,16 +116,16 @@ class AssignmentCard extends StatelessWidget {
                       width: 30,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.paper,
                         borderRadius: BorderRadius.circular(Radii.sm),
                         border: Border.all(
                           color: Brutal.ink(context),
                           width: Brutal.border,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.chevron_right_rounded,
-                        color: Colors.black,
+                        color: context.onPaper,
                         size: 22,
                       ),
                     ),

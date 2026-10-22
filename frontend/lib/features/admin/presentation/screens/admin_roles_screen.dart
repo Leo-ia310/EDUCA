@@ -100,7 +100,7 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (canEdit) ...[
-            FilledButton.icon(
+            OutlinedButton.icon(
               onPressed: () => context.push(Routes.adminAccess),
               icon: const Icon(Icons.lock_person_rounded),
               label: const Text('Accesos de padres, alumnos y notas'),
@@ -256,14 +256,14 @@ class _RoleCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.paper,
                 borderRadius: BorderRadius.circular(Radii.sm),
                 border: Border.all(color: ink, width: Brutal.border),
               ),
               child: Text(
                 count?.toString() ?? '—',
                 style: context.textTheme.titleSmall?.copyWith(
-                  color: Colors.black,
+                  color: context.onPaper,
                   fontWeight: FontWeight.w800,
                 ),
               ),

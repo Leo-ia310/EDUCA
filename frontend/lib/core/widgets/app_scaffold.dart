@@ -49,7 +49,7 @@ class AppScaffold extends StatelessWidget {
     if (onRefresh != null) {
       body = RefreshIndicator(
         onRefresh: onRefresh!,
-        color: context.palette.accentDeep,
+        color: context.buttonFill,
         backgroundColor: context.palette.cardElevated,
         child: body,
       );

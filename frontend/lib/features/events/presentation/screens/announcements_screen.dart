@@ -211,9 +211,9 @@ class _EventCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-            child: const Icon(
+            child: Icon(
               Icons.campaign_rounded,
-              color: Colors.white,
+              color: context.paper,
               size: 22,
             ),
           ),

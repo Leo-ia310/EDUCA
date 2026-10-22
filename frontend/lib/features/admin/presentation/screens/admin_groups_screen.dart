@@ -140,13 +140,13 @@ class _Chevron extends StatelessWidget {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.paper,
           borderRadius: BorderRadius.circular(Radii.sm),
           border: Border.all(color: Brutal.ink(context), width: Brutal.border),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.chevron_right_rounded,
-          color: Colors.black,
+          color: context.onPaper,
           size: 24,
         ),
       );

@@ -45,13 +45,15 @@ class HomeOptionCard extends StatelessWidget {
     // En oscuro la tarjeta se tiñe con su color de categoría (20 %) sobre la
     // superficie y la tinta es clara; en claro, texto negro o blanco según la
     // luminosidad del color.
-    final cardColor = dark
-        ? Color.alphaBlend(color.withValues(alpha: 0.20), AppColors.darkSurface)
-        : color;
+    final cardColor = dark ? AppColors.darkSurface : color;
     final fg = dark
-        ? Color.lerp(Colors.white, color, 0.22)!
+        ? AppColors.textDark
         : (color.computeLuminance() > 0.3 ? Colors.black : Colors.white);
-    final artColor = dark ? color.withValues(alpha: 0.38) : Colors.white;
+    final artColor = dark ? color.withValues(alpha: 0.32) : Colors.white;
+    final paper = context.paper;
+    final onPaper = context.onPaper;
+    final iconColor = dark ? color : Colors.black;
+    final goColor = dark ? AppColors.accentDark : Colors.white;
 
     return Opacity(
       opacity: enabled ? 1 : 0.6,
@@ -65,8 +67,10 @@ class HomeOptionCard extends StatelessWidget {
             // La ilustración ocupa la mitad derecha de la tarjeta, con margen
             // para no tocar los bordes.
             final half = c.maxWidth * 0.52;
-            return SizedBox(
-              height: 196,
+            // Con tipografía grande del sistema (celulares reales) el texto puede
+            // ocupar más de lo previsto: la tarjeta crece en vez de solaparse.
+            return MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.2,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -89,66 +93,83 @@ class HomeOptionCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  // Ícono en la esquina superior izquierda.
-                  Positioned(
-                    left: 18,
-                    top: 18,
-                    child: Container(
-                      width: 54,
-                      height: 54,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(Radii.md),
-                        border: Border.all(color: ink, width: Brutal.border),
-                      ),
-                      child: Icon(icon, color: Colors.black, size: 28),
+                  // Ícono arriba y título + descripción abajo, en un bloque con
+                  // altura mínima (define el alto de la tarjeta).
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: 196,
+                      minWidth: double.infinity,
                     ),
-                  ),
-                  // Título pequeño y resaltado + descripción grande, abajo del
-                  // ícono, a la izquierda.
-                  Positioned(
-                    left: 20,
-                    right: half + 4,
-                    bottom: 18,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(Radii.pill),
-                            border:
-                                Border.all(color: ink, width: Brutal.border),
-                          ),
-                          child: Text(
-                            title,
-                            style: context.textTheme.labelMedium?.copyWith(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.4,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(18, 18, half + 4, 18),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 54,
+                            height: 54,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: paper,
+                              borderRadius: BorderRadius.circular(Radii.md),
+                              border:
+                                  Border.all(color: ink, width: Brutal.border),
                             ),
+                            child: Icon(icon, color: iconColor, size: 28),
                           ),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            subtitle!,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.textTheme.titleLarge?.copyWith(
-                              color: fg,
-                              fontWeight: FontWeight.w800,
-                              height: 1.15,
+                          const SizedBox(height: 14),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 2),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: paper,
+                                    borderRadius:
+                                        BorderRadius.circular(Radii.pill),
+                                    border: Border.all(
+                                      color: ink,
+                                      width: Brutal.border,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        context.textTheme.labelMedium?.copyWith(
+                                      color: onPaper,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ),
+                                if (subtitle != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    subtitle!,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        context.textTheme.titleLarge?.copyWith(
+                                      color: fg,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.15,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
                   // Flecha negra en círculo blanco, esquina inferior derecha.
@@ -159,11 +180,13 @@ class HomeOptionCard extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: goColor,
                         borderRadius: BorderRadius.circular(Radii.md),
                         border: Border.all(color: ink, width: Brutal.border),
                       ),
-                      child: const _BoldArrow(),
+                      child: _BoldArrow(
+                        color: dark ? AppColors.onAccentDark : Colors.black,
+                      ),
                     ),
                   ),
                 ],
@@ -179,7 +202,9 @@ class HomeOptionCard extends StatelessWidget {
 /// Flecha "→" con trazo reforzado (varias copias superpuestas con un leve
 /// desplazamiento, ya que `Icon` no admite grosor de trazo).
 class _BoldArrow extends StatelessWidget {
-  const _BoldArrow();
+  const _BoldArrow({this.color = Colors.black});
+
+  final Color color;
 
   static const double _size = 24;
 
@@ -187,10 +212,10 @@ class _BoldArrow extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget arrow(Offset offset) => Transform.translate(
           offset: offset,
-          child: const Icon(
+          child: Icon(
             Icons.arrow_forward_rounded,
             size: _size,
-            color: Colors.black,
+            color: color,
           ),
         );
     return SizedBox(

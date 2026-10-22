@@ -129,7 +129,6 @@ class _NotificationSettingsScreenState
                 SwitchListTile.adaptive(
                   value: _pushEnabled,
                   onChanged: (v) => setState(() => _pushEnabled = v),
-                  activeThumbColor: palette.accentDeep,
                   secondary: const Icon(Icons.notifications_active_rounded),
                   title: const Text('Notificaciones push'),
                   subtitle: const Text('Avisos en este dispositivo'),
@@ -139,7 +138,6 @@ class _NotificationSettingsScreenState
                   onChanged: _savingEmail || _emailEnabled == null
                       ? null
                       : _setEmailEnabled,
-                  activeThumbColor: palette.accentDeep,
                   secondary: const Icon(Icons.mail_outline),
                   title: const Text('Correo electrónico'),
                   subtitle: Text(
@@ -178,7 +176,6 @@ class _NotificationSettingsScreenState
                     onChanged: _pushEnabled
                         ? (v) => setState(() => _channels[entry.key] = v)
                         : null,
-                    activeThumbColor: palette.accentDeep,
                     secondary: Icon(_icons[entry.key]),
                     title: Text(entry.key),
                   ),

@@ -120,7 +120,7 @@ class _SyncControls extends ConsumerWidget {
           FilledButton.tonal(
             onPressed: status.syncing ? null : service.processQueue,
             style: FilledButton.styleFrom(
-              backgroundColor: palette.accentDeep,
+              backgroundColor: context.buttonFill,
               foregroundColor: Colors.white,
               minimumSize: const Size(0, 40),
               padding:
