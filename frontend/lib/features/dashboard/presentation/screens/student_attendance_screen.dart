@@ -7,6 +7,11 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/charts.dart';
 import '../../../../core/widgets/depth_card.dart';
+import '../../../../core/utils/plural.dart';
+import '../../../auth/presentation/identity_providers.dart';
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../../shared/models/app_role.dart';
+import '../../data/attendance_month.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/student_chrome.dart';
@@ -19,6 +24,7 @@ class StudentAttendanceScreen extends ConsumerWidget {
     this.title = 'Asistencia',
     this.heading = 'Tu asistencia',
     this.percentOverride,
+    this.studentId,
   });
 
   /// Título de la barra superior y encabezado de la tarjeta (el panel del
@@ -29,6 +35,10 @@ class StudentAttendanceScreen extends ConsumerWidget {
   /// Si se indica, reemplaza el porcentaje del alumno logueado.
   final double? percentOverride;
 
+  /// Alumno cuya asistencia se muestra (el hijo en el panel del padre); si falta,
+  /// se usa el del propio alumno.
+  final int? studentId;
+
   // Días del mes con ausencia (mock demo).
   static const _absentDays = {9};
 
@@ -37,15 +47,36 @@ class StudentAttendanceScreen extends ConsumerWidget {
     final data = ref.watch(studentDashboardProvider).scopedValue ??
         StudentDashboardData.empty();
     final pct = percentOverride?.round() ?? (data.attendanceRate * 100).round();
+    final role = ref.watch(authControllerProvider).user?.activeRole;
+    final id = studentId ??
+        (role == AppRole.student
+            ? ref.watch(currentStudentIdProvider).valueOrNull
+            : null);
+    // Sin backend (demo) o sin alumno conocido: calendario de ejemplo de siempre.
+    final month = ref.watch(monthAttendanceProvider(id));
 
     return StudentDetailScaffold(
       title: title,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AttendanceHeader(percent: pct, heading: heading),
+          _AttendanceHeader(
+            percent: pct,
+            heading: heading,
+            real: month.valueOrNull,
+            demo: id == null,
+          ),
           const SizedBox(height: 20),
-          const _MonthCalendar(absentDays: _absentDays),
+          if (month.hasError)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text('No se pudo cargar la asistencia de este mes.'),
+            ),
+          _MonthCalendar(
+            absentDays: _absentDays,
+            real: month.valueOrNull,
+            demo: id == null,
+          ),
           const SizedBox(height: 16),
           const _Legend(),
         ],
@@ -55,14 +86,22 @@ class StudentAttendanceScreen extends ConsumerWidget {
 }
 
 class _AttendanceHeader extends StatelessWidget {
-  const _AttendanceHeader({required this.percent, required this.heading});
+  const _AttendanceHeader({
+    required this.percent,
+    required this.heading,
+    required this.real,
+    required this.demo,
+  });
   final int percent;
   final String heading;
+  final MonthAttendance? real;
+  final bool demo;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    return DepthCard(brutal: true, 
+    return DepthCard(
+      brutal: true,
       borderRadius: Radii.xl,
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -80,34 +119,46 @@ class _AttendanceHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Vas muy bien este mes 🎯',
+                  demo
+                      ? 'Vas muy bien este mes 🎯'
+                      : real == null || real!.isEmpty
+                          ? 'Aún no hay asistencia registrada este mes'
+                          : real!.absentDays == 0
+                              ? 'Sin faltas este mes 🎯'
+                              : 'Faltas este mes: ${real!.absentDays}',
                   style: context.textTheme.bodySmall
                       ?.copyWith(color: palette.textMuted),
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: palette.success.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(Radii.pill),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.local_fire_department_rounded,
-                          color: palette.success, size: 18,),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Racha de 12 días',
-                        style: context.textTheme.labelMedium?.copyWith(
+                if (demo || (real?.streak ?? 0) > 0)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: palette.success.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(Radii.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.local_fire_department_rounded,
                           color: palette.success,
-                          fontWeight: FontWeight.w800,
+                          size: 18,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          demo
+                              ? 'Racha de 12 días'
+                              : 'Racha de ${plural(real!.streak, 'día')}',
+                          style: context.textTheme.labelMedium?.copyWith(
+                            color: palette.success,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -118,8 +169,14 @@ class _AttendanceHeader extends StatelessWidget {
 }
 
 class _MonthCalendar extends StatelessWidget {
-  const _MonthCalendar({required this.absentDays});
+  const _MonthCalendar({
+    required this.absentDays,
+    required this.real,
+    required this.demo,
+  });
   final Set<int> absentDays;
+  final MonthAttendance? real;
+  final bool demo;
 
   @override
   Widget build(BuildContext context) {
@@ -189,8 +246,13 @@ class _MonthCalendar extends StatelessWidget {
     final d = DateTime(now.year, now.month, day);
     if (d.weekday >= 6) return _DayState.weekend;
     if (d.isAfter(today)) return _DayState.future;
-    if (absentDays.contains(day)) return _DayState.absent;
-    return _DayState.present;
+    if (demo) {
+      return absentDays.contains(day) ? _DayState.absent : _DayState.present;
+    }
+    // Datos reales: solo los días con registro se marcan; sin registro queda plano.
+    final absent = real?.absentByDay[day];
+    if (absent == null) return _DayState.future;
+    return absent ? _DayState.absent : _DayState.present;
   }
 }
 

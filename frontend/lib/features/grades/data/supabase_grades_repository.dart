@@ -162,7 +162,7 @@ class SupabaseGradesRepository implements GradesRepository {
         .select('id, name, start_date, end_date, weight, closed')
         .eq('institution_id', institutionId)
         .eq('academic_year_id', yearId)
-        .order('display_order');
+        .order('display_order', ascending: true);
     return (rows as List)
         .cast<Map<String, dynamic>>()
         .map(
@@ -199,7 +199,7 @@ class SupabaseGradesRepository implements GradesRepository {
         .eq('academic_year_id', enrollment['academic_year_id'] as Object)
         .eq('institution_id', institutionId)
         .eq('active', true)
-        .order('id')
+        .order('id', ascending: true)
         .range(from, to),);
   }
 
@@ -221,7 +221,7 @@ class SupabaseGradesRepository implements GradesRepository {
             .eq('academic_periods.academic_years.is_current', true)
             .eq('published', true);
         if (periodId != null) query = query.eq('academic_period_id', periodId);
-        return await query.order('date').order('id').range(from, to);
+        return await query.order('date', ascending: true).order('id', ascending: true).range(from, to);
       });
       result.addAll(rows.map(_evalFromRow));
     }
@@ -273,7 +273,7 @@ class SupabaseGradesRepository implements GradesRepository {
       if (periodId != null) {
         query = query.eq('evaluations.academic_period_id', periodId);
       }
-      return await query.order('id').range(from, to);
+      return await query.order('id', ascending: true).range(from, to);
     });
     return rows
         .map((r) => GradeEntry(

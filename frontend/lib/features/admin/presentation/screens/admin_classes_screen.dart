@@ -16,6 +16,7 @@ import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/class_form.dart';
 import '../widgets/page_controls.dart';
+import '../../../../core/utils/plural.dart';
 
 /// CRUD de clases y de sus asignaciones: cada clase muestra su salón y su
 /// maestro, y se puede cambiar de maestro o de salón al editarla. Alterna
@@ -162,7 +163,7 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
               ),
               const Spacer(),
               Text(
-                '${pageInfo?.total ?? dir.classes.length} clases',
+                plural(pageInfo?.total ?? dir.classes.length, 'clase'),
                 style: context.textTheme.labelMedium?.copyWith(
                   color: palette.textMuted,
                   fontWeight: FontWeight.w700,

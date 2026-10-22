@@ -12,6 +12,7 @@ import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../domain/entities.dart';
 import '../controllers/attendance_take_controller.dart' show todaysClassesProvider;
 import '../widgets/sync_status_badge.dart';
+import '../../../../core/utils/plural.dart';
 
 /// Pantalla intermedia: el docente elige la clase a la que va a pasar lista.
 class AttendanceClassesScreen extends ConsumerWidget {
@@ -134,7 +135,7 @@ class _ClassCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${brief.studentCount} estudiantes',
+                  plural(brief.studentCount, 'estudiante'),
                   style: context.textTheme.labelSmall?.copyWith(
                     color: palette.textMuted,
                     fontWeight: FontWeight.w700,

@@ -16,6 +16,7 @@ import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import '../widgets/admin_widgets.dart';
 import '../widgets/person_form.dart';
+import '../../../../core/utils/plural.dart';
 
 /// CRUD de personas de un rol: Maestros, Alumnos o Padres/Tutores.
 class AdminPeopleScreen extends ConsumerStatefulWidget {
@@ -84,7 +85,7 @@ class _AdminPeopleScreenState extends ConsumerState<AdminPeopleScreen> {
     switch (widget.role) {
       case AppRole.teacher:
         if (p.classLabels.isNotEmpty) {
-          return '${p.classLabels.length} clases asignadas · ${p.classLabels.join(' · ')}';
+          return '${plural(p.classLabels.length, 'clase')} ${p.classLabels.length == 1 ? 'asignada' : 'asignadas'} · ${p.classLabels.join(' · ')}';
         }
         final cls = dir.classesOfTeacher(p.id);
         if (cls.isEmpty) return 'Sin clases asignadas';

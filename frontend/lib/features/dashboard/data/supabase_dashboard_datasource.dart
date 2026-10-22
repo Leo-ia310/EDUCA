@@ -136,7 +136,7 @@ class SupabaseDashboardDatasource {
         .select('id, title, due_at, class_id, classes(groups(name))')
         .inFilter('class_id', classIds)
         .filter('deleted_at', 'is', null)
-        .order('due_at')
+        .order('due_at', ascending: true)
         .limit(6);
     final list = (rows as List).cast<Map<String, dynamic>>();
     if (list.isEmpty) return const [];
@@ -224,7 +224,7 @@ class SupabaseDashboardDatasource {
         .eq('academic_years.is_current',true)
         .eq('catalog_enrollment_statuses.code','ACT')
         .eq('group_id', groupIds.first)
-        .order('student_id')
+        .order('student_id', ascending: true)
         .limit(5);
     return (rows as List)
         .map(
@@ -489,7 +489,7 @@ class SupabaseDashboardDatasource {
         .inFilter('class_id', classIds)
         .eq('institution_id', institutionId)
         .eq('weekday_id', today)
-        .order('start_time');
+        .order('start_time', ascending: true);
     return (rows as List).map((r) {
       final m = r as Map<String, dynamic>;
       final subject =
@@ -521,7 +521,7 @@ class SupabaseDashboardDatasource {
         .eq('institution_id', institutionId)
         .eq('published', true)
         .filter('deleted_at', 'is', null)
-        .order('due_at')
+        .order('due_at', ascending: true)
         .limit(5);
     final assignmentIds =
         (rows as List).map((a) => (a['id'] as num).toInt()).toList();

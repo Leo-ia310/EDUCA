@@ -452,17 +452,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.payments,
         builder: (context, state) {
-          final raw = state.uri.queryParameters['studentId'];
-          final studentId = int.tryParse(raw ?? '') ?? 1001;
+          final studentId =
+              int.tryParse(state.uri.queryParameters['studentId'] ?? '');
           return _PaymentsRoleSplit(studentId: studentId);
         },
         routes: [
           GoRoute(
             path: 'history',
             builder: (context, state) {
-              final raw = state.uri.queryParameters['studentId'];
-              final studentId = int.tryParse(raw ?? '') ?? 1001;
-              return PaymentHistoryScreen(studentId: studentId);
+              final studentId =
+                  int.tryParse(state.uri.queryParameters['studentId'] ?? '');
+              return _PaymentsStudentResolved(
+                explicitId: studentId,
+                builder: PaymentHistoryScreen.new,
+              );
             },
           ),
           GoRoute(
@@ -759,7 +762,10 @@ class _AuthRefresh extends ChangeNotifier {
 /// de morosidad; estudiante también ve estado (read-only).
 class _PaymentsRoleSplit extends ConsumerWidget {
   const _PaymentsRoleSplit({required this.studentId});
-  final int studentId;
+
+  /// `studentId` explícito de la URL; si falta, se resuelve el alumno real
+  /// (el hijo del padre o el propio alumno) en vez de usar un id de ejemplo.
+  final int? studentId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -773,7 +779,10 @@ class _PaymentsRoleSplit extends ConsumerWidget {
       case AppRole.parent:
       case AppRole.student:
       case AppRole.teacher:
-        return ParentChargesScreen(studentId: studentId);
+        return _PaymentsStudentResolved(
+          explicitId: studentId,
+          builder: ParentChargesScreen.new,
+        );
     }
   }
 }
@@ -877,6 +886,27 @@ class _ExamsRoleSplit extends ConsumerWidget {
           ),
         );
     }
+  }
+}
+
+/// Estado de cuenta e historial de pagos: usa el `studentId` de la URL o, si no
+/// viene, el del hijo (padre) o el del propio alumno.
+class _PaymentsStudentResolved extends ConsumerWidget {
+  const _PaymentsStudentResolved({required this.explicitId, required this.builder});
+
+  final int? explicitId;
+  final Widget Function({Key? key, required int studentId}) builder;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (explicitId != null) return builder(studentId: explicitId!);
+    final role = ref.watch(authControllerProvider).user?.activeRole;
+    return _StudentAssignmentsResolved(
+      idProvider: role == AppRole.parent
+          ? parentChildStudentIdProvider
+          : currentStudentIdProvider,
+      builder: builder,
+    );
   }
 }
 
