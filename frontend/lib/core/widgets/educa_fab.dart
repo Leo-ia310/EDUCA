@@ -18,7 +18,7 @@ class EducaFab extends StatelessWidget {
     if (Brutal.active(context)) {
       return BrutalBox(
         onTap: onPressed,
-        color: context.palette.accentDeep,
+        color: context.buttonFill,
         radius: Radii.md,
         child: SizedBox(
           width: 52,

@@ -257,7 +257,7 @@ class _SubmissionRow extends ConsumerWidget {
                 FilledButton.tonal(
                   onPressed: () => _openGradeSheet(context, ref),
                   style: FilledButton.styleFrom(
-                    backgroundColor: palette.accentDeep,
+                    backgroundColor: context.buttonFill,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 38),
                     padding:

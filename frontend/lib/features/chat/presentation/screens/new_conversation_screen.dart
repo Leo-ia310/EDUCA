@@ -279,7 +279,7 @@ class _InitialMessageComposer extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     shape: const CircleBorder(),
                     padding: EdgeInsets.zero,
-                    backgroundColor: palette.accentDeep,
+                    backgroundColor: context.buttonFill,
                   ),
                   child: sending
                       ? const SizedBox(

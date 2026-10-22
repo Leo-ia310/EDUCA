@@ -121,11 +121,10 @@ PastelSurface pastelSurface(Color base,
       .withLightness(0.56)
       .toColor();
   if (brightness == Brightness.dark) {
-    final surface = Color.alphaBlend(
-      base.withValues(alpha: 0.20),
-      AppColors.darkSurface,
-    );
-    final ink = Color.lerp(Colors.white, base, 0.22)!;
+    // Todas las tarjetas comparten la misma superficie; el color de la materia
+    // solo queda en el círculo vívido y en los detalles.
+    const surface = AppColors.darkSurface;
+    const ink = AppColors.textDark;
     return PastelSurface(
       vivid: vivid,
       surface: surface,

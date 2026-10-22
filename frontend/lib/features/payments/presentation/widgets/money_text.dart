@@ -16,6 +16,15 @@ class Money {
     return formatter.format(amount);
   }
 
+  /// Monto abreviado («35.7k») con el mismo símbolo que [format].
+  static String compact(double amount, String currencyCode) {
+    final symbol = _symbolFor(currencyCode).trim();
+    final body = amount >= 1000
+        ? '${(amount / 1000).toStringAsFixed(1)}k'
+        : amount.toStringAsFixed(0);
+    return '$symbol $body';
+  }
+
   static String _symbolFor(String code) {
     return switch (code.toUpperCase()) {
       'NIO' => 'C\$ ',

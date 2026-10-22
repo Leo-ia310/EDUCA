@@ -79,8 +79,8 @@ class SectionNavCard extends StatelessWidget {
                     Container(
                       width: 58,
                       height: 58,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: context.paper,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(icon, color: color, size: 30),

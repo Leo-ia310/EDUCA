@@ -164,7 +164,7 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
               if (ref.watch(portalCanProvider('attendance.view')))
                 HomeOptionCard(
                   icon: Icons.event_available_rounded,
-                  title: 'Promedio de asistencias',
+                  title: 'Asistencia',
                   subtitle:
                       '${(child.attendance ?? data.attendancePercent).round()}% · ${child.name}',
                   color: context.palette.success,
@@ -449,11 +449,11 @@ class _ArrowButton extends StatelessWidget {
             margin: const EdgeInsets.only(right: 2, bottom: 2),
             decoration: Brutal.decoration(
               context,
-              color: Colors.white,
+              color: context.paper,
               radius: Radii.sm,
               offset: 2,
             ),
-            child: Icon(icon, color: Colors.black, size: 26),
+            child: Icon(icon, color: context.onPaper, size: 26),
           ),
         ),
       ),

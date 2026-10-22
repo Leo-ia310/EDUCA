@@ -142,14 +142,14 @@ class _AverageHero extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.paper,
               borderRadius: BorderRadius.circular(Radii.sm),
               border: Border.all(
                 color: Brutal.ink(context),
                 width: Brutal.border,
               ),
             ),
-            child: const Icon(Icons.star_rounded, color: Colors.black, size: 24),
+            child: Icon(Icons.star_rounded, color: context.onPaper, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(

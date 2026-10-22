@@ -275,16 +275,16 @@ class _MenuButton extends StatelessWidget {
         height: 42,
         margin: const EdgeInsets.only(right: 3, bottom: 3),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.paper,
           borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(color: Colors.black, width: 2),
           boxShadow: const [
             BoxShadow(color: Colors.black, offset: Offset(3, 3)),
           ],
         ),
-        child: const Icon(
+        child: Icon(
           Icons.more_vert_rounded,
-          color: Colors.black,
+          color: context.onPaper,
           size: 24,
         ),
       ),

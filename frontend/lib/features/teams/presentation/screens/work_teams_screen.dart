@@ -235,12 +235,12 @@ class _MemberAvatars extends StatelessWidget {
     final bg = Theme.of(context).scaffoldBackgroundColor;
     return SizedBox(
       height: 32,
-      width: shown.length * 22.0 + 10 + (extra > 0 ? 22 : 0),
+      width: shown.length * 26.0 + 8 + (extra > 0 ? 26 : 0),
       child: Stack(
         children: [
           for (var i = 0; i < shown.length; i++)
             Positioned(
-              left: i * 22.0,
+              left: i * 26.0,
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
@@ -249,7 +249,7 @@ class _MemberAvatars extends StatelessWidget {
             ),
           if (extra > 0)
             Positioned(
-              left: shown.length * 22.0,
+              left: shown.length * 26.0,
               child: Container(
                 width: 32,
                 height: 32,

@@ -93,6 +93,9 @@ class _BrutalBoxState extends State<BrutalBox> {
     Widget content = widget.padding != null
         ? Padding(padding: widget.padding!, child: widget.child)
         : widget.child;
+    // Los ListTile/Radio/Switch del interior necesitan un Material propio: sin
+    // él lanzan «ListTile background color or ink splashes may be invisible».
+    content = Material(type: MaterialType.transparency, child: content);
     if (widget.clip) {
       content = ClipRRect(
         borderRadius: BorderRadius.circular(widget.radius - Brutal.border),
@@ -178,7 +181,7 @@ class BrutalButton extends StatelessWidget {
     );
     return BrutalBox(
       onTap: onTap,
-      color: color ?? context.palette.accentDeep,
+      color: color ?? context.buttonFill,
       radius: Radii.md,
       offset: 3,
       child: Container(
@@ -231,7 +234,7 @@ class BrutalPill extends StatelessWidget {
         ),
         decoration: Brutal.decoration(
           context,
-          color: selected ? palette.accentDeep : palette.cardElevated,
+          color: selected ? context.buttonFill : palette.cardElevated,
           radius: compact ? Radii.sm : Radii.md,
           offset: compact ? 2 : 3,
         ),

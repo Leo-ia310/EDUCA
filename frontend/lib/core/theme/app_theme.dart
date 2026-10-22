@@ -134,6 +134,19 @@ class AppPalette extends ThemeExtension<AppPalette> {
 /// Atajo: `context.palette` y `context.textTheme`.
 extension AppThemeX on BuildContext {
   AppPalette get palette => Theme.of(this).extension<AppPalette>()!;
+
+  bool get isDarkTheme => Theme.of(this).brightness == Brightness.dark;
+
+  /// Relleno de los botones-ícono y «chips» que en claro son blancos con borde
+  /// oscuro; en oscuro pasan al gris elevado (no a blanco, que se vería invertido).
+  Color get paper => isDarkTheme ? AppColors.darkSurfaceAlt : Colors.white;
+
+  /// Relleno de los botones primarios: el azul profundo en claro y el acento en
+  /// oscuro (donde el «profundo» es un tono claro pensado para texto).
+  Color get buttonFill => isDarkTheme ? palette.accent : palette.accentDeep;
+
+  /// Tinta sobre [paper].
+  Color get onPaper => isDarkTheme ? AppColors.textDark : Colors.black;
   TextTheme get textTheme => Theme.of(this).textTheme;
   ColorScheme get colors => Theme.of(this).colorScheme;
 }
@@ -361,7 +374,7 @@ class AppTheme {
         backgroundColor: AppColors.accentDeep,
         foregroundColor: Colors.white,
         elevation: 4,
-        shape: CircleBorder(),
+        shape: StadiumBorder(),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.lineLight,
@@ -402,7 +415,7 @@ class AppTheme {
         AppPalette(
           surfaceAlt: AppColors.darkSurfaceAlt,
           cardElevated: AppColors.darkSurface,
-          cardContrast: Color(0xFF14213D),
+          cardContrast: AppColors.darkSurface,
           textMuted: AppColors.textDarkMuted,
           success: AppColors.successDark,
           warning: AppColors.warningDark,
@@ -515,7 +528,26 @@ class AppTheme {
         backgroundColor: AppColors.accentDark,
         foregroundColor: AppColors.onAccentDark,
         elevation: 4,
-        shape: CircleBorder(),
+        shape: StadiumBorder(),
+      ),
+      // Interruptor visible en oscuro: apagado = perilla gris azulada sobre pista
+      // elevada con borde; encendido = azul con perilla oscura.
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AppColors.onAccentDark
+              : AppColors.textDarkMuted,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AppColors.accentDark
+              : AppColors.darkSurfaceAlt,
+        ),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AppColors.accentDark
+              : AppColors.lineDark,
+        ),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.lineDark,

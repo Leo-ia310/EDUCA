@@ -166,13 +166,13 @@ class TeacherCard extends ConsumerWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.paper,
               borderRadius: BorderRadius.circular(Radii.sm),
               border: Border.all(color: ink, width: Brutal.border),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.chat_bubble_outline,
-              color: Colors.black,
+              color: context.onPaper,
               size: 18,
             ),
           ),

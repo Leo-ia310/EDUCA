@@ -263,7 +263,7 @@ class _ModePill extends StatelessWidget {
         margin: const EdgeInsets.only(right: 3, bottom: 3),
         decoration: Brutal.decoration(
           context,
-          color: selected ? palette.accentDeep : palette.cardElevated,
+          color: selected ? context.buttonFill : palette.cardElevated,
           radius: Radii.md,
           offset: 3,
         ),
@@ -357,16 +357,16 @@ class _SubjectCard extends ConsumerWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.paper,
                 borderRadius: BorderRadius.circular(Radii.sm),
                 border: Border.all(
                   color: Brutal.ink(context),
                   width: Brutal.border,
                 ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.chevron_right_rounded,
-                color: Colors.black,
+                color: context.onPaper,
                 size: 24,
               ),
             ),
