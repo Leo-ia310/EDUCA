@@ -1,0 +1,1191 @@
+{
+  "mode": "arrival",
+  "rps": 10,
+  "identities": 8,
+  "metrics": {
+    "business_status{status:503}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 0.6675268306151502,
+        "count": 16
+      }
+    },
+    "business_failed{endpoint:/api/sync/changes}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 2,
+        "fails": 0
+      }
+    },
+    "business_status{status:400}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "operational_status{endpoint:/ready,status:504}": {
+      "values": {
+        "count": 0,
+        "rate": 0
+      },
+      "type": "counter",
+      "contains": "default"
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 297074,
+        "rate": 12394.054104885321
+      }
+    },
+    "business_failed{endpoint:/api/grades/scales/default}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.5,
+        "passes": 1,
+        "fails": 1
+      }
+    },
+    "business_failed{endpoint:/api/admin/directory/people}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 4
+      }
+    },
+    "operational_status": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 8,
+        "rate": 0.3337634153075751
+      }
+    },
+    "business_failed{endpoint:/api/portal-access/grades}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 2,
+        "fails": 0
+      }
+    },
+    "business_duration{endpoint:/api/sync/changes}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 15143.8662,
+        "med": 15143.8662,
+        "p(90)": 15144.375240000001,
+        "p(95)": 15144.43887,
+        "p(99)": 15144.489774,
+        "max": 15144.5025
+      }
+    },
+    "business_requests{endpoint:/api/chats/conversations}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 8,
+        "rate": 0.3337634153075751
+      }
+    },
+    "business_failed{endpoint:/api/auth/2fa/status}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 10,
+        "rate": 0.23076923076923078,
+        "passes": 3
+      }
+    },
+    "business_duration{endpoint:/api/chats/conversations}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 491.75275,
+        "p(90)": 516.2581799999999,
+        "p(95)": 532.0104899999999,
+        "p(99)": 544.6123379999999,
+        "max": 547.7628,
+        "avg": 490.995575
+      }
+    },
+    "business_requests{endpoint:/api/assignments/teacher}": {
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      },
+      "type": "counter"
+    },
+    "business_duration{endpoint:/api/assignments/teacher}": {
+      "values": {
+        "med": 11422.7794,
+        "p(90)": 14874.7042,
+        "p(95)": 15306.1948,
+        "p(99)": 15651.38728,
+        "max": 15737.6854,
+        "avg": 11422.7794
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "business_status{status:429}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 162.86335000000003,
+        "p(95)": 173.14749999999998,
+        "p(99)": 271.265986,
+        "max": 274.1163,
+        "avg": 58.37603,
+        "med": 0
+      }
+    },
+    "business_duration{endpoint:/api/admin/profiles}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 15176.6161,
+        "p(95)": 15177.0122,
+        "p(99)": 15177.32908,
+        "max": 15177.4083,
+        "avg": 15173.4473,
+        "med": 15173.4473
+      }
+    },
+    "business_duration{endpoint:/api/portal-access/grades}": {
+      "contains": "time",
+      "values": {
+        "med": 16074.664850000001,
+        "p(90)": 16863.76041,
+        "p(95)": 16962.397355,
+        "p(99)": 17041.306911,
+        "max": 17061.0343,
+        "avg": 16074.664850000001
+      },
+      "type": "trend"
+    },
+    "business_server_failed": {
+      "contains": "default",
+      "values": {
+        "fails": 66,
+        "rate": 0.1951219512195122,
+        "passes": 16
+      },
+      "thresholds": {
+        "rate<0.05": {
+          "ok": false
+        }
+      },
+      "type": "rate"
+    },
+    "business_failed{endpoint:/api/schedules/mine}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 4,
+        "rate": 0,
+        "passes": 0
+      }
+    },
+    "business_failed{endpoint:/api/admin/directory}": {
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 2
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "business_duration{endpoint:/api/payments/summary}": {
+      "values": {
+        "max": 0,
+        "avg": 0,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "operational_status{endpoint:/health,status:200}": {
+      "values": {
+        "count": 4,
+        "rate": 0.16688170765378754
+      },
+      "type": "counter",
+      "contains": "default"
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 95,
+        "min": 31,
+        "max": 95
+      }
+    },
+    "business_requests{endpoint:/api/payments/summary}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "http_req_duration": {
+      "contains": "time",
+      "values": {
+        "med": 962.9019000000001,
+        "p(90)": 15139.290060000001,
+        "p(95)": 15178.38928,
+        "p(99)": 16505.630957,
+        "max": 17061.0343,
+        "avg": 4655.351773333334
+      },
+      "type": "trend"
+    },
+    "business_duration{endpoint:/api/schedules}": {
+      "values": {
+        "avg": 0,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0,
+        "max": 0
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "business_requests{endpoint:/api/family/children}": {
+      "contains": "default",
+      "values": {
+        "rate": 0.08344085382689377,
+        "count": 2
+      },
+      "type": "counter"
+    },
+    "operational_requests": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 8,
+        "rate": 0.3337634153075751
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 90,
+        "rate": 3.75483842221022
+      }
+    },
+    "business_requests{endpoint:/api/payments/mine}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      }
+    },
+    "business_requests{endpoint:/api/admin/profiles}": {
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      },
+      "type": "counter"
+    },
+    "operational_duration{endpoint:/ready}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 1375.482875,
+        "med": 651.6034500000001,
+        "p(90)": 3103.91526,
+        "p(95)": 3550.1679299999987,
+        "p(99)": 3907.170065999999,
+        "max": 3996.4206
+      }
+    },
+    "business_requests{endpoint:/api/portal-access/grades}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 0.08344085382689377,
+        "count": 2
+      }
+    },
+    "business_failed{endpoint:/api/family/children}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 2
+      }
+    },
+    "business_requests{endpoint:/api/auth/2fa/status}": {
+      "values": {
+        "rate": 0.5423655498748096,
+        "count": 13
+      },
+      "type": "counter",
+      "contains": "default"
+    },
+    "business_duration{endpoint:/api/payments/mine}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 9687.62829,
+        "p(99)": 9700.297418,
+        "max": 9703.4647,
+        "avg": 9545.100600000002,
+        "med": 9545.100600000002,
+        "p(90)": 9671.79188
+      }
+    },
+    "http_req_waiting": {
+      "contains": "time",
+      "values": {
+        "p(95)": 15177.95073,
+        "p(99)": 16504.974382,
+        "max": 17059.7436,
+        "avg": 4654.246764444445,
+        "med": 962.9019000000001,
+        "p(90)": 15138.80946
+      },
+      "type": "trend"
+    },
+    "business_duration{endpoint:/api/notifications}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 519.59345,
+        "med": 508.6799,
+        "p(90)": 566.2297100000001,
+        "p(95)": 574.151505,
+        "p(99)": 580.4889410000001,
+        "max": 582.0733
+      }
+    },
+    "business_requests{endpoint:/api/sync/changes}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      }
+    },
+    "business_duration{endpoint:/api/payments/charges}": {
+      "values": {
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0,
+        "max": 0,
+        "avg": 0
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "business_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.1951219512195122,
+        "passes": 16,
+        "fails": 66
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": false
+        }
+      }
+    },
+    "business_requests{endpoint:/api/payments/charges}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 68.90427000000001,
+        "p(95)": 75.04699,
+        "p(99)": 78.57107,
+        "max": 80.1526,
+        "avg": 24.442837777777775,
+        "med": 0
+      }
+    },
+    "business_duration{endpoint:/api/grades/scales/default}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 11150.76895,
+        "med": 11150.76895,
+        "p(90)": 14341.23563,
+        "p(95)": 14740.043965,
+        "p(99)": 15059.090633,
+        "max": 15138.8523
+      }
+    },
+    "business_requests{endpoint:/api/admin/roles}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1,
+        "rate": 0.041720426913446886
+      }
+    },
+    "business_requests{endpoint:/api/grades/scales/default}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      }
+    },
+    "business_failed{endpoint:/api/assignments/teacher}": {
+      "contains": "default",
+      "values": {
+        "rate": 0.5,
+        "passes": 1,
+        "fails": 1
+      },
+      "type": "rate"
+    },
+    "dropped_iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 64,
+        "rate": 2.6701073224606007
+      }
+    },
+    "business_duration{endpoint:/api/family/assignments}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 16436.9856,
+        "p(99)": 16436.9856,
+        "max": 16436.9856,
+        "avg": 16436.9856,
+        "med": 16436.9856,
+        "p(90)": 16436.9856
+      }
+    },
+    "business_requests{endpoint:/api/admin/directory/people}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 4,
+        "rate": 0.16688170765378754
+      }
+    },
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 5120.846138823529,
+        "med": 1344.8604,
+        "p(90)": 15203.547400000001,
+        "p(95)": 15288.145999999999,
+        "p(99)": 16537.471051999997,
+        "max": 17061.8198
+      }
+    },
+    "business_requests{endpoint:/api/notifications}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 0.3337634153075751,
+        "count": 8
+      }
+    },
+    "business_limited": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 82
+      },
+      "thresholds": {
+        "rate<0.10": {
+          "ok": true
+        }
+      }
+    },
+    "data_received": {
+      "values": {
+        "count": 521864,
+        "rate": 21772.388870759045
+      },
+      "type": "counter",
+      "contains": "data"
+    },
+    "operational_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 741.5388,
+        "med": 156.484,
+        "p(90)": 1913.9081399999995,
+        "p(95)": 2955.1643699999986,
+        "p(99)": 3788.169353999999,
+        "max": 3996.4206
+      }
+    },
+    "business_duration{endpoint:/api/admin/directory}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 7130.61355,
+        "med": 7130.61355,
+        "p(90)": 7194.743109999999,
+        "p(95)": 7202.759305,
+        "p(99)": 7209.172261,
+        "max": 7210.7755
+      }
+    },
+    "operational_status{endpoint:/health,status:504}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "count": 0
+      }
+    },
+    "business_duration": {
+      "contains": "time",
+      "values": {
+        "avg": 5037.187185365854,
+        "med": 1010.5542,
+        "p(90)": 15142.79214,
+        "p(95)": 15179.102719999999,
+        "p(99)": 16555.554852999998,
+        "max": 17061.0343
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": false
+        }
+      },
+      "type": "trend"
+    },
+    "business_duration{endpoint:/api/admin/directory/counts}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 558.0832,
+        "med": 558.0832,
+        "p(90)": 571.59016,
+        "p(95)": 573.27853,
+        "p(99)": 574.629226,
+        "max": 574.9669
+      }
+    },
+    "business_duration{endpoint:/api/admin/roles}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 15101.4264,
+        "p(90)": 15101.4264,
+        "p(95)": 15101.4264,
+        "p(99)": 15101.4264,
+        "max": 15101.4264,
+        "avg": 15101.4264
+      }
+    },
+    "business_requests{endpoint:/api/schedules/mine}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 4,
+        "rate": 0.16688170765378754
+      }
+    },
+    "business_requests{endpoint:/api/family/attendance}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 95,
+        "min": 9,
+        "max": 95
+      }
+    },
+    "business_failed{endpoint:/api/notifications}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 8
+      }
+    },
+    "business_status{status:500}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_failed{endpoint:/api/reports/report-cards}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 0,
+        "rate": 0,
+        "passes": 0
+      }
+    },
+    "business_status{status:200}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 66,
+        "rate": 2.7535481762874947
+      }
+    },
+    "business_failed{endpoint:/api/family/assignments}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 1
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.17777777777777778,
+        "passes": 16,
+        "fails": 74
+      }
+    },
+    "business_duration{endpoint:/api/family/attendance}": {
+      "values": {
+        "max": 8075.1144,
+        "avg": 7259.1371500000005,
+        "med": 7259.1371500000005,
+        "p(90)": 7911.91895,
+        "p(95)": 7993.516675000001,
+        "p(99)": 8058.794855
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "operational_status{endpoint:/health,status:503}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "http_req_sending": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0.29364999999999997,
+        "p(90)": 0.6673800000000001,
+        "p(95)": 0.8661949999999998,
+        "p(99)": 1.0919059999999998,
+        "max": 1.1138,
+        "avg": 0.30947777777777785
+      }
+    },
+    "business_status": {
+      "contains": "default",
+      "values": {
+        "rate": 3.4210750069026448,
+        "count": 82
+      },
+      "type": "counter"
+    },
+    "business_requests{endpoint:/api/admin/directory}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      }
+    },
+    "business_requests{endpoint:/api/assignments/student}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      }
+    },
+    "business_duration{endpoint:/api/assignments/student}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 15651.8825,
+        "avg": 15415.537199999999,
+        "med": 15415.537199999999,
+        "p(90)": 15604.61344,
+        "p(95)": 15628.24797,
+        "p(99)": 15647.155594
+      }
+    },
+    "operational_status{endpoint:/ready,status:503}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "http_req_tls_handshaking": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 182.8922,
+        "avg": 33.00602777777778,
+        "med": 0,
+        "p(90)": 89.02574,
+        "p(95)": 96.31245999999999,
+        "p(99)": 179.033338
+      }
+    },
+    "business_status{status:401}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_failed{endpoint:/api/schedules}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 0
+      }
+    },
+    "business_failed{endpoint:/api/assignments/student}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 0,
+        "rate": 1,
+        "passes": 2
+      }
+    },
+    "operational_status{endpoint:/health,status:0}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_failed{endpoint:/api/admin/directory/counts}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 2
+      }
+    },
+    "business_status{status:502}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_requests{endpoint:/api/admin/directory/counts}": {
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      },
+      "type": "counter"
+    },
+    "operational_duration{endpoint:/health}": {
+      "values": {
+        "p(99)": 110.65692,
+        "max": 110.664,
+        "avg": 107.594725,
+        "med": 108.22025,
+        "p(90)": 110.5932,
+        "p(95)": 110.6286
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "business_requests{endpoint:/api/events/announcements}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 8,
+        "rate": 0.3337634153075751
+      }
+    },
+    "business_requests{endpoint:/api/grades/periods}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 2,
+        "rate": 0.08344085382689377
+      }
+    },
+    "iterations": {
+      "values": {
+        "count": 85,
+        "rate": 3.5462362876429854
+      },
+      "type": "counter",
+      "contains": "default"
+    },
+    "business_duration{endpoint:/api/reports/report-cards}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 0,
+        "med": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0,
+        "max": 0
+      }
+    },
+    "business_duration{endpoint:/api/auth/2fa/status}": {
+      "values": {
+        "avg": 4868.775230769231,
+        "med": 777.4983,
+        "p(90)": 15095.37162,
+        "p(95)": 15107.11848,
+        "p(99)": 15119.307936,
+        "max": 15122.3553
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "business_requests{endpoint:/api/portal-access/me}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 11,
+        "rate": 0.45892469604791575
+      }
+    },
+    "business_duration{endpoint:/api/admin/directory/people}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(99)": 5463.367731,
+        "max": 5497.3845,
+        "avg": 2865.7439,
+        "med": 2602.1585999999998,
+        "p(90)": 5157.21681,
+        "p(95)": 5327.300655
+      }
+    },
+    "business_duration{endpoint:/api/portal-access/me}": {
+      "values": {
+        "avg": 4844.547636363636,
+        "med": 1629.5383,
+        "p(90)": 15124.5294,
+        "p(95)": 15124.8672,
+        "p(99)": 15125.13744,
+        "max": 15125.205
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "p(90)": 2.730750000000002,
+        "p(95)": 3.7162199999999994,
+        "p(99)": 10.447826999999998,
+        "max": 13.1852,
+        "avg": 0.7955311111111111
+      }
+    },
+    "business_status{status:0}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_failed{endpoint:/api/payments/mine}": {
+      "values": {
+        "passes": 0,
+        "fails": 2,
+        "rate": 0
+      },
+      "type": "rate",
+      "contains": "default"
+    },
+    "business_failed{endpoint:/api/portal-access/me}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.18181818181818182,
+        "passes": 2,
+        "fails": 9
+      }
+    },
+    "business_requests": {
+      "contains": "default",
+      "values": {
+        "count": 82,
+        "rate": 3.4210750069026448
+      },
+      "type": "counter"
+    },
+    "business_failed{endpoint:/api/payments/summary}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 0,
+        "fails": 0,
+        "rate": 0
+      }
+    },
+    "business_duration{endpoint:/api/events/announcements}": {
+      "values": {
+        "avg": 742.0440874999999,
+        "med": 698.6225,
+        "p(90)": 981.84741,
+        "p(95)": 987.148055,
+        "p(99)": 991.3885710000001,
+        "max": 992.4487
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "business_requests{endpoint:/api/family/assignments}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1,
+        "rate": 0.041720426913446886
+      }
+    },
+    "operational_status{endpoint:/ready,status:200}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 4,
+        "rate": 0.16688170765378754
+      }
+    },
+    "business_failed{endpoint:/api/chats/conversations}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 0,
+        "fails": 8,
+        "rate": 0
+      }
+    },
+    "business_duration{endpoint:/api/family/children}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(90)": 1305.22434,
+        "p(95)": 1325.0423700000001,
+        "p(99)": 1340.896794,
+        "max": 1344.8604,
+        "avg": 1146.6801,
+        "med": 1146.6801
+      }
+    },
+    "business_duration{endpoint:/api/grades/periods}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 4967.69925,
+        "med": 4967.69925,
+        "p(90)": 5796.77481,
+        "p(95)": 5900.4092550000005,
+        "p(99)": 5983.316811000001,
+        "max": 6004.0437
+      }
+    },
+    "business_failed{endpoint:/api/events/announcements}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 8,
+        "rate": 0,
+        "passes": 0
+      }
+    },
+    "business_requests{endpoint:/api/reports/report-cards}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_status{status:504}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_failed{endpoint:/api/admin/profiles}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 2,
+        "fails": 0
+      }
+    },
+    "business_status{status:404}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_failed{endpoint:/api/grades/periods}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 2
+      }
+    },
+    "business_failed{endpoint:/api/payments/charges}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 0
+      }
+    },
+    "business_duration{endpoint:/api/schedules/mine}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 5343.8019,
+        "avg": 2366.5098,
+        "med": 1546.7888,
+        "p(90)": 4223.864880000001,
+        "p(95)": 4783.833389999999,
+        "p(99)": 5231.808197999999
+      }
+    },
+    "operational_status{endpoint:/ready,status:0}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_failed{endpoint:/api/admin/roles}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 1,
+        "fails": 0
+      }
+    },
+    "business_failed{endpoint:/api/family/attendance}": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 2
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 2349.0621405405413,
+        "med": 742.79125,
+        "p(90)": 7090.646860000001,
+        "p(95)": 8534.182134999994,
+        "p(99)": 13559.271871999985,
+        "max": 16436.9856
+      }
+    },
+    "business_requests{endpoint:/api/schedules}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "business_status{status:403}": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 0,
+        "rate": 0
+      }
+    }
+  },
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 23969.074
+  }
+}

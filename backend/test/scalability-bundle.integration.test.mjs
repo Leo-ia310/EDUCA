@@ -40,3 +40,14 @@ test('SQL Editor bundle blocks conflicting schedules atomically and keeps 2FA op
     await db.close();
   }
 });
+
+test('incremental assignment bundle installs both fixes atomically and preserves the deployed base readiness contract', {timeout:120000}, async()=>{
+  const db=await database({through:'0053_backend_readiness.sql'});
+  try {
+    const sql=await readFile(new URL('../../supabase/deploy/assignment-performance-0054-0055.sql',import.meta.url),'utf8');
+    await db.admin.query(sql);
+    assert.deepEqual((await db.admin.query('select backend_readiness_v1() result')).rows[0].result,{schemaVersion:53,assignmentWriteVersion:1});
+    assert.equal((await db.admin.query("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity")).rows[0].count,'0');
+    await assert.rejects(db.admin.query(sql),/already present/);await db.admin.query('rollback');
+  } finally {await db.close();}
+});

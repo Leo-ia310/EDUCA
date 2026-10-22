@@ -1,6 +1,7 @@
 import '../../../collaborations/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/network/provider_cache.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/animated_count.dart';
@@ -39,8 +40,8 @@ class _TeacherGradebookScreenState
     final classesAsync = ref.watch(teacherClassesProvider);
     // Periodos sin ids repetidos; el seleccionado debe existir en la lista
     // (si no, se usa el vigente o el primero) para no romper el dropdown.
-    final periods = _uniquePeriods(periodsAsync.valueOrNull ?? const []);
-    final classes = (classesAsync.valueOrNull ?? const <ClassSessionBrief>[])
+    final periods = _uniquePeriods(periodsAsync.scopedValue ?? const []);
+    final classes = (classesAsync.scopedValue ?? const <ClassSessionBrief>[])
         .where((c) => c.can('students.view'))
         .toList();
     final selectedClassId = classes.any((c) => c.classId == _classId)
@@ -80,8 +81,8 @@ class _TeacherGradebookScreenState
             ),
             Expanded(
               child: _GradebookBody(
-                classesLoading: classesAsync.isLoading,
-                periodsLoading: periodsAsync.isLoading,
+                classesLoading: classesAsync.isLoading && !classesAsync.isRefreshing,
+                periodsLoading: periodsAsync.isLoading && !periodsAsync.isRefreshing,
                 hasClasses: classes.isNotEmpty,
                 hasPeriods: periods.isNotEmpty,
                 data: data,

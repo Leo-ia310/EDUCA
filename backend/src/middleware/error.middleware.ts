@@ -36,6 +36,9 @@ export function errorHandler(
   else if(parser?.type==='entity.too.large')error=new HttpError(413,"El cuerpo excede el tamaño permitido.","payload_too_large");
   else if(parser?.type==='encoding.unsupported'||parser?.type==='charset.unsupported')error=new HttpError(415,"Codificación no admitida.","unsupported_encoding");
   if (isHttpError(error)) {
+    if (error.status>=500 && error.diagnostics) console.error({
+      event:'database_request_failed',requestId,status:error.status,databaseCode:error.diagnostics.databaseCode,
+    });
     if(error.retryAfter!=null)res.setHeader("retry-after",String(error.retryAfter));
     return res.status(error.status).json({
       ok: false,

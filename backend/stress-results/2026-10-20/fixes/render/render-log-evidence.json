@@ -1,0 +1,29 @@
+{
+  "source": "Render logs supplied by the user",
+  "records": [
+    {
+      "event": "database_request_failed",
+      "requestId": "dab47bba-0ad8-463f-bc01-121c753489ea",
+      "status": 503,
+      "databaseCode": "57014"
+    },
+    {
+      "event": "database_request_failed",
+      "requestId": "08e8815e-6dad-409c-8830-8dc3972cc5cf",
+      "status": 503,
+      "databaseCode": "57014"
+    },
+    {
+      "event": "database_request_failed",
+      "requestId": "92b535a5-80b0-4e31-b84c-dc41661185ed",
+      "status": 503,
+      "databaseCode": "unknown"
+    },
+    {
+      "event": "database_request_failed",
+      "requestId": "db268468-6e3f-4e6e-94cd-0c08ebc15013",
+      "status": 503,
+      "databaseCode": "unknown"
+    }
+  ]
+}

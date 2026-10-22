@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_paths.dart';
+import '../../../../core/network/provider_cache.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ class TeacherClassesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final result = ref.watch(teacherDashboardProvider);
-    final classes = result.valueOrNull?.myClasses ?? <TeacherClass>[];
+    final classes = result.scopedValue?.myClasses ?? <TeacherClass>[];
 
     return StudentDetailScaffold(
       title: 'Mis clases',
@@ -39,7 +40,7 @@ class TeacherClassesScreen extends ConsumerWidget {
           label: const Text('Colaboradores'),),
       child: SafeArea(
         bottom: false,
-        child: result.isLoading
+        child: result.isLoading && !result.isRefreshing
             ? const SkeletonList()
             : result.hasError
                 ? ErrorStateView(

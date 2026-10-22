@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,8 +20,8 @@ class AllSubjectsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Datos reales del backend (fallback a demo mientras carga o sin backend).
-    final data = ref.watch(studentDashboardProvider).valueOrNull ??
-        StudentDashboardData.mock();
+    final data = ref.watch(studentDashboardProvider).scopedValue ??
+        StudentDashboardData.empty();
     final subjects = data.subjects;
 
     return StudentDetailScaffold(

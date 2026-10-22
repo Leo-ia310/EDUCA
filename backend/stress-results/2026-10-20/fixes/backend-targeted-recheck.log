@@ -1,0 +1,23 @@
+TAP version 13
+# Subtest: more than 1000 recipients retain complete counters without per-recipient recounts
+ok 1 - more than 1000 recipients retain complete counters without per-recipient recounts
+  ---
+  duration_ms: 38088.8775
+  type: 'test'
+  ...
+# Subtest: private administrative full-name search uses its expression index with selective server filters
+ok 2 - private administrative full-name search uses its expression index with selective server filters
+  ---
+  duration_ms: 97897.2646
+  type: 'test'
+  ...
+# Full-name lookup: 7.221ms; indexes: persons_full_name_search, students_institution_person
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 138357.3972

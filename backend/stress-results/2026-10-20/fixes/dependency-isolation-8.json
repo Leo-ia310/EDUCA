@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-20T18:16:12.773Z",
+  "concurrency": 8,
+  "backendRequests": 1,
+  "dependencyRequests": 9,
+  "calls": [
+    {
+      "i": 3,
+      "status": 200,
+      "ms": 2342.6425,
+      "resultCount": 4
+    },
+    {
+      "i": 5,
+      "status": 200,
+      "ms": 2335.2192,
+      "resultCount": 4
+    },
+    {
+      "i": 7,
+      "status": 200,
+      "ms": 2906.8424999999997,
+      "resultCount": 4
+    },
+    {
+      "i": 2,
+      "status": 200,
+      "ms": 3027.6391,
+      "resultCount": 4
+    },
+    {
+      "i": 0,
+      "status": 200,
+      "ms": 3134.03,
+      "resultCount": 4
+    },
+    {
+      "i": 1,
+      "status": 200,
+      "ms": 3129.1342,
+      "resultCount": 4
+    },
+    {
+      "i": 6,
+      "status": 200,
+      "ms": 3109.7940000000003,
+      "resultCount": 4
+    },
+    {
+      "i": 4,
+      "status": 200,
+      "ms": 3129.0516000000002,
+      "resultCount": 4
+    }
+  ],
+  "sessionClosed": true
+}

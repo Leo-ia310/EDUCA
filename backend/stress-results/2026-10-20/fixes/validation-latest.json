@@ -1,0 +1,32 @@
+{
+  "recordedAt": "2026-10-20T19:40:30.421Z",
+  "source": "Completed CLI test output in this task",
+  "commands": [
+    {
+      "command": "npm --prefix backend run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm --prefix backend run build",
+      "exitCode": 0
+    },
+    {
+      "command": "npm --prefix backend run test:unit",
+      "exitCode": 0,
+      "passed": 62,
+      "failed": 0
+    },
+    {
+      "command": "node --test backend/test/live-actor-roles.integration.test.mjs backend/test/assignment-write.integration.test.mjs",
+      "exitCode": 0,
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "command": "node --test --test-concurrency=1 backend/test/payments.integration.test.mjs backend/test/attendance-sync.integration.test.mjs",
+      "exitCode": 0,
+      "passed": 45,
+      "failed": 0
+    }
+  ]
+}

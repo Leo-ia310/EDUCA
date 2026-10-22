@@ -1,0 +1,6 @@
+Analyzing frontend...
+
+   info - Missing a required trailing comma. Try adding a trailing comma - test\assignment_save_retry_test.dart:29:52 - require_trailing_commas
+   info - Missing a required trailing comma. Try adding a trailing comma - test\assignment_save_retry_test.dart:89:47 - require_trailing_commas
+
+2 issues found. (ran in 155.5s)

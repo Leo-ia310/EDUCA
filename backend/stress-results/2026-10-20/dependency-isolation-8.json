@@ -1,0 +1,65 @@
+{
+  "at": "2026-10-20T17:32:50.796Z",
+  "concurrency": 8,
+  "backendRequests": 1,
+  "dependencyRequests": 9,
+  "calls": [
+    {
+      "i": 1,
+      "status": 500,
+      "ms": 8858.8027,
+      "sqlCode": "57014",
+      "error": "canceling statement due to statement timeout"
+    },
+    {
+      "i": 2,
+      "status": 500,
+      "ms": 8861.228599999999,
+      "sqlCode": "57014",
+      "error": "canceling statement due to statement timeout"
+    },
+    {
+      "i": 3,
+      "status": 500,
+      "ms": 8891.3138,
+      "sqlCode": "57014",
+      "error": "canceling statement due to statement timeout"
+    },
+    {
+      "i": 4,
+      "status": 500,
+      "ms": 8891.291000000001,
+      "sqlCode": "57014",
+      "error": "canceling statement due to statement timeout"
+    },
+    {
+      "i": 0,
+      "status": 500,
+      "ms": 8904.5218,
+      "sqlCode": "57014",
+      "error": "canceling statement due to statement timeout"
+    },
+    {
+      "i": 6,
+      "status": 500,
+      "ms": 8895.1535,
+      "sqlCode": "57014",
+      "error": "canceling statement due to statement timeout"
+    },
+    {
+      "i": 5,
+      "status": 500,
+      "ms": 8988.576500000001,
+      "sqlCode": "57014",
+      "error": "canceling statement due to statement timeout"
+    },
+    {
+      "i": 7,
+      "status": 500,
+      "ms": 9156.1171,
+      "sqlCode": "57014",
+      "error": "canceling statement due to statement timeout"
+    }
+  ],
+  "sessionClosed": true
+}

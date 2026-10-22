@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import '../widgets/assignment_load_more.dart';
 import '../../../collaborations/providers.dart';
 import '../../../../core/constants/env.dart';
@@ -35,7 +36,7 @@ List<Assignment> _byCreation(Iterable<Assignment> items) =>
 /// Materias del docente: las de sus clases (con fallback a las que aparecen
 /// en sus tareas si aún no tiene clases cargadas).
 List<TeacherClass> _teacherSubjects(WidgetRef ref, List<Assignment> all) {
-  final classes = (ref.watch(teacherDashboardProvider).valueOrNull ??
+  final classes = (ref.watch(teacherDashboardProvider).scopedValue ??
           TeacherDashboardData.empty())
       .myClasses;
   if (classes.isNotEmpty) return classes;

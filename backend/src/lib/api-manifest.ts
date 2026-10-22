@@ -23,8 +23,8 @@ const businessSource = "backend/src/modules/business-api/business-api.handlers.t
 
 export const apiManifest: ApiManifestEntry[] = [
   api({module:"operations",method:"GET",path:"/health",summary:"Proceso HTTP activo",auth:"público",frontendStatus:"not_needed",request:"sin body",response:"{ ok: true, service }",source:"backend/src/app.ts",notes:"Liveness sin consultar dependencias; no mide capacidad de negocio."}),
-  api({module:"operations",method:"GET",path:"/ready",summary:"Disponibilidad de PostgreSQL y versión de contrato",auth:"público",frontendStatus:"not_needed",request:"sin body",response:"{ ok, service, schemaVersion: 53 }",source:"backend/src/app.ts",notes:"200 listo; 503 durante cierre, caída de consulta o falta de migración 0053. Probe compartido y caché de 2 segundos; no expone detalles internos ni comprueba cada proveedor externo. Paquete manual completo: supabase/deploy/scalability-0029-0053.sql; requiere backup, revisión de horarios y base compatible con 0028. No activa 2FA."}),
-  api({module:"operations",method:"GET",path:"/internal/metrics",summary:"Contadores, latencia y concurrencia del proceso",auth:"Authorization: Bearer INTERNAL_API_SECRET",frontendStatus:"not_needed",request:"sin body",response:"{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies } }",source:"backend/src/app.ts",notes:"Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Latencia de dependencia hasta cabeceras; solicitudes HTTP completas hasta finish/close."}),
+  api({module:"operations",method:"GET",path:"/ready",summary:"Disponibilidad de PostgreSQL y versión de contrato",auth:"público",frontendStatus:"not_needed",request:"sin body",response:"{ ok, service, schemaVersion: 53, assignmentWriteVersion: 1 }",source:"backend/src/app.ts",notes:"200 listo; 503 durante cierre, caída de consulta o falta de migraciones 0053–0055. La capacidad aditiva assignmentWriteVersion=1 permite desplegar SQL antes del backend sin romper la versión anterior. Probe compartido y caché de 2 segundos; no expone detalles internos ni comprueba cada proveedor externo. Paquete inicial: supabase/deploy/scalability-0029-0053.sql; completar con supabase/deploy/assignment-performance-0054-0055.sql antes de publicar este backend. Requiere backup y, para el paquete inicial, revisión de horarios y base compatible con 0028. No activa 2FA."}),
+  api({module:"operations",method:"GET",path:"/internal/metrics",summary:"Contadores, latencia y concurrencia del proceso",auth:"Authorization: Bearer INTERNAL_API_SECRET",frontendStatus:"not_needed",request:"sin body",response:"{ ok: true, data: { scope, uptimeSeconds, activeRequests, draining, latencyBucketUpperMs, requests, dependencies, dependencyConcurrency, catalogCache } }",source:"backend/src/app.ts",notes:"Métricas por plantilla de ruta/estado y dependencia, sin IDs, query strings, cuerpos ni tokens. catalogCache muestra enabled, circuitOpen, localEntries, hits, localHits, misses, joins y failures; nunca secretos ni claves. Agregar por instancia en observabilidad. No son percentiles de toda la flota. Auth y PostgREST comparten admisión FIFO por proceso: SUPABASE_MAX_CONCURRENT_REQUESTS=8, SUPABASE_MAX_DATABASE_REQUESTS=4 y SUPABASE_MAX_PENDING_REQUESTS=100 por defecto. Las consultas SQL adquieren primero su límite propio para dejar capacidad compartida a Auth. La espera usa el deadline existente y se cancela al desconectar; no cachea permisos. dependencyConcurrency informa active, pending, limit, queueLimit, rejected, cancelled y tiempos de espera, además del límite SQL anidado en database. Latencia de dependencia incluye cola y llega hasta cabeceras; solicitudes HTTP completas hasta finish/close. Storage conserva su transporte y deadline sin usar esta cola."}),
   api({
     module: "portal-access",
     method: "GET",
@@ -35,7 +35,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "sin body",
     response: "{ permissions, students: [{ studentId, name, academicYearId, annualVisible, periods }], staff }",
     source: "backend/src/modules/portal-access/portal-access.routes.ts",
-    notes: "Migraciones 0026, 0027 y 0039–0044. annualVisible corresponde al año actual; los documentos históricos conservan su autorización por año conocido y los anuales sin año mantienen la comprobación conservadora. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.",
+    notes: "Migraciones 0026, 0027 y 0039–0044. annualVisible corresponde al año actual; los documentos históricos conservan su autorización por año conocido y los anuales sin año mantienen la comprobación conservadora. Permisos: usuario > rol > institución; notas: usuario > estudiante > grupo > rol > institución y periodo específico dentro del mismo alcance. Docentes y administración conservan acceso. RLS protege consultas directas, promedios, boletines y Storage. Flutter carga permisos al iniciar y sincroniza cambios mediante portal_access_revisions en Realtime, al reconectar o volver a la app. No hay sondeo periódico; cambios efectivos se aplican en segundo plano sin recargar si el resultado es idéntico. Backend valida cada petición. Las RPC del módulo distinguen errores de dependencia (503), permisos (403) y validación (400), sin exponer mensajes SQL. Destinatarios se buscan por nombre con lista limitada a 50 coincidencias.",
   }),
   api({
     module: "portal-access",
@@ -726,7 +726,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "ids de tarea y archivo",
     response: "{ ok: true, data: { ok: true, attachments: [{ id, name, url, sizeBytes, mimeType }] } }",
     source: "backend/src/modules/assignments/assignments.routes.ts",
-    notes: "Solo desvincula el archivo de la tarea (assignment_files); el archivo y su objeto en almacenamiento no se borran.",
+    notes: "Solo desvincula el archivo de la tarea (assignment_files); el archivo y su objeto en almacenamiento no se borran. Si falla la lectura posterior de adjuntos, conserva 503 para dependencia y 403 para permisos, sin exponer SQL.",
   }),
   api({
     module: "assignments",
@@ -809,7 +809,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: classId?, search?, onlyOpen?, kinds? (separados por coma), subject?, cursor?, limit? (1–100; defecto 50)",
     response: "{ ok: true, data: { assignments: [{ id, classId, subjectName, groupName, teacherName, title, description, instructions, assignedAt, dueAt, kind, maxScore, allowLate, published, attachments, totalStudents, submittedCount, gradedCount, progress }], nextCursor: string | null } }",
     source: "backend/src/modules/assignments/assignments.routes.ts",
-    notes: "Migración 0032. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.",
+    notes: "Migraciones 0032 y 0054. Permisos de clase, matrícula y familia se calculan una vez por consulta mediante InitPlans; no hay caché entre usuarios o peticiones. 0056 evita consultas anidadas redundantes de roles vigentes en esos alcances. RLS, revocaciones y 2FA opcional permanecen activos. Año actual, sin borradas. Página por due_at/id, NULL al final; reutilizar nextCursor para continuar. Filtros en SQL antes de paginar. Una consulta agrupa adjuntos, matrícula y entregas. RLS limita a clases propias y colaboraciones aceptadas. Sustituye el límite silencioso de 300.",
   }),
   api({
     module: "assignments", method: "GET", path: "/api/assignments/student",
@@ -819,7 +819,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: studentId (obligatorio para padres), classId?, search?, onlyOpen?, kinds?, subject?, cursor?, limit? (1–100; defecto 50)",
     response: "{ ok: true, data: { assignments: [tarea con progress: { status, score }], nextCursor: string | null } }",
     source: "backend/src/modules/assignments/assignments.routes.ts",
-    notes: "Migración 0032. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.",
+    notes: "Migraciones 0032 y 0054, con alcances RLS por consulta; 0056 simplifica comprobaciones de roles sin cachear permisos. Alcance del alumno validado por backend y SQL/RLS. Solo matrícula ACT del año actual y tareas publicadas. progress evita consultas por cada tarjeta; notas respetan visibilidad. Cursor opaco, filtros y adjuntos como /teacher.",
   }),
   api({
     module: "assignments",
@@ -831,7 +831,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "id de tarea",
     response: "{ ok: true, data: { assignment: { ...tarea, attachments }, students: [{ studentId, name, submissionId | null, status: pending|submitted|late|graded, submittedAt, notes, attachments, score | null, feedback | null }] } }",
     source: "backend/src/modules/assignments/assignments.routes.ts",
-    notes: "Incluye alumnos activos sin entrega (pending). La nota sale de grades via la evaluacion ligada a la tarea.",
+    notes: "Incluye alumnos activos sin entrega (pending). La nota sale de grades via la evaluacion ligada a la tarea. Los fallos de lectura de adjuntos conservan su estado de dependencia o permisos y no exponen SQL.",
   }),
   api({
     module: "assignments",
@@ -840,10 +840,10 @@ export const apiManifest: ApiManifestEntry[] = [
     summary: "Crea o actualiza una tarea",
     auth: "teacher con assignments.create en la clase",
     frontendStatus: "connected",
-    request: "{ assignmentId?, classId, title, description?, instructions?, dueAt, maxScore, allowLate?, published?, attachments?: [{ id }] }",
+    request: "{ assignmentId?, classId, title, description?, instructions?, dueAt, maxScore, allowLate?, published?, attachments?: [{ id }] (máximo 100), idempotencyKey?: UUID }",
     response: "{ ok: true, data: { assignment } }",
     source: "backend/src/modules/assignments/assignments.routes.ts",
-    notes: "Equivale a action assignments.upsert. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Los adjuntos se ligan por id de archivo ya registrado (files/metadata); al editar solo se agregan.",
+    notes: "Equivale a action assignments.upsert. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Migración 0055: guardado, adjuntos y documento de respuesta en una transacción SQL. attachments presente reemplaza la lista; omitido la conserva. Reintentos con el mismo idempotencyKey y contenido retornan el documento confirmado; contenido distinto devuelve 409. Sin clave se genera una por petición para compatibilidad, sin garantía entre reintentos. Flutter conserva la clave y el contenido hasta confirmar, incluso al navegar; resuelve una creación incierta antes de enviar ediciones. Se validan clase anterior/destino, institución, archivos y permisos vigentes.",
   }),
   api({
     module: "assignments",
@@ -937,7 +937,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: date? (AAAA-MM-DD; por defecto hoy)",
     response: "{ ok: true, data: { class: { id, subject, group }, date, sessionId | null, statuses: [{ id, name, code, countsAsAbsent, color }], students: [{ studentId, name, statusId | null, notes, attendanceId, uuid, version, recordedAt }] } }",
     source: "backend/src/modules/attendance/attendance.routes.ts",
-    notes: "Solo lectura para la web del maestro. No crea la sesion de clase. Alumnos activos matriculados en el salon de la clase.",
+    notes: "Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Solo lectura para la web del maestro. No crea la sesion de clase. Alumnos activos matriculados en el salon de la clase.",
   }),
   api({
     module: "attendance",
@@ -961,7 +961,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: from?, to? (AAAA-MM-DD; por defecto ultimos 30 dias)",
     response: "{ ok: true, data: { from, to, statuses: [{ id, name, code, countsAsAbsent, color }], groups: [{ groupId, name, sessions, marks, absent, rate | null, byStatus }], total } }",
     source: "backend/src/modules/attendance/attendance.routes.ts",
-    notes: "Solo lectura para el panel web. Sesiones y marcas se recorren por páginas ordenadas para evitar truncar reportes de más de 1000 filas. rate = (marcas - ausencias) / marcas, donde ausencia es el estado con counts_as_absent. byStatus indexado por id de estado.",
+    notes: "Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Solo lectura para el panel web. Sesiones y marcas se recorren por páginas ordenadas para evitar truncar reportes de más de 1000 filas. rate = (marcas - ausencias) / marcas, donde ausencia es el estado con counts_as_absent. byStatus indexado por id de estado.",
   }),
   api({
     module: "attendance",
@@ -973,7 +973,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "query: from?, to? (AAAA-MM-DD)",
     response: "{ ok: true, data: { from, to, group: { id, name }, statuses, sessions: [{ id, date, classId, subject, topic, marks, absent, rate, byStatus }], students: [{ studentId, name, marks, absent, rate, byStatus }] } }",
     source: "backend/src/modules/attendance/attendance.routes.ts",
-    notes: "Alumnos activos con matrícula ACT en el salón, sin duplicados entre años, incluso sin marcas (rate null). Reporte completo mediante páginas ordenadas. 404 si el salón no existe en la institución.",
+    notes: "Solo el catalogo de tipos de estado usa Redis opcional (60s) y L1 de 10s, aislado por proyecto e institucion. Alumnos, marcas y permisos siempre se consultan y autorizan. Alumnos activos con matrícula ACT en el salón, sin duplicados entre años, incluso sin marcas (rate null). Reporte completo mediante páginas ordenadas. 404 si el salón no existe en la institución.",
   }),
   api({
     module: "attendance",
@@ -1172,7 +1172,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "sin parametros; institucion de la sesion",
     response: "{ ok: true, data: { scale: object | null, status: configured | not_configured } }",
     source: "backend/src/modules/grades/grades.routes.ts",
-    notes: "Sin filtro de periodo. Usa la escala predeterminada activa de la institucion o la primera activa por id; sin escalas devuelve HTTP 200 con scale null.",
+    notes: "Sin filtro de periodo. Usa la escala predeterminada activa de la institucion o la primera activa por id; sin escalas devuelve HTTP 200 con scale null. Cache Upstash opcional exclusivamente del catalogo institucional (30s), con revision por institucion invalidada al configurar escalas por REST o business-api. Autenticacion vigente en cada peticion; fallback a DB si Redis falla. Nunca almacena notas ni permisos.",
   }),
   api({
     module: "grades",

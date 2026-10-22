@@ -1,0 +1,2 @@
+{"level":"info","service":"educa360-backend","event":"server_started","port":53656}
+{ event: 'notification_push_worker_unavailable' }

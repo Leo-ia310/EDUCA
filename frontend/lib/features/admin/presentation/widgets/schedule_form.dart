@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../schedule/providers.dart';
 import '../../data/admin_backend_repository.dart';
 import '../../data/admin_schedule.dart';
 import '../../data/demo_schedules.dart';
@@ -181,6 +182,8 @@ class _ScheduleFormState extends ConsumerState<_ScheduleForm> {
         );
       }
       ref.invalidate(adminSchedulesProvider);
+      ref.invalidate(weeklySlotsProvider);
+      ref.invalidate(childWeeklySlotsProvider);
       navigator.pop();
     } catch (e) {
       if (!mounted) return;
@@ -281,6 +284,8 @@ class _ScheduleFormState extends ConsumerState<_ScheduleForm> {
     try {
       await repo.deleteSchedule(e.id);
       ref.invalidate(adminSchedulesProvider);
+      ref.invalidate(weeklySlotsProvider);
+      ref.invalidate(childWeeklySlotsProvider);
       navigator.pop();
       messenger.showSnackBar(
         const SnackBar(content: Text('Horario eliminado')),

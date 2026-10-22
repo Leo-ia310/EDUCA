@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { decodeAssignmentCursor, encodeAssignmentCursor, AssignmentCursor } from "./assignment-cursor";
 import { collaborationService } from "../collaborations/collaborations.service";
 import { assertNoDbError } from "../../lib/db";
@@ -167,25 +168,19 @@ export class AssignmentsService {
       );
     }
 
-    const classRow = await this.permissions.assertTeacherCanUseClass(
-      ctx,
-      classId,
-      "assignments.create",
-    );
+    this.permissions.requireRole(ctx, ['teacher']);
     const assignmentId = optionalId(payload.assignmentId);
-    if (assignmentId != null) {
-      await this.permissions.assertTeacherCanUseAssignment(ctx, assignmentId);
+    const key = optionalString(payload.idempotencyKey);
+    if (key != null && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(key)) {
+      throw new HttpError(400, 'Clave de operación inválida.', 'validation_error');
     }
-    const teacherId = await this.permissions.currentTeacherId(ctx);
-    const academicPeriodId = await this.repository.currentAcademicPeriodId(
-      ctx.institutionId,
-      dueAt,
-    );
-    const now = new Date().toISOString();
+    if (payload.attachments != null && (!Array.isArray(payload.attachments) || payload.attachments.length > 100)) {
+      throw new HttpError(400, 'Adjuntos inválidos; máximo 100 archivos.', 'validation_error');
+    }
+    const fileIds = payload.attachments == null ? null : [...new Set(asList(payload.attachments)
+      .map(item => requiredId(asRecord(item).id, 'Archivo')))].sort((a, b) => a - b);
     const dbPayload = {
-      institution_id: ctx.institutionId,
-      class_id: Number(classRow.id),
-      academic_period_id: academicPeriodId,
+      class_id: classId,
       title,
       ...(kind == null ? {} : { kind }),
       description: optionalString(payload.description),
@@ -194,24 +189,8 @@ export class AssignmentsService {
       max_score: maxScore,
       allow_late: Boolean(payload.allowLate),
       published: payload.published == null ? true : Boolean(payload.published),
-      assigned_at: now,
-      ...(assignmentId == null ? { created_by: teacherId } : {}),
-      updated_at: now,
     };
-
-    const row = assignmentId == null
-      ? await this.repository.insertAssignment(dbPayload)
-      : await this.repository.updateAssignment(
-        assignmentId,
-        ctx.institutionId,
-        dbPayload,
-      );
-
-    await this.linkAttachments(ctx, {
-      attachments: payload.attachments,
-      assignmentId: Number(row.id),
-    });
-    return { assignment: await this.hydrateAssignment(ctx, Number(row.id)) };
+    return { assignment: await this.repository.writeAssignment(assignmentId, dbPayload, fileIds, key ?? randomUUID()) };
   }
 
   /** Quita un adjunto de la tarea (solo el vínculo; el archivo queda en el almacenamiento). */
@@ -345,7 +324,6 @@ export class AssignmentsService {
     ctx: AppContext,
     options: {
       attachments: unknown;
-      assignmentId?: number;
       submissionId?: number;
     },
   ) {
@@ -367,13 +345,6 @@ export class AssignmentsService {
         );
       }
 
-      if (options.assignmentId != null) {
-        const result = await this.repository.linkAssignmentFile(
-          options.assignmentId,
-          fileId,
-        );
-        assertNoDbError(result.error);
-      }
       if (options.submissionId != null) {
         const result = await this.repository.linkSubmissionFile(
           options.submissionId,
@@ -394,7 +365,7 @@ export class AssignmentsService {
       column,
       id,
     );
-    if (error) throw new HttpError(400, error.message, "db_error");
+    assertNoDbError(error);
     return (data ?? [])
       .map((row: Record<string, unknown>) =>
         row.files as Record<string, unknown> | null
@@ -403,53 +374,6 @@ export class AssignmentsService {
         file != null
       )
       .map(mapAttachment);
-  }
-
-  private async hydrateAssignment(ctx: AppContext, id: number) {
-    const row = await this.repository.findAssignmentForHydration(
-      id,
-      ctx.institutionId,
-    );
-    const cls = row.classes as Record<string, unknown> | null;
-    const subject =
-      (cls?.subjects as Record<string, unknown> | null)?.name ?? "Materia";
-    const group =
-      (cls?.groups as Record<string, unknown> | null)?.name ?? "Grupo";
-    const teacherPerson =
-      ((cls?.teachers as Record<string, unknown> | null)?.persons ??
-        null) as Record<string, unknown> | null;
-    const teacherName = teacherPerson == null
-      ? null
-      : `${teacherPerson.first_name ?? ""} ${teacherPerson.last_name ?? ""}`
-        .trim();
-
-    const [attachments, counts] = await Promise.all([
-      this.attachmentRows('assignment_files', 'assignment_id', id),
-      this.repository.assignmentCounts(id),
-    ]);
-
-    return {
-      id: String(row.id),
-      classId: Number(row.class_id),
-      subjectName: String(subject),
-      groupName: String(group),
-      title: String(row.title ?? ""),
-      description: row.description ?? null,
-      instructions: row.instructions ?? null,
-      assignedAt: String(
-        row.assigned_at ?? row.created_at ?? new Date().toISOString(),
-      ),
-      dueAt: String(row.due_at ?? new Date().toISOString()),
-      kind: String(row.kind ?? "homework"),
-      maxScore: Number(row.max_score ?? 100),
-      allowLate: Boolean(row.allow_late),
-      published: row.published == null ? true : Boolean(row.published),
-      attachments,
-      teacherName: teacherName && teacherName.length > 0 ? teacherName : null,
-      totalStudents: Number(counts.total ?? 0),
-      submittedCount: Number(counts.delivered ?? 0),
-      gradedCount: Number(counts.graded ?? 0),
-    };
   }
 
   private async hydrateSubmission(ctx: AppContext, id: number) {

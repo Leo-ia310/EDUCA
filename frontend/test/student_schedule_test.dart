@@ -36,8 +36,12 @@ class _Auth extends MockAuthRepository {
   @override
   Future<AuthSession?> currentSession() async => session;
   @override
-  Future<void> sendPasswordReset(String email,
-      {Institution? institution,}) async {}
+  Future<void> sendPasswordReset(
+    String email, {
+    Institution? institution,
+  }) async {}
+  @override
+  Future<void> signOut() async {}
 }
 
 class _Api implements BackendApiClient {
@@ -45,9 +49,11 @@ class _Api implements BackendApiClient {
   bool fail = false;
   final requests = <Map<String, dynamic>>[];
   @override
-  Future<dynamic> get(String path,
-      {Map<String, dynamic>? queryParameters,
-      bool authenticated = true,}) async {
+  Future<dynamic> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) async {
     requests.add({
       'path': path,
       'query': queryParameters,
@@ -63,8 +69,11 @@ class _Api implements BackendApiClient {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-Future<ProviderContainer> _container(_Api? api,
-    {AuthSession? session = _session,}) async {
+Future<ProviderContainer> _container(
+  _Api? api, {
+  AuthSession? session = _session,
+  bool listen = true,
+}) async {
   final container = ProviderContainer(
     overrides: [
       scheduleDemoEnabledProvider.overrideWithValue(false),
@@ -75,18 +84,28 @@ Future<ProviderContainer> _container(_Api? api,
   addTearDown(container.dispose);
   container.read(authControllerProvider);
   await Future<void>.delayed(Duration.zero);
-  container.listen(weeklySlotsProvider, (_, __) {});
+  if (listen) container.listen(weeklySlotsProvider, (_, __) {});
   return container;
 }
 
 Future<void> _mount(
-    WidgetTester tester, Future<Map<int, List<ClassSlot>>> Function() load,
-    {bool detail = false,}) async {
-  final router = GoRouter(initialLocation: '/schedule', routes: [
-    GoRoute(path: '/schedule', builder: (_, __) => detail
-        ? const ScheduleScreen()
-        : const Scaffold(body: SingleChildScrollView(child: HomeScheduleSection())),),
-  ],);
+  WidgetTester tester,
+  Future<Map<int, List<ClassSlot>>> Function() load, {
+  bool detail = false,
+}) async {
+  final router = GoRouter(
+    initialLocation: '/schedule',
+    routes: [
+      GoRoute(
+        path: '/schedule',
+        builder: (_, __) => detail
+            ? const ScheduleScreen()
+            : const Scaffold(
+                body: SingleChildScrollView(child: HomeScheduleSection()),
+              ),
+      ),
+    ],
+  );
   addTearDown(router.dispose);
   await tester.pumpWidget(
     ProviderScope(
@@ -103,6 +122,32 @@ Future<void> _mount(
 }
 
 void main() {
+  test('role changes reload timetable and logout cannot return retained data',
+      () async {
+    final api = _Api();
+    final container = await _container(api);
+    await container.read(weeklySlotsProvider.future);
+    container
+        .read(authControllerProvider.notifier)
+        .setActiveRole(AppRole.teacher);
+    await container.read(weeklySlotsProvider.future);
+    expect(api.requests, hasLength(2));
+    await container.read(authControllerProvider.notifier).signOut();
+    await expectLater(
+        container.read(weeklySlotsProvider.future), throwsStateError,);
+    expect(api.requests, hasLength(2));
+  });
+  test('three route visits reuse one timetable request', () async {
+    final api = _Api();
+    final container = await _container(api, listen: false);
+    for (var visit = 0; visit < 3; visit++) {
+      final subscription = container.listen(weeklySlotsProvider, (_, __) {});
+      await container.read(weeklySlotsProvider.future);
+      subscription.close();
+      await container.pump();
+    }
+    expect(api.requests, hasLength(1));
+  });
   test('demo examples are disabled by default even without credentials', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -136,8 +181,10 @@ void main() {
       };
     final container = await _container(api);
     final weekly = await container.read(weeklySlotsProvider.future);
-    expect(weekly.values.expand((v) => v).map((s) => s.subject),
-        ['Álgebra asignada'],);
+    expect(
+      weekly.values.expand((v) => v).map((s) => s.subject),
+      ['Álgebra asignada'],
+    );
     await container
         .read(authControllerProvider.notifier)
         .sendPasswordReset('fixture@example.com');
@@ -148,21 +195,29 @@ void main() {
       () async {
     final missingApi = await _container(null);
     await expectLater(
-        missingApi.read(weeklySlotsProvider.future), throwsStateError,);
+      missingApi.read(weeklySlotsProvider.future),
+      throwsStateError,
+    );
     final api = _Api();
     final missingSession = await _container(api, session: null);
     await expectLater(
-        missingSession.read(weeklySlotsProvider.future), throwsStateError,);
+      missingSession.read(weeklySlotsProvider.future),
+      throwsStateError,
+    );
     expect(api.requests, isEmpty);
     final failed = await _container(_Api()..fail = true);
     await expectLater(
-        failed.read(weeklySlotsProvider.future), throwsStateError,);
+      failed.read(weeklySlotsProvider.future),
+      throwsStateError,
+    );
   });
   test('malformed API response is an error instead of an empty timetable',
       () async {
     final container = await _container(_Api()..response = {'unexpected': []});
     await expectLater(
-        container.read(weeklySlotsProvider.future), throwsStateError,);
+      container.read(weeklySlotsProvider.future),
+      throwsStateError,
+    );
   });
   testWidgets(
       'home distinguishes loading, no schedule and API failure with retry',
@@ -177,8 +232,10 @@ void main() {
     expect(find.text('No tienes horario asignado'), findsNothing);
     request.completeError(StateError('API no disponible'));
     await tester.pumpAndSettle();
-    expect(find.text('No se pudo cargar tu horario. Intenta nuevamente.'),
-        findsOneWidget,);
+    expect(
+      find.text('No se pudo cargar tu horario. Intenta nuevamente.'),
+      findsOneWidget,
+    );
     expect(find.text('No tienes horario asignado'), findsNothing);
     await tester.tap(find.text('Reintentar'));
     await tester.pumpAndSettle();
@@ -200,8 +257,10 @@ void main() {
       detail: true,
     );
     await tester.pumpAndSettle();
-    expect(find.text('No se pudo cargar el horario. Intenta nuevamente.'),
-        findsOneWidget,);
+    expect(
+      find.text('No se pudo cargar el horario. Intenta nuevamente.'),
+      findsOneWidget,
+    );
     expect(find.text('Día libre'), findsNothing);
     await tester.tap(find.text('Reintentar'));
     await tester.pumpAndSettle();

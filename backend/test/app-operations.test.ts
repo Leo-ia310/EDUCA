@@ -9,7 +9,7 @@ const { createApp } = require('../src/app') as typeof import('../src/app');
 const { supabasePublic } = require('../src/lib/supabase') as typeof import('../src/lib/supabase');
 test('real app separates liveness, cached readiness and authenticated metrics without using a remote dependency', async () => {
     let probes = 0;
-    const rpc = mock.method(supabasePublic, 'rpc', ((name: string) => { assert.equal(name, 'backend_readiness_v1'); probes++; return Promise.resolve({ data: { schemaVersion: 53 }, error: null }); }) as any);
+    const rpc = mock.method(supabasePublic, 'rpc', ((name: string) => { assert.equal(name, 'backend_readiness_v1'); probes++; return Promise.resolve({ data: { schemaVersion: 53,assignmentWriteVersion:1 }, error: null }); }) as any);
     const server = createApp().listen(0, '127.0.0.1');
     await once(server, 'listening');
     const url = `http://127.0.0.1:${(server.address() as {
@@ -26,7 +26,12 @@ test('real app separates liveness, cached readiness and authenticated metrics wi
         assert.equal((await fetch(url + '/internal/metrics')).status, 403);
         const metrics = await fetch(url + '/internal/metrics', { headers: { authorization: 'Bearer fixture-metrics-secret' } });
         assert.equal(metrics.status, 200);
-        assert.equal((await metrics.json() as any).data.scope, 'process');
+        const data = (await metrics.json() as any).data;
+        assert.equal(data.scope, 'process');
+        assert.equal(typeof data.catalogCache.enabled, 'boolean');
+        assert.equal(typeof data.catalogCache.localHits, 'number');
+        assert.equal('token' in data.catalogCache, false);
+        assert.equal('url' in data.catalogCache, false);
     }
     finally {
         rpc.mock.restore();

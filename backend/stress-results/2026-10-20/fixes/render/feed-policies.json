@@ -1,0 +1,569 @@
+[
+  {
+    "tablename": "assignment_files",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "assignment_files",
+    "policyname": "class_scope_assignment_files",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "teacher_class_read(( SELECT assignments.class_id\n   FROM assignments\n  WHERE (assignments.id = assignment_files.assignment_id)), 'class.view'::text)"
+  },
+  {
+    "tablename": "assignment_files",
+    "policyname": "class_scope_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "class_permission(( SELECT assignments.class_id\n   FROM assignments\n  WHERE (assignments.id = assignment_files.assignment_id)), 'assignments.create'::text)"
+  },
+  {
+    "tablename": "assignment_files",
+    "policyname": "class_scope_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "assignment_files",
+    "policyname": "class_scope_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "class_permission(( SELECT assignments.class_id\n   FROM assignments\n  WHERE (assignments.id = assignment_files.assignment_id)), 'assignments.create'::text)"
+  },
+  {
+    "tablename": "assignment_files",
+    "policyname": "portal_assignment_files_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "(( SELECT portal_can('materials.view'::text) AS portal_can) AND (EXISTS ( SELECT 1\n   FROM assignments a\n  WHERE (a.id = assignment_files.assignment_id))))"
+  },
+  {
+    "tablename": "assignment_files",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(assignment_id IN ( SELECT assignments.id\n   FROM assignments\n  WHERE (assignments.institution_id = ( SELECT current_institution_id() AS current_institution_id))))"
+  },
+  {
+    "tablename": "assignments",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "assignments",
+    "policyname": "class_scope_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "class_permission(class_id, 'assignments.create'::text)"
+  },
+  {
+    "tablename": "assignments",
+    "policyname": "class_scope_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "assignments",
+    "policyname": "class_scope_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "((NOT ( SELECT is_teacher_actor() AS is_teacher_actor)) OR (class_id = ANY (( SELECT class_permission_ids('class.view'::text) AS class_permission_ids)::bigint[])))"
+  },
+  {
+    "tablename": "assignments",
+    "policyname": "class_scope_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "class_permission(class_id, 'assignments.create'::text)"
+  },
+  {
+    "tablename": "assignments",
+    "policyname": "portal_module_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "(( SELECT portal_can('assignments.view'::text) AS portal_can) AND (( SELECT portal_staff_actor() AS portal_staff_actor) OR (class_id = ANY (( SELECT portal_family_class_ids() AS portal_family_class_ids)::bigint[]))))"
+  },
+  {
+    "tablename": "assignments",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "classes",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "classes",
+    "policyname": "class_admin_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "( SELECT class_admin_actor() AS class_admin_actor)"
+  },
+  {
+    "tablename": "classes",
+    "policyname": "class_admin_write",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "true"
+  },
+  {
+    "tablename": "classes",
+    "policyname": "class_scope_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "((NOT ( SELECT is_teacher_actor() AS is_teacher_actor)) OR (id = ANY (( SELECT class_permission_ids('class.view'::text) AS class_permission_ids)::bigint[])))"
+  },
+  {
+    "tablename": "classes",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "enrollments",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "enrollments",
+    "policyname": "class_scope_roster",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "((NOT ( SELECT is_teacher_actor() AS is_teacher_actor)) OR (group_id = ANY (( SELECT teacher_group_ids() AS teacher_group_ids)::bigint[])))"
+  },
+  {
+    "tablename": "enrollments",
+    "policyname": "portal_identity_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "( SELECT class_admin_actor() AS class_admin_actor)"
+  },
+  {
+    "tablename": "enrollments",
+    "policyname": "portal_identity_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "enrollments",
+    "policyname": "portal_identity_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "( SELECT class_admin_actor() AS class_admin_actor)"
+  },
+  {
+    "tablename": "enrollments",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "admin_guard_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "(( SELECT admin_can('reports.generate'::text) AS admin_can) OR teacher_class_permission(class_id, 'grades.write'::text))"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "admin_guard_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "admin_guard_select",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "(( SELECT admin_can('reports.view'::text) AS admin_can) OR teacher_class_permission(class_id, 'class.view'::text))"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "admin_guard_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "(( SELECT admin_can('reports.generate'::text) AS admin_can) OR teacher_class_permission(class_id, 'grades.write'::text))"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "class_scope_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "class_permission(class_id, 'collaborators.manage'::text)"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "class_scope_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "class_scope_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "((NOT ( SELECT is_teacher_actor() AS is_teacher_actor)) OR (class_id = ANY (( SELECT class_permission_ids('students.view'::text) AS class_permission_ids)::bigint[])))"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "class_scope_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "class_permission(class_id, 'collaborators.manage'::text)"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "portal_academic_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM users u\n  WHERE ((u.auth_user_id = ( SELECT auth.uid() AS uid)) AND (u.institution_id = ( SELECT current_institution_id() AS current_institution_id)) AND u.active AND (u.deleted_at IS NULL) AND portal_staff(u.id))))"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "portal_academic_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "portal_academic_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM users u\n  WHERE ((u.auth_user_id = ( SELECT auth.uid() AS uid)) AND (u.institution_id = ( SELECT current_institution_id() AS current_institution_id)) AND u.active AND (u.deleted_at IS NULL) AND portal_staff(u.id))))"
+  },
+  {
+    "tablename": "evaluations",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "files",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "files",
+    "policyname": "portal_file_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "portal_file_read(id)"
+  },
+  {
+    "tablename": "files",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "admin_guard_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "(( SELECT admin_can('reports.generate'::text) AS admin_can) OR teacher_class_permission(( SELECT evaluations.class_id\n   FROM evaluations\n  WHERE (evaluations.id = grades.evaluation_id)), 'grades.write'::text))"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "admin_guard_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "grades",
+    "policyname": "admin_guard_select",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "(( SELECT admin_can('reports.view'::text) AS admin_can) OR teacher_class_permission(( SELECT evaluations.class_id\n   FROM evaluations\n  WHERE (evaluations.id = grades.evaluation_id)), 'class.view'::text))"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "admin_guard_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "(( SELECT admin_can('reports.generate'::text) AS admin_can) OR teacher_class_permission(( SELECT evaluations.class_id\n   FROM evaluations\n  WHERE (evaluations.id = grades.evaluation_id)), 'grades.write'::text))"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "class_scope_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "class_permission(( SELECT evaluations.class_id\n   FROM evaluations\n  WHERE (evaluations.id = grades.evaluation_id)), 'grades.write'::text)"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "class_scope_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "grades",
+    "policyname": "class_scope_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "((NOT ( SELECT is_teacher_actor() AS is_teacher_actor)) OR (( SELECT evaluations.class_id\n   FROM evaluations\n  WHERE (evaluations.id = grades.evaluation_id)) = ANY (( SELECT class_permission_ids('students.view'::text) AS class_permission_ids)::bigint[])))"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "class_scope_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "class_permission(( SELECT evaluations.class_id\n   FROM evaluations\n  WHERE (evaluations.id = grades.evaluation_id)), 'grades.write'::text)"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "portal_academic_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM users u\n  WHERE ((u.auth_user_id = ( SELECT auth.uid() AS uid)) AND (u.institution_id = ( SELECT current_institution_id() AS current_institution_id)) AND u.active AND (u.deleted_at IS NULL) AND portal_staff(u.id))))"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "portal_academic_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "grades",
+    "policyname": "portal_academic_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "(EXISTS ( SELECT 1\n   FROM users u\n  WHERE ((u.auth_user_id = ( SELECT auth.uid() AS uid)) AND (u.institution_id = ( SELECT current_institution_id() AS current_institution_id)) AND u.active AND (u.deleted_at IS NULL) AND portal_staff(u.id))))"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "portal_grade_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n   FROM (evaluations e\n     JOIN classes c ON ((c.id = e.class_id)))\n  WHERE ((e.id = grades.evaluation_id) AND\n        CASE\n            WHEN (e.academic_period_id IS NOT NULL) THEN portal_can_view_grades(grades.student_id, e.academic_period_id)\n            ELSE portal_can_view_year_grades(grades.student_id, c.academic_year_id)\n        END)))"
+  },
+  {
+    "tablename": "grades",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "groups",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "groups",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "persons",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "persons",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "students",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "students",
+    "policyname": "class_scope_students",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "((NOT ( SELECT is_teacher_actor() AS is_teacher_actor)) OR (id = ANY (( SELECT teacher_student_ids() AS teacher_student_ids)::bigint[])))"
+  },
+  {
+    "tablename": "students",
+    "policyname": "portal_identity_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "( SELECT class_admin_actor() AS class_admin_actor)"
+  },
+  {
+    "tablename": "students",
+    "policyname": "portal_identity_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "students",
+    "policyname": "portal_identity_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "( SELECT class_admin_actor() AS class_admin_actor)"
+  },
+  {
+    "tablename": "students",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "subjects",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "subjects",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "class_scope_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "((NOT ( SELECT is_teacher_actor() AS is_teacher_actor)) OR (( SELECT assignments.class_id\n   FROM assignments\n  WHERE (assignments.id = submissions.assignment_id)) = ANY (( SELECT class_permission_ids('assignments.review'::text) AS class_permission_ids)::bigint[])))"
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "class_scope_submissions_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "(NOT ( SELECT is_teacher_actor() AS is_teacher_actor))"
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "class_scope_submissions_write",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "true"
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "portal_module_read",
+    "permissive": "RESTRICTIVE",
+    "cmd": "SELECT",
+    "qual": "(( SELECT portal_can('assignments.view'::text) AS portal_can) AND (( SELECT portal_staff_actor() AS portal_staff_actor) OR (student_id = ANY (( SELECT portal_family_student_ids() AS portal_family_student_ids)::bigint[]))))"
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "portal_submission_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "portal_submit_scope(student_id)"
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "portal_submission_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "portal_submission_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "portal_submit_scope(student_id)"
+  },
+  {
+    "tablename": "submissions",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  },
+  {
+    "tablename": "teachers",
+    "policyname": "auth_second_factor",
+    "permissive": "RESTRICTIVE",
+    "cmd": "ALL",
+    "qual": "( SELECT auth_2fa_session_allowed() AS auth_2fa_session_allowed)"
+  },
+  {
+    "tablename": "teachers",
+    "policyname": "collaboration_identity_delete",
+    "permissive": "RESTRICTIVE",
+    "cmd": "DELETE",
+    "qual": "( SELECT class_admin_actor() AS class_admin_actor)"
+  },
+  {
+    "tablename": "teachers",
+    "policyname": "collaboration_identity_insert",
+    "permissive": "RESTRICTIVE",
+    "cmd": "INSERT",
+    "qual": null
+  },
+  {
+    "tablename": "teachers",
+    "policyname": "collaboration_identity_update",
+    "permissive": "RESTRICTIVE",
+    "cmd": "UPDATE",
+    "qual": "( SELECT class_admin_actor() AS class_admin_actor)"
+  },
+  {
+    "tablename": "teachers",
+    "policyname": "tenant_isolation",
+    "permissive": "PERMISSIVE",
+    "cmd": "ALL",
+    "qual": "(institution_id = ( SELECT current_institution_id() AS current_institution_id))"
+  }
+]

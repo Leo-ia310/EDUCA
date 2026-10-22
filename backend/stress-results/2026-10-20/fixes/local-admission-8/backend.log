@@ -1,0 +1,19 @@
+{"level":"info","service":"educa360-backend","event":"server_started","port":53818}
+{
+  event: 'database_request_failed',
+  requestId: '8c6ac902-07e4-493f-b189-21c571e28ba5',
+  status: 503,
+  databaseCode: 'unknown'
+}
+{
+  event: 'database_request_failed',
+  requestId: 'fcd2904a-dbb1-4080-9f56-adafceee139f',
+  status: 503,
+  databaseCode: 'unknown'
+}
+{
+  event: 'database_request_failed',
+  requestId: '7138d186-9854-4bf2-a485-9f67ba749e37',
+  status: 503,
+  databaseCode: '57014'
+}

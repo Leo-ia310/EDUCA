@@ -275,10 +275,12 @@ class AssignmentDraft {
     this.published = true,
     this.attachments = const [],
     this.assignmentId,
+    this.idempotencyKey,
   });
 
   final int classId;
   final String? assignmentId;
+  final String? idempotencyKey;
   final String title;
   final String? description;
   final String? instructions;

@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import '../widgets/assignment_load_more.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -217,8 +218,8 @@ class _StudentAssignmentsScreenState
   /// Por materia: una tarjeta por cada materia del estudiante.
   List<Widget> _subjectCards(BuildContext context, List<Assignment> items) {
     final subjects =
-        ref.watch(studentDashboardProvider).valueOrNull?.subjects ??
-            StudentDashboardData.mock().subjects;
+        ref.watch(studentDashboardProvider).scopedValue?.subjects ??
+            StudentDashboardData.empty().subjects;
     return [
       for (final (i, s) in subjects.indexed)
         entranceItem(

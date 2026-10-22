@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import '../../../auth/presentation/identity_providers.dart';
 import '../../../portal_access/providers.dart';
 import '../../../portal_access/access_widgets.dart';
@@ -50,7 +51,7 @@ class SubjectDetailScreen extends ConsumerWidget {
             .toList() ??
         const <Assignment>[];
 
-    final data = ref.watch(studentDashboardProvider).valueOrNull;
+    final data = ref.watch(studentDashboardProvider).scopedValue;
     final subjectGrades =
         data?.grades.where((g) => g.subject == subject.name).toList() ??
             const <GradeBrief>[];

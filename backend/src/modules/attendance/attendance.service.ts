@@ -1,11 +1,13 @@
 import { syncService } from "../sync/sync.service";
+import { institutionCatalogCache } from "../../lib/catalog-cache";
 import { HttpError } from "../../lib/errors";
 import { asRecord, dateOnly, requiredDate, requiredId, } from "../../validators/common.validators";
 import { attendanceRepository, AttendanceRepository, } from "./attendance.repository";
 import type { AppContext } from "../../types/app-context";
 import { permissionsService, PermissionsService, } from "../../services/permissions.service";
 export class AttendanceService {
-    constructor(private readonly repository: AttendanceRepository = attendanceRepository, private readonly permissions: PermissionsService = permissionsService) { }
+    constructor(private readonly repository: AttendanceRepository = attendanceRepository, private readonly permissions: PermissionsService = permissionsService,
+        private readonly catalogCache = institutionCatalogCache) { }
     async upsertClassSession(ctx: AppContext, payload: Record<string, unknown>) {
         this.permissions.requireRole(ctx, ["teacher"]);
         const classId = requiredId(payload.classId, "Clase");
@@ -41,7 +43,7 @@ export class AttendanceService {
         if (!cls)
             throw new HttpError(404, "Clase no encontrada.", "not_found");
         const [statuses, enrollments, session] = await Promise.all([
-            this.repository.statuses(),
+            this.catalogCache.readAttendanceStatuses(ctx.institutionId, () => this.repository.statuses()),
             this.repository.enrolledStudents(ctx.institutionId, Number(cls.group_id), cls.academic_year_id == null ? null : Number(cls.academic_year_id)),
             this.repository.findSessionOfClassDate(ctx.institutionId, classId, date),
         ]);
@@ -87,7 +89,7 @@ export class AttendanceService {
         this.requireAdminView(ctx);
         const { from, to } = dateRange(query);
         const [statuses, groups, sessions] = await Promise.all([
-            this.repository.statuses(),
+            this.catalogCache.readAttendanceStatuses(ctx.institutionId, () => this.repository.statuses()),
             this.repository.groupNames(ctx.institutionId),
             this.repository.sessionsInRange(ctx.institutionId, from, to),
         ]);
@@ -125,7 +127,7 @@ export class AttendanceService {
         const groupId = requiredId(groupIdRaw, "Salón");
         const { from, to } = dateRange(query);
         const [statuses, groups, sessions, enrollments] = await Promise.all([
-            this.repository.statuses(),
+            this.catalogCache.readAttendanceStatuses(ctx.institutionId, () => this.repository.statuses()),
             this.repository.groupNames(ctx.institutionId, groupId),
             this.repository.sessionsInRange(ctx.institutionId, from, to, groupId),
             this.repository.enrolledStudents(ctx.institutionId, groupId),

@@ -1,0 +1,176 @@
+{
+  "time": "2026-10-20T17:26:24.531Z",
+  "extensions": [
+    {
+      "extname": "pg_stat_statements"
+    }
+  ],
+  "activity": [
+    {
+      "state": "active",
+      "wait_event_type": "Client",
+      "wait_event": "WalSenderWaitForWal",
+      "count": 1
+    },
+    {
+      "state": "active",
+      "wait_event_type": null,
+      "wait_event": null,
+      "count": 1
+    },
+    {
+      "state": "idle",
+      "wait_event_type": "Client",
+      "wait_event": "ClientRead",
+      "count": 15
+    },
+    {
+      "state": "idle",
+      "wait_event_type": "Extension",
+      "wait_event": "Extension",
+      "count": 1
+    },
+    {
+      "state": null,
+      "wait_event_type": "Extension",
+      "wait_event": "Extension",
+      "count": 1
+    }
+  ],
+  "tables": [
+    {
+      "schemaname": "public",
+      "relname": "announcement_delivery_jobs",
+      "n_live_tup": "1",
+      "seq_scan": "175717",
+      "idx_scan": "1537",
+      "n_dead_tup": "49"
+    },
+    {
+      "schemaname": "public",
+      "relname": "parents",
+      "n_live_tup": "63",
+      "seq_scan": "71485",
+      "idx_scan": "26458",
+      "n_dead_tup": "8"
+    },
+    {
+      "schemaname": "public",
+      "relname": "conversation_participants",
+      "n_live_tup": "10",
+      "seq_scan": "66624",
+      "idx_scan": "31384",
+      "n_dead_tup": "49"
+    },
+    {
+      "schemaname": "public",
+      "relname": "user_roles",
+      "n_live_tup": "351",
+      "seq_scan": "51722",
+      "idx_scan": "1135348",
+      "n_dead_tup": "57"
+    },
+    {
+      "schemaname": "public",
+      "relname": "teachers",
+      "n_live_tup": "73",
+      "seq_scan": "45640",
+      "idx_scan": "6693",
+      "n_dead_tup": "23"
+    },
+    {
+      "schemaname": "public",
+      "relname": "messages",
+      "n_live_tup": "15",
+      "seq_scan": "21730",
+      "idx_scan": "0",
+      "n_dead_tup": "11"
+    },
+    {
+      "schemaname": "public",
+      "relname": "parent_students",
+      "n_live_tup": "69",
+      "seq_scan": "19496",
+      "idx_scan": "22136",
+      "n_dead_tup": "11"
+    },
+    {
+      "schemaname": "public",
+      "relname": "users",
+      "n_live_tup": "351",
+      "seq_scan": "10288",
+      "idx_scan": "5722884",
+      "n_dead_tup": "54"
+    },
+    {
+      "schemaname": "public",
+      "relname": "class_collaborators",
+      "n_live_tup": "3",
+      "seq_scan": "8654",
+      "idx_scan": "3393",
+      "n_dead_tup": "0"
+    },
+    {
+      "schemaname": "public",
+      "relname": "groups",
+      "n_live_tup": "68",
+      "seq_scan": "3026",
+      "idx_scan": "15081",
+      "n_dead_tup": "0"
+    },
+    {
+      "schemaname": "public",
+      "relname": "persons",
+      "n_live_tup": "316",
+      "seq_scan": "2289",
+      "idx_scan": "116063",
+      "n_dead_tup": "44"
+    },
+    {
+      "schemaname": "public",
+      "relname": "students",
+      "n_live_tup": "180",
+      "seq_scan": "1734",
+      "idx_scan": "107486",
+      "n_dead_tup": "19"
+    }
+  ],
+  "contextQueries": [
+    {
+      "queryid": "-5248282834852189096",
+      "calls": "454",
+      "total_exec_time": 14700.079868,
+      "mean_exec_time": 32.3790305462555,
+      "max_exec_time": 293.892518,
+      "rows": "454",
+      "query": "WITH pgrst_source AS (SELECT pgrst_call.pgrst_scalar FROM (SELECT $1 AS json_data) pgrst_payload, LATERAL (SELECT \"p_auth_user_id\", \"p_session_id\", \"p_window_ms\", \"p_limit\" FROM json_to_record(pgrst_payload.json_data) AS"
+    },
+    {
+      "queryid": "-6980285796791395117",
+      "calls": "1",
+      "total_exec_time": 7.061016,
+      "mean_exec_time": 7.061016,
+      "max_exec_time": 7.061016,
+      "rows": "0",
+      "query": "-- END 0034_chat_queries.sql\r\n\r\n\r\n-- BEGIN 0035_backend_request_context.sql\r\n-- SHA256 73ea9f744638a536bda8128ca667044620c9ed6d778b75eec553f660855528b8\r\n-- Service-only RPC called AFTER Supabase Auth verifies the exact b"
+    },
+    {
+      "queryid": "-7959268361904578857",
+      "calls": "1",
+      "total_exec_time": 1.885669,
+      "mean_exec_time": 1.885669,
+      "max_exec_time": 1.885669,
+      "rows": "0",
+      "query": "create or replace function public.backend_request_context(p_auth_user_id uuid,p_session_id uuid,\r\n  p_window_ms integer default 900000,p_limit integer default 1200)\r\nreturns jsonb language plpgsql security definer set se"
+    },
+    {
+      "queryid": "1564706730212953583",
+      "calls": "1",
+      "total_exec_time": 1.484922,
+      "mean_exec_time": 1.484922,
+      "max_exec_time": 1.484922,
+      "rows": "0",
+      "query": "grant execute on function public.backend_request_context(uuid,uuid,integer,integer) to service_role"
+    }
+  ]
+}

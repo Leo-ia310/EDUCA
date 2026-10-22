@@ -1,3 +1,4 @@
+import '../auth/presentation/query_auth_provider.dart';
 import '../../core/constants/env.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,7 +36,7 @@ final attendanceRemoteDataSourceProvider =
 });
 
 final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   return AttendanceRepositoryImpl(
     local: ref.watch(attendanceLocalDataSourceProvider),
     remote: ref.watch(attendanceRemoteDataSourceProvider),

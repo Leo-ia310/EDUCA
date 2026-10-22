@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import '../../../portal_access/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,7 +61,7 @@ class _ParentChildrenScreenState extends ConsumerState<ParentChildrenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final data = ref.watch(parentDashboardProvider).valueOrNull ??
+    final data = ref.watch(parentDashboardProvider).scopedValue ??
         ParentDashboardData.empty();
     final kids = data.children;
     final selected =
@@ -410,7 +411,7 @@ class ParentAttendanceScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(parentDashboardProvider).valueOrNull ??
+    final data = ref.watch(parentDashboardProvider).scopedValue ??
         ParentDashboardData.empty();
     final kids = data.children;
     final child =

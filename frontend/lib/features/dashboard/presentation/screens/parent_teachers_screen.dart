@@ -1,3 +1,4 @@
+import '../../../../core/network/provider_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,8 +22,8 @@ class ParentTeachersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(parentDashboardProvider).valueOrNull ??
-        ParentDashboardData.mock();
+    final data = ref.watch(parentDashboardProvider).scopedValue ??
+        ParentDashboardData.empty();
     final kids = data.children;
     final child =
         kids[ref.watch(selectedChildIndexProvider).clamp(0, kids.length - 1)];

@@ -1,0 +1,920 @@
+{
+  "startedAt": "2026-10-20T19:22:09.850Z",
+  "base": "http://127.0.0.1:53818",
+  "preflight": [
+    {
+      "operation": "login",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 2426.1324000000004
+    },
+    {
+      "operation": "GET",
+      "path": "/api/auth/2fa/status",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1062.3466000000003,
+      "requestId": "822da219-bd34-4d01-8150-fc3e0d0f6364"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/me",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 820.0282999999995,
+      "requestId": "a2490008-2427-445c-8c4c-efc4a5e4cb93"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/notifications?limit=20",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1027.8279000000002,
+      "requestId": "9434447b-0133-4822-8dab-b1e6452f0afe"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/chats/conversations?limit=20",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 795.8642,
+      "requestId": "c54bac18-3744-4f9a-88d6-d57b3fb8b641"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/events/announcements?limit=20",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1060.2532,
+      "requestId": "87ed1a01-c81c-457d-85e2-4cebbeffcf01"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/directory/counts",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 682.1466,
+      "requestId": "7cc2c87d-a6f7-4b22-8753-0b6938dfc370"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/directory/people?role=student&pageSize=20",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 968.1666999999998,
+      "requestId": "31446d60-b6c2-4c6d-a130-f308e2b33bf5"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/directory/people?role=parent&pageSize=20",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 852.8790000000008,
+      "requestId": "33d8723c-1db4-48bc-b8e6-d1a8b697e033"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/directory?kind=classes&pageSize=20",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 895.9120000000003,
+      "requestId": "0a204a1f-faab-429c-b07d-308488fd01d0"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/profiles?pageSize=20",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 721.3204999999998,
+      "requestId": "903cde45-3309-4324-a640-abc118eca0bf"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/roles",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 792.4292999999998,
+      "requestId": "a88d485f-f5bd-40b6-91e6-bc62655b597a"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/schedules?pageSize=20",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 884.994200000001,
+      "requestId": "8791872c-a4be-489f-9fde-d4cce6ae35ba"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/payments/charges",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 2741.5391999999993,
+      "requestId": "506629ae-119a-42ab-b5d3-1e51331c759c"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/payments/summary",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 678.3719999999976,
+      "requestId": "1a13dbb7-2777-4e82-aab8-a02dfe846408"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/grades/periods",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 853.1795999999995,
+      "requestId": "b606f056-94de-4d3e-a5e8-e2c0702ab24a"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/grades/scales/default",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 647.1175000000003,
+      "requestId": "2617f221-ad41-439b-9348-40f8542ef5b5"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/reports/report-cards",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 855.3506000000016,
+      "requestId": "d918367b-8615-41e1-80e5-889b5aed29ba"
+    },
+    {
+      "operation": "login",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1669.0904999999984
+    },
+    {
+      "operation": "GET",
+      "path": "/api/auth/2fa/status",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 810.5191000000013,
+      "requestId": "f9265c02-f18c-4aee-b82e-b9e72021cf6d"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/me",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 738.5339000000022,
+      "requestId": "2a23ac5d-a11c-42f7-b388-6877b69f56fb"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/notifications?limit=20",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 689.8970000000008,
+      "requestId": "c7441d14-0c63-4034-862e-6cf8114feafc"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/chats/conversations?limit=20",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 634.7547000000013,
+      "requestId": "e6ac94e4-ba3a-4065-b10a-67398784de3c"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/events/announcements?limit=20",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 961.275700000002,
+      "requestId": "5b01a0f4-8a0d-4baa-9e70-03c069208dfd"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/assignments/teacher?limit=20",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1661.0283999999992,
+      "requestId": "5a93a35e-b9c7-4eaa-bee9-ecf389948ece"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/schedules/mine",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 785.3525999999983,
+      "requestId": "229fbecf-f3c6-434f-9eb4-6a2c2ded8a0d"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/grades/periods",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 843.0037000000011,
+      "requestId": "3128496a-5dd0-4e4e-8839-3bb8d4cea0fe"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/grades/scales/default",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 608.8368999999984,
+      "requestId": "550c3207-6105-4ab0-a763-b34d2cdaa9c1"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/sync/changes?limit=100",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 667.3339000000014,
+      "requestId": "a5e55a40-f106-4aa1-8ef0-2de0f4c89d15"
+    },
+    {
+      "operation": "login",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1628.170000000002
+    },
+    {
+      "operation": "GET",
+      "path": "/api/auth/2fa/status",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 830.511599999998,
+      "requestId": "95944c8c-6639-4390-9ee4-95dd0fb205bc"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/me",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1582.867000000002,
+      "requestId": "6f8c81bb-c33d-48f3-af24-9d73b4d4d95a"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/notifications?limit=20",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 659.414300000004,
+      "requestId": "4f3e9c74-d2e3-482f-9d8d-b420781b35b3"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/chats/conversations?limit=20",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 839.077400000002,
+      "requestId": "e6e4746a-8528-43fb-bf75-9b1a80c7266c"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/events/announcements?limit=20",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 769.2669000000024,
+      "requestId": "6cefbf5c-e1c3-4cf6-b780-08b553250b2c"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/assignments/student?limit=20",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1792.8830000000016,
+      "requestId": "1366953c-50a5-4729-b83c-eff03ee28028"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/payments/mine",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1612.7733000000007,
+      "requestId": "492f681e-0de1-4e31-b776-b94774457ab6"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/schedules/mine",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 830.5705999999991,
+      "requestId": "b4c6ccd0-6803-4dff-be03-97074cc212ed"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/grades",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1099.6404000000039,
+      "requestId": "72b1ab49-5928-4b48-950e-169b30960388"
+    },
+    {
+      "operation": "login",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1703.8073000000004
+    },
+    {
+      "operation": "GET",
+      "path": "/api/auth/2fa/status",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 956.0588999999964,
+      "requestId": "914ae066-499d-4198-a0dc-9aff948fe444"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/me",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 2017.9832999999999,
+      "requestId": "082cadf0-cadf-4557-a857-b226202752f6"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/notifications?limit=20",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 624.5919000000067,
+      "requestId": "5c8e0b60-6c28-4e42-ad4a-918a431b6daf"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/chats/conversations?limit=20",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 830.1426999999967,
+      "requestId": "fcfef78e-1b33-474c-87f8-4c03afddb15a"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/events/announcements?limit=20",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 881.5323999999964,
+      "requestId": "c8416054-f586-4368-96ca-d412543a2a19"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/family/children",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 961.251400000001,
+      "requestId": "38f5eec9-b6de-4786-8150-29bc3298bb98"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/family/attendance",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 1358.356399999997,
+      "requestId": "08067853-2369-409a-9f69-35d6ff22257a"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/family/assignments",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "status": 200,
+      "ms": 2279.376000000004,
+      "requestId": "6bd03443-291b-4147-ac2b-a7d863eb5340"
+    },
+    {
+      "operation": "login",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1783.7697000000044
+    },
+    {
+      "operation": "GET",
+      "path": "/api/auth/2fa/status",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 819.337099999997,
+      "requestId": "d4c6c5aa-7366-43d4-b9f1-9eeb22ce2a9b"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/me",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 691.3129999999946,
+      "requestId": "c357eb39-306f-4fb9-9264-7146c234d5fd"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/notifications?limit=20",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 610.3539000000019,
+      "requestId": "e776435f-4d38-4051-bc0c-6141ac46a4c8"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/chats/conversations?limit=20",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 663.1510000000053,
+      "requestId": "b95a9241-d7d0-493b-91ff-b03c67a24a8c"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/events/announcements?limit=20",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 664.4927000000025,
+      "requestId": "128db4e8-cad9-47f9-9202-476c07313a3a"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/directory/counts",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 639.1322,
+      "requestId": "39129b77-3e93-48a9-b7ac-e0e199fe57a7"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/directory/people?role=student&pageSize=20",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 655.5587000000014,
+      "requestId": "5cb5a43c-87c2-4aa0-9df0-90054dad66f5"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/directory/people?role=parent&pageSize=20",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 776.6877000000022,
+      "requestId": "fa896a57-385a-4c3d-8104-e28c9ef94f8f"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/directory?kind=classes&pageSize=20",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 659.6088999999993,
+      "requestId": "d2016e50-75a1-49f0-83a4-95ecd9152bc4"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/profiles?pageSize=20",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 628.9334000000017,
+      "requestId": "263ddf6d-8587-463d-aeeb-80a2f78c6703"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/admin/roles",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 645.1468999999997,
+      "requestId": "031de012-8c81-4dab-b7e7-0248e18ea422"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/schedules?pageSize=20",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 697.839899999999,
+      "requestId": "d53ec5a1-4ffa-49da-802e-a5c828ff5b12"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/payments/charges",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 2346.898700000005,
+      "requestId": "bd970047-0332-4adf-9014-094550af0909"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/payments/summary",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 672.7290000000066,
+      "requestId": "2c5284f7-161b-4ac9-a9d4-b0bbf3f34364"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/grades/periods",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 987.3672999999981,
+      "requestId": "c7b9cb6d-b6ab-4c30-a01f-d389bb7377df"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/grades/scales/default",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 817.572800000009,
+      "requestId": "4de0c209-66ef-40f3-a996-b24c71775a32"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/reports/report-cards",
+      "role": "admin",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 694.0935000000027,
+      "requestId": "e890b4ab-2e9e-4bce-8b2c-177e8088ac16"
+    },
+    {
+      "operation": "login",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1594.8905000000086
+    },
+    {
+      "operation": "GET",
+      "path": "/api/auth/2fa/status",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 829.7945999999938,
+      "requestId": "b067fdb2-d9e5-405b-8c7e-0fc563cdad59"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/me",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 721.2284000000072,
+      "requestId": "bf418baf-1eb0-4cfe-82a6-1e51321753d1"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/notifications?limit=20",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 605.9372999999905,
+      "requestId": "edd4b86a-9f19-48de-b489-cefcdba1f39b"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/chats/conversations?limit=20",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 668.0837999999931,
+      "requestId": "5cae6ab3-d3c9-4017-9049-6edd61537699"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/events/announcements?limit=20",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 728.6628000000055,
+      "requestId": "f8f531fc-3a28-40cb-93b4-6fd9785d0701"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/assignments/teacher?limit=20",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1250.409599999999,
+      "requestId": "b4c7cba1-d99d-441b-a077-9a06618468e9"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/schedules/mine",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 836.9159999999974,
+      "requestId": "209d8d5c-c68e-42f9-80c8-f3e1dd91f8af"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/grades/periods",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 867.3907999999938,
+      "requestId": "7d32f7f8-a144-46dc-861e-4535d66e48c5"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/grades/scales/default",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 838.7890000000043,
+      "requestId": "77c3c4fb-6104-4411-861a-7c105ca96d62"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/sync/changes?limit=100",
+      "role": "teacher",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 669.1762000000017,
+      "requestId": "0fa06161-a148-46e9-acca-1984a49ccc20"
+    },
+    {
+      "operation": "login",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1512.1670000000013
+    },
+    {
+      "operation": "GET",
+      "path": "/api/auth/2fa/status",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 814.046199999997,
+      "requestId": "fa46a6d2-2531-44d8-b8bc-23f8e1c42ea0"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/me",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 886.6171999999933,
+      "requestId": "32034b4e-6c7a-4a2e-8452-1f074efc1294"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/notifications?limit=20",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 677.5656000000017,
+      "requestId": "b4d3e507-13ff-448b-a33c-dcf8e9fe7271"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/chats/conversations?limit=20",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 651.4612999999954,
+      "requestId": "9a9cbadf-c49e-4007-afed-b5332a69011c"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/events/announcements?limit=20",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 661.1747000000032,
+      "requestId": "c467dac4-078f-493c-bbe9-5c2caa36bb5d"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/assignments/student?limit=20",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1036.0486000000092,
+      "requestId": "0273000c-5bb6-4850-9739-a8bb4036cd0a"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/payments/mine",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1701.4478999999992,
+      "requestId": "3db8d930-7562-4db6-b096-1dd796397753"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/schedules/mine",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 689.4176999999909,
+      "requestId": "821ed7c5-d77e-4e17-b1e4-7e0605a37585"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/grades",
+      "role": "student",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1257.7233000000124,
+      "requestId": "5bb6865c-9f36-4bd3-8a37-4ebdb5644c2c"
+    },
+    {
+      "operation": "login",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1530.0990999999922
+    },
+    {
+      "operation": "GET",
+      "path": "/api/auth/2fa/status",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 833.3196000000025,
+      "requestId": "6982a58c-9e2a-4e89-aa78-48a73fcbab1b"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/portal-access/me",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1066.9616999999998,
+      "requestId": "b3c779a0-3c2a-4477-98e7-59548f821218"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/notifications?limit=20",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 996.1895000000077,
+      "requestId": "0f2941e8-7343-4231-b6cd-e3c39f27bdcb"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/chats/conversations?limit=20",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 776.6186000000016,
+      "requestId": "9f662691-f8a1-4829-84df-2496a76d14f5"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/events/announcements?limit=20",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 690.3145000000077,
+      "requestId": "ce53d8e9-bf99-4198-887b-be5e92d43bb3"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/family/children",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1152.0589000000036,
+      "requestId": "891fa995-ce6c-4aa6-84f8-a5733801d8e5"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/family/attendance",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 960.7439000000013,
+      "requestId": "21b21935-2bc7-4056-85f5-02cc00a75ad9"
+    },
+    {
+      "operation": "GET",
+      "path": "/api/family/assignments",
+      "role": "parent",
+      "institution": "EDU360",
+      "status": 200,
+      "ms": 1553.651199999993,
+      "requestId": "baaa9550-65f9-4848-9d05-9b4be2861a30"
+    }
+  ],
+  "phases": [
+    {
+      "name": "soak-5rps",
+      "code": 99,
+      "requestedRps": 5,
+      "requests": 289,
+      "failed": 0.0726643598615917,
+      "serverFailed": 0.0657439446366782,
+      "limited": 0,
+      "p95": 25427.36902,
+      "p99": 33507.92290400001,
+      "dropped": 71
+    }
+  ],
+  "cleanup": [
+    {
+      "operation": "close-test-session",
+      "role": "admin",
+      "institution": "BIGSCHOOL",
+      "ok": true
+    },
+    {
+      "operation": "close-test-session",
+      "role": "teacher",
+      "institution": "BIGSCHOOL",
+      "ok": true
+    },
+    {
+      "operation": "close-test-session",
+      "role": "student",
+      "institution": "BIGSCHOOL",
+      "ok": true
+    },
+    {
+      "operation": "close-test-session",
+      "role": "parent",
+      "institution": "BIGSCHOOL",
+      "ok": true
+    },
+    {
+      "operation": "close-test-session",
+      "role": "admin",
+      "institution": "EDU360",
+      "ok": true
+    },
+    {
+      "operation": "close-test-session",
+      "role": "teacher",
+      "institution": "EDU360",
+      "ok": true
+    },
+    {
+      "operation": "close-test-session",
+      "role": "student",
+      "institution": "EDU360",
+      "ok": true
+    },
+    {
+      "operation": "close-test-session",
+      "role": "parent",
+      "institution": "EDU360",
+      "ok": true
+    }
+  ],
+  "runnerRequests": 96,
+  "finishedAt": "2026-10-20T19:25:21.358Z"
+}

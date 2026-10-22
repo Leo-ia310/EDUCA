@@ -1,8 +1,8 @@
+import '../auth/presentation/query_auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/backend_api_client.dart';
 import '../../core/network/supabase_client.dart';
-import '../auth/presentation/auth_controller.dart';
 import 'data/mock_chat_repository.dart';
 import 'data/supabase_chat_repository.dart';
 import 'domain/chat_repository.dart';
@@ -11,7 +11,7 @@ import 'domain/entities.dart';
 /// Repository singleton (para que las conversaciones y su historial se
 /// mantengan mientras la app esté abierta).
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   final user = auth.user;
   final client = ref.watch(supabaseClientProvider);
   final api = ref.watch(backendApiClientProvider);

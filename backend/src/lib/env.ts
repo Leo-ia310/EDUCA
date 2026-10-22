@@ -41,9 +41,16 @@ function optionalInteger(name: string, fallback: number, max = 2147483647, min =
 const nodeEnv = optional("NODE_ENV", "development");
 export const env = {
     nodeEnv,
+    upstashRedisRestUrl: optional("UPSTASH_REDIS_REST_URL"),
+    upstashRedisRestToken: optional("UPSTASH_REDIS_REST_TOKEN"),
+    cacheNamespace: optional("CACHE_NAMESPACE", `nivra:${nodeEnv}`),
+    redisTimeoutMs: optionalInteger("REDIS_TIMEOUT_MS", 2000, 5000, 100),
     isProduction: nodeEnv === "production",
     port: optionalInteger("PORT", 3000, 65535),
     dependencyTimeoutMs: optionalInteger("DEPENDENCY_TIMEOUT_MS", 15000, 60000),
+    supabaseMaxConcurrent: optionalInteger("SUPABASE_MAX_CONCURRENT_REQUESTS", 8, 256),
+    supabaseMaxDatabase: optionalInteger("SUPABASE_MAX_DATABASE_REQUESTS", 4, 256),
+    supabaseMaxPending: optionalInteger("SUPABASE_MAX_PENDING_REQUESTS", 100, 5000),
     requestTimeoutMs: optionalInteger("REQUEST_TIMEOUT_MS", 60000, 180000),
     maxConcurrentRequests: optionalInteger("MAX_CONCURRENT_REQUESTS", 100, 2000),
     shutdownTimeoutMs: optionalInteger("SHUTDOWN_TIMEOUT_MS", 25000, 120000),

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/network/provider_cache.dart';
 
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -49,7 +50,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     final weekly = widget.forChild
         ? ref.watch(childWeeklySlotsProvider(widget.studentId))
         : ref.watch(weeklySlotsProvider);
-    final byDay = weekly.valueOrNull ?? const <int, List<ClassSlot>>{};
+    final byDay = weekly.scopedValue ?? const <int, List<ClassSlot>>{};
     // Lun–Vie siempre; sábado/domingo solo si el admin los programó.
     final dayCount = byDay.entries
             .where((e) => e.value.isNotEmpty)
@@ -157,7 +158,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           const SizedBox(height: 20),
           SectionHeader(title: ScheduleMock.weekDaysLong[selectedDay]),
           const SizedBox(height: 8),
-          if (weekly.isLoading)
+          if (weekly.isLoading && !weekly.isRefreshing)
             const Padding(
               padding: EdgeInsets.only(top: 24),
               child: SkeletonList(),

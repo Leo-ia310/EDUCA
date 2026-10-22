@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/env.dart';
 import '../../core/network/backend_api_client.dart';
+import '../../core/network/provider_cache.dart';
 import '../../core/network/supabase_client.dart';
 import '../../core/theme/subject_palette.dart';
 import '../auth/presentation/auth_controller.dart';
@@ -38,7 +39,8 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>((ref) {
 /// Convierte los bloques que entrega el backend (o el almacén demo) al modelo
 /// de la UI, agrupados por día (0 = lunes … 6 = domingo) y ordenados por hora.
 Map<int, List<ClassSlot>> buildWeeklySlots(
-    Iterable<Map<String, dynamic>> items,) {
+  Iterable<Map<String, dynamic>> items,
+) {
   final byDay = <int, List<ClassSlot>>{};
   for (final m in items) {
     final day = (m['weekdayIndex'] as num).toInt();
@@ -76,7 +78,8 @@ Future<Map<int, List<ClassSlot>>> _fetchWeekly(
   );
   if (data is! Map || data['schedules'] is! List) {
     throw StateError(
-        'El servicio de horarios devolvió una respuesta inválida.',);
+      'El servicio de horarios devolvió una respuesta inválida.',
+    );
   }
   final items = data['schedules'] as List;
   return buildWeeklySlots([
@@ -92,13 +95,18 @@ Future<Map<int, List<ClassSlot>>> _fetchWeekly(
 /// alumno, o del maestro). Nunca se mezclan datos de ejemplo con reales.
 final weeklySlotsProvider =
     FutureProvider.autoDispose<Map<int, List<ClassSlot>>>((ref) async {
+  final access = ref.watch(portalAccessProvider.future);
   final demoEnabled = ref.watch(scheduleDemoEnabledProvider);
-  final identity = ref.watch(authControllerProvider.select((a) => (
+  final identity = ref.watch(
+    authControllerProvider.select(
+      (a) => (
         a.user?.id,
         a.user?.institutionId,
         a.user?.activeRole,
         a.institution?.id
-      ),),);
+      ),
+    ),
+  );
   if (demoEnabled) {
     final demo = ref.watch(demoSchedulesProvider);
     return buildWeeklySlots([
@@ -125,12 +133,22 @@ final weeklySlotsProvider =
   if (api == null) {
     throw StateError('No se pudo conectar con el servicio de horarios.');
   }
-  return _fetchWeekly(api);
+  return ref.cacheAfter(
+    access,
+    (permissions) {
+      if (!permissions.can('schedule.view')) {
+        throw StateError('Tu institución restringió el acceso al horario.');
+      }
+      return _fetchWeekly(api);
+    },
+    ttl: const Duration(minutes: 5),
+  );
 });
 
 /// Horario de un hijo (vista del padre). Solo conectado; en demo, el de ejemplo.
 final childWeeklySlotsProvider = FutureProvider.autoDispose
     .family<Map<int, List<ClassSlot>>, int?>((ref, studentId) async {
+  final access = ref.watch(portalAccessProvider.future);
   final api = ref.watch(backendApiClientProvider);
   if (ref.watch(scheduleDemoEnabledProvider)) {
     return ref.watch(weeklySlotsProvider.future);
@@ -138,14 +156,27 @@ final childWeeklySlotsProvider = FutureProvider.autoDispose
   if (studentId == null) {
     throw StateError('Selecciona un estudiante para consultar su horario.');
   }
-  final identity = ref.watch(authControllerProvider.select((a) => (
+  final identity = ref.watch(
+    authControllerProvider.select(
+      (a) => (
         a.user?.id,
         a.user?.institutionId,
         a.user?.activeRole,
         a.institution?.id
-      ),),);
+      ),
+    ),
+  );
   if (identity.$1 == null || identity.$2 != identity.$4 || api == null) {
     throw StateError('No se pudo validar la sesión para consultar el horario.');
   }
-  return _fetchWeekly(api, studentId: studentId);
+  return ref.cacheAfter(
+    access,
+    (permissions) {
+      if (!permissions.can('schedule.view')) {
+        throw StateError('Tu institución restringió el acceso al horario.');
+      }
+      return _fetchWeekly(api, studentId: studentId);
+    },
+    ttl: const Duration(minutes: 5),
+  );
 });

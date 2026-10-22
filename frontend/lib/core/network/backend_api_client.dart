@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -7,12 +8,14 @@ import '../constants/env.dart';
 import 'supabase_client.dart';
 
 class BackendApiException extends StateError {
-  BackendApiException(super.message,
-      {this.statusCode,
-      this.code,
-      this.retryable = false,
-      this.requestId,
-      this.retryAfter,});
+  BackendApiException(
+    super.message, {
+    this.statusCode,
+    this.code,
+    this.retryable = false,
+    this.requestId,
+    this.retryAfter,
+  });
   final int? statusCode;
   final String? code;
   final bool retryable;
@@ -35,6 +38,7 @@ class BackendApiClient {
         final identity = event.session?.user.id;
         if (identity != _identity) {
           _identity = identity;
+          _reads.clear();
           for (final entry in _active.entries.toList()) {
             if (entry.value) entry.key.cancel('session_changed');
           }
@@ -49,6 +53,7 @@ class BackendApiClient {
   final SupabaseClient _supabase;
   final Dio _dio;
   final _active = <CancelToken, bool>{};
+  final _reads = <String, Future<dynamic>>{};
   StreamSubscription<AuthState>? _authSubscription;
   String? _identity;
   bool _disposed = false;
@@ -58,43 +63,98 @@ class BackendApiClient {
     return value.endsWith('/') ? value.substring(0, value.length - 1) : value;
   }
 
-  Future<dynamic> call(String action,
-          [Map<String, dynamic> payload = const {},]) =>
+  Future<dynamic> call(
+    String action, [
+    Map<String, dynamic> payload = const {},
+  ]) =>
       post('/business-api', data: {'action': action, 'payload': payload});
-  Future<dynamic> get(String path,
-          {Map<String, dynamic>? queryParameters, bool authenticated = true,}) =>
-      _request('GET', path,
-          query: queryParameters, authenticated: authenticated,);
-  Future<dynamic> post(String path,
-          {Map<String, dynamic>? data,
-          Map<String, dynamic>? queryParameters,
-          bool authenticated = true,}) =>
-      _request('POST', path,
-          data: data ?? const {},
+  Future<dynamic> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) {
+    final query = (queryParameters ?? const <String, dynamic>{})
+        .entries
+        .where((entry) => entry.value != null)
+        .toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final key = jsonEncode([
+      authenticated,
+      if (authenticated) _supabase.auth.currentSession?.accessToken,
+      path,
+      Map<String, dynamic>.fromEntries(query),
+    ]);
+    final existing = _reads[key];
+    if (existing != null) return existing;
+    late final Future<dynamic> pending;
+    pending = () async {
+      try {
+        return await _request(
+          'GET',
+          path,
           query: queryParameters,
-          authenticated: authenticated,);
-  Future<dynamic> patch(String path,
-          {Map<String, dynamic>? data,
-          Map<String, dynamic>? queryParameters,
-          bool authenticated = true,}) =>
-      _request('PATCH', path,
-          data: data ?? const {},
-          query: queryParameters,
-          authenticated: authenticated,);
-  Future<dynamic> delete(String path,
-          {Map<String, dynamic>? data,
-          Map<String, dynamic>? queryParameters,
-          bool authenticated = true,}) =>
-      _request('DELETE', path,
-          data: data, query: queryParameters, authenticated: authenticated,);
+          authenticated: authenticated,
+        );
+      } finally {
+        if (identical(_reads[key], pending)) _reads.remove(key);
+      }
+    }();
+    _reads[key] = pending;
+    return pending;
+  }
 
-  Future<dynamic> _request(String method, String path,
-      {Map<String, dynamic>? data,
-      Map<String, dynamic>? query,
-      required bool authenticated,}) async {
+  Future<dynamic> post(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) =>
+      _request(
+        'POST',
+        path,
+        data: data ?? const {},
+        query: queryParameters,
+        authenticated: authenticated,
+      );
+  Future<dynamic> patch(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) =>
+      _request(
+        'PATCH',
+        path,
+        data: data ?? const {},
+        query: queryParameters,
+        authenticated: authenticated,
+      );
+  Future<dynamic> delete(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+    bool authenticated = true,
+  }) =>
+      _request(
+        'DELETE',
+        path,
+        data: data,
+        query: queryParameters,
+        authenticated: authenticated,
+      );
+
+  Future<dynamic> _request(
+    String method,
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? query,
+    required bool authenticated,
+  }) async {
     if (_disposed) {
-      throw BackendApiException('La sesión HTTP terminó.',
-          code: 'request_cancelled',);
+      throw BackendApiException(
+        'La sesión HTTP terminó.',
+        code: 'request_cancelled',
+      );
     }
     final identity = _supabase.auth.currentSession?.user.id;
     final headers = <String, String>{
@@ -104,12 +164,17 @@ class BackendApiClient {
     if (authenticated) {
       final token = _supabase.auth.currentSession?.accessToken;
       if (token == null || token.isEmpty) {
-        throw BackendApiException('Sesión requerida para llamar al backend.',
-            statusCode: 401, code: 'session_required',);
+        throw BackendApiException(
+          'Sesión requerida para llamar al backend.',
+          statusCode: 401,
+          code: 'session_required',
+        );
       }
       headers['Authorization'] = 'Bearer $token';
     }
     final cancel = CancelToken();
+    // Writes form a barrier: a subsequent read cannot join a pre-write GET.
+    if (method != 'GET') _reads.clear();
     _active[cancel] = authenticated;
     try {
       final result = await _unwrap(
@@ -119,19 +184,23 @@ class BackendApiClient {
           queryParameters: query == null
               ? null
               : Map<String, dynamic>.fromEntries(
-                  query.entries.where((entry) => entry.value != null),),
+                  query.entries.where((entry) => entry.value != null),
+                ),
           options: Options(method: method, headers: headers),
           cancelToken: cancel,
         ),
       );
       if (_disposed ||
           authenticated && _supabase.auth.currentSession?.user.id != identity) {
-        throw BackendApiException('La cuenta cambió durante la solicitud.',
-            code: 'request_cancelled',);
+        throw BackendApiException(
+          'La cuenta cambió durante la solicitud.',
+          code: 'request_cancelled',
+        );
       }
       return result;
     } finally {
       _active.remove(cancel);
+      if (method != 'GET') _reads.clear();
     }
   }
 
@@ -140,8 +209,11 @@ class BackendApiClient {
       final response = await request;
       final data = response.data;
       if (data is Map && data['ok'] == true) return data['data'];
-      throw _failure(response, 'Respuesta inválida del backend.',
-          fallbackCode: 'invalid_response',);
+      throw _failure(
+        response,
+        'Respuesta inválida del backend.',
+        fallbackCode: 'invalid_response',
+      );
     } on DioException catch (error) {
       final message = switch (error.type) {
         DioExceptionType.connectionError =>
@@ -171,8 +243,11 @@ class BackendApiClient {
     }
   }
 
-  BackendApiException _failure(Response<dynamic> response, String fallback,
-      {String? fallbackCode,}) {
+  BackendApiException _failure(
+    Response<dynamic> response,
+    String fallback, {
+    String? fallbackCode,
+  }) {
     final data = response.data;
     final error = data is Map ? data['error'] : null;
     final status = response.statusCode;
@@ -201,10 +276,11 @@ class BackendApiClient {
       final date =
           DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", 'en_US').parseUtc(raw);
       return Duration(
-          milliseconds: date
-              .difference(DateTime.now().toUtc())
-              .inMilliseconds
-              .clamp(0, 86400000),);
+        milliseconds: date
+            .difference(DateTime.now().toUtc())
+            .inMilliseconds
+            .clamp(0, 86400000),
+      );
     } on FormatException {
       return null;
     }
@@ -213,6 +289,7 @@ class BackendApiClient {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    _reads.clear();
     for (final cancel in _active.keys.toList()) {
       cancel.cancel('client_disposed');
     }

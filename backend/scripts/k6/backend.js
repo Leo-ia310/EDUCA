@@ -12,6 +12,7 @@ const serverFailed = new Rate('server_failed');
 const latency = new Trend('application_duration', true);
 const responses = new Counter('responses');
 const limitSources = new Counter('rate_limit_sources');
+const sessionCleanup = new Counter('session_cleanup_requests');
 const thresholds = {
   application_failed: ['rate<0.01'],
   server_failed: [{ threshold: 'rate<0.1', abortOnFail: true, delayAbortEval: '20s' }],
@@ -155,8 +156,10 @@ export function setup() {
   if (profile === 'writes') {
     if (__ENV.ALLOW_WRITES !== 'EDU360' || (__ENV.INSTITUTION_CODE || 'EDU360') !== 'EDU360' || !classId)
       throw new Error('Writes require explicit EDU360 opt-in and an EDU360 class fixture');
+    const runId=Date.now();
+    console.log('FIXTURE_RUN '+JSON.stringify({prefix:`K6-STRESS-${runId}-`,institution:'EDU360'}));
     for (let i = 0; i < 8; i++) {
-      const payload = { classId, title: `K6-STRESS-${Date.now()}-${i}`, description: 'Temporary k6 draft',
+      const payload = { classId, title: `K6-STRESS-${runId}-${i}`, description: 'Temporary k6 draft',
         dueAt: new Date(Date.now() + 86400000 * 3).toISOString(), maxScore: 100, published: false };
       const r = request('POST', '/api/assignments/upsert', tokens.teacher, payload);
       const assignment = body(r).data?.assignment;
@@ -200,6 +203,16 @@ export function teardown(data) {
   }
   const r = request('GET', '/health', null, undefined, 'recovery');
   console.log('RECOVERY ' + JSON.stringify({ status: r.status, ms: r.timings.duration }));
+  if (__ENV.SUPABASE_URL && __ENV.SUPABASE_ANON_KEY) {
+    for(const [role,token] of Object.entries(data.tokens)) {
+      const closed=http.post(__ENV.SUPABASE_URL+'/auth/v1/logout?scope=local',null,{
+        headers:{apikey:__ENV.SUPABASE_ANON_KEY,Authorization:`Bearer ${token}`},timeout:'20s',
+        tags:{phase:'session_cleanup',name:'Supabase local test-session logout'},
+      });
+      sessionCleanup.add(1);
+      console.log('SESSION_CLOSED '+JSON.stringify({role,status:closed.status,ok:closed.status===204||closed.status===200}));
+    }
+  }
 }
 export function handleSummary(data) {
   // k6 includes setup_data in this version: never persist bearer tokens or personal fixtures.

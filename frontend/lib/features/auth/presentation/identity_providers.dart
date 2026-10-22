@@ -1,7 +1,7 @@
+import 'query_auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/supabase_client.dart';
-import 'auth_controller.dart';
 
 /// Identidad operativa del usuario logueado, resuelta EN EL BACKEND.
 ///
@@ -21,7 +21,7 @@ int? _asInt(dynamic v) => v is num ? v.toInt() : null;
 /// student_id del usuario logueado (rol student).
 final currentStudentIdProvider = FutureProvider<int?>((ref) async {
   final client = ref.watch(supabaseClientProvider);
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   if (client == null || auth.institution == null) return _demoStudentId;
   final res = await client.rpc('current_student_id');
   return _asInt(res);
@@ -30,7 +30,7 @@ final currentStudentIdProvider = FutureProvider<int?>((ref) async {
 /// teacher_id del usuario logueado (rol teacher). `null` si no aplica.
 final currentTeacherIdProvider = FutureProvider<int?>((ref) async {
   final client = ref.watch(supabaseClientProvider);
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   if (client == null || auth.institution == null) return null;
   final res = await client.rpc('current_teacher_id');
   return _asInt(res);
@@ -39,7 +39,7 @@ final currentTeacherIdProvider = FutureProvider<int?>((ref) async {
 /// parent_id del usuario logueado (rol parent). `null` si no aplica.
 final currentParentIdProvider = FutureProvider<int?>((ref) async {
   final client = ref.watch(supabaseClientProvider);
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   if (client == null || auth.institution == null) return null;
   final res = await client.rpc('current_parent_id');
   return _asInt(res);
@@ -48,7 +48,7 @@ final currentParentIdProvider = FutureProvider<int?>((ref) async {
 /// student_id del primer hijo del usuario logueado (rol parent).
 final parentChildStudentIdProvider = FutureProvider<int?>((ref) async {
   final client = ref.watch(supabaseClientProvider);
-  final auth = ref.watch(authControllerProvider);
+  final auth = ref.watch(queryAuthProvider);
   if (client == null || auth.institution == null) return _demoStudentId;
   final res = await client.rpc('my_children_student_ids');
   if (res is List && res.isNotEmpty) {

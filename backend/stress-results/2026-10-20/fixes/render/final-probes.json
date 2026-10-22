@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-20T19:39:17.405Z",
+  "probes": [
+    {
+      "path": "/health",
+      "status": null,
+      "error": "client_deadline_20s",
+      "responseRecorded": false
+    },
+    {
+      "path": "/health",
+      "status": 200,
+      "ms": 54565.6429,
+      "body": {
+        "ok": true,
+        "service": "educa360-backend"
+      },
+      "responseRecorded": true
+    },
+    {
+      "path": "/ready",
+      "status": 200,
+      "ms": 271.7256999999954,
+      "body": {
+        "ok": true,
+        "service": "educa360-backend",
+        "schemaVersion": 53,
+        "assignmentWriteVersion": 1
+      },
+      "responseRecorded": true
+    }
+  ]
+}

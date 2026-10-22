@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { institutionCatalogCache } from "../../lib/catalog-cache";
 import { HttpError } from "../../lib/errors";
 import {
   asList,
@@ -23,15 +24,20 @@ export class GradesService {
   constructor(
     private readonly repository: GradesRepository = gradesRepository,
     private readonly permissions: PermissionsService = permissionsService,
+    private readonly catalogCache = institutionCatalogCache,
   ) {}
 
   async getDefaultScale(ctx: AppContext) {
+    return this.catalogCache.read(ctx.institutionId, () => this.loadDefaultScale(ctx.institutionId));
+  }
+
+  private async loadDefaultScale(institutionId: number) {
     // Scales belong to the institution, not to an academic period.
-    const scales = await this.repository.findActiveScales(ctx.institutionId);
+    const scales = await this.repository.findActiveScales(institutionId);
     if (scales.length === 0) {
       return { scale: null, status: "not_configured" };
     }
-    const defaultId = await this.repository.findDefaultScaleSetting(ctx.institutionId);
+    const defaultId = await this.repository.findDefaultScaleSetting(institutionId);
     const scale = scales.find((item) => String(item.id) === defaultId) ?? scales[0];
     return { scale, status: "configured" };
   }
@@ -84,6 +90,7 @@ export class GradesService {
     const ranges=asList(payload.ranges).map(range=>this.normalizeScaleRange(range,minValue,maxValue));
     const key=writeKey(payload.requestId);
     const scale=await this.repository.writeScale(id,{name,scale_type:type,min_value:minValue,max_value:maxValue,pass_value:passValue,decimals},ranges,key);
+    await this.catalogCache.invalidate(ctx.institutionId);
     return {scale};
   }
 
@@ -99,6 +106,7 @@ export class GradesService {
     const id = requiredId(payload.id, "Escala");
     await this.repository.findInstitutionScale(ctx.institutionId, id);
     await this.repository.upsertDefaultScaleSetting(ctx.institutionId, id);
+    await this.catalogCache.invalidate(ctx.institutionId);
     return { ok: true };
   }
 

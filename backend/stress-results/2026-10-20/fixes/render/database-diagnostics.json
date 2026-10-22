@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-20T18:49:37.083Z",
+  "functions": [],
+  "activity": [
+    {
+      "state": "active",
+      "wait_event_type": null,
+      "wait_event": null,
+      "count": 1
+    },
+    {
+      "state": "idle",
+      "wait_event_type": "Client",
+      "wait_event": "ClientRead",
+      "count": 24
+    },
+    {
+      "state": "idle",
+      "wait_event_type": "Extension",
+      "wait_event": "Extension",
+      "count": 1
+    },
+    {
+      "state": null,
+      "wait_event_type": "Extension",
+      "wait_event": "Extension",
+      "count": 1
+    }
+  ]
+}
