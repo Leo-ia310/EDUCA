@@ -1,0 +1,172 @@
+{
+  "checkedAt": "2026-10-23T20:04:38.635Z",
+  "function": "nivra-originality",
+  "deployed": {
+    "status": "ACTIVE",
+    "version": 1,
+    "verifyJwt": false
+  },
+  "processingEnabled": false,
+  "results": [
+    {
+      "label": "anonymous",
+      "httpStatus": 401,
+      "clientElapsedMs": 871,
+      "response": {}
+    },
+    {
+      "label": "invalid-secret",
+      "httpStatus": 401,
+      "clientElapsedMs": 354,
+      "response": {}
+    },
+    {
+      "label": "txt-round-1",
+      "httpStatus": 200,
+      "clientElapsedMs": 377,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "txt",
+        "words": 20000,
+        "elapsedMs": 10,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "docx-round-1",
+      "httpStatus": 200,
+      "clientElapsedMs": 390,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "docx",
+        "words": 20000,
+        "elapsedMs": 62,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "pdf-round-1",
+      "httpStatus": 200,
+      "clientElapsedMs": 439,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "pdf",
+        "words": 80,
+        "elapsedMs": 91,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "prepare-round-1",
+      "httpStatus": 200,
+      "clientElapsedMs": 422,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "prepare",
+        "words": 20000,
+        "elapsedMs": 88,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "compare-round-1",
+      "httpStatus": 200,
+      "clientElapsedMs": 392,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "compare",
+        "words": 20000,
+        "elapsedMs": 63,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "txt-round-2",
+      "httpStatus": 200,
+      "clientElapsedMs": 361,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "txt",
+        "words": 20000,
+        "elapsedMs": 8,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "docx-round-2",
+      "httpStatus": 200,
+      "clientElapsedMs": 412,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "docx",
+        "words": 20000,
+        "elapsedMs": 66,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "pdf-round-2",
+      "httpStatus": 200,
+      "clientElapsedMs": 438,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "pdf",
+        "words": 80,
+        "elapsedMs": 92,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "prepare-round-2",
+      "httpStatus": 200,
+      "clientElapsedMs": 442,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "prepare",
+        "words": 20000,
+        "elapsedMs": 90,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "compare-round-2",
+      "httpStatus": 200,
+      "clientElapsedMs": 292,
+      "response": {
+        "status": "validated",
+        "mode": "validate",
+        "format": "compare",
+        "words": 20000,
+        "elapsedMs": 66,
+        "algorithmVersion": "nivra-1-n5-m40"
+      }
+    },
+    {
+      "label": "document-selection-rejected",
+      "httpStatus": 400,
+      "clientElapsedMs": 340,
+      "response": {}
+    }
+  ],
+  "database": {
+    "migration0059present": false,
+    "cronpresent": false,
+    "metrics": {
+      "failed": 0,
+      "processing": 0,
+      "queueDepth": 0,
+      "oldestQueueAgeSeconds": 0
+    }
+  },
+  "passed": true,
+  "scope": "Hosted fixed synthetic probes only. Elapsed times are not CPU measurements or peak memory. No real submission workflow, arbitrary uploads or representative document load tested."
+}

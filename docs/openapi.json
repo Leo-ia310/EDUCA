@@ -16,10 +16,77 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      },
+      "originalityCronSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-originality-secret"
       }
     }
   },
   "paths": {
+    "/functions/v1/nivra-originality": {
+      "post": {
+        "tags": [
+          "assignments"
+        ],
+        "servers": [
+          {
+            "url": "https://{projectRef}.supabase.co",
+            "variables": {
+              "projectRef": {
+                "default": "your-project-ref"
+              }
+            }
+          }
+        ],
+        "summary": "Procesar una fase reanudable de Nivra en Supabase Edge",
+        "description": "Auth: x-originality-secret: ORIGINALITY_CRON_SECRET (mínimo 32 caracteres), solo scheduler.\n\nNotas: Procesamiento requiere 0058 y 0059. Sin ORIGINALITY_EDGE_ENABLED=true solo ejecuta fixtures sintéticas, sin leer Storage ni tocar la cola. Activación explícita mediante configuración. Una fase por invocación, PDF por página y comparación paginada; máximo atómico al terminar todas las candidatas. Cron separado y secretos en Vault. No ejecutar a la vez que Node. Validar límites hosted antes de activar.\n\nFuente: supabase/functions/nivra-originality/index.ts.",
+        "security": [
+          {
+            "originalityCronSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "examples": {
+                "manifest": {
+                  "value": "{}; sin IDs, URLs ni institución elegibles por el llamante; en modo validación query probe=txt|docx|pdf|prepare|compare"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ status: validated|idle|yielded|completed|discarded|failed, mode?, format?, words?, elapsedMs?, algorithmVersion?, stage?, nextStage?, code? }; respuesta directa sin envelope Express",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/assignments/submissions/{submissionId}/originality": {
       "get": {
         "tags": [

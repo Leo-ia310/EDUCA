@@ -39,6 +39,20 @@ jobs:
       - run: npm run build
       - name: Generated API documentation is current
         run: git diff --exit-code -- ../docs/APIS_PENDIENTES_POR_CONECTAR.md ../docs/openapi.json
+      - name: Shared Edge algorithm matches the Node source
+        run: node scripts/build-originality-edge.cjs --check
+
+  originality-edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: '2.6.8'
+      - run: deno check --frozen --config supabase/functions/nivra-originality/deno.json supabase/functions/nivra-originality/index.ts
+      - run: deno test --frozen --config supabase/functions/nivra-originality/deno.json --allow-read --allow-env=NODE_ENV --deny-net supabase/functions/nivra-originality/test/edge_test.ts
+      - run: deno test --frozen --config supabase/functions/nivra-originality/deno.json --allow-read --allow-env=NODE_ENV --allow-net=127.0.0.1 supabase/functions/nivra-originality/test/http_test.ts
 
   flutter:
     runs-on: ubuntu-latest

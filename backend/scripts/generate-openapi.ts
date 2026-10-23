@@ -22,13 +22,18 @@ for (const entry of apiManifest) {
   paths[path] ??= {};
   paths[path][method] = {
     tags: [entry.module],
+    servers: entry.path === '/functions/v1/nivra-originality'
+      ? [{ url: 'https://{projectRef}.supabase.co', variables: { projectRef: { default: 'your-project-ref' } } }]
+      : undefined,
     summary: entry.summary,
     description: [
       `Auth: ${entry.auth}.`,
       entry.notes ? `Notas: ${entry.notes}` : "",
       `Fuente: ${entry.source}.`,
     ].filter(Boolean).join("\n\n"),
-    security: entry.auth === "publico" ? [] : [{ bearerAuth: [] }],
+    security: entry.path === '/functions/v1/nivra-originality'
+      ? [{ originalityCronSecret: [] }]
+      : entry.auth === "publico" ? [] : [{ bearerAuth: [] }],
     parameters: pathParams.length
       ? pathParams.map((name) => ({ name, in: "path", required: true, schema: { type: "string" } }))
       : undefined,
@@ -75,6 +80,7 @@ const document = {
   components: {
     securitySchemes: {
       bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
+      originalityCronSecret: { type: "apiKey", in: "header", name: "x-originality-secret" },
     },
   },
   paths,

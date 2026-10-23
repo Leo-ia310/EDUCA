@@ -1,6 +1,7 @@
 -- Local/reviewed rollback only. First stop the worker and restore the previous backend/frontend.
 -- This removes derived analysis, never original files, submissions or grades.
 begin;
+drop table if exists public.originality_edge_state,public.originality_edge_control;
 drop trigger if exists originality_submission_capture on public.submissions;
 drop trigger if exists originality_file_capture on public.submission_files;
 drop trigger if exists originality_submission_clock on public.submissions;

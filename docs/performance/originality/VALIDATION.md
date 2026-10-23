@@ -30,6 +30,8 @@ Actualización operativa, 2026-10-23: con autorización del usuario se aplicó 0
 
 Verificación Flutter previa al mismo push: `flutter analyze --no-pub` terminó con **No issues found!**; `flutter test --no-pub --concurrency=1 test/originality_report_test.dart test/originality_card_test.dart` aprobó **4/4**. Esta repetición enfocada complementa la suite completa de 194 pruebas registrada arriba.
 
+Adaptación Supabase, 2026-10-23: compilación/typecheck y 84 unitarias Node aprobadas; nueva ejecución enfocada de 18 integraciones PostgreSQL aprobadas (protocolo Edge, módulo y rollback). La función reanudable se prueba en Deno y HTTP loopback; las fases offline medidas consumieron 31–438 ms de CPU y hasta 176.840.704 bytes de RSS muestreado, no pico. Ver `supabase-edge-local.json` y `docs/NIVRA_ORIGINALITY_SUPABASE.md` para alcance, comandos y limitaciones. Posteriormente, con autorización del usuario, se publicó ACTIVE v1 en EDUCA solo en modo validación: diez probes sintéticos alojados devolvieron 200 (dos rondas de TXT/DOCX/PDF/preparación/comparación); sin secreto o con secreto incorrecto, 401; selección de documento, 400. Evidencia: `supabase-edge-hosted-validation-2026-10-23.json`. Tiempos internos transcurridos 8–92 ms, no CPU ni pico de memoria. Durante esos probes todavía no se había aplicado 0059. Después, con autorización separada y un respaldo lógico nuevo con checksum/listado/lectura completa verificados, se aplicó 0059 atómicamente (2026-10-23, 14:18 America/Managua). Dos tablas con RLS, seis funciones privadas y dos triggers verificados; pruebas HTTP de lectura de servicio y rechazo anónimo con 42501 aprobadas. Evidencia: `production-migration-0059-2026-10-23.json`. En ese corte, Cron todavía no estaba instalado ni activo y el procesamiento permanecía deshabilitado; no se invocaron claim ni reconciliación. Esa prueba no tocó entregas ni archivos de alumnos. Recursos con documentos representativos y carga real siguen pendientes.
+
 Comandos reproducibles principales:
 
 ```powershell
@@ -46,3 +48,5 @@ cd ../frontend
 C:\src\flutter\bin\flutter.bat test --no-pub --concurrency=1
 C:\src\flutter\bin\flutter.bat analyze --no-pub
 ```
+
+Activación real autorizada, 2026-10-23, 14:43 America/Managua: Vault configurado y protegido frente a anon/authenticated, pg_cron y pg_net instalados, flag activo y job cada diez segundos. Se verificaron 27 ejecuciones correctas y 27 respuestas HTTP 200, checkpoints y seis trabajos finalizados como `insufficient_text`, sin fallos. El llenado histórico sigue: 86 trabajos pendientes, incluido uno procesando en ese corte. Evidencia: `supabase-edge-activation-2026-10-23.json`. No equivale a similitud cero ni a validación exhaustiva de capacidad PDF o del flujo docente autenticado.

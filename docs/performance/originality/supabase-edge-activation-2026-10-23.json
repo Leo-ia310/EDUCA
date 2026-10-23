@@ -1,0 +1,117 @@
+{
+  "checkedAt": "2026-10-23T20:43:10.800Z",
+  "processingEnabled": true,
+  "initialEligibleSubmissions": 92,
+  "schedule": [
+    {
+      "jobname": "nivra-originality",
+      "schedule": "10 seconds",
+      "active": true
+    }
+  ],
+  "runs": [
+    {
+      "status": "succeeded",
+      "runs": 27
+    }
+  ],
+  "responses": [
+    {
+      "status_code": 200,
+      "responses": 27
+    }
+  ],
+  "lastResponses": [
+    {
+      "httpStatus": 200,
+      "response": {
+        "status": "yielded",
+        "stage": "compare",
+        "nextStage": "finish"
+      }
+    },
+    {
+      "httpStatus": 200,
+      "response": {
+        "status": "yielded",
+        "stage": "prepare",
+        "nextStage": "compare"
+      }
+    },
+    {
+      "httpStatus": 200,
+      "response": {
+        "status": "yielded",
+        "stage": "extract",
+        "nextStage": "prepare"
+      }
+    },
+    {
+      "httpStatus": 200,
+      "response": {
+        "status": "completed",
+        "stage": "finish"
+      }
+    },
+    {
+      "httpStatus": 200,
+      "response": {
+        "status": "yielded",
+        "stage": "compare",
+        "nextStage": "finish"
+      }
+    },
+    {
+      "httpStatus": 200,
+      "response": {
+        "status": "yielded",
+        "stage": "prepare",
+        "nextStage": "compare"
+      }
+    },
+    {
+      "httpStatus": 200,
+      "response": {
+        "status": "yielded",
+        "stage": "extract",
+        "nextStage": "prepare"
+      }
+    },
+    {
+      "httpStatus": 200,
+      "response": {
+        "status": "completed",
+        "stage": "finish"
+      }
+    }
+  ],
+  "metrics": {
+    "failed": 0,
+    "processing": 1,
+    "queueDepth": 86,
+    "oldestQueueAgeSeconds": 262.982699
+  },
+  "documents": [
+    {
+      "state": "insufficient_text",
+      "documents": 6
+    },
+    {
+      "state": "processing",
+      "documents": 1
+    },
+    {
+      "state": "queued",
+      "documents": 85
+    }
+  ],
+  "completedJobs": 6,
+  "vault": {
+    "secret_matches": true,
+    "url_matches": true,
+    "anon_read": false,
+    "authenticated_read": false
+  },
+  "passed": true,
+  "scope": "Real scheduler, HTTP invocation, checkpoints and job completion verified. Historical backfill continues asynchronously; per-document outcomes can be insufficient_text or unsupported_format. No claim of production peak-memory or worst-case PDF capacity."
+}

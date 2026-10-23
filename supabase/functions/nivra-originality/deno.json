@@ -1,0 +1,8 @@
+{
+  "compilerOptions": { "strict": true },
+  "nodeModulesDir": "none",
+  "tasks": {
+    "test": "deno test --allow-read --allow-env=NODE_ENV --deny-net test/edge_test.ts",
+    "test:http": "deno test --allow-read --allow-env=NODE_ENV --allow-net=127.0.0.1 test/http_test.ts"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "recordedAt": "2026-10-23T19:16:08.991Z",
+  "runtime": {
+    "deno": "2.6.8",
+    "v8": "14.5.201.2-rusty",
+    "typescript": "5.9.2"
+  },
+  "scope": "Offline Deno on Windows: individual phase CPU and sampled process RSS; not hosted Edge, not peak RSS, not HTTP/SQL latency. PDF sample has one page and 80 words; DOCX and comparison samples have 20000 words.",
+  "samples": [
+    {
+      "stage": "pdf-cold-first-page-80-words",
+      "cpuMs": 438,
+      "wallMs": 416.07820000000004,
+      "rssBytes": 78278656
+    },
+    {
+      "stage": "docx-read-20000-words",
+      "cpuMs": 204,
+      "wallMs": 85.89250000000004,
+      "rssBytes": 98275328
+    },
+    {
+      "stage": "prepare-20000-words",
+      "cpuMs": 311,
+      "wallMs": 248.78700000000003,
+      "rssBytes": 125222912
+    },
+    {
+      "stage": "compare-three-20000-word-peers",
+      "cpuMs": 282,
+      "wallMs": 267.0337999999999,
+      "rssBytes": 172015616
+    },
+    {
+      "stage": "checkpoint-json-roundtrip-20000-words",
+      "cpuMs": 31,
+      "wallMs": 25.552300000000287,
+      "rssBytes": 176840704
+    }
+  ],
+  "allSampleCpuBelow1500ms": true,
+  "maxSampledRssBytes": 176840704,
+  "hostedValidationRequired": true
+}

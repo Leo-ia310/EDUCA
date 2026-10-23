@@ -1,0 +1,118 @@
+{
+  "appliedAt": "2026-10-23T20:18:21.578Z",
+  "migration": "0059_nivra_originality_edge.sql",
+  "sha256": "a12865796cb9fd52ee3a617ce97700acb64d83b6f5d3354c3457aa66266f0480",
+  "backup": "C:/Users/Maykel/.codex/backups/EDUCA-before-0059-2026-10-23T20-15-22-224Z/database.dump",
+  "backupArchiveVerified": true,
+  "restoreRehearsed": false,
+  "committed": true,
+  "tables": [
+    {
+      "relname": "originality_edge_control",
+      "relrowsecurity": true,
+      "anon_access": false,
+      "authenticated_access": false,
+      "service_read": true
+    },
+    {
+      "relname": "originality_edge_state",
+      "relrowsecurity": true,
+      "anon_access": false,
+      "authenticated_access": false,
+      "service_read": true
+    }
+  ],
+  "permissions": [
+    {
+      "proname": "originality_edge_claim",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    },
+    {
+      "proname": "originality_edge_cleanup",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    },
+    {
+      "proname": "originality_edge_finish",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    },
+    {
+      "proname": "originality_edge_live",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    },
+    {
+      "proname": "originality_edge_reconcile",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    },
+    {
+      "proname": "originality_edge_yield",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": true
+    }
+  ],
+  "triggers": [
+    {
+      "tgname": "originality_edge_document_cleanup",
+      "tgenabled": "O"
+    },
+    {
+      "tgname": "originality_edge_job_cleanup",
+      "tgenabled": "O"
+    }
+  ],
+  "control": [
+    {
+      "id": 1,
+      "after_id": "0"
+    }
+  ],
+  "checkpoints": 0,
+  "cronActivated": false,
+  "processingEnabled": false,
+  "before": {
+    "base0058": true,
+    "edgestate": false,
+    "edgecontrol": false,
+    "cronpresent": false,
+    "metrics": {
+      "failed": 0,
+      "processing": 0,
+      "queueDepth": 0,
+      "oldestQueueAgeSeconds": 0
+    }
+  },
+  "postDeploy": {
+    "checkedAt": "2026-10-23T20:18:52.015Z",
+    "http": {
+      "serviceTableReadOk": true,
+      "anonymousTableReadDenied": true,
+      "anonymousTableErrorCode": "42501",
+      "serviceReadOnlyRpcOk": true,
+      "anonymousRpcDenied": true,
+      "anonymousRpcErrorCode": "42501"
+    },
+    "remoteProcessingDisabled": true,
+    "database": {
+      "migration0059present": true,
+      "cronpresent": false,
+      "checkpoints": 0,
+      "metrics": {
+        "failed": 0,
+        "processing": 0,
+        "queueDepth": 0,
+        "oldestQueueAgeSeconds": 0
+      }
+    },
+    "passed": true
+  }
+}
