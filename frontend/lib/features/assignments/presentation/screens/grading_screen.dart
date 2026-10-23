@@ -15,6 +15,7 @@ import '../controllers/assignment_detail_controller.dart';
 import '../controllers/grading_controller.dart';
 import '../widgets/assignment_status_chip.dart';
 import '../widgets/attachment_pill.dart';
+import '../widgets/originality_card.dart';
 
 class GradingScreen extends ConsumerWidget {
   const GradingScreen({super.key, required this.assignmentId});
@@ -242,6 +243,8 @@ class _SubmissionRow extends ConsumerWidget {
               ],
             ),
           ],
+          if (submission.status != SubmissionStatus.pending)
+            OriginalityButton(submissionId: submission.id),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -252,8 +255,11 @@ class _SubmissionRow extends ConsumerWidget {
                   style: context.textTheme.labelSmall
                       ?.copyWith(color: palette.textMuted),
                 )
-              else if (ref.watch(classPermissionProvider(
-                  (assignment.classId, 'assignments.grade'),),))
+              else if (ref.watch(
+                classPermissionProvider(
+                  (assignment.classId, 'assignments.grade'),
+                ),
+              ))
                 FilledButton.tonal(
                   onPressed: () => _openGradeSheet(context, ref),
                   style: FilledButton.styleFrom(

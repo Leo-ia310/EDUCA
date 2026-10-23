@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: durable capture is idempotent, timestamp is DB UTC, lease is globally serial and recoverable
+ok 1 - durable capture is idempotent, timestamp is DB UTC, lease is globally serial and recoverable
+  ---
+  duration_ms: 96613.8655
+  type: 'test'
+  ...
+# Subtest: 40 learners: delivery 39 matches 1, updates both reports; max and ties are deterministic
+ok 2 - 40 learners: delivery 39 matches 1, updates both reports; max and ties are deterministic
+  ---
+  duration_ms: 4990.7386
+  type: 'test'
+  ...
+# Subtest: versions invalidate old pairs, first document is not exempt, empty candidates are not 0%
+ok 3 - versions invalidate old pairs, first document is not exempt, empty candidates are not 0%
+  ---
+  duration_ms: 1146.0523
+  type: 'test'
+  ...
+# Subtest: same-assignment/tenant candidate isolation and live role/class grants protect evidence and retries
+ok 4 - same-assignment/tenant candidate isolation and live role/class grants protect evidence and retries
+  ---
+  duration_ms: 1840.06
+  type: 'test'
+  ...
+# Subtest: atomic submission replaces links, replays same content and rejects a peer file without partial writes
+ok 5 - atomic submission replaces links, replays same content and rejects a peer file without partial writes
+  ---
+  duration_ms: 2557.6552
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 113003.7833

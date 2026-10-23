@@ -1,0 +1,76 @@
+import { unzipSync, strFromU8 } from 'fflate';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import { dirname, join } from 'node:path';
+import { prepareText, sha256, type AcademicText } from './domain';
+
+export type ExtractionInput = { bytes?: Uint8Array; notes?: string; mime?: string; shared?: string[]; maxBytes: number; maxPages: number; maxWords: number; minWords: number; ngram: number };
+export type ExtractionResult = { state: 'completed' | 'insufficient_text' | 'unsupported_format'; binaryHash: string | null; textHash: string | null; academic: AcademicText | null; fingerprints: string[]; runtime?: { heapSizeLimitBytes: number } };
+
+export async function extract(input: ExtractionInput): Promise<ExtractionResult> {
+  let text = input.notes ?? '', binaryHash: string | null = null;
+  const bytes = input.bytes;
+  if (bytes) {
+    if (!bytes.length || bytes.length > input.maxBytes) throw new Error('resource_limit');
+    binaryHash = sha256(bytes);
+    const header = Buffer.from(bytes.subarray(0, 8)).toString('ascii');
+    if (header.startsWith('%PDF-')) {
+      if (input.mime !== 'application/pdf') throw new Error('mime_mismatch');
+      // Native dynamic import survives CommonJS compilation (Node >=22).
+      const pdfjs = await (new Function('return import("pdfjs-dist/legacy/build/pdf.mjs")')() as Promise<typeof import('pdfjs-dist/legacy/build/pdf.mjs')>);
+      const task = pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: false, disableFontFace: true, useWasm: false,
+        standardFontDataUrl: join(dirname(require.resolve('pdfjs-dist/package.json')), 'standard_fonts').replace(/\\/gu, '/') + '/', verbosity: 0,
+        useWorkerFetch: false, isOffscreenCanvasSupported: false, isImageDecoderSupported: false, stopAtErrors: true });
+      try {
+        const pdf = await task.promise;
+        if (pdf.numPages > input.maxPages) throw new Error('resource_limit');
+        const pages: string[] = [];
+        let length = 0;
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const value = content.items.map(item => 'str' in item ? item.str + (item.hasEOL ? '\n' : ' ') : '').join('');
+          length += value.length;
+          if (length > 500000) throw new Error('resource_limit');
+          pages.push(value); page.cleanup();
+        }
+        text = pages.join('\n');
+      } finally { await task.destroy(); }
+    } else if (header.startsWith('PK\x03\x04')) {
+      if (input.mime !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') throw new Error('mime_mismatch');
+      let entries = 0, expanded = 0;
+      // fflate calls filter BEFORE allocation/decompression. Only the document is inflated.
+      const files = unzipSync(bytes, { filter: file => {
+        entries++; expanded += file.originalSize;
+        if (entries > 500 || expanded > 20 * 1024 * 1024 || file.originalSize > 2 * 1024 * 1024) throw new Error('resource_limit');
+        return file.name === 'word/document.xml' || file.name === '[Content_Types].xml';
+      } });
+      if (!files['word/document.xml'] || !files['[Content_Types].xml']) throw new Error('invalid_document');
+      const contentTypes = strFromU8(files['[Content_Types].xml']);
+      if (/<!DOCTYPE|<!ENTITY/iu.test(contentTypes) || XMLValidator.validate(contentTypes) !== true ||
+        !contentTypes.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml')) throw new Error('invalid_document');
+      const xml = strFromU8(files['word/document.xml']);
+      if (/<!DOCTYPE|<!ENTITY/iu.test(xml) || XMLValidator.validate(xml) !== true) throw new Error('invalid_document');
+      const parsed: unknown = new XMLParser({ preserveOrder: true, ignoreAttributes: true, processEntities: false, parseTagValue: false, trimValues: false }).parse(xml);
+      const chunks: string[] = [];
+      const walk = (value: unknown, depth = 0): void => {
+        if (depth > 80) throw new Error('resource_limit');
+        if (Array.isArray(value)) { for (const node of value) walk(node, depth + 1); }
+        else if (value && typeof value === 'object') {
+          for (const [key, child] of Object.entries(value)) {
+            if (key === '#text' && typeof child === 'string') chunks.push(child.replace(/&(?:amp|lt|gt|quot|apos);/gu, e => ({ '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'" })[e]!));
+            else if (key !== ':@') { walk(child, depth + 1); if (key === 'w:p' || key === 'w:br' || key === 'w:tab') chunks.push('\n'); }
+          }
+        }
+      };
+      walk(parsed); text = chunks.join('');
+    } else if (input.mime === 'text/plain') {
+      try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch { throw new Error('invalid_document'); }
+      if (/[\x00-\x08\x0e-\x1f]/u.test(text) || /^\s*(?:<\?xml|<html|\{\\rtf|MZ)/iu.test(text)) throw new Error('mime_mismatch');
+    } else return { state: 'unsupported_format', binaryHash, textHash: null, academic: null, fingerprints: [] };
+  }
+  const academic = prepareText(text, input.shared, input.ngram, input.maxWords);
+  if (academic.tokens.length < input.minWords || new Set(academic.tokens.map(t => t.word)).size < 10) {
+    return { state: 'insufficient_text', binaryHash, textHash: academic.textHash, academic: null, fingerprints: [] };
+  }
+  return { state: 'completed', binaryHash, textHash: academic.textHash, academic, fingerprints: academic.fingerprints };
+}

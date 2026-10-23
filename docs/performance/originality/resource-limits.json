@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-23T17:41:03.3400498Z",
+  "mechanism": "Windows Job Object",
+  "requestedCpus": 0.5,
+  "logicalCpus": 8,
+  "cpuRateHardCap": 625,
+  "jobMemoryLimitBytes": 536870912,
+  "elapsedMs": 16782,
+  "exitCode": 0,
+  "scope": "Offline Node algorithm/index fixture + extraction worker thread; not HTTP/PostgreSQL/Render."
+}

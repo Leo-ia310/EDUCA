@@ -76,6 +76,15 @@ const okOnly = obj({ ok: bool });
 const fileRef = obj({ id: idish });
 
 export const responseSchemas: Record<string, Schema> = {
+  'GET /api/assignments/submissions/:submissionId/originality': obj({
+    documents: arr(obj({
+      id: int, state: enumOf('queued','processing','completed','failed','insufficient_text','unsupported_format'),
+      name: str, submittedAt: str, processedAt: nullable(str), algorithmVersion: str, errorCode: nullable(str),
+      preliminary: bool, compared: bool,
+      topMatch: nullable(obj({ coverage: num, sourceId: int, sourceName: str, sourceStudent: str, sourceSubmittedAt: str,
+        binaryIdentical: bool, textIdentical: bool, fragments: nullable(arr(obj({text:str,start:int,end:int}))), sourceFragments: nullable(arr(obj({text:str,start:int,end:int}))) })),
+    })), notice: str,
+  }),
   "GET /api/attendance/summary": obj({
     from: str, to: str, statuses: arr(attendanceStatus),
     groups: arr(obj({ groupId: str, name: str, sessions: int, marks: int, absent: int, rate, byStatus })),
@@ -308,7 +317,11 @@ export const responseSchemas: Record<string, Schema> = {
  * Esquemas de los CUERPOS de petición de las escrituras que usa la web (misma clave «MÉTODO ruta»).
  * Son estrictos con los nombres de campo (para atrapar errores de escritura) pero aceptan ids como texto o número.
  */
+responseSchemas['POST /api/assignments/submissions/:submissionId/originality/retry'] =
+  responseSchemas['GET /api/assignments/submissions/:submissionId/originality'];
+
 export const requestSchemas: Record<string, Schema> = {
+  'POST /api/assignments/submissions/:submissionId/originality/retry': obj({}),
   "POST /api/assignments/upsert": obj({
     assignmentId: idish, classId: idish, title: str, description: str, instructions: str, dueAt: str, maxScore: num,
     kind: enumOf("homework", "exam", "project", "quiz", "presentation"),
@@ -316,7 +329,7 @@ export const requestSchemas: Record<string, Schema> = {
   }, ["assignmentId", "description", "instructions", "allowLate", "published", "attachments", "kind", "idempotencyKey"]),
   "PATCH /api/assignments/:id/publish": obj({ published: bool }),
   "PATCH /api/assignments/submissions/:submissionId/grade": obj({ score: num, feedback: str }, ["feedback"]),
-  "POST /api/assignments/submit": obj({ assignmentId: idish, studentId: idish, notes: str, attachments: arr(fileRef) }, ["studentId", "notes", "attachments"]),
+  "POST /api/assignments/submit": obj({ assignmentId: idish, studentId: idish, notes: { ...str, maxLength: 50000 }, attachments: { ...arr(fileRef), maxItems: 20 } }, ["studentId", "notes", "attachments"]),
   "POST /api/grades/set-grade": obj({ evaluationId: idish, studentId: idish, rawScore: num, notes: str }, ["notes"]),
   "POST /api/attendance/class/:classId": obj({
     date: str, marks: arr(obj({operationId:str,uuid:str,expectedVersion:int, studentId: idish, statusId: idish, notes: str,recordedAt:str }, ["notes"])),

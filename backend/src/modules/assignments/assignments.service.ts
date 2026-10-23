@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { parseSubmissionFiles } from './submission.schemas';
 import { decodeAssignmentCursor, encodeAssignmentCursor, AssignmentCursor } from "./assignment-cursor";
 import { collaborationService } from "../collaborations/collaborations.service";
 import { assertNoDbError } from "../../lib/db";
@@ -274,21 +275,8 @@ export class AssignmentsService {
       throw new HttpError(409, "Esta tarea ya fue calificada: no se puede volver a entregar.", "already_graded");
     }
 
-    const statusId = await this.repository.taskStatusId("ENTR");
-    const now = new Date().toISOString();
-    const row = await this.repository.upsertSubmission({
-      institution_id: ctx.institutionId,
-      assignment_id: assignmentId,
-      student_id: studentId,
-      submitted_at: now,
-      student_notes: optionalString(payload.notes),
-      task_status_id: statusId,
-      updated_at: now,
-    });
-    await this.linkAttachments(ctx, {
-      attachments: payload.attachments,
-      submissionId: Number(row.id),
-    });
+    const fileIds = parseSubmissionFiles(payload.attachments);
+    const row = await this.repository.submit(assignmentId, studentId, optionalString(payload.notes, 50000), fileIds);
     return { submission: await this.hydrateSubmission(ctx, Number(row.id)) };
   }
 
@@ -318,41 +306,6 @@ export class AssignmentsService {
     );
     assertNoDbError(error);
     return { submission: await this.hydrateSubmission(ctx, submissionId) };
-  }
-
-  private async linkAttachments(
-    ctx: AppContext,
-    options: {
-      attachments: unknown;
-      submissionId?: number;
-    },
-  ) {
-    const attachments = asList(options.attachments);
-    for (const item of attachments) {
-      const raw = asRecord(item);
-      const fileId = optionalId(raw.id);
-      if (fileId == null) continue;
-
-      const file = await this.repository.findInstitutionFile(
-        ctx.institutionId,
-        fileId,
-      );
-      if (!file) {
-        throw new HttpError(
-          400,
-          "Uno de los adjuntos no pertenece a esta institución.",
-          "validation_error",
-        );
-      }
-
-      if (options.submissionId != null) {
-        const result = await this.repository.linkSubmissionFile(
-          options.submissionId,
-          fileId,
-        );
-        assertNoDbError(result.error);
-      }
-    }
   }
 
   private async attachmentRows(

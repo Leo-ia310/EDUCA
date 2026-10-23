@@ -1,0 +1,13 @@
+
+> educa360-backend@0.1.0 prebuild
+> npm run docs:apis
+
+
+> educa360-backend@0.1.0 docs:apis
+> tsx scripts/generate-api-docs.ts && tsx scripts/generate-openapi.ts
+
+API docs generated: C:\Users\Maykel\Desktop\EDUCA\docs\APIS_PENDIENTES_POR_CONECTAR.md
+OpenAPI generated: C:\Users\Maykel\Desktop\EDUCA\docs\openapi.json
+
+> educa360-backend@0.1.0 build
+> tsc -p tsconfig.json

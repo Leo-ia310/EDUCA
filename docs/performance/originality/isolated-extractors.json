@@ -1,0 +1,32 @@
+[
+  {
+    "format": "editor",
+    "state": "completed",
+    "words": 80,
+    "heapLimitBytes": 192937984
+  },
+  {
+    "format": "txt",
+    "state": "completed",
+    "words": 80,
+    "heapLimitBytes": 192937984
+  },
+  {
+    "format": "docx",
+    "state": "completed",
+    "words": 80,
+    "heapLimitBytes": 192937984
+  },
+  {
+    "format": "pdf",
+    "state": "completed",
+    "words": 80,
+    "heapLimitBytes": 192937984
+  },
+  {
+    "format": "pdf-empty",
+    "state": "insufficient_text",
+    "words": 0,
+    "heapLimitBytes": 192937984
+  }
+]

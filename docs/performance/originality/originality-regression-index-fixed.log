@@ -1,0 +1,23 @@
+TAP version 13
+# Subtest: private administrative full-name search uses its expression index with selective server filters
+ok 1 - private administrative full-name search uses its expression index with selective server filters
+  ---
+  duration_ms: 70101.7007
+  type: 'test'
+  ...
+# Full-name lookup: 3.645ms; indexes: persons_full_name_search, originality_students_person_retention
+# Subtest: a mixed teacher/admin retains own class grading without bypassing the limited administrative profile
+ok 2 - a mixed teacher/admin retains own class grading without bypassing the limited administrative profile
+  ---
+  duration_ms: 958.2401
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 72730.2278

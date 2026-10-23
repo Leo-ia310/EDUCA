@@ -1,0 +1,126 @@
+{
+  "startedAt": "2026-10-23T18:32:28.938Z",
+  "scope": "Direct Supabase Storage HTTP with service-role signing, anonymous signed upload and actual Nivra sourceUrl + local isolated extraction; excludes authenticated Express/student workflow and Render execution.",
+  "bucket": "files",
+  "private": true,
+  "configuration": {
+    "maxBytes": 5242880,
+    "maxPages": 50,
+    "maxWords": 20000,
+    "minWords": 40,
+    "ngram": 5
+  },
+  "fixtures": [
+    {
+      "format": "txt",
+      "bytes": 549,
+      "downloadHttpStatus": 200,
+      "downloadMs": 661,
+      "sha256Matches": true,
+      "urlLifetimeSeconds": 60,
+      "extractionState": "completed",
+      "words": 80,
+      "publicHttpStatus": 400,
+      "tamperedSignatureHttpStatus": 400,
+      "anonymousSigningDenied": true
+    },
+    {
+      "format": "pdf",
+      "bytes": 1214,
+      "downloadHttpStatus": 200,
+      "downloadMs": 469,
+      "sha256Matches": true,
+      "urlLifetimeSeconds": 60,
+      "extractionState": "completed",
+      "words": 80,
+      "publicHttpStatus": 400,
+      "tamperedSignatureHttpStatus": 400,
+      "anonymousSigningDenied": true
+    },
+    {
+      "format": "docx",
+      "bytes": 631,
+      "downloadHttpStatus": 200,
+      "downloadMs": 578,
+      "sha256Matches": true,
+      "urlLifetimeSeconds": 60,
+      "extractionState": "completed",
+      "words": 80,
+      "publicHttpStatus": 400,
+      "tamperedSignatureHttpStatus": 400,
+      "anonymousSigningDenied": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "status": 400
+    },
+    {
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "status": 400
+    },
+    {
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "status": 400
+    },
+    {
+      "method": "DELETE",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "status": 200
+    }
+  ],
+  "cleanup": {
+    "ok": true,
+    "remainingObjects": 0
+  },
+  "finishedAt": "2026-10-23T18:32:39.702Z",
+  "passed": true
+}

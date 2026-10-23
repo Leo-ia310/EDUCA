@@ -1,0 +1,5 @@
+
+> educa360-backend@0.1.0 check:schemas
+> node scripts/check_api_schemas.mjs
+
+Define CHECK_USER y CHECK_PASSWORD (una cuenta de administración).

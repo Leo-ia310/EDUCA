@@ -1,0 +1,72 @@
+TAP version 13
+# Subtest: HTTP contract validates ID/query/body and protects role/missing session before exposing report
+ok 1 - HTTP contract validates ID/query/body and protects role/missing session before exposing report
+  ---
+  duration_ms: 967.1488
+  type: 'test'
+  ...
+# {"event":"originality_processed","format":"editor","state":"completed","attempts":1,"queueWaitMs":-1,"durationMs":12,"candidateQueries":2,"deduplicatedPairs":1,"rssBytes":85458944,"maxRssKb":86276,"cpuMicros":{"user":16000,"system":0}}
+# {"event":"originality_failed","code":"analysis_unavailable"}
+# Subtest: worker drains all candidates, saves later exact match, and admits only one active call
+ok 2 - worker drains all candidates, saves later exact match, and admits only one active call
+  ---
+  duration_ms: 23.048
+  type: 'test'
+  ...
+# Subtest: analysis failure is sanitized and persisted without touching delivery or grade
+ok 3 - analysis failure is sanitized and persisted without touching delivery or grade
+  ---
+  duration_ms: 6.2546
+  type: 'test'
+  ...
+# Subtest: invalid configured limits fail at startup
+ok 4 - invalid configured limits fail at startup
+  ---
+  duration_ms: 2.1965
+  type: 'test'
+  ...
+# Subtest: Unicode, whitespace, case, hashes and offsets are deterministic; filenames never enter the algorithm
+ok 5 - Unicode, whitespace, case, hashes and offsets are deterministic; filenames never enter the algorithm
+  ---
+  duration_ms: 33.5884
+  type: 'test'
+  ...
+# Subtest: explicit metadata, shared lines, quotes and bibliography are auditable; body remains
+ok 6 - explicit metadata, shared lines, quotes and bibliography are auditable; body remains
+  ---
+  duration_ms: 9.3979
+  type: 'test'
+  ...
+# Subtest: coverage fuses overlaps, is directional and ignores trivial grams
+ok 7 - coverage fuses overlaps, is directional and ignores trivial grams
+  ---
+  duration_ms: 19.1529
+  type: 'test'
+  ...
+# Subtest: extraction states: editor, TXT, DOCX, short/empty, MIME spoof and zip limits
+ok 8 - extraction states: editor, TXT, DOCX, short/empty, MIME spoof and zip limits
+  ---
+  duration_ms: 253.2388
+  type: 'test'
+  ...
+# Subtest: request schemas reject coercion, unbounded keys, invalid flags and retry payloads
+ok 9 - request schemas reject coercion, unbounded keys, invalid flags and retry payloads
+  ---
+  duration_ms: 2.4494
+  type: 'test'
+  ...
+# Subtest: selectable PDF extracts text, an empty/scanned-equivalent page is insufficient
+ok 10 - selectable PDF extracts text, an empty/scanned-equivalent page is insufficient
+  ---
+  duration_ms: 7814.1384
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9345.4264

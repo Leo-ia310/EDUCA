@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { originalityReport, originalityRetry } from './originality/originality.controller';
 
 import {
   assignmentSubmissions,
@@ -19,6 +20,8 @@ import { requireRoles } from "../../middleware/permissions.middleware";
 export const assignmentsRoutes = Router();
 
 assignmentsRoutes.use(authMiddleware);
+assignmentsRoutes.get('/submissions/:submissionId/originality', requireRoles(['teacher']), asyncHandler(originalityReport));
+assignmentsRoutes.post('/submissions/:submissionId/originality/retry', requireRoles(['teacher']), asyncHandler(originalityRetry));
 assignmentsRoutes.post(
   "/teacher-classes",
   requireRoles(["teacher"]),

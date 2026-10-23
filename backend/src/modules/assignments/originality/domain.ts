@@ -1,0 +1,99 @@
+import { createHash } from 'node:crypto';
+
+export const ALGORITHM_VERSION = 'nivra-1';
+export type Interval = [number, number];
+export type Token = { word: string; start: number; end: number };
+export type AcademicText = {
+  text: string; tokens: Token[]; normalized: string; textHash: string;
+  fingerprints: string[]; excluded: { start: number; end: number; rule: string }[];
+};
+export const sha256 = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
+export const canonicalText = (value: string) => value.normalize('NFKC').toLowerCase().replace(/\s+/gu, ' ').trim();
+
+export function prepareText(text: string, shared: string[] = [], n = 5, maxWords = 20000): AcademicText {
+  if (text.length > 500000 || !Number.isInteger(n) || n < 3 || n > 10) throw new Error('resource_limit');
+  // Store Unicode character offsets (PostgreSQL substring), not UTF-16 indices.
+  const characterOffset = new Uint32Array(text.length + 1);
+  let utf16 = 0, characters = 0;
+  for (const ch of text) { characterOffset[utf16] = characters; utf16 += ch.length; characters++; }
+  characterOffset[text.length] = characters;
+  const excluded: AcademicText['excluded'] = [];
+  const sharedLines = new Set(shared.flatMap(s => s.split(/\r?\n/u)).map(canonicalText).filter(s => s.length >= 20));
+  let bibliography = false, lineNumber = 0;
+  const tokens: Token[] = [];
+  for (const line of text.matchAll(/[^\n]*(?:\n|$)/gu)) {
+    if (!line[0]) continue;
+    const value = line[0].trim();
+    if (/^(bibliograf[ií]a|referencias bibliogr[aá]ficas|references)\s*:?[\s]*$/iu.test(value)) bibliography = true;
+    const rule = bibliography ? 'bibliography_heading' : sharedLines.has(canonicalText(value)) ? 'shared_instruction_line'
+      : lineNumber < 12 && /^(nombre(?: del estudiante)?|matr[ií]cula|fecha|instituci[oó]n|docente)\s*:/iu.test(value) ? 'labelled_metadata'
+      : /^>\s/u.test(value) ? 'explicit_quote' : null;
+    lineNumber++;
+    if (rule) { excluded.push({ start: line.index, end: line.index + line[0].length, rule }); continue; }
+    for (const match of line[0].matchAll(/[\p{L}\p{N}][\p{L}\p{N}\p{M}]*(?:['’][\p{L}\p{N}\p{M}]+)*/gu)) {
+      tokens.push({ word: canonicalText(match[0]), start: characterOffset[line.index + match.index], end: characterOffset[line.index + match.index + match[0].length] });
+      if (tokens.length > maxWords) throw new Error('resource_limit');
+    }
+  }
+  const normalized = tokens.map(t => t.word).join(' ');
+  for (const interval of excluded) { interval.start = characterOffset[interval.start]; interval.end = characterOffset[interval.end]; }
+  return { text, tokens, normalized, textHash: sha256(normalized), excluded, fingerprints: [...new Set(grams(tokens, n, excluded).filter(Boolean).map(sha256))] };
+}
+
+function grams(tokens: Token[], n: number, excluded: AcademicText['excluded'] = []): string[] {
+  let exclusionIndex = 0;
+  return Array.from({ length: Math.max(0, tokens.length - n + 1) }, (_, i) => {
+    const words = tokens.slice(i, i + n).map(t => t.word);
+    // Do not bridge excluded lines; repeated boilerplate is not useful evidence.
+    while (exclusionIndex < excluded.length && excluded[exclusionIndex].end <= tokens[i].end) exclusionIndex++;
+    if (new Set(words).size < 3 || excluded[exclusionIndex]?.start < tokens[i + n - 1].start) return '';
+    return words.join(' ');
+  });
+}
+
+export function mergeIntervals(intervals: Interval[]): Interval[] {
+  const merged: Interval[] = [];
+  for (const [start, end] of [...intervals].sort((a, b) => a[0] - b[0] || a[1] - b[1])) {
+    const last = merged.at(-1);
+    if (last && start <= last[1]) last[1] = Math.max(last[1], end);
+    else merged.push([start, end]);
+  }
+  return merged;
+}
+export function compareTexts(a: AcademicText, b: AcademicText, n = 5) {
+  const exact = a.textHash === b.textHash && a.normalized === b.normalized && a.tokens.length > 0;
+  let ai: Interval[] = [], bi: Interval[] = [];
+  if (exact) { ai = [[0, a.tokens.length]]; bi = [[0, b.tokens.length]]; }
+  else {
+    const ga = grams(a.tokens, n, a.excluded), gb = grams(b.tokens, n, b.excluded);
+    // Every occurrence contributes coverage. No occurrence cross-product is required.
+    const setA = new Set(ga.filter(Boolean)), setB = new Set(gb.filter(Boolean));
+    const runs = (g: string[], other: Set<string>): Interval[] => {
+      const result: Interval[] = [];
+      let start = -1;
+      for (let i = 0; i <= g.length; i++) {
+        if (i < g.length && g[i] && other.has(g[i])) { if (start < 0) start = i; }
+        else if (start >= 0) { if (i - start + n - 1 >= 10) result.push([start, i + n - 1]); start = -1; }
+      }
+      return result;
+    };
+    ai = mergeIntervals(runs(ga, setB)); bi = mergeIntervals(runs(gb, setA));
+  }
+  const coverage = (i: Interval[], size: number) => size ? 100 * i.reduce((s, [l, r]) => s + r - l, 0) / size : 0;
+  const offsets = (intervals: Interval[], doc: AcademicText): Interval[] => {
+    const evidence: Interval[] = []; let exclusionIndex = 0;
+    for (const [l, r] of intervals) {
+      let start = l;
+      for (let i = l + 1; i < r; i++) {
+        while (exclusionIndex < doc.excluded.length && doc.excluded[exclusionIndex].end <= doc.tokens[i - 1].end) exclusionIndex++;
+        if (doc.excluded[exclusionIndex]?.start < doc.tokens[i].start) {
+          evidence.push([doc.tokens[start].start, doc.tokens[i - 1].end]); start = i;
+        }
+      }
+      evidence.push([doc.tokens[start].start, doc.tokens[r - 1].end]);
+    }
+    return evidence;
+  };
+  return { aCoverage: coverage(ai, a.tokens.length), bCoverage: coverage(bi, b.tokens.length),
+    aIntervals: offsets(ai, a), bIntervals: offsets(bi, b), textIdentical: exact };
+}

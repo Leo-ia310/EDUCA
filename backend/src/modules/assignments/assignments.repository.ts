@@ -5,6 +5,11 @@ import { readAllPages } from "../../lib/read-all";
 const db = supabaseAdmin as any;
 
 export class AssignmentsRepository {
+  async submit(assignmentId: number, studentId: number, notes: string | null, fileIds: number[] | null) {
+    return expectSingle<{ id: number }>(db.rpc('assignment_submit', {
+      p_assignment: assignmentId, p_student: studentId, p_notes: notes, p_files: fileIds,
+    }), 'No se pudo guardar la entrega.');
+  }
   async writeAssignment(id: number | null, data: Record<string, unknown>, fileIds: number[] | null, key: string) {
     return expectSingle<Record<string, unknown>>(db.rpc('assignment_write', {
       p_id: id, p_data: data, p_file_ids: fileIds, p_key: key,
@@ -30,27 +35,6 @@ export class AssignmentsRepository {
       .from(table)
       .select("files(id, original_name, url, size_bytes, mime_type)")
       .eq(column, id);
-  }
-
-  async findInstitutionFile(institutionId: number, fileId: number) {
-    const { data , error: queryError_2} = await db
-      .from("files")
-      .select("id")
-      .eq("id", fileId)
-      .eq("institution_id", institutionId)
-      .is("deleted_at", null)
-      .maybeSingle();
-    assertNoDbError(queryError_2);
-    return data;
-  }
-
-  async linkSubmissionFile(submissionId: number, fileId: number) {
-    return db
-      .from("submission_files")
-      .upsert({ submission_id: submissionId, file_id: fileId }, {
-        onConflict: "submission_id,file_id",
-        ignoreDuplicates: true,
-      });
   }
 
   async findAssignmentForHydration(id: number, institutionId: number) {
@@ -224,17 +208,6 @@ export class AssignmentsRepository {
       .maybeSingle();
     assertNoDbError(error);
     return (data ?? null) as Record<string, unknown> | null;
-  }
-
-  async upsertSubmission(payload: Record<string, unknown>) {
-    return expectSingle<Record<string, unknown>>(
-      db
-        .from("submissions")
-        .upsert(payload, { onConflict: "assignment_id,student_id" })
-        .select("id")
-        .single(),
-      "No se pudo guardar la entrega.",
-    );
   }
 
   async findSubmissionWithAssignment(

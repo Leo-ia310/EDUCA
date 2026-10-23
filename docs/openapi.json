@@ -20,6 +20,510 @@
     }
   },
   "paths": {
+    "/api/assignments/submissions/{submissionId}/originality": {
+      "get": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "Consultar coincidencia textual máxima por documento de una entrega",
+        "description": "Auth: teacher con class.view, assignments.review y students.view en la clase; RLS.\n\nNotas: Migración 0058. Sin porcentaje hasta completar y existir otra entrega comparable. Cobertura direccional; solo máximo real y desempate por ID. Evidencia limitada a 10 fragmentos de hasta 1500 caracteres por documento; acceso auditado. No implica plagio ni autoría. Worker separado: npm run start:originality.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ documents: [{ id, state, name, submittedAt, processedAt, algorithmVersion, errorCode, preliminary, compared, topMatch: null | { coverage, sourceId, sourceName, sourceStudent, sourceSubmittedAt, binaryIdentical, textIdentical, fragments, sourceFragments } }], notice }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "documents": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "queued",
+                                  "processing",
+                                  "completed",
+                                  "failed",
+                                  "insufficient_text",
+                                  "unsupported_format"
+                                ]
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "submittedAt": {
+                                "type": "string"
+                              },
+                              "processedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "algorithmVersion": {
+                                "type": "string"
+                              },
+                              "errorCode": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "preliminary": {
+                                "type": "boolean"
+                              },
+                              "compared": {
+                                "type": "boolean"
+                              },
+                              "topMatch": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "coverage": {
+                                        "type": "number"
+                                      },
+                                      "sourceId": {
+                                        "type": "integer"
+                                      },
+                                      "sourceName": {
+                                        "type": "string"
+                                      },
+                                      "sourceStudent": {
+                                        "type": "string"
+                                      },
+                                      "sourceSubmittedAt": {
+                                        "type": "string"
+                                      },
+                                      "binaryIdentical": {
+                                        "type": "boolean"
+                                      },
+                                      "textIdentical": {
+                                        "type": "boolean"
+                                      },
+                                      "fragments": {
+                                        "anyOf": [
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "text": {
+                                                  "type": "string"
+                                                },
+                                                "start": {
+                                                  "type": "integer"
+                                                },
+                                                "end": {
+                                                  "type": "integer"
+                                                }
+                                              },
+                                              "required": [
+                                                "text",
+                                                "start",
+                                                "end"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "sourceFragments": {
+                                        "anyOf": [
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "text": {
+                                                  "type": "string"
+                                                },
+                                                "start": {
+                                                  "type": "integer"
+                                                },
+                                                "end": {
+                                                  "type": "integer"
+                                                }
+                                              },
+                                              "required": [
+                                                "text",
+                                                "start",
+                                                "end"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "coverage",
+                                      "sourceId",
+                                      "sourceName",
+                                      "sourceStudent",
+                                      "sourceSubmittedAt",
+                                      "binaryIdentical",
+                                      "textIdentical",
+                                      "fragments",
+                                      "sourceFragments"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "state",
+                              "name",
+                              "submittedAt",
+                              "processedAt",
+                              "algorithmVersion",
+                              "errorCode",
+                              "preliminary",
+                              "compared",
+                              "topMatch"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "notice": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "documents",
+                        "notice"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/assignments/submissions/{submissionId}/originality/retry": {
+      "post": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "Reintentar análisis fallido de versiones actuales",
+        "description": "Auth: teacher con class.view, assignments.review y students.view en la clase; RLS.\n\nNotas: No modifica entregas ni calificaciones; reintento auditado. No reinicia trabajos con lease vigente.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              },
+              "examples": {
+                "manifest": {
+                  "value": "params submissionId: entero positivo; body vacío {}"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reporte actual; fallos recuperables pasan a queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "documents": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "queued",
+                                  "processing",
+                                  "completed",
+                                  "failed",
+                                  "insufficient_text",
+                                  "unsupported_format"
+                                ]
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "submittedAt": {
+                                "type": "string"
+                              },
+                              "processedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "algorithmVersion": {
+                                "type": "string"
+                              },
+                              "errorCode": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "preliminary": {
+                                "type": "boolean"
+                              },
+                              "compared": {
+                                "type": "boolean"
+                              },
+                              "topMatch": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "coverage": {
+                                        "type": "number"
+                                      },
+                                      "sourceId": {
+                                        "type": "integer"
+                                      },
+                                      "sourceName": {
+                                        "type": "string"
+                                      },
+                                      "sourceStudent": {
+                                        "type": "string"
+                                      },
+                                      "sourceSubmittedAt": {
+                                        "type": "string"
+                                      },
+                                      "binaryIdentical": {
+                                        "type": "boolean"
+                                      },
+                                      "textIdentical": {
+                                        "type": "boolean"
+                                      },
+                                      "fragments": {
+                                        "anyOf": [
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "text": {
+                                                  "type": "string"
+                                                },
+                                                "start": {
+                                                  "type": "integer"
+                                                },
+                                                "end": {
+                                                  "type": "integer"
+                                                }
+                                              },
+                                              "required": [
+                                                "text",
+                                                "start",
+                                                "end"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "sourceFragments": {
+                                        "anyOf": [
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "text": {
+                                                  "type": "string"
+                                                },
+                                                "start": {
+                                                  "type": "integer"
+                                                },
+                                                "end": {
+                                                  "type": "integer"
+                                                }
+                                              },
+                                              "required": [
+                                                "text",
+                                                "start",
+                                                "end"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "coverage",
+                                      "sourceId",
+                                      "sourceName",
+                                      "sourceStudent",
+                                      "sourceSubmittedAt",
+                                      "binaryIdentical",
+                                      "textIdentical",
+                                      "fragments",
+                                      "sourceFragments"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "state",
+                              "name",
+                              "submittedAt",
+                              "processedAt",
+                              "algorithmVersion",
+                              "errorCode",
+                              "preliminary",
+                              "compared",
+                              "topMatch"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "notice": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "documents",
+                        "notice"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -7700,7 +8204,7 @@
           "assignments"
         ],
         "summary": "Entrega una tarea",
-        "description": "Auth: student.\n\nNotas: 409 already_graded si ya esta calificada. Antes de calificar, volver a entregar actualiza la entrega.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: student.\n\nNotas: 409 already_graded si ya esta calificada. Migración 0058: assignment_submit guarda entrega y reemplaza adjuntos atómicamente; máximo 20 archivos propios. Omitir adjuntos conserva los existentes; [] los desvincula. La misma entrega con igual texto y adjuntos es idempotente. Reloj PostgreSQL UTC y captura diferida por versión; no espera análisis ni modifica notas. La migración debe aplicarse antes de este backend.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7734,7 +8238,8 @@
                     ]
                   },
                   "notes": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50000
                   },
                   "attachments": {
                     "type": "array",
@@ -7756,7 +8261,8 @@
                         "id"
                       ],
                       "additionalProperties": false
-                    }
+                    },
+                    "maxItems": 20
                   }
                 },
                 "required": [

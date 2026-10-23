@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
+    "start:originality": "node --max-old-space-size=160 dist/modules/assignments/originality/worker.js",
     "check:schemas": "node scripts/check_api_schemas.mjs",
     "docs:apis": "tsx scripts/generate-api-docs.ts && tsx scripts/generate-openapi.ts",
     "prebuild": "npm run docs:apis",
@@ -22,7 +23,10 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^8.7.0",
+    "fast-xml-parser": "^5.11.2",
+    "fflate": "^0.8.3",
     "helmet": "^8.3.0",
+    "pdfjs-dist": "^6.4.299",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

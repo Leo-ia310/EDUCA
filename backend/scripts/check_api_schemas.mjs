@@ -124,6 +124,8 @@ try {
   const due = new Date(Date.now() + 3 * 3600e3).toISOString();
   const asg = (await write('teacher', 'POST /api/assignments/upsert', '/assignments/upsert', { classId: Number(klass.id), title: 'Tarea CHK', dueAt: due, maxScore: 20, allowLate: true, published: true, attachments: [{ id: Number(file.id) }] })).assignment;
   const submitted = await write('student', 'POST /api/assignments/submit', '/assignments/submit', { assignmentId: Number(asg.id), notes: 'chk' });
+  await get('teacher', 'GET /api/assignments/submissions/:submissionId/originality', `/assignments/submissions/${submitted.submission.id}/originality?evidence=true`);
+  await write('teacher', 'POST /api/assignments/submissions/:submissionId/originality/retry', `/assignments/submissions/${submitted.submission.id}/originality/retry`, {});
   const today = new Date().toLocaleDateString('en-CA');
   await write('teacher', 'POST /api/attendance/class/:classId', `/attendance/class/${klass.id}`, { date: today, marks: students.map((s, i) => ({ operationId:randomUUID(),uuid:randomUUID(),expectedVersion:0,recordedAt:new Date().toISOString(),studentId: Number(s.id), statusId: i === 0 ? 2 : 1 })) });
   // calificar la entrega crea la evaluación; luego se corrige otra nota con set-grade y se oculta/publica la tarea
