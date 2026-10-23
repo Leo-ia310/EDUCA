@@ -1,4 +1,4 @@
-FROM node:22-alpine AS deps
+FROM node:22.23.4-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -10,7 +10,7 @@ COPY scripts ./scripts
 RUN mkdir -p ../docs
 RUN npm run build
 
-FROM node:22-alpine AS runtime
+FROM node:22.23.4-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package*.json ./

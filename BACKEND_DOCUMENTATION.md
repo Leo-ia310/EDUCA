@@ -116,7 +116,7 @@ Flujo de request:
 
 Requisitos previos:
 
-- Node.js 20 o superior.
+- Node.js 22.23.4 (versión usada en desarrollo, Docker y CI). También se admiten las ramas corregidas 24.x desde 24.22.1 y 26.x desde 26.12.1.
 - npm.
 - Proyecto Supabase disponible.
 - Credenciales de Supabase y Postgres para scripts conectados.

@@ -302,7 +302,7 @@ docker run --env-file .env -p 3000:3000 nivra-backend
 
 ## Escrituras y operación escalable
 
-El runtime requiere Node >=20.3.0 por la composición de señales de cancelación; CI verifica Node 22. Contratos de recuperación y actualización coordinada en [ESCRITURAS_TRANSACCIONALES](../docs/ESCRITURAS_TRANSACCIONALES.md) y presupuestos, readiness, métricas y SIGTERM en [OPERACION_BACKEND](../docs/OPERACION_BACKEND.md). La lista de bloques y su evidencia está en [ESCALABILIDAD_IMPLEMENTACION](../docs/ESCALABILIDAD_IMPLEMENTACION.md).
+El runtime usa Node 22.23.4 en desarrollo (`../.nvmrc`), Docker y CI. También admite las ramas 24.x desde 24.22.1 y 26.x desde 26.12.1. Estos mínimos incluyen la corrección de [CVE-2026-111497 en Brotli](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases); no usar versiones anteriores. Tras actualizar, reconstruir las imágenes y reiniciar las instancias para que carguen el runtime corregido. Contratos de recuperación y actualización coordinada en [ESCRITURAS_TRANSACCIONALES](../docs/ESCRITURAS_TRANSACCIONALES.md) y presupuestos, readiness, métricas y SIGTERM en [OPERACION_BACKEND](../docs/OPERACION_BACKEND.md). La lista de bloques y su evidencia está en [ESCALABILIDAD_IMPLEMENTACION](../docs/ESCALABILIDAD_IMPLEMENTACION.md).
 
 `npm test` genera documentación, comprueba TypeScript de aplicación y pruebas y ejecuta regresiones unitarias/SQL aisladas. El harness de `test/` crea PostgreSQL temporal en loopback, sin leer `.env` ni usar servicios remotos. Los scripts E2E históricos sí requieren una instalación y credenciales explícitas; no se ejecutan en CI. Los scripts de carga se ejecutan aparte y no demuestran capacidad hasta medir el despliegue real.
 
