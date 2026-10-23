@@ -18,6 +18,7 @@ import '../widgets/admin_widgets.dart';
 import '../widgets/class_form.dart';
 import '../widgets/person_form.dart';
 import '../widgets/page_controls.dart';
+import '../../../../core/utils/plural.dart';
 
 /// Salones / años: lista con su CRUD. Cada salón abre el detalle con la lista
 /// de sus estudiantes y de sus clases.
@@ -120,7 +121,7 @@ class _GroupsList extends ConsumerWidget {
               AdminTile(
                 title: g.name,
                 subtitle:
-                    '${g.studentCount ?? dir.studentsOfGroup(g.id).length} estudiantes · ${g.classCount ?? dir.classesOfGroup(g.id).length} clases',
+                    '${plural(g.studentCount ?? dir.studentsOfGroup(g.id).length, 'estudiante')} · ${plural(g.classCount ?? dir.classesOfGroup(g.id).length, 'clase')}',
                 color: context.palette.mint,
                 leadingIcon: Icons.meeting_room_rounded,
                 trailing: _Chevron(),

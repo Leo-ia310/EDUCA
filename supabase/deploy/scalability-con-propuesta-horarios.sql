@@ -2917,7 +2917,7 @@ begin
     else
       if not exists(select 1 from public.groups g where g.id=group_id and g.institution_id=p_inst and g.academic_year_id=year_id and g.active) then raise exception 'Salón fuera del año actual.' using errcode='22023'; end if;
       insert into public.enrollments(institution_id,student_id,group_id,academic_year_id,enrollment_status_id,enrolled_at)
-      values(p_inst,p_id,group_id,year_id,(select id from public.catalog_enrollment_statuses where code='ACT' and active order by id limit 1),current_date)
+      values(p_inst,p_id,group_id,year_id,(select id from public.catalog_enrollment_statuses where code='ACT' order by id limit 1),current_date)
       on conflict(student_id,academic_year_id) do update set group_id=excluded.group_id,enrollment_status_id=excluded.enrollment_status_id;
     end if;
   elsif p_kind='parents' and p_relations?'childIds' then

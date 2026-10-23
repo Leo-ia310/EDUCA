@@ -312,7 +312,7 @@ class WorkTeamDetailScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'La nota se aplica a los ${team.members.length} integrantes.',
+              'La nota se aplica ${team.members.length == 1 ? 'al integrante' : 'a los ${team.members.length} integrantes'}.',
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
             const SizedBox(height: 14),

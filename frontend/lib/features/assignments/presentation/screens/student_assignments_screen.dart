@@ -15,6 +15,7 @@ import '../../../../core/widgets/entrance.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../dashboard/data/dashboard_data.dart';
+import '../../../dashboard/data/supabase_dashboard_datasource.dart' show iconForSubject;
 import '../../../dashboard/domain/dashboard_models.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../../dashboard/providers.dart';
@@ -217,9 +218,24 @@ class _StudentAssignmentsScreenState
 
   /// Por materia: una tarjeta por cada materia del estudiante.
   List<Widget> _subjectCards(BuildContext context, List<Assignment> items) {
-    final subjects =
-        ref.watch(studentDashboardProvider).scopedValue?.subjects ??
-            StudentDashboardData.empty().subjects;
+    // Las materias salen del panel del alumno (docente e ícono) y se completan
+    // con las de las propias tareas: en el panel del padre ese panel no existe,
+    // y sin esto la lista de materias quedaba en blanco.
+    final known = ref.watch(studentDashboardProvider).scopedValue?.subjects ??
+        StudentDashboardData.empty().subjects;
+    final subjects = [
+      ...known,
+      for (final name in {
+        for (final a in items) a.subjectName.trim(),
+      })
+        if (name.isNotEmpty && !known.any((k) => _sameSubject(k.name, name)))
+          SubjectProgress(
+            name: name,
+            teacher: '',
+            progress: 0,
+            icon: iconForSubject(name),
+          ),
+    ];
     return [
       for (final (i, s) in subjects.indexed)
         entranceItem(

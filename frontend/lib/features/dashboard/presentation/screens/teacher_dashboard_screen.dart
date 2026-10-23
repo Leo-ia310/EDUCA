@@ -17,6 +17,7 @@ import '../widgets/home_hero.dart';
 import '../widgets/home_schedule_section.dart';
 import '../widgets/home_tile_card.dart';
 import '../widgets/student_home_header.dart';
+import '../../../../core/utils/plural.dart';
 
 class TeacherDashboardScreen extends ConsumerStatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -59,7 +60,7 @@ class _TeacherDashboardScreenState
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: HomeHero(
               name: user.displayFirstName,
-              subtitle: 'Docente · ${data.myClasses.length} grupos',
+              subtitle: 'Docente · ${plural(data.myClasses.length, 'grupo')}',
             ),
           ),
           Padding(
@@ -100,7 +101,8 @@ class _TeacherDashboardScreenState
                   (
                     icon: Icons.class_rounded,
                     title: 'Mis clases',
-                    subtitle: '${data.myClasses.length} clases asignadas',
+                    subtitle:
+                        '${plural(data.myClasses.length, 'clase')} ${data.myClasses.length == 1 ? 'asignada' : 'asignadas'}',
                     color: context.palette.accent,
                     route: Routes.myClasses,
                     art: const ArtCluster([
@@ -169,7 +171,8 @@ class _TeacherDashboardScreenState
                   (
                     icon: Icons.groups_rounded,
                     title: 'Grupos',
-                    subtitle: '${data.myClasses.length} grupos de trabajo',
+                    subtitle:
+                        '${plural(data.myClasses.length, 'grupo')} de trabajo',
                     color: context.palette.coral,
                     route: Routes.workTeams,
                     art: const ArtCluster([

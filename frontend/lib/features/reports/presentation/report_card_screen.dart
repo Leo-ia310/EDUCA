@@ -8,6 +8,7 @@ import 'package:printing/printing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/brutal.dart';
 import '../../../core/widgets/depth_card.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../core/widgets/skeleton.dart';
@@ -72,10 +73,24 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
           else
             card.when(
               loading: () => const SkeletonList(),
-              error: (e, _) => ErrorStateView(message: '$e'),
+              error: (e, _) => '$e'.contains('No hay escalas')
+                  ? const EmptyState(
+                      icon: Icons.grading_rounded,
+                      title: 'Boletín no disponible',
+                      subtitle:
+                          'El colegio aún no configuró una escala de calificación.',
+                    )
+                  : ErrorStateView(message: '$e'),
               data: (data) => scaleAsync.when(
                 loading: () => const SkeletonList(),
-                error: (e, _) => ErrorStateView(message: '$e'),
+                error: (e, _) => '$e'.contains('No hay escalas')
+                    ? const EmptyState(
+                        icon: Icons.grading_rounded,
+                        title: 'Boletín no disponible',
+                        subtitle:
+                            'El colegio aún no configuró una escala de calificación.',
+                      )
+                    : ErrorStateView(message: '$e'),
                 data: (scale) => periodsAsync.when(
                   loading: () => const SkeletonList(),
                   error: (e, _) => ErrorStateView(message: '$e'),

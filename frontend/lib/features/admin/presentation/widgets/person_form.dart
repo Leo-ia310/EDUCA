@@ -9,6 +9,7 @@ import '../../data/admin_backend_repository.dart';
 import '../../data/school_directory.dart';
 import 'admin_widgets.dart';
 import 'directory_picker.dart';
+import '../../../../core/utils/plural.dart';
 
 /// Abre la hoja de alta/edición de una persona.
 ///
@@ -477,7 +478,7 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
           if (connected &&
               !(ref.watch(authControllerProvider).user?.can('classes.edit') ??
                   false))
-            Text('${_teacherClassIds.length} clases asignadas')
+            Text('${plural(_teacherClassIds.length, 'clase')} ${_teacherClassIds.length == 1 ? 'asignada' : 'asignadas'}')
           else if (connected)
             DirectoryPicker(
               kind: 'classes',

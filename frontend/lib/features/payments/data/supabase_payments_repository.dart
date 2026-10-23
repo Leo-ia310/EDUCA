@@ -105,7 +105,7 @@ class SupabasePaymentsRepository implements PaymentsRepository {
           .select(_chargeSelect)
           .eq('institution_id', institutionId);
       if (studentId != null) query = query.eq('student_id', studentId);
-      return await query.order('due_at').order('id').range(from, to);
+      return await query.order('due_at', ascending: true).order('id', ascending: true).range(from, to);
     });
     final paidByCharge =
         await _paidAmountsByCharge(charges.map((c) => c['id']).toList());
@@ -282,8 +282,26 @@ class SupabasePaymentsRepository implements PaymentsRepository {
 
   @override
   Future<DunningMetrics> dunningMetrics() async {
-    final data =
+    var data =
         Map<String, dynamic>.from(await _api.get('/payments/summary') as Map);
+    // El resumen viene por moneda (`byCurrency`) y el nivel superior es solo la
+    // moneda por defecto (USD): si el colegio cobra en otra (p. ej. NIO), el
+    // superior sale en ceros. Se usa la moneda con más movimiento.
+    final byCurrency = data['byCurrency'];
+    if (byCurrency is Map && byCurrency.isNotEmpty) {
+      double weight(Map<String, dynamic> m) =>
+          ((m['expectedThisMonth'] as num?)?.toDouble() ?? 0) +
+          ((m['collectedThisMonth'] as num?)?.toDouble() ?? 0) +
+          ((m['overdueAmount'] as num?)?.toDouble() ?? 0) +
+          ((m['pendingAmount'] as num?)?.toDouble() ?? 0);
+      Map<String, dynamic>? best;
+      for (final entry in byCurrency.values) {
+        if (entry is! Map) continue;
+        final m = Map<String, dynamic>.from(entry);
+        if (best == null || weight(m) > weight(best)) best = m;
+      }
+      if (best != null && weight(best) > weight(data)) data = best;
+    }
     return DunningMetrics(
       totalOverdueAmount: (data['overdueAmount'] as num?)?.toDouble() ?? 0,
       overdueCount: (data['overdueCount'] as num?)?.toInt() ?? 0,

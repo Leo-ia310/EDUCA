@@ -420,6 +420,7 @@ class ParentAttendanceScreen extends ConsumerWidget {
       title: 'Promedio de asistencias',
       heading: 'Asistencia de ${child.name}',
       percentOverride: child.attendance ?? data.attendancePercent,
+      studentId: child.id,
     );
   }
 }

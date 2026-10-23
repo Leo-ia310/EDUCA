@@ -76,7 +76,8 @@ class _FolderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final ink = dark ? Colors.white : Colors.black;
+    // Borde y sombra oscuros en ambos temas (como el resto de tarjetas).
+    const ink = Colors.black;
     final s = context.pastel(subject.color ?? subjectColor(subject.name));
     final tabColor = dark ? s.vivid : s.vivid.withValues(alpha: 0.55);
     final iconBg = dark ? s.surface : s.vivid.withValues(alpha: 0.28);
@@ -114,8 +115,8 @@ class _FolderCard extends StatelessWidget {
                   color: context.palette.cardElevated,
                   border: Border.all(color: ink, width: _border),
                   borderRadius: BorderRadius.circular(Radii.md),
-                  boxShadow: [
-                    BoxShadow(color: ink, offset: const Offset(5, 5)),
+                  boxShadow: const [
+                    BoxShadow(color: ink, offset: Offset(5, 5)),
                   ],
                 ),
                 child: Column(
@@ -176,7 +177,7 @@ class _FolderCard extends StatelessWidget {
                             border: Border.all(color: ink, width: _border),
                             borderRadius: BorderRadius.circular(Radii.xs + 4),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.arrow_forward_rounded,
                             color: ink,
                             size: 18,
