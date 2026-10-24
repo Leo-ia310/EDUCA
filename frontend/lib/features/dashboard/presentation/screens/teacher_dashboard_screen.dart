@@ -1,3 +1,4 @@
+import '../../../../core/network/backend_api_client.dart';
 import '../../../../core/network/provider_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -168,6 +169,8 @@ class _TeacherDashboardScreenState
                       ),
                     ]),
                   ),
+                  // Los equipos de trabajo viven solo en memoria (sin backend): en modo real no se ofrecen.
+                  if (ref.watch(backendApiClientProvider) == null)
                   (
                     icon: Icons.groups_rounded,
                     title: 'Grupos',

@@ -29,8 +29,9 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user!;
-    final data = ref.watch(parentDashboardProvider).scopedValue ??
-        ParentDashboardData.empty();
+    final dashboard = ref.watch(parentDashboardProvider).scopedValue;
+    final loading = dashboard == null && !ref.watch(parentDashboardProvider).hasError;
+    final data = dashboard ?? ParentDashboardData.empty();
 
     return AppScaffold(
       padding: EdgeInsets.zero,
@@ -72,7 +73,9 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen> {
                   (
                     icon: Icons.family_restroom_rounded,
                     title: 'Mis Hijos',
-                    subtitle: data.children.map((c) => c.name).join(', '),
+                    subtitle: loading
+                        ? 'Cargando…'
+                        : data.children.map((c) => c.name).join(', '),
                     color: context.palette.accent,
                     route: Routes.parentChildren as String?,
                     art: const ArtCluster([

@@ -546,7 +546,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // ----- Horario -----
       GoRoute(
         path: Routes.schedule,
-        builder: (_, __) => const ScheduleScreen(),
+        // Padre y administración tienen sus propias pantallas de horario (/parent/schedule, /admin/schedules).
+        builder: (_, __) => const RoleGuard(
+          allowed: {AppRole.student, AppRole.teacher},
+          child: ScheduleScreen(),
+        ),
       ),
 
       // ----- Calendario escolar (tab del navbar del alumno) -----

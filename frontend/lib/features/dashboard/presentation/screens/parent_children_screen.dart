@@ -377,25 +377,19 @@ class _ChildCard extends StatelessWidget {
                     ),
                   ),
                 const Spacer(),
-                Row(
-                  children: [
-                    stat('Edad', child.age == null ? '—' : '${child.age} años'),
-                    if (showGrades)
-                      stat(
-                        'Promedio',
-                        child.average == null
-                            ? '—'
-                            : child.average!.toStringAsFixed(0),
-                      ),
-                    if (showAttendance)
-                      stat(
-                        'Asistencia',
-                        child.attendance == null
-                            ? '—'
-                            : '${child.attendance!.round()}%',
-                      ),
-                  ],
-                ),
+                // Solo se muestran los datos que existen (en modo real a veces no hay edad ni promedio).
+                if (child.age != null ||
+                    (showGrades && child.average != null) ||
+                    (showAttendance && child.attendance != null))
+                  Row(
+                    children: [
+                      if (child.age != null) stat('Edad', '${child.age} años'),
+                      if (showGrades && child.average != null)
+                        stat('Promedio', child.average!.toStringAsFixed(0)),
+                      if (showAttendance && child.attendance != null)
+                        stat('Asistencia', '${child.attendance!.round()}%'),
+                    ],
+                  ),
               ],
             ),
           ),
