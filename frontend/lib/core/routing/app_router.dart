@@ -876,10 +876,6 @@ class _ExamsRoleSplit extends ConsumerWidget {
           ),
         );
       case AppRole.student:
-      case AppRole.teacher:
-      case AppRole.admin:
-      case AppRole.coordinator:
-      case AppRole.director:
         return _StudentAssignmentsResolved(
           idProvider: currentStudentIdProvider,
           builder: ({Key? key, required int studentId}) =>
@@ -889,6 +885,12 @@ class _ExamsRoleSplit extends ConsumerWidget {
             exams: true,
           ),
         );
+      // El maestro gestiona tareas y exámenes en /assignments; la administración no tiene feed propio.
+      case AppRole.teacher:
+      case AppRole.admin:
+      case AppRole.coordinator:
+      case AppRole.director:
+        return const _AccessDenied();
     }
   }
 }
@@ -905,6 +907,10 @@ class _PaymentsStudentResolved extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (explicitId != null) return builder(studentId: explicitId!);
     final role = ref.watch(authControllerProvider).user?.activeRole;
+    // Sin alumno en la URL, solo el propio alumno o el padre (con su hijo) tienen a quién mostrar.
+    if (role != AppRole.parent && role != AppRole.student) {
+      return const _AccessDenied();
+    }
     return _StudentAssignmentsResolved(
       idProvider: role == AppRole.parent
           ? parentChildStudentIdProvider
@@ -947,6 +953,19 @@ class _StudentAssignmentsResolved extends ConsumerWidget {
 
 /// Guard de roles. Si el usuario actual no tiene un rol permitido, muestra
 /// pantalla de acceso denegado.
+class _AccessDenied extends StatelessWidget {
+  const _AccessDenied();
+
+  @override
+  Widget build(BuildContext context) => const Scaffold(
+        body: EmptyState(
+          icon: Icons.lock_outline,
+          title: 'Acceso denegado',
+          subtitle: 'Tu rol no tiene acceso a esta sección.',
+        ),
+      );
+}
+
 class RoleGuard extends ConsumerWidget {
   const RoleGuard({super.key, required this.allowed, required this.child});
 
@@ -959,15 +978,7 @@ class RoleGuard extends ConsumerWidget {
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (!allowed.contains(user.activeRole)) {
-      return const Scaffold(
-        body: EmptyState(
-          icon: Icons.lock_outline,
-          title: 'Acceso denegado',
-          subtitle: 'Tu rol no tiene acceso a esta sección.',
-        ),
-      );
-    }
+    if (!allowed.contains(user.activeRole)) return const _AccessDenied();
     return child;
   }
 }
