@@ -1,5 +1,6 @@
 import '../../../../core/network/provider_cache.dart';
 import '../../../auth/presentation/identity_providers.dart';
+import '../../../chat/presentation/open_teacher_chat.dart';
 import '../../../portal_access/providers.dart';
 import '../../../portal_access/access_widgets.dart';
 import 'package:flutter/material.dart';
@@ -121,7 +122,11 @@ class SubjectDetailScreen extends ConsumerWidget {
             icon: Icons.person_outline_rounded,
             label: subject.teacher,
             trailing: Icons.chat_bubble_outline,
-            onTap: () => context.push(Routes.chat),
+            onTap: () => openTeacherChat(
+              context,
+              ref,
+              teacherName: subject.teacher,
+            ),
           ),
           const SizedBox(height: 20),
 

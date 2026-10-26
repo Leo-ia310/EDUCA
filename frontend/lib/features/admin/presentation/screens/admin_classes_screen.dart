@@ -148,6 +148,7 @@ class _AdminClassesScreenState extends ConsumerState<AdminClassesScreen> {
                     }
                   });
                 },),
+          const SizedBox(height: 12),
           Row(
             children: [
               BrutalPill(

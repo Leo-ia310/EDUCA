@@ -1,14 +1,11 @@
 import '../../../../core/network/provider_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/constants/env.dart';
 import '../../../../core/widgets/brutal.dart';
-import '../../../chat/providers.dart';
+import '../../../chat/presentation/open_teacher_chat.dart';
 import '../../data/dashboard_data.dart';
 import '../../providers.dart';
 import '../widgets/student_chrome.dart';
@@ -96,25 +93,8 @@ class TeacherCard extends ConsumerWidget {
   const TeacherCard({super.key, required this.teacher});
   final Teacher teacher;
 
-  Future<void> _openChat(BuildContext context, WidgetRef ref) async {
-    // En demo se crea/abre la conversación con el maestro; sin backend de
-    // contactos aún no hay id de usuario del maestro, así que se abre el
-    // selector de contactos.
-    if (!Env.isDemoMode) {
-      context.push(Routes.chatNew);
-      return;
-    }
-    final slug = teacher.name
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-    final conv = await ref.read(chatRepositoryProvider).ensureIndividual(
-          otherUserId: 'u-teacher-$slug',
-          otherName: teacher.name,
-          otherRole: 'teacher',
-        );
-    if (!context.mounted) return;
-    context.push('${Routes.chat}/${conv.id}');
-  }
+  Future<void> _openChat(BuildContext context, WidgetRef ref) =>
+      openTeacherChat(context, ref, teacherName: teacher.name);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -45,6 +45,7 @@ class _AdminProfilesListState extends ConsumerState<AdminProfilesList> {
               }
             });
           },),
+      const SizedBox(height: 12),
       profiles.when(
         loading: () => const Padding(
             padding: EdgeInsets.all(16),

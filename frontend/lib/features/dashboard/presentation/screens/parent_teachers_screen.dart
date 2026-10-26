@@ -1,14 +1,12 @@
 import '../../../../core/network/provider_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../core/routing/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/widgets/entrance.dart';
-import '../../../chat/providers.dart';
+import '../../../chat/presentation/open_teacher_chat.dart';
 import '../../data/dashboard_data.dart';
 import '../../data/mock_dashboard_data.dart';
 import '../../providers.dart';
@@ -54,20 +52,12 @@ class _TeacherRow extends ConsumerWidget {
   const _TeacherRow({required this.item});
   final ParentSubject item;
 
-  Future<void> _openChat(BuildContext context, WidgetRef ref) async {
-    final id = item.teacherUserId;
-    if (id == null) {
-      context.push(Routes.chatNew);
-      return;
-    }
-    final conv = await ref.read(chatRepositoryProvider).ensureIndividual(
-          otherUserId: id,
-          otherName: item.teacher,
-          otherRole: 'teacher',
-        );
-    if (!context.mounted) return;
-    context.push('${Routes.chat}/${conv.id}');
-  }
+  Future<void> _openChat(BuildContext context, WidgetRef ref) => openTeacherChat(
+        context,
+        ref,
+        teacherName: item.teacher,
+        teacherUserId: item.teacherUserId,
+      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

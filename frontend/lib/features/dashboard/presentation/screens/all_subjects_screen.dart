@@ -81,6 +81,8 @@ class _FolderCard extends StatelessWidget {
     final s = context.pastel(subject.color ?? subjectColor(subject.name));
     final tabColor = dark ? s.vivid : s.vivid.withValues(alpha: 0.55);
     final iconBg = dark ? s.surface : s.vivid.withValues(alpha: 0.28);
+    // En oscuro el negro no se distingue del fondo: los íconos toman el color de la materia.
+    final iconColor = dark ? s.vivid : ink;
 
     return GestureDetector(
       onTap: onTap,
@@ -135,7 +137,7 @@ class _FolderCard extends StatelessWidget {
                           ),
                           child: Icon(
                             subject.icon ?? Icons.menu_book_rounded,
-                            color: ink,
+                            color: iconColor,
                             size: 26,
                           ),
                         ),
@@ -177,9 +179,9 @@ class _FolderCard extends StatelessWidget {
                             border: Border.all(color: ink, width: _border),
                             borderRadius: BorderRadius.circular(Radii.xs + 4),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.arrow_forward_rounded,
-                            color: ink,
+                            color: iconColor,
                             size: 18,
                           ),
                         ),
