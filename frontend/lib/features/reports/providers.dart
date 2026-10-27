@@ -6,9 +6,11 @@ import 'domain/receipt_pdf_service.dart';
 import 'domain/report_pdf_service.dart';
 
 final reportPdfServiceProvider = Provider<ReportPdfService>(
-    (ref) => const ReportPdfService(loadAssets: loadReportPdfAssets),);
+  (ref) => const ReportPdfService(loadAssets: loadPdfAssets),
+);
 
-final receiptPdfServiceProvider =
-    Provider<ReceiptPdfService>((ref) => const ReceiptPdfService());
+final receiptPdfServiceProvider = Provider<ReceiptPdfService>(
+  (ref) => const ReceiptPdfService(loadAssets: loadPdfAssets),
+);
 
 final reportsRepositoryProvider = backendReportsRepositoryProvider;

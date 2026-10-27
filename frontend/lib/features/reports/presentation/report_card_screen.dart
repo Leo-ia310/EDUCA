@@ -18,6 +18,7 @@ import '../../grades/domain/entities.dart';
 import '../../grades/presentation/controllers/grades_controller.dart';
 import '../../grades/presentation/widgets/grade_pill.dart';
 import '../../grades/providers.dart';
+import '../domain/pdf_style.dart';
 import '../providers.dart';
 
 class ReportCardScreen extends ConsumerStatefulWidget {
@@ -171,9 +172,20 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
     }
     final pdfService = ref.read(reportPdfServiceProvider);
     await Printing.layoutPdf(
-      onLayout: (_) => pdfService.buildReportCard(card),
+      onLayout: (_) => pdfService.buildReportCard(card, branding: _branding()),
       name: 'Boletin_${card.studentName}_${card.periodName}.pdf',
     );
+  }
+
+  /// Nombre y logo del colegio de la sesión para el encabezado del PDF.
+  PdfBranding? _branding() {
+    final institution = ref.read(authControllerProvider).institution;
+    return institution == null
+        ? null
+        : PdfBranding(
+            name: institution.displayName,
+            logoUrl: institution.logoUrl,
+          );
   }
 
   Future<void> _sharePdf(ReportCard card) async {
@@ -191,7 +203,7 @@ class _ReportCardScreenState extends ConsumerState<ReportCardScreen> {
       return;
     }
     final pdfService = ref.read(reportPdfServiceProvider);
-    final bytes = await pdfService.buildReportCard(card);
+    final bytes = await pdfService.buildReportCard(card, branding: _branding());
     await Printing.sharePdf(
       bytes: bytes,
       filename: 'Boletin_${card.studentName}_${card.periodName}.pdf'

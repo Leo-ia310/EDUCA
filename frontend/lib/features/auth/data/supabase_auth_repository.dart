@@ -19,7 +19,7 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<Institution> resolveInstitution(String code) async {
     final res = await _client
         .from('institutions')
-        .select('id, code, name, logo_url, primary_color, timezone, active')
+        .select('id, code, name, commercial_name, logo_url, primary_color, timezone, active')
         .eq('code', code.trim())
         .eq('active', true)
         .maybeSingle();
@@ -135,7 +135,7 @@ class SupabaseAuthRepository implements AuthRepository {
     final fullName = me['full_name'] as String? ?? 'Usuario';
     final institution = await _client
         .from('institutions')
-        .select('id, code, name, logo_url, primary_color, timezone, active')
+        .select('id, code, name, commercial_name, logo_url, primary_color, timezone, active')
         .eq('id', (me['institution_id'] as num).toInt())
         .maybeSingle();
     if (institution == null) return null;

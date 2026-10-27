@@ -9,6 +9,7 @@ import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/skeleton.dart';
+import '../../../reports/domain/pdf_style.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../reports/providers.dart';
@@ -146,13 +147,20 @@ class PaymentHistoryScreen extends ConsumerWidget {
     final receipt = Receipt(
       payment: payment,
       charge: charge,
-      institutionName: institution?.name ?? 'Colegio Educa360',
+      institutionName: institution?.displayName ?? 'Colegio',
       payerName: user?.fullName ?? 'Padre/Tutor',
-      gradeLevel: '4° Grado A',
       issuedAt: payment.paidAt,
     );
     await Printing.layoutPdf(
-      onLayout: (_) => pdf.buildReceipt(receipt),
+      onLayout: (_) => pdf.buildReceipt(
+        receipt,
+        branding: institution == null
+            ? null
+            : PdfBranding(
+                name: institution.displayName,
+                logoUrl: institution.logoUrl,
+              ),
+      ),
       name: 'Recibo_${payment.receiptNumber}.pdf',
     );
   }

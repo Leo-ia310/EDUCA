@@ -98,7 +98,8 @@ class Charge extends Equatable {
   double get pending => (totalAmount - paidAmount).clamp(0, double.infinity);
   bool get isOverdue => isOverdueOn(DateTime.now());
   bool isOverdueOn(DateTime date) =>
-      status != ChargeStatus.paid && status != ChargeStatus.cancelled &&
+      status != ChargeStatus.paid &&
+      status != ChargeStatus.cancelled &&
       DateTime(dueDate.year, dueDate.month, dueDate.day)
           .isBefore(DateTime(date.year, date.month, date.day));
   int get daysToDue => dueDate.difference(DateTime.now()).inDays;
@@ -127,8 +128,7 @@ class Charge extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, status, paidAmount, dueDate, totalAmount];
+  List<Object?> get props => [id, status, paidAmount, dueDate, totalAmount];
 }
 
 /// Pago registrado (parcial o total) contra un [Charge].
@@ -204,16 +204,18 @@ class Receipt {
     required this.charge,
     required this.institutionName,
     required this.payerName,
-    required this.gradeLevel,
     required this.issuedAt,
+    this.gradeLevel,
   });
 
   final Payment payment;
   final Charge charge;
   final String institutionName;
   final String payerName;
-  final String gradeLevel;
   final DateTime issuedAt;
+
+  /// Solo se imprime si se conoce el grado real del alumno.
+  final String? gradeLevel;
 }
 
 /// Métricas para el panel administrativo.

@@ -5,20 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../grades/domain/entities.dart';
-
-/// Recursos opcionales del PDF: tipografía de la app (Inter) y logo. Si faltan,
-/// el boletín se genera igual con la tipografía estándar y sin logo.
-class ReportPdfAssets {
-  const ReportPdfAssets({this.regular, this.bold, this.logo});
-
-  final pw.Font? regular;
-  final pw.Font? bold;
-
-  /// PNG/JPG del logo de Nivra.
-  final Uint8List? logo;
-}
-
-typedef ReportPdfAssetsLoader = Future<ReportPdfAssets?> Function();
+import 'pdf_style.dart';
 
 /// Genera el PDF del boletín con base en [ReportCard], con el mismo lenguaje
 /// visual que la app: azul de marca, bordes tinta gruesos, sombra dura y
@@ -27,22 +14,7 @@ typedef ReportPdfAssetsLoader = Future<ReportPdfAssets?> Function();
 class ReportPdfService {
   const ReportPdfService({this.loadAssets});
 
-  final ReportPdfAssetsLoader? loadAssets;
-
-  // Paleta de la app (AppColors, modo claro).
-  static const _ink = PdfColor.fromInt(0xFF0B1B3A);
-  static const _accent = PdfColor.fromInt(0xFF2563EB);
-  static const _accentDeep = PdfColor.fromInt(0xFF1D4ED8);
-  static const _accentSoft = PdfColor.fromInt(0xFFDCE8FF);
-  static const _surfaceAlt = PdfColor.fromInt(0xFFEEF4FF);
-  static const _muted = PdfColor.fromInt(0xFF5B6B8C);
-  static const _line = PdfColor.fromInt(0xFFDCE6F7);
-  static const _white = PdfColors.white;
-  static const _success = PdfColor.fromInt(0xFF15803D);
-  static const _successSoft = PdfColor.fromInt(0xFFDCFCE7);
-  static const _danger = PdfColor.fromInt(0xFFB91C1C);
-  static const _dangerSoft = PdfColor.fromInt(0xFFFEE2E2);
-  static const _sunSoft = PdfColor.fromInt(0xFFFFF1CC);
+  final PdfAssetsLoader? loadAssets;
 
   /// Colores de categoría (como las tarjetas pastel por materia de la app).
   static const _subjectDots = [
@@ -54,39 +26,46 @@ class ReportPdfService {
     PdfColor.fromInt(0xFF0EA5E9),
   ];
 
-  static const _border = 1.2;
-  static const _shadow = 3.0;
-
-  Future<Uint8List> buildReportCard(ReportCard card) async {
-    ReportPdfAssets? assets;
+  /// [branding] trae el nombre a mostrar y el logo del colegio que emite el boletín;
+  /// sin él se usa el nombre que viene en el propio [card] y el logo de Nivra.
+  Future<Uint8List> buildReportCard(
+    ReportCard card, {
+    PdfBranding? branding,
+  }) async {
+    PdfAssets? assets;
     try {
-      assets = await loadAssets?.call();
+      assets = await loadAssets?.call(logoUrl: branding?.logoUrl);
     } catch (_) {
       assets = null; // sin red/recursos: tipografía estándar
     }
-    final theme = assets?.regular != null && assets?.bold != null
-        ? pw.ThemeData.withFont(base: assets!.regular!, bold: assets.bold!)
-        : null;
-    final logo = assets?.logo == null ? null : pw.MemoryImage(assets!.logo!);
+    final theme = assets?.theme;
+    final logo = assets?.logo;
+    final school = branding?.name.trim().isNotEmpty ?? false
+        ? branding!.name.trim()
+        : card.institutionName;
 
     final doc = pw.Document(
       title: 'Boletín ${card.periodName} — ${card.studentName}',
-      author: card.institutionName,
+      author: school,
       creator: 'Nivra',
       theme: theme,
     );
     final fmt = DateFormat('d MMM y', 'es');
-    const shadow = _shadow;
+    const shadow = PdfStyle.shadow;
 
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(30, 30, 30, 28),
-        header: (ctx) =>
-            ctx.pageNumber == 1 ? pw.SizedBox() : _runningHeader(card, logo),
-        footer: _footer,
+        header: (ctx) => ctx.pageNumber == 1
+            ? pw.SizedBox()
+            : _runningHeader(card, school, logo),
+        footer: (ctx) => PdfStyle.footer(
+          'Nivra · Boletín generado automáticamente',
+          pageLabel: 'Página ${ctx.pageNumber} de ${ctx.pagesCount}',
+        ),
         build: (ctx) => [
-          _hero(card, logo, fmt, shadow),
+          _hero(card, school, logo, fmt, shadow),
           pw.SizedBox(height: 16),
           _summary(card, shadow),
           pw.SizedBox(height: 18),
@@ -96,7 +75,7 @@ class ReportPdfService {
           pw.SizedBox(height: 18),
           _legend(shadow),
           pw.SizedBox(height: 26),
-          _signatures(card),
+          _signatures(school),
         ],
       ),
     );
@@ -106,81 +85,22 @@ class ReportPdfService {
 
   // ---------------------------------------------------------------- bloques
 
-  /// Tarjeta con borde tinta y sombra dura abajo a la derecha.
-  pw.Widget _card({
-    required pw.Widget child,
-    PdfColor fill = _white,
-    double radius = 12,
-    pw.EdgeInsets padding = const pw.EdgeInsets.all(14),
-    double shadow = _shadow,
-  }) {
-    // La sombra dura se dibuja a mano detrás de la tarjeta, con el mismo radio de
-    // esquina (`boxShadow` la deja cuadrada y además rasteriza el PDF).
-    return pw.Padding(
-      padding: pw.EdgeInsets.only(right: shadow, bottom: shadow),
-      child: pw.CustomPaint(
-        painter: shadow == 0
-            ? null
-            : (canvas, size) {
-                canvas
-                  ..setFillColor(_ink)
-                  ..drawRRect(shadow, -shadow, size.x, size.y, radius, radius)
-                  ..fillPath();
-              },
-        child: pw.Container(
-          padding: padding,
-          decoration: pw.BoxDecoration(
-            color: fill,
-            border: pw.Border.all(color: _ink, width: _border),
-            borderRadius: pw.BorderRadius.circular(radius),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-
-  pw.Widget _logoBox(pw.MemoryImage? logo, {double size = 40}) {
-    return pw.Container(
-      width: size,
-      height: size,
-      decoration: pw.BoxDecoration(
-        color: _white,
-        border: pw.Border.all(color: _ink, width: _border),
-        borderRadius: pw.BorderRadius.circular(10),
-      ),
-      alignment: pw.Alignment.center,
-      child: logo == null
-          ? pw.Text(
-              'N',
-              style: pw.TextStyle(
-                color: _accent,
-                fontSize: size * 0.5,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            )
-          : pw.Padding(
-              padding: const pw.EdgeInsets.all(3),
-              child: pw.Image(logo, fit: pw.BoxFit.contain),
-            ),
-    );
-  }
-
   pw.Widget _hero(
     ReportCard card,
+    String school,
     pw.MemoryImage? logo,
     DateFormat fmt,
     double shadow,
   ) {
-    return _card(
-      fill: _accent,
+    return PdfStyle.card(
+      fill: PdfStyle.accent,
       radius: 16,
       shadow: shadow == 0 ? 0 : shadow + 1,
       padding: const pw.EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-          _logoBox(logo, size: 46),
+          PdfStyle.logoBox(logo, size: 46),
           pw.SizedBox(width: 14),
           pw.Expanded(
             child: pw.Column(
@@ -189,7 +109,7 @@ class ReportPdfService {
                 pw.Text(
                   'NIVRA · BOLETÍN DE CALIFICACIONES',
                   style: const pw.TextStyle(
-                    color: _accentSoft,
+                    color: PdfStyle.accentSoft,
                     fontSize: 7.5,
                     letterSpacing: 1.2,
                     fontWeight: pw.FontWeight.bold,
@@ -197,9 +117,9 @@ class ReportPdfService {
                 ),
                 pw.SizedBox(height: 3),
                 pw.Text(
-                  card.institutionName,
+                  school,
                   style: const pw.TextStyle(
-                    color: _white,
+                    color: PdfStyle.white,
                     fontSize: 19,
                     fontWeight: pw.FontWeight.bold,
                   ),
@@ -207,7 +127,8 @@ class ReportPdfService {
                 pw.SizedBox(height: 2),
                 pw.Text(
                   card.periodName,
-                  style: const pw.TextStyle(color: _accentSoft, fontSize: 10),
+                  style: const pw.TextStyle(
+                      color: PdfStyle.accentSoft, fontSize: 10,),
                 ),
               ],
             ),
@@ -216,14 +137,15 @@ class ReportPdfService {
           pw.Container(
             padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             decoration: pw.BoxDecoration(
-              color: _white,
-              border: pw.Border.all(color: _ink, width: _border),
+              color: PdfStyle.white,
+              border:
+                  pw.Border.all(color: PdfStyle.ink, width: PdfStyle.border),
               borderRadius: pw.BorderRadius.circular(9),
             ),
             child: pw.Text(
               'Emitido ${fmt.format(DateTime.now())}',
               style: const pw.TextStyle(
-                color: _ink,
+                color: PdfStyle.ink,
                 fontSize: 8,
                 fontWeight: pw.FontWeight.bold,
               ),
@@ -238,8 +160,8 @@ class ReportPdfService {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: pw.BoxDecoration(
-        color: _white,
-        border: pw.Border.all(color: _ink, width: 1),
+        color: PdfStyle.white,
+        border: pw.Border.all(color: PdfStyle.ink, width: 1),
         borderRadius: pw.BorderRadius.circular(9),
       ),
       child: pw.Column(
@@ -249,7 +171,7 @@ class ReportPdfService {
             label.toUpperCase(),
             style: const pw.TextStyle(
               fontSize: 6.5,
-              color: _muted,
+              color: PdfStyle.muted,
               letterSpacing: 0.8,
               fontWeight: pw.FontWeight.bold,
             ),
@@ -259,7 +181,7 @@ class ReportPdfService {
             value,
             style: const pw.TextStyle(
               fontSize: 11.5,
-              color: _ink,
+              color: PdfStyle.ink,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
@@ -282,9 +204,9 @@ class ReportPdfService {
       children: [
         pw.Expanded(
           flex: 3,
-          child: _card(
+          child: PdfStyle.card(
             shadow: shadow,
-            fill: _surfaceAlt,
+            fill: PdfStyle.surfaceAlt,
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
@@ -292,14 +214,15 @@ class ReportPdfService {
                   card.studentName,
                   style: const pw.TextStyle(
                     fontSize: 17,
-                    color: _ink,
+                    color: PdfStyle.ink,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
                 pw.SizedBox(height: 2),
                 pw.Text(
                   card.gradeLevel,
-                  style: const pw.TextStyle(fontSize: 10, color: _muted),
+                  style:
+                      const pw.TextStyle(fontSize: 10, color: PdfStyle.muted),
                 ),
                 pw.SizedBox(height: 11),
                 pw.Row(
@@ -332,9 +255,9 @@ class ReportPdfService {
         pw.SizedBox(width: 8),
         pw.Expanded(
           flex: 2,
-          child: _card(
+          child: PdfStyle.card(
             shadow: shadow,
-            fill: _accent,
+            fill: PdfStyle.accent,
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               mainAxisAlignment: pw.MainAxisAlignment.center,
@@ -342,7 +265,7 @@ class ReportPdfService {
                 pw.Text(
                   'PROMEDIO GENERAL',
                   style: const pw.TextStyle(
-                    color: _accentSoft,
+                    color: PdfStyle.accentSoft,
                     fontSize: 7.5,
                     letterSpacing: 1,
                     fontWeight: pw.FontWeight.bold,
@@ -352,14 +275,16 @@ class ReportPdfService {
                 pw.Text(
                   card.hasGrades ? card.overallAverage.toStringAsFixed(2) : '-',
                   style: const pw.TextStyle(
-                    color: _white,
+                    color: PdfStyle.white,
                     fontSize: 34,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
                 if (card.overallLabel != null) ...[
                   pw.SizedBox(height: 4),
-                  _chip(card.overallLabel!, _white, _ink, border: _ink),
+                  PdfStyle.chip(
+                      card.overallLabel!, PdfStyle.white, PdfStyle.ink,
+                      borderColor: PdfStyle.ink,),
                 ],
               ],
             ),
@@ -376,7 +301,7 @@ class ReportPdfService {
           width: 4,
           height: 13,
           decoration: pw.BoxDecoration(
-            color: _accent,
+            color: PdfStyle.accent,
             borderRadius: pw.BorderRadius.circular(2),
           ),
         ),
@@ -384,36 +309,12 @@ class ReportPdfService {
         pw.Text(
           text,
           style: const pw.TextStyle(
-            color: _ink,
+            color: PdfStyle.ink,
             fontSize: 12.5,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
       ],
-    );
-  }
-
-  pw.Widget _chip(
-    String label,
-    PdfColor fill,
-    PdfColor text, {
-    PdfColor? border,
-  }) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: pw.BoxDecoration(
-        color: fill,
-        border: pw.Border.all(color: border ?? text, width: 0.9),
-        borderRadius: pw.BorderRadius.circular(9),
-      ),
-      child: pw.Text(
-        label,
-        style: pw.TextStyle(
-          color: text,
-          fontSize: 8,
-          fontWeight: pw.FontWeight.bold,
-        ),
-      ),
     );
   }
 
@@ -428,7 +329,7 @@ class ReportPdfService {
   pw.Widget _subjectsTable(ReportCard card, double shadow) {
     final rows = <pw.TableRow>[
       pw.TableRow(
-        decoration: const pw.BoxDecoration(color: _accentSoft),
+        decoration: const pw.BoxDecoration(color: PdfStyle.accentSoft),
         children: [
           _th('Materia'),
           _th('Docente'),
@@ -450,7 +351,7 @@ class ReportPdfService {
                     height: 7,
                     decoration: pw.BoxDecoration(
                       color: _dotFor(line.subjectName),
-                      border: pw.Border.all(color: _ink, width: 0.7),
+                      border: pw.Border.all(color: PdfStyle.ink, width: 0.7),
                       shape: pw.BoxShape.circle,
                     ),
                   ),
@@ -459,7 +360,7 @@ class ReportPdfService {
                     child: pw.Text(
                       line.subjectName,
                       style: const pw.TextStyle(
-                        color: _ink,
+                        color: PdfStyle.ink,
                         fontSize: 10,
                         fontWeight: pw.FontWeight.bold,
                       ),
@@ -468,17 +369,17 @@ class ReportPdfService {
                 ],
               ),
             ),
-            _cell(line.teacherName, _muted),
+            _cell(line.teacherName, PdfStyle.muted),
             _cell(
               line.hasGrade ? line.finalScore.toStringAsFixed(2) : '-',
-              line.hasGrade && !line.passed ? _danger : _ink,
+              line.hasGrade && !line.passed ? PdfStyle.danger : PdfStyle.ink,
               align: pw.TextAlign.right,
               bold: true,
               size: 11,
             ),
             _cell(
               line.qualitativeLabel ?? '-',
-              _muted,
+              PdfStyle.muted,
               align: pw.TextAlign.right,
             ),
             pw.Padding(
@@ -487,10 +388,13 @@ class ReportPdfService {
               child: pw.Align(
                 alignment: pw.Alignment.centerRight,
                 child: !line.hasGrade
-                    ? _chip('Sin calificar', _surfaceAlt, _muted)
+                    ? PdfStyle.chip(
+                        'Sin calificar', PdfStyle.surfaceAlt, PdfStyle.muted,)
                     : line.passed
-                        ? _chip('Aprobado', _successSoft, _success)
-                        : _chip('Reprobado', _dangerSoft, _danger),
+                        ? PdfStyle.chip(
+                            'Aprobado', PdfStyle.successSoft, PdfStyle.success,)
+                        : PdfStyle.chip(
+                            'Reprobado', PdfStyle.dangerSoft, PdfStyle.danger,),
               ),
             ),
           ],
@@ -501,16 +405,16 @@ class ReportPdfService {
         columnWidths: _columnWidths,
         defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
         border: const pw.TableBorder(
-          left: pw.BorderSide(color: _ink, width: _border),
-          right: pw.BorderSide(color: _ink, width: _border),
-          top: pw.BorderSide(color: _ink, width: _border),
-          bottom: pw.BorderSide(color: _ink, width: _border),
-          horizontalInside: pw.BorderSide(color: _line, width: 0.8),
+          left: pw.BorderSide(color: PdfStyle.ink, width: PdfStyle.border),
+          right: pw.BorderSide(color: PdfStyle.ink, width: PdfStyle.border),
+          top: pw.BorderSide(color: PdfStyle.ink, width: PdfStyle.border),
+          bottom: pw.BorderSide(color: PdfStyle.ink, width: PdfStyle.border),
+          horizontalInside: pw.BorderSide(color: PdfStyle.line, width: 0.8),
         ),
         children: rows,
       );
     }
-    return _card(
+    return PdfStyle.card(
       shadow: shadow,
       padding: pw.EdgeInsets.zero,
       radius: 12,
@@ -521,7 +425,7 @@ class ReportPdfService {
           columnWidths: _columnWidths,
           defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
           border: const pw.TableBorder(
-            horizontalInside: pw.BorderSide(color: _line, width: 0.8),
+            horizontalInside: pw.BorderSide(color: PdfStyle.line, width: 0.8),
           ),
           children: rows,
         ),
@@ -543,7 +447,7 @@ class ReportPdfService {
           label.toUpperCase(),
           textAlign: align,
           style: const pw.TextStyle(
-            color: _accentDeep,
+            color: PdfStyle.accentDeep,
             fontSize: 7.5,
             letterSpacing: 0.8,
             fontWeight: pw.FontWeight.bold,
@@ -572,9 +476,9 @@ class ReportPdfService {
       );
 
   pw.Widget _legend(double shadow) {
-    return _card(
+    return PdfStyle.card(
       shadow: shadow,
-      fill: _sunSoft,
+      fill: PdfStyle.sunSoft,
       padding: const pw.EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -582,7 +486,7 @@ class ReportPdfService {
           pw.Text(
             'Observaciones',
             style: const pw.TextStyle(
-              color: _ink,
+              color: PdfStyle.ink,
               fontSize: 10,
               fontWeight: pw.FontWeight.bold,
             ),
@@ -592,7 +496,7 @@ class ReportPdfService {
             'Este boletín refleja el rendimiento académico del estudiante durante el periodo indicado. '
             'Los criterios de aprobación siguen la escala configurada por la institución.',
             style: const pw.TextStyle(
-              color: _ink,
+              color: PdfStyle.ink,
               fontSize: 9,
               lineSpacing: 1.4,
             ),
@@ -603,13 +507,13 @@ class ReportPdfService {
   }
 
   /// Espacio para la firma del director y el sello del colegio (se rellenan a mano).
-  pw.Widget _signatures(ReportCard card) {
+  pw.Widget _signatures(String school) {
     pw.Widget caption(String title, String detail) => pw.Column(
           children: [
             pw.Text(
               title,
               style: const pw.TextStyle(
-                color: _ink,
+                color: PdfStyle.ink,
                 fontSize: 9.5,
                 fontWeight: pw.FontWeight.bold,
               ),
@@ -617,7 +521,7 @@ class ReportPdfService {
             pw.SizedBox(height: 2),
             pw.Text(
               detail,
-              style: const pw.TextStyle(color: _muted, fontSize: 8),
+              style: const pw.TextStyle(color: PdfStyle.muted, fontSize: 8),
             ),
           ],
         );
@@ -630,9 +534,9 @@ class ReportPdfService {
             child: pw.Column(
               children: [
                 pw.SizedBox(height: 64),
-                pw.Container(height: _border, color: _ink),
+                pw.Container(height: PdfStyle.border, color: PdfStyle.ink),
                 pw.SizedBox(height: 6),
-                caption('Firma del director(a)', card.institutionName),
+                caption('Firma del director(a)', school),
               ],
             ),
           ),
@@ -646,7 +550,7 @@ class ReportPdfService {
                 decoration: pw.BoxDecoration(
                   shape: pw.BoxShape.circle,
                   border: pw.Border.all(
-                    color: _muted,
+                    color: PdfStyle.muted,
                     width: 1,
                     style: pw.BorderStyle.dashed,
                   ),
@@ -654,7 +558,7 @@ class ReportPdfService {
                 child: pw.Text(
                   'SELLO',
                   style: const pw.TextStyle(
-                    color: _line,
+                    color: PdfStyle.line,
                     fontSize: 11,
                     letterSpacing: 2,
                     fontWeight: pw.FontWeight.bold,
@@ -662,7 +566,7 @@ class ReportPdfService {
                 ),
               ),
               pw.SizedBox(height: 6),
-              caption('Sello del colegio', card.institutionName),
+              caption('Sello del colegio', school),
             ],
           ),
         ],
@@ -671,22 +575,27 @@ class ReportPdfService {
   }
 
   /// Cabecera compacta de las páginas siguientes a la primera.
-  pw.Widget _runningHeader(ReportCard card, pw.MemoryImage? logo) {
+  pw.Widget _runningHeader(
+    ReportCard card,
+    String school,
+    pw.MemoryImage? logo,
+  ) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 14),
       padding: const pw.EdgeInsets.only(bottom: 8),
       decoration: const pw.BoxDecoration(
-        border: pw.Border(bottom: pw.BorderSide(color: _accent, width: 2)),
+        border:
+            pw.Border(bottom: pw.BorderSide(color: PdfStyle.accent, width: 2)),
       ),
       child: pw.Row(
         children: [
-          _logoBox(logo, size: 26),
+          PdfStyle.logoBox(logo, size: 26),
           pw.SizedBox(width: 9),
           pw.Expanded(
             child: pw.Text(
-              '${card.institutionName} · Boletín ${card.periodName}',
+              '$school · Boletín ${card.periodName}',
               style: const pw.TextStyle(
-                color: _ink,
+                color: PdfStyle.ink,
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
               ),
@@ -694,37 +603,10 @@ class ReportPdfService {
           ),
           pw.Text(
             card.studentName,
-            style: const pw.TextStyle(color: _muted, fontSize: 9),
+            style: const pw.TextStyle(color: PdfStyle.muted, fontSize: 9),
           ),
         ],
       ),
-    );
-  }
-
-  pw.Widget _footer(pw.Context ctx) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-      children: [
-        pw.Container(height: 1.2, color: _ink),
-        pw.SizedBox(height: 6),
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text(
-              'Nivra · Boletín generado automáticamente',
-              style: const pw.TextStyle(fontSize: 8, color: _muted),
-            ),
-            pw.Text(
-              'Página ${ctx.pageNumber} de ${ctx.pagesCount}',
-              style: const pw.TextStyle(
-                fontSize: 8,
-                color: _accentDeep,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

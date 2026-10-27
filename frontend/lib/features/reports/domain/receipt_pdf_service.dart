@@ -6,183 +6,227 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../payments/domain/entities.dart';
 import '../../payments/presentation/widgets/money_text.dart';
+import 'pdf_style.dart';
 
-/// Genera el PDF de recibo de pago. Diseño A5 vertical (cabe mejor en
-/// compartir por WhatsApp/correo). Reutiliza la paleta de marca lima.
+/// Genera el PDF de recibo de pago (A5 vertical: cabe mejor al compartir por
+/// WhatsApp o correo) con el mismo lenguaje visual que el boletín y la app.
 class ReceiptPdfService {
-  const ReceiptPdfService();
+  const ReceiptPdfService({this.loadAssets});
 
-  Future<Uint8List> buildReceipt(Receipt r) async {
+  final PdfAssetsLoader? loadAssets;
+
+  /// [branding] trae el nombre a mostrar y el logo del colegio que emite el
+  /// recibo; sin él se usa el nombre que viene en [r] y el logo de Nivra.
+  Future<Uint8List> buildReceipt(Receipt r, {PdfBranding? branding}) async {
+    PdfAssets? assets;
+    try {
+      assets = await loadAssets?.call(logoUrl: branding?.logoUrl);
+    } catch (_) {
+      assets = null; // sin red/recursos: tipografía estándar
+    }
+    final school = branding?.name.trim().isNotEmpty ?? false
+        ? branding!.name.trim()
+        : r.institutionName;
+
     final doc = pw.Document(
       title: 'Recibo ${r.payment.receiptNumber}',
+      author: school,
+      creator: 'Nivra',
+      theme: assets?.theme,
     );
-    const green = PdfColor.fromInt(0xFF9BE000);
-    const dark = PdfColor.fromInt(0xFF1E2218);
-    const muted = PdfColor.fromInt(0xFF5C6354);
-    const surface = PdfColor.fromInt(0xFFF1F4E2);
-    const divider = PdfColor.fromInt(0xFFE3E7D2);
 
-    doc.addPage(pw.Page(
-      pageFormat: PdfPageFormat.a5,
-      margin: const pw.EdgeInsets.all(24),
-      build: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-        children: [
-          _header(r, green, dark, muted),
-          pw.SizedBox(height: 16),
-          _summary(r, dark, muted, surface),
-          pw.SizedBox(height: 16),
-          _detailRow('Concepto', r.charge.conceptName, dark, muted, divider),
-          _detailRow('Estudiante', r.payment.studentName, dark, muted, divider),
-          _detailRow('Padre / Tutor', r.payerName, dark, muted, divider),
-          _detailRow('Grado', r.gradeLevel, dark, muted, divider),
-          _detailRow('Método', r.payment.method.label, dark, muted, divider),
-          if (r.payment.reference != null)
-            _detailRow(
-              'Referencia',
-              r.payment.reference!,
-              dark,
-              muted,
-              divider,
-            ),
-          if (r.payment.gatewayName != null)
-            _detailRow(
-              'Procesador',
-              r.payment.gatewayName!,
-              dark,
-              muted,
-              divider,
-            ),
-          pw.SizedBox(height: 12),
-          pw.Divider(color: divider),
-          pw.SizedBox(height: 12),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Total pagado',
-                  style: const pw.TextStyle(
-                      color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold,),),
-              pw.Text(
-                Money.format(r.payment.amount, r.payment.currencyCode),
-                style: const pw.TextStyle(
-                    color: PdfColor.fromInt(0xFF15803D),
-                    fontSize: 22,
-                    fontWeight: pw.FontWeight.bold,),
-              ),
-            ],
-          ),
-          pw.SizedBox(height: 20),
-          _footer(r, muted),
-        ],
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a5,
+        margin: const pw.EdgeInsets.fromLTRB(26, 26, 26, 22),
+        build: (ctx) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            _hero(r, school, assets?.logo),
+            pw.SizedBox(height: 14),
+            _amount(r),
+            pw.SizedBox(height: 14),
+            _details(r),
+            pw.SizedBox(height: 14),
+            _note(),
+            pw.Spacer(),
+            PdfStyle.footer('Nivra · Recibo ${r.payment.receiptNumber}'),
+          ],
+        ),
       ),
-    ),);
+    );
 
     return doc.save();
   }
 
-  pw.Widget _header(
-      Receipt r, PdfColor green, PdfColor dark, PdfColor muted,) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
-      children: [
-        pw.Container(
-          width: 42,
-          height: 42,
-          decoration: pw.BoxDecoration(
-            color: green,
-            borderRadius: pw.BorderRadius.circular(10),
-          ),
-          alignment: pw.Alignment.center,
-          child: pw.Text('E360',
-              style: pw.TextStyle(
-                  color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold,),),
-        ),
-        pw.SizedBox(width: 12),
-        pw.Expanded(
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(r.institutionName,
-                  style: pw.TextStyle(
-                      color: dark,
-                      fontSize: 14,
-                      fontWeight: pw.FontWeight.bold,),),
-              pw.Text('Recibo oficial de pago',
-                  style: pw.TextStyle(color: muted, fontSize: 10),),
-            ],
-          ),
-        ),
-        pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.end,
-          children: [
-            pw.Text('Recibo',
-                style: pw.TextStyle(color: muted, fontSize: 8),),
-            pw.Text(r.payment.receiptNumber,
-                style: pw.TextStyle(
-                    color: dark, fontSize: 12, fontWeight: pw.FontWeight.bold,),),
-          ],
-        ),
-      ],
-    );
-  }
-
-  pw.Widget _summary(
-      Receipt r, PdfColor dark, PdfColor muted, PdfColor surface,) {
-    final fmt = DateFormat("d 'de' MMMM 'de' y, HH:mm", 'es');
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(14),
-      decoration: pw.BoxDecoration(
-        color: surface,
-        borderRadius: pw.BorderRadius.circular(10),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text('Emitido',
-              style: pw.TextStyle(color: muted, fontSize: 9),),
-          pw.Text(
-            fmt.format(r.issuedAt),
-            style: pw.TextStyle(
-                color: dark, fontSize: 11, fontWeight: pw.FontWeight.bold,),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _detailRow(
-      String k, String v, PdfColor dark, PdfColor muted, PdfColor divider,) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(vertical: 6),
-      decoration: pw.BoxDecoration(
-        border:
-            pw.Border(bottom: pw.BorderSide(color: divider, width: 0.5)),
-      ),
+  pw.Widget _hero(Receipt r, String school, pw.MemoryImage? logo) {
+    return PdfStyle.card(
+      fill: PdfStyle.accent,
+      radius: 14,
+      shadow: 4,
+      padding: const pw.EdgeInsets.all(13),
       child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-          pw.SizedBox(
-              width: 100,
-              child: pw.Text(k,
-                  style: pw.TextStyle(color: muted, fontSize: 9),),),
+          PdfStyle.logoBox(logo, size: 40),
+          pw.SizedBox(width: 11),
           pw.Expanded(
-            child: pw.Text(v,
-                style: pw.TextStyle(
-                    color: dark, fontSize: 10, fontWeight: pw.FontWeight.bold,),),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'NIVRA · RECIBO OFICIAL DE PAGO',
+                  style: const pw.TextStyle(
+                    color: PdfStyle.accentSoft,
+                    fontSize: 6.5,
+                    letterSpacing: 1,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  school,
+                  style: const pw.TextStyle(
+                    color: PdfStyle.white,
+                    fontSize: 15,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 8),
+          PdfStyle.chip(
+            'N.º ${r.payment.receiptNumber}',
+            PdfStyle.white,
+            PdfStyle.ink,
           ),
         ],
       ),
     );
   }
 
-  pw.Widget _footer(Receipt r, PdfColor muted) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text('Documento emitido electrónicamente por Educa360.',
-            style: pw.TextStyle(color: muted, fontSize: 8),),
-        pw.Text('Este recibo tiene validez como comprobante interno.',
-            style: pw.TextStyle(color: muted, fontSize: 8),),
-      ],
+  pw.Widget _amount(Receipt r) {
+    final issued = DateFormat("d 'de' MMMM 'de' y, HH:mm", 'es');
+    return PdfStyle.card(
+      fill: PdfStyle.successSoft,
+      padding: const pw.EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'TOTAL PAGADO',
+                  style: const pw.TextStyle(
+                    color: PdfStyle.success,
+                    fontSize: 7,
+                    letterSpacing: 1,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  Money.format(r.payment.amount, r.payment.currencyCode),
+                  style: const pw.TextStyle(
+                    color: PdfStyle.ink,
+                    fontSize: 26,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  'Emitido ${issued.format(r.issuedAt)}',
+                  style: const pw.TextStyle(
+                    color: PdfStyle.muted,
+                    fontSize: 8.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          PdfStyle.chip('Pagado', PdfStyle.white, PdfStyle.success),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _details(Receipt r) {
+    final rows = <(String, String)>[
+      ('Concepto', r.charge.conceptName),
+      ('Estudiante', r.payment.studentName),
+      ('Padre / Tutor', r.payerName),
+      if (r.gradeLevel != null && r.gradeLevel!.trim().isNotEmpty)
+        ('Grado', r.gradeLevel!),
+      ('Método', r.payment.method.label),
+      if (r.payment.reference != null) ('Referencia', r.payment.reference!),
+      if (r.payment.gatewayName != null) ('Procesador', r.payment.gatewayName!),
+    ];
+    return PdfStyle.card(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: pw.Column(
+        children: [
+          for (var i = 0; i < rows.length; i++)
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(vertical: 8),
+              decoration: pw.BoxDecoration(
+                border: i == rows.length - 1
+                    ? null
+                    : const pw.Border(
+                        bottom: pw.BorderSide(
+                          color: PdfStyle.line,
+                          width: 0.8,
+                        ),
+                      ),
+              ),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.SizedBox(
+                    width: 92,
+                    child: pw.Text(
+                      rows[i].$1.toUpperCase(),
+                      style: const pw.TextStyle(
+                        color: PdfStyle.muted,
+                        fontSize: 7,
+                        letterSpacing: 0.8,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  pw.Expanded(
+                    child: pw.Text(
+                      rows[i].$2,
+                      style: const pw.TextStyle(
+                        color: PdfStyle.ink,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _note() {
+    return PdfStyle.card(
+      fill: PdfStyle.sunSoft,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      child: pw.Text(
+        'Documento emitido electrónicamente por Nivra. Este recibo tiene '
+        'validez como comprobante interno.',
+        style: const pw.TextStyle(
+          color: PdfStyle.ink,
+          fontSize: 8.5,
+          lineSpacing: 1.4,
+        ),
+      ),
     );
   }
 }

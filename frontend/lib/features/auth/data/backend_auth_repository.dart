@@ -26,12 +26,21 @@ class BackendAuthRepository implements AuthRepository {
   static const _institutionIdKey = 'auth.backend.institution_id';
   static const _institutionCodeKey = 'auth.backend.institution_code';
   static const _institutionNameKey = 'auth.backend.institution_name';
+  static const _institutionCommercialKey =
+      'auth.backend.institution_commercial_name';
+  static const _institutionLogoKey = 'auth.backend.institution_logo_url';
+  static const _institutionSavedAtKey = 'auth.backend.institution_saved_at';
+
+  /// La copia local del colegio (nombre, logo) se renueva pasado este tiempo.
+  static const _institutionTtl = Duration(hours: 12);
 
   @override
   Future<Institution> resolveInstitution(String code) async {
     final res = await _supabase
         .from('institutions')
-        .select('id, code, name, logo_url, primary_color, timezone, active')
+        .select(
+            'id, code, name, commercial_name, logo_url, primary_color, timezone, active',
+        )
         .eq('code', code.trim())
         .eq('active', true)
         .maybeSingle();
@@ -344,17 +353,29 @@ class BackendAuthRepository implements AuthRepository {
   Future<Institution?> _institutionForUser(Map<String, dynamic> user) async {
     final id = (user['institution_id'] as num?)?.toInt();
     final persistedId = _prefs.getInt(_institutionIdKey);
-    if (id != null && persistedId == id) {
+    final savedAt = _prefs.getInt(_institutionSavedAtKey);
+    final fresh = savedAt != null &&
+        DateTime.now().millisecondsSinceEpoch - savedAt <
+            _institutionTtl.inMilliseconds;
+    if (id != null && persistedId == id && fresh) {
       final code = _prefs.getString(_institutionCodeKey);
       final name = _prefs.getString(_institutionNameKey);
       if (code != null && name != null) {
-        return Institution(id: id, code: code, name: name);
+        return Institution(
+          id: id,
+          code: code,
+          name: name,
+          commercialName: _prefs.getString(_institutionCommercialKey),
+          logoUrl: _prefs.getString(_institutionLogoKey),
+        );
       }
     }
     if (id == null) return null;
     final institution = await _supabase
         .from('institutions')
-        .select('id, code, name, logo_url, primary_color, timezone, active')
+        .select(
+            'id, code, name, commercial_name, logo_url, primary_color, timezone, active',
+        )
         .eq('id', id)
         .maybeSingle();
     if (institution == null) return null;
@@ -414,7 +435,16 @@ class BackendAuthRepository implements AuthRepository {
     await _prefs.setInt(_institutionIdKey, institution.id);
     await _prefs.setString(_institutionCodeKey, institution.code);
     await _prefs.setString(_institutionNameKey, institution.name);
+    await _setOrRemove(_institutionCommercialKey, institution.commercialName);
+    await _setOrRemove(_institutionLogoKey, institution.logoUrl);
+    await _prefs.setInt(
+      _institutionSavedAtKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
+
+  Future<void> _setOrRemove(String key, String? value) =>
+      value == null ? _prefs.remove(key) : _prefs.setString(key, value);
 
   Future<void> _persistSession(sb.Session? session) async {
     if (session == null) return;
@@ -428,6 +458,9 @@ class BackendAuthRepository implements AuthRepository {
     await _prefs.remove(_institutionIdKey);
     await _prefs.remove(_institutionCodeKey);
     await _prefs.remove(_institutionNameKey);
+    await _prefs.remove(_institutionCommercialKey);
+    await _prefs.remove(_institutionLogoKey);
+    await _prefs.remove(_institutionSavedAtKey);
   }
 
   AuthFailure _authFailureFrom(Object error, String fallback) {
