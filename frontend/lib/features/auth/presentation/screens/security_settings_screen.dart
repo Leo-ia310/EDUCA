@@ -319,11 +319,13 @@ class _SecuritySettingsScreenState
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    // Debajo del título (no al lado): en celulares de 360 px
+                    // el título se partía a mitad de palabra.
+                    const SizedBox(height: 8),
+                    _SecurityStatusBadge(enabled: enabled),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              _SecurityStatusBadge(enabled: enabled),
             ],
           ),
           const SizedBox(height: 18),

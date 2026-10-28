@@ -171,14 +171,22 @@ class _MetricsBlock extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  MoneyText(
-                    amount: metrics.collectedThisMonth as double,
-                    currencyCode: metrics.currencyCode as String,
-                    style: context.textTheme.displaySmall?.copyWith(
-                      color: palette.accent,
-                      fontWeight: FontWeight.w800,
+                  // Se reduce si no cabe (montos grandes en pantallas de 360 px).
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.bottomLeft,
+                      child: MoneyText(
+                        amount: metrics.collectedThisMonth as double,
+                        currencyCode: metrics.currencyCode as String,
+                        style: context.textTheme.displaySmall?.copyWith(
+                          color: palette.accent,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   const Spacer(),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),

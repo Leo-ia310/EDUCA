@@ -95,7 +95,11 @@ class BalanceSummary extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onPayNext,
                     icon: const Icon(Icons.credit_card_rounded),
-                    label: const Text('Pagar ahora'),
+                    // FittedBox: en celulares de 360 px el texto se partía en dos líneas.
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Pagar ahora'),
+                    ),
                   ),
                 ),
               if (onPayNext != null &&

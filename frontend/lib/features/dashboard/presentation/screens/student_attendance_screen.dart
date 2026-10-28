@@ -307,18 +307,23 @@ class _DayCell extends StatelessWidget {
             ? null
             : Border.all(color: Brutal.ink(context), width: 1.5),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '$day',
-            style: context.textTheme.labelSmall?.copyWith(
-              color: dayColor,
-              fontWeight: FontWeight.w700,
+      // En celulares de 360 px la celda mide ~36 px: si el contenido no cabe, se
+      // reduce en vez de desbordar.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$day',
+              style: context.textTheme.labelSmall?.copyWith(
+                color: dayColor,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          if (child != null) ...[const SizedBox(height: 1), child],
-        ],
+            if (child != null) ...[const SizedBox(height: 1), child],
+          ],
+        ),
       ),
     );
   }

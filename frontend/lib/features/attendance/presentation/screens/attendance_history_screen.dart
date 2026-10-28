@@ -124,10 +124,10 @@ class _SyncControls extends ConsumerWidget {
               foregroundColor: Colors.white,
               minimumSize: const Size(0, 40),
               padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),
-            child:
-                Text(status.syncing ? 'Sincronizando…' : 'Sincronizar ahora'),
+            // Etiqueta corta: con la larga el texto de al lado se partía a mitad de palabra en 360 px.
+            child: Text(status.syncing ? 'Sincronizando…' : 'Sincronizar'),
           ),
         ],
       ),

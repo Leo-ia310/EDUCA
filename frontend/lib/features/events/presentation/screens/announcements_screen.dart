@@ -211,9 +211,9 @@ class _EventCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(color: s.vivid, shape: BoxShape.circle),
-            child: Icon(
+            child: const Icon(
               Icons.campaign_rounded,
-              color: context.paper,
+              color: Colors.white,
               size: 22,
             ),
           ),
@@ -361,7 +361,7 @@ class _DeliveryStatus extends StatelessWidget {
               child: Text(
                 label,
                 style: context.textTheme.labelMedium
-                    ?.copyWith(color: context.palette.ink),
+                    ?.copyWith(color: context.onPaper),
               ),
             ),
           ],
