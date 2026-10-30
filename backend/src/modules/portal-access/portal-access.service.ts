@@ -3,7 +3,7 @@ import { HttpError } from "../../lib/errors";
 import { supabaseAdmin } from "../../lib/supabase";
 import { permissionsService } from "../../services/permissions.service";
 import type { AppContext } from "../../types/app-context";
-import { optionalId, requiredString } from "../../validators/common.validators";
+import { optionalId, requiredId, requiredString } from "../../validators/common.validators";
 
 export const PORTAL_PERMISSIONS = ["grades.view","payments.view","attendance.view","schedule.view","assignments.view","assignments.submit","reports.view","reports.download","announcements.view","messages.send","materials.view"];
 export class PortalAccessService {
@@ -27,12 +27,36 @@ export class PortalAccessService {
   }
   me() { return this.rpc(this.client.rpc("portal_access_me"),"No se pudieron consultar tus permisos."); }
   config() { return this.rpc(this.client.rpc("portal_access_admin"),"No se pudo consultar la configuración de accesos."); }
+  userPermissions(id: unknown) {
+    const userId = requiredId(id,"Usuario");
+    return this.rpc(this.client.rpc("portal_user_permissions",{p_user_id:userId}),"No se pudieron consultar los permisos del usuario.");
+  }
   manage(payload: Record<string,unknown>) {
     const action=requiredString(payload.action,"Acción",30);
-    if (!["save_permission","delete_permission","save_visibility","delete_visibility"].includes(action)) throw new HttpError(400,"Acción inválida.","validation_error");
+    if (action === "save_user_permissions") {
+      const userId=requiredId(payload.userId,"Usuario");
+      const changes=payload.permissions;
+      if (!Array.isArray(changes) || changes.length===0 || changes.length>PORTAL_PERMISSIONS.length ||
+          changes.some(change=>change===null || typeof change!=="object" || Array.isArray(change) ||
+            !PORTAL_PERMISSIONS.includes(change.permission) || typeof change.allowed!=="boolean") ||
+          new Set(changes.map(change=>change.permission)).size!==changes.length) {
+        throw new HttpError(400,"Indica permisos válidos y su estado, sin repetir.","validation_error");
+      }
+      return this.rpc(this.client.rpc("manage_portal_user_permissions",{p_user_id:userId,p_changes:changes}),"No se pudieron guardar los permisos del usuario.");
+    }
+    if (!["save_permission","save_permissions","delete_permission","save_visibility","delete_visibility"].includes(action)) throw new HttpError(400,"Acción inválida.","validation_error");
     if (action.startsWith("save_")) {
       if (typeof payload.allowed !== "boolean") throw new HttpError(400,"Indica si el acceso está habilitado.","validation_error");
       if (action === "save_permission" && !PORTAL_PERMISSIONS.includes(String(payload.permission))) throw new HttpError(400,"Permiso inválido.","validation_error");
+      if (action === "save_permissions") {
+        const codes = payload.permissions;
+        if (!Array.isArray(codes) || codes.length === 0 || codes.length > PORTAL_PERMISSIONS.length ||
+            codes.some(code => typeof code !== "string" || !PORTAL_PERMISSIONS.includes(code)) ||
+            new Set(codes).size !== codes.length) {
+          throw new HttpError(400,"Selecciona permisos válidos, sin repetir.","validation_error");
+        }
+        return this.rpc(this.client.rpc("manage_portal_permissions",{p_payload:payload}),"No se pudieron guardar los permisos seleccionados.");
+      }
     }
     return this.rpc(this.client.rpc("manage_portal_access",{p_action:action,p_payload:payload}),"No se pudo guardar la configuración de accesos.");
   }

@@ -947,7 +947,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ action: save_permission | delete_permission | save_visibility | delete_visibility, scope?, role?, userId?, groupId?, studentId?, periodId?, permission?, allowed?, id? }"
+                  "value": "{ action: save_permission | save_permissions | save_user_permissions | delete_permission | save_visibility | delete_visibility, scope?, role?, userId?, groupId?, studentId?, periodId?, permission?, permissions?, allowed?, id? }. save_permissions: permissions string[1..11] con el mismo allowed (0061). save_user_permissions: userId y permissions [{ permission, allowed: boolean }], entre 1 y 11 cambios con estados independientes, sin códigos duplicados (0062). Guarda solo los cambios del usuario en una transacción y conserva otras reglas y la herencia global. reports.view y reports.download son independientes; descargar requiere ambos."
                 }
               }
             }
@@ -955,12 +955,93 @@
         },
         "responses": {
           "200": {
-            "description": "configuración actualizada",
+            "description": "configuración actualizada; save_user_permissions devuelve { userId, permissions: { código: boolean }, overrides: { código: boolean } }",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/portal-access/users/{id}/permissions": {
+      "get": {
+        "tags": [
+          "portal-access"
+        ],
+        "summary": "Permisos efectivos y reglas propias de un alumno o padre para el editor individual",
+        "description": "Auth: admin, director o coordinator con roles.edit; usuario activo de la misma institución, sin perfil de personal.\n\nNotas: 0062: resuelve los once permisos con la precedencia real usuario > rol > institución. Se usa en el diálogo Editar permisos de la lista con buscador. No impersona al destinatario ni expone reglas de otra institución. El guardado usa save_user_permissions en POST /api/portal-access/config; solo los interruptores modificados crean o actualizan reglas propias.\n\nFuente: backend/src/modules/portal-access/portal-access.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ userId, permissions: { código: boolean }, overrides: { código: boolean } }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "userId": {
+                          "type": "integer"
+                        },
+                        "permissions": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "boolean"
+                          }
+                        },
+                        "overrides": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "required": [
+                        "userId",
+                        "permissions",
+                        "overrides"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
                 }
               }
             }

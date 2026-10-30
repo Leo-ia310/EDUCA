@@ -138,6 +138,9 @@ try {
   fx = { teacher, group, klass, students, asg, file, period, card, today };
 
   const s0 = students[0].id;
+  const portalConfig = await must('admin', 'GET', '/portal-access/config');
+  const editorUser = portalConfig.users.find(u => u.name.includes(`CHK ${tag}`) && u.roles?.includes('student'));
+  if (!editorUser) throw new Error('No se encontró la cuenta temporal para verificar el editor de permisos.');
   console.log('\nValidando respuestas reales…');
   // Administración
   for (const [key, path] of [
@@ -146,6 +149,7 @@ try {
     ['GET /api/admin/roles', '/admin/roles'], ['GET /api/admin/users', '/admin/users'], ['GET /api/admin/students', '/admin/students'],
     ['GET /api/admin/teachers', '/admin/teachers'], ['GET /api/admin/parents', '/admin/parents'], ['GET /api/files', '/files'],
     ['GET /api/auth/2fa/status', '/auth/2fa/status'], ['GET /api/portal-access/me', '/portal-access/me'], ['GET /api/portal-access/config', '/portal-access/config'],
+    ['GET /api/portal-access/users/:id/permissions', `/portal-access/users/${editorUser.id}/permissions`],
     ['GET /api/grades/periods', '/grades/periods'], ['GET /api/grades/scales/default', '/grades/scales/default'],
     ['GET /api/payments/summary', '/payments/summary'], ['GET /api/payments/concepts', '/payments/concepts'], ['GET /api/payments/charges', '/payments/charges'],
     ['GET /api/schedules', '/schedules'], ['GET /api/events/announcements', '/events/announcements'], ['GET /api/notifications', '/notifications'],

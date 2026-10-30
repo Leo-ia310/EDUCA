@@ -102,8 +102,8 @@ class _AdminRolesScreenState extends ConsumerState<AdminRolesScreen> {
           if (canEdit) ...[
             OutlinedButton.icon(
               onPressed: () => context.push(Routes.adminAccess),
-              icon: const Icon(Icons.lock_person_rounded),
-              label: const Text('Accesos de padres, alumnos y notas'),
+              icon: const Icon(Icons.edit_rounded),
+              label: const Text('Editar permisos'),
             ),
             const SizedBox(height: 16),
           ],

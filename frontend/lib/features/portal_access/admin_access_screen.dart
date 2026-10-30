@@ -9,13 +9,111 @@ import '../dashboard/presentation/widgets/student_chrome.dart';
 import 'providers.dart';
 
 class AdminAccessScreen extends ConsumerStatefulWidget {
-  const AdminAccessScreen({super.key});
+  const AdminAccessScreen({super.key, this.initialSearch = ''});
+  final String initialSearch;
   @override
   ConsumerState<AdminAccessScreen> createState() => _AdminAccessScreenState();
 }
 
 class _AdminAccessScreenState extends ConsumerState<AdminAccessScreen> {
   bool _saving = false;
+  String _userSearch = '';
+  late final TextEditingController _userSearchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _userSearch = widget.initialSearch;
+    _userSearchController = TextEditingController(text: _userSearch);
+  }
+
+  @override
+  void dispose() {
+    _userSearchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _editUser(Map<String, dynamic> user) async {
+    final saved = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _UserPermissionsDialog(user: user),
+    );
+    if (saved == true && mounted) {
+      ref.invalidate(portalAccessConfigProvider);
+      ref.invalidate(portalAccessProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permisos del usuario actualizados.')),
+      );
+    }
+  }
+
+  Widget _users(Map<String, dynamic> data) {
+    final terms = _searchKey(_userSearch)
+        .split(RegExp(r'\s+'))
+        .where((term) => term.isNotEmpty);
+    final users = (data['users'] as List).cast<Map<String, dynamic>>();
+    final matches = users.where((user) {
+      final key =
+          _searchKey('${user['name']} ${_userRole(user)} ${user['id']}');
+      return terms.every(key.contains);
+    }).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Usuarios', style: context.textTheme.titleMedium),
+        const Text(
+          'Busca un alumno o padre y usa el lápiz para editar sus permisos.',
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _userSearchController,
+          decoration: const InputDecoration(
+            labelText: 'Buscar usuarios',
+            hintText: 'Nombre, rol o número de usuario',
+            prefixIcon: Icon(Icons.search_rounded),
+          ),
+          onChanged: (value) => setState(() => _userSearch = value),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${matches.length} ${matches.length == 1 ? 'usuario' : 'usuarios'}',
+        ),
+        const SizedBox(height: 8),
+        DepthCard(
+          soft: true,
+          padding: EdgeInsets.zero,
+          child: matches.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('No hay usuarios que coincidan con la búsqueda.'),
+                )
+              : SizedBox(
+                  height: matches.length < 5 ? matches.length * 76.0 : 380,
+                  child: ListView.separated(
+                    key: ValueKey(_userSearch),
+                    primary: false,
+                    itemCount: matches.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final user = matches[index];
+                      return ListTile(
+                        title: Text(user['name'] as String),
+                        subtitle: Text(_userRole(user)),
+                        trailing: IconButton(
+                          tooltip: 'Editar permisos de ${user['name']}',
+                          icon: const Icon(Icons.edit_rounded),
+                          onPressed: _saving ? null : () => _editUser(user),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _save(Map<String, dynamic> payload) async {
     if (_saving) return;
     setState(() => _saving = true);
@@ -90,6 +188,8 @@ class _AdminAccessScreenState extends ConsumerState<AdminAccessScreen> {
                   ),
                   if (_saving) const LinearProgressIndicator(),
                   const SizedBox(height: 16),
+                  _users(data),
+                  const SizedBox(height: 24),
                   Text(
                     'Permisos de módulos',
                     style: context.textTheme.titleMedium,
@@ -202,6 +302,170 @@ class _AdminAccessScreenState extends ConsumerState<AdminAccessScreen> {
   }
 }
 
+String _userRole(Map<String, dynamic> user) {
+  final roles = user['roles'] as List? ?? const [];
+  final labels = [
+    if (roles.contains('student')) 'Alumno',
+    if (roles.contains('parent')) 'Padre / madre',
+  ];
+  return labels.isEmpty ? 'Usuario' : labels.join(' · ');
+}
+
+class _UserPermissionsDialog extends ConsumerStatefulWidget {
+  const _UserPermissionsDialog({required this.user});
+  final Map<String, dynamic> user;
+
+  @override
+  ConsumerState<_UserPermissionsDialog> createState() =>
+      _UserPermissionsDialogState();
+}
+
+class _UserPermissionsDialogState
+    extends ConsumerState<_UserPermissionsDialog> {
+  late Future<void> _request;
+  Map<String, bool> _values = {}, _original = {};
+  Set<String> _overrides = {};
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _request = _load();
+  }
+
+  Future<void> _load() async {
+    final response = Map<String, dynamic>.from(
+      await ref.read(backendApiClientProvider)!.get(
+            '/portal-access/users/${widget.user['id']}/permissions',
+          ) as Map,
+    );
+    final permissions =
+        Map<String, dynamic>.from(response['permissions'] as Map);
+    _values = {
+      for (final code in portalPermissionLabels.keys)
+        code: permissions[code] == true,
+    };
+    _original = Map.of(_values);
+    _overrides = (response['overrides'] as Map).keys.cast<String>().toSet();
+  }
+
+  bool get _changed =>
+      _values.keys.any((code) => _values[code] != _original[code]);
+
+  Future<void> _save() async {
+    if (_saving || !_changed) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await ref.read(backendApiClientProvider)!.post(
+        '/portal-access/config',
+        data: {
+          'action': 'save_user_permissions',
+          'userId': widget.user['id'],
+          'permissions': [
+            for (final entry in _values.entries)
+              if (entry.value != _original[entry.key])
+                {'permission': entry.key, 'allowed': entry.value},
+          ],
+        },
+      );
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error =
+              'No se pudieron guardar los permisos. Puedes intentarlo de nuevo.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+        canPop: !_saving,
+        child: AlertDialog(
+          title: const Text('Editar permisos'),
+          content: SizedBox(
+            width: 460,
+            child: FutureBuilder<void>(
+              future: _request,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return ErrorStateView(
+                    message: 'No se pudieron cargar los permisos del usuario.',
+                    onRetry: () => setState(() => _request = _load()),
+                  );
+                }
+                return SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.user['name'] as String,
+                        style: context.textTheme.titleMedium,
+                      ),
+                      Text(_userRole(widget.user)),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Cada interruptor habilita o deshabilita un permiso para este usuario. Solo se guardan los permisos que cambies.',
+                      ),
+                      const SizedBox(height: 8),
+                      for (final entry in portalPermissionLabels.entries)
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(entry.value),
+                          subtitle: Text(
+                            _overrides.contains(entry.key) ||
+                                    _values[entry.key] != _original[entry.key]
+                                ? 'Personalizado para este usuario'
+                                : 'Según configuración global',
+                          ),
+                          value: _values[entry.key]!,
+                          onChanged: _saving
+                              ? null
+                              : (value) =>
+                                  setState(() => _values[entry.key] = value),
+                        ),
+                      if (_error != null)
+                        Text(
+                          _error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      if (_saving) const LinearProgressIndicator(),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: _saving ? null : () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: _saving || !_changed ? null : _save,
+              child: const Text('Guardar permisos'),
+            ),
+          ],
+        ),
+      );
+}
+
 String? _lookup(List<dynamic> rows, dynamic id) {
   for (final row in rows) {
     if (row['id'] == id) return row['name'] as String;
@@ -228,7 +492,8 @@ class _AccessRuleDialog extends StatefulWidget {
 }
 
 class _AccessRuleDialogState extends State<_AccessRuleDialog> {
-  String _scope = 'institution', _role = 'parent', _permission = 'grades.view';
+  String _scope = 'institution', _role = 'parent';
+  final Set<String> _permissions = {};
   int? _target, _period;
   bool _allowed = false;
   @override
@@ -306,9 +571,12 @@ class _AccessRuleDialogState extends State<_AccessRuleDialog> {
                   ),
                   onTap: () async {
                     final target = await showDialog<int>(
-                        context: context,
-                        builder: (_) => _RecipientSearchDialog(
-                            rows: rows, selected: _target,),);
+                      context: context,
+                      builder: (_) => _RecipientSearchDialog(
+                        rows: rows,
+                        selected: _target,
+                      ),
+                    );
                     if (target != null && mounted) {
                       setState(() => _target = target);
                     }
@@ -316,19 +584,43 @@ class _AccessRuleDialogState extends State<_AccessRuleDialog> {
                 ),
               if (!widget.visibility) ...[
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _permission,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Permiso'),
-                  items: [
-                    for (final entry in portalPermissionLabels.entries)
-                      DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      ),
-                  ],
-                  onChanged: (v) => setState(() => _permission = v!),
+                const Text('Selecciona uno o varios permisos.'),
+                const Text(
+                  'Ver boletín y descargar boletín se configuran por separado. Puedes permitir la consulta y desactivar la descarga.',
                 ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: () => setState(
+                        () => _permissions
+                          ..clear()
+                          ..addAll(portalPermissionLabels.keys),
+                      ),
+                      child: const Text('Seleccionar todos'),
+                    ),
+                    TextButton(
+                      onPressed: _permissions.isEmpty
+                          ? null
+                          : () => setState(_permissions.clear),
+                      child: const Text('Limpiar selección'),
+                    ),
+                  ],
+                ),
+                for (final entry in portalPermissionLabels.entries)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(entry.value),
+                    value: _permissions.contains(entry.key),
+                    onChanged: (selected) => setState(() {
+                      if (selected == true) {
+                        _permissions.add(entry.key);
+                      } else {
+                        _permissions.remove(entry.key);
+                      }
+                    }),
+                  ),
               ],
               if (widget.visibility) ...[
                 const SizedBox(height: 12),
@@ -357,8 +649,8 @@ class _AccessRuleDialogState extends State<_AccessRuleDialog> {
                   widget.visibility
                       ? (_allowed ? 'Notas visibles' : 'Notas ocultas')
                       : (_allowed
-                          ? 'Acceso habilitado'
-                          : 'Acceso deshabilitado'),
+                          ? 'Habilitar los permisos seleccionados'
+                          : 'Deshabilitar los permisos seleccionados'),
                 ),
                 value: _allowed,
                 onChanged: (v) => setState(() => _allowed = v),
@@ -373,23 +665,29 @@ class _AccessRuleDialogState extends State<_AccessRuleDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed:
-              ['group', 'student', 'user'].contains(_scope) && _target == null
-                  ? null
-                  : () => Navigator.pop(context, {
-                        'action': widget.visibility
-                            ? 'save_visibility'
-                            : 'save_permission',
-                        'scope': _scope,
-                        'allowed': _allowed,
-                        if (_scope == 'role') 'role': _role,
-                        if (_scope == 'user') 'userId': _target,
-                        if (_scope == 'group') 'groupId': _target,
-                        if (_scope == 'student') 'studentId': _target,
-                        if (widget.visibility) 'periodId': _period,
-                        if (!widget.visibility) 'permission': _permission,
-                      }),
-          child: const Text('Guardar'),
+          onPressed: (['group', 'student', 'user'].contains(_scope) &&
+                      _target == null) ||
+                  (!widget.visibility && _permissions.isEmpty)
+              ? null
+              : () => Navigator.pop(context, {
+                    'action': widget.visibility
+                        ? 'save_visibility'
+                        : 'save_permissions',
+                    'scope': _scope,
+                    'allowed': _allowed,
+                    if (_scope == 'role') 'role': _role,
+                    if (_scope == 'user') 'userId': _target,
+                    if (_scope == 'group') 'groupId': _target,
+                    if (_scope == 'student') 'studentId': _target,
+                    if (widget.visibility) 'periodId': _period,
+                    if (!widget.visibility)
+                      'permissions': _permissions.toList(),
+                  }),
+          child: Text(
+            widget.visibility || _permissions.isEmpty
+                ? 'Guardar'
+                : 'Guardar ${_permissions.length} ${_permissions.length == 1 ? 'permiso' : 'permisos'}',
+          ),
         ),
       ],
     );
@@ -435,46 +733,57 @@ class _RecipientSearchDialogState extends State<_RecipientSearchDialog> {
     return AlertDialog(
       title: const Text('Buscar destinatario'),
       content: SizedBox(
-          width: 460,
-          height: 420,
-          child: Column(children: [
+        width: 460,
+        height: 420,
+        child: Column(
+          children: [
             TextField(
-                autofocus: true,
-                decoration: const InputDecoration(
-                    labelText: 'Nombre del destinatario',
-                    hintText: 'Escribe para buscar…',
-                    prefixIcon: Icon(Icons.search_rounded),),
-                onChanged: (value) => setState(() => _query = value),),
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Nombre del destinatario',
+                hintText: 'Escribe para buscar…',
+                prefixIcon: Icon(Icons.search_rounded),
+              ),
+              onChanged: (value) => setState(() => _query = value),
+            ),
             const SizedBox(height: 8),
             Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                    matches.length > shown.length
-                        ? 'Mostrando ${shown.length} de ${matches.length}. Escribe para filtrar.'
-                        : '${matches.length} ${matches.length == 1 ? 'resultado' : 'resultados'}',
-                    style: context.textTheme.bodySmall,),),
+              alignment: Alignment.centerLeft,
+              child: Text(
+                matches.length > shown.length
+                    ? 'Mostrando ${shown.length} de ${matches.length}. Escribe para filtrar.'
+                    : '${matches.length} ${matches.length == 1 ? 'resultado' : 'resultados'}',
+                style: context.textTheme.bodySmall,
+              ),
+            ),
             const SizedBox(height: 8),
             Expanded(
-                child: shown.isEmpty
-                    ? const Center(
-                        child: Text('Sin coincidencias. Prueba otro nombre.'),)
-                    : ListView.builder(
-                        itemCount: shown.length,
-                        itemBuilder: (context, index) {
-                          final row = shown[index].row;
-                          return ListTile(
-                              title: Text(row['name'] as String),
-                              trailing: row['id'] == widget.selected
-                                  ? const Icon(Icons.check_rounded)
-                                  : null,
-                              onTap: () =>
-                                  Navigator.pop(context, row['id'] as int),);
-                        },),),
-          ],),),
+              child: shown.isEmpty
+                  ? const Center(
+                      child: Text('Sin coincidencias. Prueba otro nombre.'),
+                    )
+                  : ListView.builder(
+                      itemCount: shown.length,
+                      itemBuilder: (context, index) {
+                        final row = shown[index].row;
+                        return ListTile(
+                          title: Text(row['name'] as String),
+                          trailing: row['id'] == widget.selected
+                              ? const Icon(Icons.check_rounded)
+                              : null,
+                          onTap: () => Navigator.pop(context, row['id'] as int),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
       ],
     );
   }

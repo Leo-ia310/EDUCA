@@ -590,9 +590,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.adminAccess,
-        builder: (_, __) => const RoleGuard(
-          allowed: {AppRole.admin, AppRole.coordinator, AppRole.director},
-          child: AdminAccessScreen(),
+        builder: (_, state) => RoleGuard(
+          allowed: const {AppRole.admin, AppRole.coordinator, AppRole.director},
+          child: AdminAccessScreen(
+              initialSearch: state.uri.queryParameters['search'] ?? '',),
         ),
       ),
       GoRoute(
@@ -898,7 +899,8 @@ class _ExamsRoleSplit extends ConsumerWidget {
 /// Estado de cuenta e historial de pagos: usa el `studentId` de la URL o, si no
 /// viene, el del hijo (padre) o el del propio alumno.
 class _PaymentsStudentResolved extends ConsumerWidget {
-  const _PaymentsStudentResolved({required this.explicitId, required this.builder});
+  const _PaymentsStudentResolved(
+      {required this.explicitId, required this.builder,});
 
   final int? explicitId;
   final Widget Function({Key? key, required int studentId}) builder;

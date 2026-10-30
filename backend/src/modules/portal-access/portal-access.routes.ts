@@ -7,5 +7,6 @@ export const portalAccessRoutes=Router();
 portalAccessRoutes.use(authMiddleware);
 portalAccessRoutes.get("/me",asyncHandler(async(_req,res)=>{res.json({ok:true,data:await portalAccessService.me()});}));
 portalAccessRoutes.get("/config",asyncHandler(async(_req,res)=>{res.json({ok:true,data:await portalAccessService.config()});}));
+portalAccessRoutes.get("/users/:id/permissions",asyncHandler(async(req,res)=>{res.json({ok:true,data:await portalAccessService.userPermissions(req.params.id)});}));
 portalAccessRoutes.post("/config",asyncHandler(async(req,res)=>{res.json({ok:true,data:await portalAccessService.manage(asRecord(req.body))});}));
 portalAccessRoutes.get("/grades",asyncHandler(async(req,res)=>{res.json({ok:true,data:await portalAccessService.grades(requireAppContext(req),req.query)});}));

@@ -15,8 +15,8 @@ const portalPermissionLabels = <String, String>{
   'schedule.view': 'Ver horario',
   'assignments.view': 'Ver tareas',
   'assignments.submit': 'Entregar tareas',
-  'reports.view': 'Ver reportes',
-  'reports.download': 'Descargar boletines',
+  'reports.view': 'Ver boletín',
+  'reports.download': 'Descargar boletín',
   'announcements.view': 'Ver comunicados',
   'messages.send': 'Enviar mensajes',
   'materials.view': 'Ver materiales',
@@ -76,8 +76,12 @@ class PortalAccess {
 // Identity changes reload access; transient auth loading/error flags do not.
 final portalAccessLoaderProvider =
     Provider<Future<PortalAccess> Function()>((ref) {
-  final identity = ref.watch(authControllerProvider.select((auth) =>
-      (auth.user?.id, auth.user?.institutionId, auth.user?.activeRole),),);
+  final identity = ref.watch(
+    authControllerProvider.select(
+      (auth) =>
+          (auth.user?.id, auth.user?.institutionId, auth.user?.activeRole),
+    ),
+  );
   if (Env.isDemoMode ||
       (identity.$1 != null &&
           ![AppRole.student, AppRole.parent].contains(identity.$3))) {
@@ -88,14 +92,20 @@ final portalAccessLoaderProvider =
     if (identity.$1 == null || api == null) {
       throw StateError('Inicia sesión para consultar tus accesos.');
     }
-    return PortalAccess.fromJson(Map<String, dynamic>.from(
-      await api.get('/portal-access/me') as Map,
-    ),);
+    return PortalAccess.fromJson(
+      Map<String, dynamic>.from(
+        await api.get('/portal-access/me') as Map,
+      ),
+    );
   };
 });
 final portalAccessChangesProvider = StreamProvider<void>((ref) {
-  final identity = ref.watch(authControllerProvider.select((auth) =>
-      (auth.user?.id, auth.user?.institutionId, auth.user?.activeRole),),);
+  final identity = ref.watch(
+    authControllerProvider.select(
+      (auth) =>
+          (auth.user?.id, auth.user?.institutionId, auth.user?.activeRole),
+    ),
+  );
   if (Env.isDemoMode ||
       identity.$1 == null ||
       ![AppRole.student, AppRole.parent].contains(identity.$3)) {
@@ -105,11 +115,12 @@ final portalAccessChangesProvider = StreamProvider<void>((ref) {
   if (client == null) return const Stream.empty();
   final events = StreamController<void>();
   final sync = PortalAccessSync(
-      client: client,
-      institutionId: identity.$2!,
-      onChange: () {
-        if (!events.isClosed) events.add(null);
-      },);
+    client: client,
+    institutionId: identity.$2!,
+    onChange: () {
+      if (!events.isClosed) events.add(null);
+    },
+  );
   ref.onDispose(() {
     sync.dispose();
     unawaited(events.close());
@@ -118,7 +129,8 @@ final portalAccessChangesProvider = StreamProvider<void>((ref) {
 });
 final portalAccessProvider =
     AsyncNotifierProvider<PortalAccessController, PortalAccess>(
-        PortalAccessController.new,);
+  PortalAccessController.new,
+);
 
 class PortalAccessController extends AsyncNotifier<PortalAccess> {
   int _generation = 0;

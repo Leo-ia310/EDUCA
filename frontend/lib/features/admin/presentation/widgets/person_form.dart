@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/routing/route_paths.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../shared/models/app_role.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -229,7 +231,8 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
         if (widget.existing == null) 'password': _password.text,
       };
       if (_role == AppRole.teacher) {
-        if (ref.read(authControllerProvider).user?.can('classes.edit') ?? false) {
+        if (ref.read(authControllerProvider).user?.can('classes.edit') ??
+            false) {
           payload['classIds'] = _teacherClassIds.toList()..sort();
         }
       } else if (_role == AppRole.student) {
@@ -378,6 +381,35 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
           ),
         ],
         const SizedBox(height: 8),
+        if (widget.existing != null &&
+            (ref.watch(authControllerProvider).user?.can('roles.edit') ??
+                false)) ...[
+          FilledButton.tonalIcon(
+            icon: const Icon(Icons.edit_rounded),
+            label: const Text('Editar permisos'),
+            onPressed: _saving
+                ? null
+                : () {
+                    final router = GoRouter.of(context);
+                    final destination = Uri(
+                      path: Routes.adminAccess,
+                      queryParameters: [AppRole.student, AppRole.parent]
+                              .contains(widget.existing!.role)
+                          ? {'search': widget.existing!.name}
+                          : null,
+                    ).toString();
+                    Navigator.of(context).pop();
+                    router.push(destination);
+                  },
+          ),
+          if (widget.existing!.role == AppRole.teacher)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                  'Este editor configura los accesos de alumnos y padres. El acceso académico del maestro se gestiona mediante sus clases asignadas.',),
+            ),
+          const SizedBox(height: 12),
+        ],
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: _active,
@@ -478,7 +510,8 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
           if (connected &&
               !(ref.watch(authControllerProvider).user?.can('classes.edit') ??
                   false))
-            Text('${plural(_teacherClassIds.length, 'clase')} ${_teacherClassIds.length == 1 ? 'asignada' : 'asignadas'}')
+            Text(
+                '${plural(_teacherClassIds.length, 'clase')} ${_teacherClassIds.length == 1 ? 'asignada' : 'asignadas'}',)
           else if (connected)
             DirectoryPicker(
               kind: 'classes',

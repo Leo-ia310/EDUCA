@@ -287,6 +287,7 @@ export const responseSchemas: Record<string, Schema> = {
     verifiedAt: nullable(str), emailHint: nullable(str), availableMethods: arr(str),
   }),
   "GET /api/portal-access/me": obj({ staff: bool, students: arr(row), permissions: rec(bool) }),
+  "GET /api/portal-access/users/:id/permissions": obj({ userId: int, permissions: rec(bool), overrides: rec(bool) }),
   "GET /api/portal-access/config": obj({
     users: arr(obj({ id: int, name: str, roles: arr(str) })),
     groups: arr(obj({ id: int, name: str })),
