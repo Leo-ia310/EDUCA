@@ -295,10 +295,17 @@ export class AssignmentsService {
       submissionId,
       ctx.institutionId,
     );
-    const classId = Number(
-      (submission.assignments as Record<string, unknown> | null)?.class_id,
-    );
+    const assignment = submission.assignments as Record<string, unknown> | null;
+    const classId = Number(assignment?.class_id);
     await this.permissions.assertTeacherCanUseClass(ctx, classId, "assignments.grade");
+    const maxScore = Number(assignment?.max_score);
+    if (Number.isFinite(maxScore) && score > maxScore) {
+      throw new HttpError(
+        400,
+        `La nota no puede superar el máximo de la tarea (${maxScore}).`,
+        "validation_error",
+      );
+    }
     const { error } = await this.repository.gradeSubmissionRpc(
       submissionId,
       score,

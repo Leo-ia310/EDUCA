@@ -31,6 +31,11 @@ export class AdminRepository {
   }
   async rejectProvision(id:string) { return transactionRpc<boolean>(this.scoped,"admin_provision_reject",{p_id:id}); }
 
+  async findAccountByPerson(institutionId:number,personId:number) {
+    const { data, error } = await db.from("users").select("id, active").eq("institution_id", institutionId).eq("person_id", personId).is("deleted_at", null).maybeSingle();
+    assertNoDbError(error);
+    return data as { id: number | string; active: boolean } | null;
+  }
   async archivePersonAccount(institutionId:number,kind:string,id:number) {
     return transactionRpc(this.scoped,"admin_person_archive",{p_inst:institutionId,p_kind:kind,p_id:id});
   }

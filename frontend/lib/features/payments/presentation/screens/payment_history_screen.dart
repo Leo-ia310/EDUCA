@@ -99,23 +99,29 @@ class PaymentHistoryScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 10),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3,),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(Radii.pill),
-                            ),
-                            child: Text(
-                              p.receiptNumber,
-                              style: context.textTheme.labelSmall?.copyWith(
-                                color: const Color(0xFF232A33),
-                                fontWeight: FontWeight.w800,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3,),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                borderRadius:
+                                    BorderRadius.circular(Radii.pill),
+                              ),
+                              child: Text(
+                                p.receiptNumber,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.textTheme.labelSmall?.copyWith(
+                                  color: const Color(0xFF232A33),
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           TextButton.icon(
                             onPressed: () => _openReceipt(context, ref, p),
                             style: TextButton.styleFrom(foregroundColor: s.ink),

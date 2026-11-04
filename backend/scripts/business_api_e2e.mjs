@@ -316,7 +316,7 @@ async function main() {
       );
     }
 
-    const sessionDate = new Date(Date.UTC(2099, 0, 2));
+    const sessionDate = new Date(Date.UTC(2020, 0, 2));
     const attendanceUuid = randomUUID();
     const classSession = await expectOk(
       'teacher attendance.upsertClassSession',
@@ -329,7 +329,7 @@ async function main() {
       await db.query(`delete from attendances where uuid = $1`, [attendanceUuid]);
       await db.query(
         `delete from class_sessions where class_id = $1 and date = $2 and recorded_by = $3`,
-        [cls.id, '2099-01-02', teacher.teacher_id],
+        [cls.id, '2020-01-02', teacher.teacher_id],
       );
     });
     await expectOk(
@@ -476,17 +476,16 @@ async function main() {
     );
 
     const endpoint = `https://e2e.local/${MARK}`;
-    await expectOk(
-      'student notifications.saveWebPushDevice',
+    // El backend solo acepta suscripciones de proveedores push autorizados: un endpoint falso se rechaza.
+    await expectError(
+      'student notifications.saveWebPushDevice rejects unauthorized provider',
       tokens.student,
       'notifications.saveWebPushDevice',
       {
         endpoint,
         pushToken: JSON.stringify({ endpoint, keys: { p256dh: 'x', auth: 'y' } }),
       },
-    );
-    cleanupJobs.push((db) =>
-      db.query(`delete from devices where device_uuid = $1`, [endpoint]),
+      400,
     );
 
     const paymentReference = `${MARK} payment`;

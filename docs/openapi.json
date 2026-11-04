@@ -5573,7 +5573,7 @@
           "admin"
         ],
         "summary": "Actualiza padre/acudiente y persona",
-        "description": "Auth: admin, super_admin.\n\nNotas: 0048: datos y vínculos de hijos en una transacción, sin borrado previo que deje relaciones parciales.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
+        "description": "Auth: admin, super_admin.\n\nNotas: 0048: datos y vínculos de hijos en una transacción, sin borrado previo que deje relaciones parciales. active=false/true desactiva/reactiva la cuenta del padre (users.active): deja de iniciar sesión y de aparecer en el chat.\n\nFuente: backend/src/modules/admin/admin.routes.ts.",
         "security": [
           {
             "bearerAuth": []

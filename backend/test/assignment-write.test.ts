@@ -37,3 +37,16 @@ test('attachment response failures retain dependency status and never expose dat
   const service=new AssignmentsService(new Attachments(),permissions);
   await assert.rejects(service.removeAttachment(ctx,42,8),(error:any)=>error.status===503&&!error.message.includes('private SQL'));
 });
+
+test('grading rejects a score above the assignment maximum and never reaches the grade RPC',async()=>{
+  let graded=0;
+  class Grading extends AssignmentsRepository {
+    override async findSubmissionWithAssignment(){return {id:5,assignment_id:9,assignments:{class_id:4,max_score:20}};}
+    override async gradeSubmissionRpc(){graded++;return {error:null} as never;}
+  }
+  const permissions={requireRole(){},async assertTeacherCanUseClass(){}} as unknown as PermissionsService;
+  const service=new AssignmentsService(new Grading(),permissions);
+  await assert.rejects(service.gradeSubmission(ctx,{submissionId:5,score:999}),{status:400});
+  await assert.rejects(service.gradeSubmission(ctx,{submissionId:5,score:-1}),{status:400});
+  assert.equal(graded,0);
+});

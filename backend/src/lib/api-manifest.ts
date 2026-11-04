@@ -631,7 +631,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "campos parciales; institutionId? solo super_admin",
     response: "{ parent }",
     source: "backend/src/modules/admin/admin.routes.ts",
-    notes: "0048: datos y vínculos de hijos en una transacción, sin borrado previo que deje relaciones parciales.",
+    notes: "0048: datos y vínculos de hijos en una transacción, sin borrado previo que deje relaciones parciales. active=false/true desactiva/reactiva la cuenta del padre (users.active): deja de iniciar sesión y de aparecer en el chat.",
   }),
   api({
     module: "admin",
@@ -750,7 +750,7 @@ export const apiManifest: ApiManifestEntry[] = [
     summary: "Califica una entrega y sincroniza la nota",
     auth: "teacher, admin, coordinator, director, super_admin",
     frontendStatus: "connected",
-    request: "{ submissionId, score, feedback? }",
+    request: "{ submissionId, score, feedback? }; score entre 0 y el puntaje máximo de la tarea (400 validation_error si lo supera)",
     response: "{ submission }",
     source: businessSource,
   }),

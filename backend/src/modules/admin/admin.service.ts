@@ -186,6 +186,13 @@ export class AdminService {
         const id = requiredId(idValue, "Registro");
         const relations = await this.peopleRelations(institutionId, resource, payload);
         const row = await this.repository.writePerson(institutionId, resource, id, this.personPayload(ctx, payload, "update"), this.peoplePayload(resource, payload, "update"), relations);
+        // parents no tiene columna «active»: el estado vive en la cuenta (users.active), como en alumnos y maestros.
+        const active = resource === "parents" ? this.optionalBoolean(payload.active) : undefined;
+        if (active !== undefined && (row as Record<string, unknown>)?.person_id != null) {
+            const account = await this.repository.findAccountByPerson(institutionId, Number((row as Record<string, unknown>).person_id));
+            if (account != null && account.active !== active)
+                await this.repository.writeAccount(institutionId, Number(account.id), { active }, null);
+        }
         return { [this.entityName(resource)]: row };
     }
     async createGroup(ctx: AppContext, payload: Record<string, unknown>) {

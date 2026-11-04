@@ -68,6 +68,17 @@ try {
     await del('charges', 'delete from charges where id = any($1)', [charges]);
     await del('schedules', 'delete from schedules where class_id = any($1)', [classes]);
     await del('files', 'delete from files where id = any($1)', [fileIds]);
+
+    // Los anuncios «<prefijo>…» avisan a TODA la institución: se borran con sus avisos y entregas de correo/push.
+    await del('notifications', 'delete from notifications where title like $1 or message like $1', [`${prefix}%`]);
+    await del('announcements', 'delete from announcements where title like $1', [`${prefix}%`]);
+    // Chats cuyos participantes son todos cuentas de prueba, y esas cuentas, que no deben seguir activas
+    // (si no, aparecen en los contactos del chat y pueden iniciar sesión).
+    const testUser = `lower(u.email) like '${prefix.trim().toLowerCase()}.%' or lower(u.email) like '%@demo.test'`;
+    await del('conversations', `delete from conversations c where exists (select 1 from conversation_participants p where p.conversation_id = c.id)
+      and not exists (select 1 from conversation_participants p join users u on u.id = p.user_id where p.conversation_id = c.id and not (${testUser}))`);
+    await del('cuentas_desactivadas', `update users u set active = false, deleted_at = coalesce(deleted_at, now()), updated_at = now()
+      where u.active and u.deleted_at is null and (${testUser})`);
     await db.query('commit');
 
     if (files.length) {

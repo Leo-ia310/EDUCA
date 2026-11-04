@@ -217,7 +217,7 @@ export class AssignmentsRepository {
     return expectSingle<Record<string, unknown>>(
       db
         .from("submissions")
-        .select("id, assignment_id, assignments(class_id)")
+        .select("id, assignment_id, assignments(class_id, max_score)")
         .eq("id", submissionId)
         .eq("institution_id", institutionId)
         .single(),
