@@ -1,6 +1,7 @@
 import 'features/portal_access/access_widgets.dart';
 import 'core/routing/route_paths.dart';
 import 'features/auth/presentation/auth_controller.dart';
+import 'features/auth/presentation/widgets/brand_splash_replay.dart';
 import 'shared/models/app_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -43,13 +44,18 @@ class _Educa360AppState extends ConsumerState<Educa360App> {
       routerConfig: router,
       builder: (context, child) => ValueListenableBuilder(
         valueListenable: router.routeInformationProvider,
-        builder: (context, info, _) => PortalRouteGate(
+        builder: (context, info, _) => BrandSplashReplay(
           path: info.uri.path,
-          child: child ?? const SizedBox.shrink(),
-          onHome: () => router.go(
-            ref.read(authControllerProvider).user?.activeRole == AppRole.parent
-                ? Routes.parentDashboard
-                : Routes.studentDashboard,
+          loginPath: Routes.login,
+          child: PortalRouteGate(
+            path: info.uri.path,
+            child: child ?? const SizedBox.shrink(),
+            onHome: () => router.go(
+              ref.read(authControllerProvider).user?.activeRole ==
+                      AppRole.parent
+                  ? Routes.parentDashboard
+                  : Routes.studentDashboard,
+            ),
           ),
         ),
       ),
