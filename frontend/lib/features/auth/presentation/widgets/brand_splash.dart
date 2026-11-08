@@ -22,17 +22,23 @@ void restoreSystemBars() {
 }
 
 /// Animación de marca (GIF de Nivra) sobre fondo blanco: se decodifica ANTES de
-/// empezar a contar, dura una vuelta completa y avisa con [onFinished].
-/// Siempre arranca desde el primer cuadro, incluso si ya se mostró antes.
+/// empezar a contar y dura una vuelta completa (el GIF no se repite: se queda en
+/// su último cuadro). Avisa con [onNearEnd] [fadeOut] antes de terminar, para que
+/// quien la muestre la desvanezca justo en el último tramo y todo acabe a los
+/// 3,0 s. Siempre arranca desde el primer cuadro, incluso si ya se mostró antes.
 class BrandSplash extends StatefulWidget {
-  const BrandSplash({super.key, required this.onFinished});
+  const BrandSplash({super.key, required this.onNearEnd});
 
-  final VoidCallback onFinished;
+  final VoidCallback onNearEnd;
 
   static const asset = 'assets/images/nivra_splash.gif';
 
   /// Duración de una vuelta del GIF (3,0 s).
   static const animationTime = Duration(milliseconds: 3000);
+
+  /// Últimos milisegundos en los que la animación se desvanece sobre lo que hay
+  /// debajo (el formulario del login), para que no aparezca de golpe.
+  static const fadeOut = Duration(milliseconds: 450);
 
   /// Tope de espera para decodificar el GIF antes de mostrarlo igual.
   static const _maxLoadWait = Duration(seconds: 2);
@@ -85,9 +91,9 @@ class _BrandSplashState extends State<BrandSplash>
     if (!mounted) return;
     setState(() => _ready = true);
     _controller.forward();
-    await Future<void>.delayed(BrandSplash.animationTime);
+    await Future<void>.delayed(BrandSplash.animationTime - BrandSplash.fadeOut);
     if (!mounted) return;
-    widget.onFinished();
+    widget.onNearEnd();
   }
 
   @override
