@@ -70,8 +70,8 @@ try {
     await del('files', 'delete from files where id = any($1)', [fileIds]);
 
     // Los anuncios «<prefijo>…» avisan a TODA la institución: se borran con sus avisos y entregas de correo/push.
-    await del('notifications', 'delete from notifications where title like $1 or message like $1', [`${prefix}%`]);
-    await del('announcements', 'delete from announcements where title like $1', [`${prefix}%`]);
+    await del('notifications', 'delete from notifications where title like $1 or message like $1', [`${prefix.trim()}%`]);
+    await del('announcements', 'delete from announcements where title like $1', [`${prefix.trim()}%`]);
     // Chats cuyos participantes son todos cuentas de prueba, y esas cuentas, que no deben seguir activas
     // (si no, aparecen en los contactos del chat y pueden iniciar sesión).
     const testUser = `lower(u.email) like '${prefix.trim().toLowerCase()}.%' or lower(u.email) like '%@demo.test'`;

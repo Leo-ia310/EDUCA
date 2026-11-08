@@ -33,8 +33,8 @@ class _TeacherDashboardScreenState
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user!;
-    final data = ref.watch(teacherDashboardProvider).scopedValue ??
-        TeacherDashboardData.empty();
+    final loaded = ref.watch(teacherDashboardProvider).scopedValue;
+    final data = loaded ?? TeacherDashboardData.empty();
 
     return AppScaffold(
       padding: EdgeInsets.zero,
@@ -61,7 +61,9 @@ class _TeacherDashboardScreenState
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: HomeHero(
               name: user.displayFirstName,
-              subtitle: 'Docente · ${plural(data.myClasses.length, 'grupo')}',
+              subtitle: loaded == null
+                  ? 'Docente'
+                  : 'Docente · ${plural(data.myClasses.length, 'grupo')}',
             ),
           ),
           Padding(

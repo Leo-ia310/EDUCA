@@ -134,6 +134,8 @@ class _PortalGradesScreenState extends ConsumerState<PortalGradesScreen> {
                                     title: 'Sin notas registradas',
                                   )
                                 : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       for (final row in rows)
                                         Padding(
