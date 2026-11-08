@@ -91,7 +91,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final routingError = state.error != null;
       // Email recovery must work signed out, signed in, or during a pending 2FA.
       if (loc == Routes.resetPassword) return null;
-      if (auth.loading && loc == Routes.splash) return null;
+      // El splash se queda hasta terminar su animación completa y hasta que la
+      // sesión esté lista (así dura igual en el primer arranque y en los demás).
+      if (loc == Routes.splash &&
+          (!ref.read(splashFinishedProvider) || auth.loading)) {
+        return null;
+      }
 
       // El splash siempre reenvía: al dashboard si hay sesión, o al login si no.
       // (La pantalla splash no navega por sí misma.)
@@ -760,6 +765,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 class _AuthRefresh extends ChangeNotifier {
   _AuthRefresh(Ref ref) {
     ref.listen(authControllerProvider, (_, __) => notifyListeners());
+    ref.listen(splashFinishedProvider, (_, __) => notifyListeners());
   }
 }
 
