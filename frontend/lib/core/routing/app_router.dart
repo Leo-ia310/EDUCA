@@ -298,15 +298,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const _ExamsRoleSplit(),
         routes: [
           GoRoute(
-            path: 'class/:classId',
-            builder: (context, state) => RoleGuard(
-              allowed: const {AppRole.teacher},
-              child: TeacherClassAssignmentsScreen(
-                classId: int.tryParse(state.pathParameters['classId'] ?? '') ?? 0,
-              ),
-            ),
-          ),
-          GoRoute(
             path: 'subject/:name',
             builder: (context, state) {
               final name = state.pathParameters['name'] ?? '';
@@ -341,6 +332,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return const _AssignmentsRoleSplit();
         },
         routes: [
+          GoRoute(
+            path: 'class/:classId',
+            builder: (context, state) => RoleGuard(
+              allowed: const {AppRole.teacher},
+              child: TeacherClassAssignmentsScreen(
+                classId:
+                    int.tryParse(state.pathParameters['classId'] ?? '') ?? 0,
+              ),
+            ),
+          ),
           GoRoute(
             path: 'new',
             builder: (context, state) {
@@ -604,7 +605,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => RoleGuard(
           allowed: const {AppRole.admin, AppRole.coordinator, AppRole.director},
           child: AdminAccessScreen(
-              initialSearch: state.uri.queryParameters['search'] ?? '',),
+            initialSearch: state.uri.queryParameters['search'] ?? '',
+          ),
         ),
       ),
       GoRoute(
@@ -910,8 +912,10 @@ class _ExamsRoleSplit extends ConsumerWidget {
 /// Estado de cuenta e historial de pagos: usa el `studentId` de la URL o, si no
 /// viene, el del hijo (padre) o el del propio alumno.
 class _PaymentsStudentResolved extends ConsumerWidget {
-  const _PaymentsStudentResolved(
-      {required this.explicitId, required this.builder,});
+  const _PaymentsStudentResolved({
+    required this.explicitId,
+    required this.builder,
+  });
 
   final int? explicitId;
   final Widget Function({Key? key, required int studentId}) builder;
