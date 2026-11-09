@@ -6832,7 +6832,7 @@
         ],
         "responses": {
           "200": {
-            "description": "{ ok: true, data: { assignments: [{ id, classId, subjectName, groupName, teacherName, title, description, instructions, assignedAt, dueAt, kind, maxScore, allowLate, published, attachments, totalStudents, submittedCount, gradedCount, progress }], nextCursor: string | null } }",
+            "description": "{ ok: true, data: { assignments: [{ id, classId, subjectName, groupName, teacherName, title, description, instructions, assignedAt, dueAt, kind, maxScore, allowLate, allowStudentComments, published, attachments, totalStudents, submittedCount, gradedCount, progress }], nextCursor: string | null } }",
             "content": {
               "application/json": {
                 "schema": {
@@ -6906,6 +6906,9 @@
                                 "type": "number"
                               },
                               "allowLate": {
+                                "type": "boolean"
+                              },
+                              "allowStudentComments": {
                                 "type": "boolean"
                               },
                               "published": {
@@ -7040,6 +7043,7 @@
                               "dueAt",
                               "maxScore",
                               "allowLate",
+                              "allowStudentComments",
                               "published",
                               "totalStudents",
                               "submittedCount",
@@ -7176,6 +7180,9 @@
                               "allowLate": {
                                 "type": "boolean"
                               },
+                              "allowStudentComments": {
+                                "type": "boolean"
+                              },
                               "published": {
                                 "type": "boolean"
                               },
@@ -7308,6 +7315,7 @@
                               "dueAt",
                               "maxScore",
                               "allowLate",
+                              "allowStudentComments",
                               "published",
                               "totalStudents",
                               "submittedCount",
@@ -7445,6 +7453,9 @@
                             "allowLate": {
                               "type": "boolean"
                             },
+                            "allowStudentComments": {
+                              "type": "boolean"
+                            },
                             "published": {
                               "type": "boolean"
                             },
@@ -7515,6 +7526,7 @@
                             "dueAt",
                             "maxScore",
                             "allowLate",
+                            "allowStudentComments",
                             "published",
                             "totalStudents",
                             "submittedCount",
@@ -7683,7 +7695,7 @@
           "assignments"
         ],
         "summary": "Crea o actualiza una tarea",
-        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Equivale a action assignments.upsert. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Migración 0055: guardado, adjuntos y documento de respuesta en una transacción SQL. attachments presente reemplaza la lista; omitido la conserva. Reintentos con el mismo idempotencyKey y contenido retornan el documento confirmado; contenido distinto devuelve 409. Sin clave se genera una por petición para compatibilidad, sin garantía entre reintentos. Flutter conserva la clave y el contenido hasta confirmar, incluso al navegar; resuelve una creación incierta antes de enviar ediciones. Se validan clase anterior/destino, institución, archivos y permisos vigentes.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "description": "Auth: teacher con assignments.create en la clase.\n\nNotas: Equivale a action assignments.upsert. allowStudentComments (migración 0064, defecto true): si es false el backend descarta el comentario (notes) en las entregas; omitido conserva el valor actual. kind opcional: homework, exam, project, quiz o presentation (migración 0032); se conserva al editar y sincroniza el tipo de la evaluación. Migración 0055: guardado, adjuntos y documento de respuesta en una transacción SQL. attachments presente reemplaza la lista; omitido la conserva. Reintentos con el mismo idempotencyKey y contenido retornan el documento confirmado; contenido distinto devuelve 409. Sin clave se genera una por petición para compatibilidad, sin garantía entre reintentos. Flutter conserva la clave y el contenido hasta confirmar, incluso al navegar; resuelve una creación incierta antes de enviar ediciones. Se validan clase anterior/destino, institución, archivos y permisos vigentes.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
         "security": [
           {
             "bearerAuth": []
@@ -7744,6 +7756,9 @@
                   "allowLate": {
                     "type": "boolean"
                   },
+                  "allowStudentComments": {
+                    "type": "boolean"
+                  },
                   "published": {
                     "type": "boolean"
                   },
@@ -7783,7 +7798,7 @@
               },
               "examples": {
                 "manifest": {
-                  "value": "{ assignmentId?, classId, title, description?, instructions?, dueAt, maxScore, allowLate?, published?, attachments?: [{ id }] (máximo 100), idempotencyKey?: UUID }"
+                  "value": "{ assignmentId?, classId, title, description?, instructions?, dueAt, maxScore, allowLate?, allowStudentComments? (defecto true), published?, attachments?: [{ id }] (máximo 100), idempotencyKey?: UUID }"
                 }
               }
             }
@@ -7859,6 +7874,9 @@
                               "type": "number"
                             },
                             "allowLate": {
+                              "type": "boolean"
+                            },
+                            "allowStudentComments": {
                               "type": "boolean"
                             },
                             "published": {
@@ -7942,6 +7960,7 @@
                             "kind",
                             "maxScore",
                             "allowLate",
+                            "allowStudentComments",
                             "published",
                             "attachments",
                             "teacherName",

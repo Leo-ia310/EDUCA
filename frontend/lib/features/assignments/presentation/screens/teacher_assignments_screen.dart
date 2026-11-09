@@ -18,37 +18,40 @@ import '../../../dashboard/data/dashboard_data.dart';
 import '../../../dashboard/data/mock_dashboard_data.dart';
 import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../../dashboard/providers.dart';
+import '../../domain/assignment_page.dart';
 import '../../domain/entities.dart';
 import '../controllers/assignments_list_controller.dart';
 import '../widgets/assignment_card.dart';
-
-/// Coincidencia flexible entre nombres de materia.
-bool _sameSubject(String a, String b) {
-  final x = a.toLowerCase().trim();
-  final y = b.toLowerCase().trim();
-  return x == y || x.contains(y) || y.contains(x);
-}
 
 /// Más reciente primero (fecha de creación).
 List<Assignment> _byCreation(Iterable<Assignment> items) =>
     [...items]..sort((a, b) => b.assignedAt.compareTo(a.assignedAt));
 
-/// Materias del docente: las de sus clases (con fallback a las que aparecen
-/// en sus tareas si aún no tiene clases cargadas).
-List<TeacherClass> _teacherSubjects(WidgetRef ref, List<Assignment> all) {
-  final classes = (ref.watch(teacherDashboardProvider).scopedValue ??
+/// Clases del docente (propias y colaborativas).
+List<TeacherClass> _teacherClasses(WidgetRef ref) {
+  return (ref.watch(teacherDashboardProvider).scopedValue ??
           TeacherDashboardData.empty())
       .myClasses;
-  if (classes.isNotEmpty) return classes;
-  final names = {for (final a in all) a.subjectName};
-  return [
-    for (final n in names)
-      TeacherClass(name: n, room: '', icon: Icons.menu_book_rounded),
-  ];
 }
 
-/// Panel "Tareas y Exámenes" del docente: "Por materia" (tarjetas de materia
-/// que abren su propio panel) y "Vista general" (todo, por fecha de creación).
+/// ¿Puede crear tareas? (en una clase concreta si [classId] viene).
+bool _canCreate(WidgetRef ref, {int? classId}) {
+  if (Env.isDemoMode) return true;
+  final classes = (ref
+          .watch(collaborationWorkspaceProvider)
+          .valueOrNull?['classes'] as List?) ??
+      const [];
+  return classes.any(
+    (c) =>
+        (classId == null || (c['classId'] as num?)?.toInt() == classId) &&
+        (c['permissions'] as List).contains('assignments.create'),
+  );
+}
+
+/// Panel "Tareas y Exámenes" del docente. «Por clase»: tarjetas de clase con
+/// sus totales reales (se calculan en la base, no dependen de páginas
+/// cargadas) que abren la lista de esa clase. «Todas»: todo el historial por
+/// fecha de creación, con filtros y carga automática al desplazarse.
 class TeacherAssignmentsScreen extends ConsumerStatefulWidget {
   const TeacherAssignmentsScreen({super.key});
 
@@ -59,21 +62,14 @@ class TeacherAssignmentsScreen extends ConsumerStatefulWidget {
 
 class _TeacherAssignmentsScreenState
     extends ConsumerState<TeacherAssignmentsScreen> {
-  bool _bySubject = true;
+  bool _byClass = true;
+  AssignmentKind? _kind;
+  bool _onlyOpen = false;
 
   @override
   Widget build(BuildContext context) {
-    final provider = teacherAssignmentsProvider(null);
-    final list = ref.watch(provider);
-    final paging = ref.watch(provider.notifier);
     final palette = context.palette;
-    final canCreate = Env.isDemoMode ||
-        ((ref.watch(collaborationWorkspaceProvider).valueOrNull?['classes']
-                    as List?) ??
-                [])
-            .any(
-          (c) => (c['permissions'] as List).contains('assignments.create'),
-        );
+    final canCreate = _canCreate(ref);
 
     return StudentDetailScaffold(
       title: 'Tareas y Exámenes',
@@ -90,183 +86,316 @@ class _TeacherAssignmentsScreenState
                 children: [
                   Expanded(
                     child: _ModePill(
-                      label: 'Por materia',
-                      selected: _bySubject,
-                      onTap: () => setState(() => _bySubject = true),
+                      label: 'Por clase',
+                      selected: _byClass,
+                      onTap: () => setState(() => _byClass = true),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _ModePill(
-                      label: 'Vista general',
-                      selected: !_bySubject,
-                      onTap: () => setState(() => _bySubject = false),
+                      label: 'Todas',
+                      selected: !_byClass,
+                      onTap: () => setState(() => _byClass = false),
                     ),
                   ),
                 ],
               ),
             ),
             Expanded(
-              child: ShaderMask(
-                blendMode: BlendMode.dstIn,
-                shaderCallback: (r) => LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: const [Colors.transparent, Colors.black],
-                  stops: [0, (28 / r.height).clamp(0.0, 1.0)],
-                ).createShader(r),
-                child: list.when(
-                  loading: () => const SkeletonList(),
-                  error: (e, _) => ErrorStateView(message: '$e'),
-                  data: (all) {
-                    final subjects = _teacherSubjects(ref, all);
-                    final mine = subjects.isEmpty
-                        ? all
-                        : all
-                            .where(
-                              (a) => subjects.any(
-                                (s) => _sameSubject(a.subjectName, s.name),
-                              ),
-                            )
-                            .toList();
-                    if (mine.isEmpty && subjects.isEmpty) {
-                      return EmptyState(
-                        icon: Icons.assignment_rounded,
-                        title: 'Sin tareas aún',
-                        subtitle: 'Crea tu primera tarea o examen.',
-                        actionLabel: canCreate ? 'Crear tarea' : null,
-                        onAction: canCreate
-                            ? () => context.push('${Routes.assignments}/new')
-                            : null,
-                      );
-                    }
-                    return RefreshIndicator(
-                      color: palette.accentDeep,
-                      onRefresh: () async => ref.invalidate(provider),
-                      child: ListView(
-                        key: ValueKey(_bySubject),
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-                        children: [
-                          if (canCreate)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: BrutalButton(
-                                expand: true,
-                                onTap: () =>
-                                    context.push('${Routes.assignments}/new'),
-                                icon: Icons.add,
-                                label: 'Nueva tarea o examen',
-                              ),
-                            ),
-                          if (_bySubject)
-                            ..._subjectCards(context, subjects, mine)
-                          else
-                            ..._generalList(context, mine),
-                          AssignmentLoadMore(controller: paging),
-                        ],
+              child: _byClass
+                  ? _ClassCards(canCreate: canCreate, palette: palette)
+                  : _AssignmentsList(
+                      feed: (
+                        classId: null,
+                        kind: _kind,
+                        onlyOpen: _onlyOpen,
+                        search: '',
                       ),
-                    );
-                  },
-                ),
-              ),
+                      kind: _kind,
+                      onlyOpen: _onlyOpen,
+                      onKind: (k) => setState(() => _kind = k),
+                      onOnlyOpen: (v) => setState(() => _onlyOpen = v),
+                      canCreate: canCreate,
+                    ),
             ),
           ],
         ),
       ),
     );
   }
-
-  List<Widget> _subjectCards(
-    BuildContext context,
-    List<TeacherClass> subjects,
-    List<Assignment> mine,
-  ) {
-    return [
-      for (final (i, s) in subjects.indexed)
-        entranceItem(
-          context,
-          i,
-          _SubjectCard(
-            subject: s,
-            tasks:
-                mine.where((a) => _sameSubject(a.subjectName, s.name)).toList(),
-            onTap: () => context.push(
-              '${Routes.assignments}/subject/${Uri.encodeComponent(s.name)}',
-            ),
-          ),
-        ),
-    ];
-  }
-
-  List<Widget> _generalList(BuildContext context, List<Assignment> mine) {
-    return [
-      for (final (i, a) in _byCreation(mine).indexed)
-        entranceItem(context, i, _AssignmentTile(assignment: a)),
-    ];
-  }
 }
 
-/// Panel de una materia: tareas, pruebas, exámenes y trabajos en tarjetas.
-class TeacherSubjectAssignmentsScreen extends ConsumerWidget {
-  const TeacherSubjectAssignmentsScreen({super.key, required this.subject});
-
-  final String subject;
+/// Tarjetas de clase con sus conteos reales (sin «Cargar más»).
+class _ClassCards extends ConsumerWidget {
+  const _ClassCards({required this.canCreate, required this.palette});
+  final bool canCreate;
+  final AppPalette palette;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final provider = teacherAssignmentsProvider(subject);
+    final dash = ref.watch(teacherDashboardProvider);
+    final counts = ref.watch(teacherAssignmentCountsProvider);
+    final classes =
+        _teacherClasses(ref).where((c) => c.classId != null).toList();
+
+    if (dash.isLoading && !dash.isRefreshing && classes.isEmpty) {
+      return const SkeletonList();
+    }
+    if (classes.isEmpty) {
+      return EmptyState(
+        icon: Icons.assignment_rounded,
+        title: 'Sin clases asignadas',
+        subtitle: 'Cuando tengas clases podrás crear tareas y exámenes.',
+        actionLabel: canCreate ? 'Crear tarea' : null,
+        onAction:
+            canCreate ? () => context.push('${Routes.assignments}/new') : null,
+      );
+    }
+    final byClass = counts.valueOrNull ?? const <int, ClassAssignmentCounts>{};
+    return RefreshIndicator(
+      color: palette.accentDeep,
+      onRefresh: () async {
+        ref.invalidate(teacherAssignmentCountsProvider);
+        ref.invalidate(teacherDashboardProvider);
+        await ref.read(teacherAssignmentCountsProvider.future);
+      },
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        children: [
+          if (canCreate)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: BrutalButton(
+                expand: true,
+                onTap: () => context.push('${Routes.assignments}/new'),
+                icon: Icons.add,
+                label: 'Nueva tarea o examen',
+              ),
+            ),
+          for (final (i, c) in classes.indexed)
+            entranceItem(
+              context,
+              i,
+              _ClassCard(
+                teacherClass: c,
+                counts: byClass[c.classId],
+                loading: counts.isLoading && !counts.hasValue,
+                onTap: () => context.push(
+                  '${Routes.assignments}/class/${c.classId}',
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lista de tareas con filtros por tipo y «solo abiertas». Carga perezosa:
+/// al llegar al final pide la siguiente página.
+class _AssignmentsList extends ConsumerWidget {
+  const _AssignmentsList({
+    required this.feed,
+    required this.kind,
+    required this.onlyOpen,
+    required this.onKind,
+    required this.onOnlyOpen,
+    required this.canCreate,
+    this.emptyHint = 'Crea tu primera tarea o examen.',
+  });
+
+  final TeacherFeed feed;
+  final AssignmentKind? kind;
+  final bool onlyOpen;
+  final ValueChanged<AssignmentKind?> onKind;
+  final ValueChanged<bool> onOnlyOpen;
+  final bool canCreate;
+  final String emptyHint;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
+    final provider = teacherAssignmentsProvider(feed);
     final list = ref.watch(provider);
     final paging = ref.watch(provider.notifier);
-    final canCreate = Env.isDemoMode ||
-        ((ref.watch(collaborationWorkspaceProvider).valueOrNull?['classes']
-                    as List?) ??
-                [])
-            .any((c) =>
-                _sameSubject(c['subjectName'] as String, subject) &&
-                (c['permissions'] as List).contains('assignments.create'),);
+    final newRoute = feed.classId == null
+        ? '${Routes.assignments}/new'
+        : '${Routes.assignments}/new?classId=${feed.classId}';
+
+    return list.when(
+      loading: () => const SkeletonList(),
+      error: (e, _) => ErrorStateView(
+        message: '$e',
+        onRetry: () => ref.invalidate(provider),
+      ),
+      data: (all) {
+        final items = _byCreation(all);
+        final filtering = kind != null || onlyOpen;
+        return RefreshIndicator(
+          color: palette.accentDeep,
+          onRefresh: () async {
+            ref.invalidate(provider);
+            ref.invalidate(teacherAssignmentCountsProvider);
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            itemCount: items.length + 3,
+            itemBuilder: (context, i) {
+              if (i == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (canCreate)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: BrutalButton(
+                            expand: true,
+                            onTap: () => context.push(newRoute),
+                            icon: Icons.add,
+                            label: 'Nueva tarea o examen',
+                          ),
+                        ),
+                      _FilterBar(
+                        kind: kind,
+                        onlyOpen: onlyOpen,
+                        onKind: onKind,
+                        onOnlyOpen: onOnlyOpen,
+                      ),
+                    ],
+                  ),
+                );
+              }
+              if (i == items.length + 1) {
+                return items.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 24),
+                        child: EmptyState(
+                          icon: Icons.assignment_rounded,
+                          title:
+                              filtering ? 'Sin resultados' : 'Sin tareas aún',
+                          subtitle: filtering
+                              ? 'Ninguna tarea coincide con los filtros.'
+                              : emptyHint,
+                        ),
+                      )
+                    : const SizedBox.shrink();
+              }
+              if (i == items.length + 2) {
+                return AssignmentLoadMore(controller: paging, auto: true);
+              }
+              return entranceItem(
+                context,
+                i - 1,
+                _AssignmentTile(assignment: items[i - 1]),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Filtros: tipo (todas / tareas / exámenes…) y «solo abiertas».
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({
+    required this.kind,
+    required this.onlyOpen,
+    required this.onKind,
+    required this.onOnlyOpen,
+  });
+
+  final AssignmentKind? kind;
+  final bool onlyOpen;
+  final ValueChanged<AssignmentKind?> onKind;
+  final ValueChanged<bool> onOnlyOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              avatar: const Icon(Icons.lock_open_rounded, size: 16),
+              label: const Text('Abiertas'),
+              selected: onlyOpen,
+              onSelected: onOnlyOpen,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: const Text('Todos los tipos'),
+              selected: kind == null,
+              onSelected: (_) => onKind(null),
+            ),
+          ),
+          for (final k in AssignmentKind.values)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(k.label),
+                selected: kind == k,
+                onSelected: (_) => onKind(kind == k ? null : k),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Panel de una clase: sus tareas, pruebas, exámenes y trabajos.
+class TeacherClassAssignmentsScreen extends ConsumerStatefulWidget {
+  const TeacherClassAssignmentsScreen({super.key, required this.classId});
+
+  final int classId;
+
+  @override
+  ConsumerState<TeacherClassAssignmentsScreen> createState() =>
+      _TeacherClassAssignmentsScreenState();
+}
+
+class _TeacherClassAssignmentsScreenState
+    extends ConsumerState<TeacherClassAssignmentsScreen> {
+  AssignmentKind? _kind;
+  bool _onlyOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cls = _teacherClasses(ref)
+        .where((c) => c.classId == widget.classId)
+        .firstOrNull;
     return StudentDetailScaffold(
-      title: subject,
+      title: cls?.name ?? 'Clase',
       scrollable: false,
       bottomNav: false,
       bodyPadding: EdgeInsets.zero,
       child: SafeArea(
         bottom: false,
-        child: list.when(
-          loading: () => const SkeletonList(),
-          error: (e, _) => ErrorStateView(message: '$e'),
-          data: (all) {
-            final items = _byCreation(
-              all.where((a) => _sameSubject(a.subjectName, subject)),
-            );
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 28, 16, 32),
-              children: [
-                if (canCreate)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: BrutalButton(
-                      expand: true,
-                      onTap: () => context.push('${Routes.assignments}/new'),
-                      icon: Icons.add,
-                      label: 'Nueva tarea o examen',
-                    ),
-                  ),
-                if (items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 24),
-                    child: EmptyState(
-                      icon: Icons.assignment_rounded,
-                      title: 'Sin tareas',
-                      subtitle: 'Aún no hay tareas en esta materia.',
-                    ),
-                  )
-                else
-                  for (final (i, a) in items.indexed)
-                    entranceItem(context, i, _AssignmentTile(assignment: a)),
-                AssignmentLoadMore(controller: paging),
-              ],
-            );
-          },
+        child: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: _AssignmentsList(
+            feed: (
+              classId: widget.classId,
+              kind: _kind,
+              onlyOpen: _onlyOpen,
+              search: '',
+            ),
+            kind: _kind,
+            onlyOpen: _onlyOpen,
+            onKind: (k) => setState(() => _kind = k),
+            onOnlyOpen: (v) => setState(() => _onlyOpen = v),
+            canCreate: _canCreate(ref, classId: widget.classId),
+            emptyHint: 'Aún no hay tareas en esta clase.',
+          ),
         ),
       ),
     );
@@ -331,81 +460,137 @@ class _ModePill extends StatelessWidget {
   }
 }
 
-/// Tarjeta de materia: ícono, nombre y resumen de tareas.
-class _SubjectCard extends StatelessWidget {
-  const _SubjectCard({
-    required this.subject,
-    required this.tasks,
+/// Tarjeta de clase: ícono, nombre, grupo y totales reales de tareas.
+class _ClassCard extends StatelessWidget {
+  const _ClassCard({
+    required this.teacherClass,
+    required this.counts,
+    required this.loading,
     required this.onTap,
   });
 
-  final TeacherClass subject;
-  final List<Assignment> tasks;
+  final TeacherClass teacherClass;
+  final ClassAssignmentCounts? counts;
+  final bool loading;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final s = context.pastel(subjectColor(subject.name));
+    final c = teacherClass;
+    final s = context.pastel(subjectColor(c.name));
     final ink = Brutal.ink(context);
-    final summary = tasks.isEmpty
-        ? 'Sin tareas'
-        : '${tasks.length} elemento${tasks.length == 1 ? '' : 's'}';
+    final total = counts?.total ?? 0;
+    final open = counts?.open ?? 0;
+    final drafts = counts?.drafts ?? 0;
+    final summary = loading
+        ? 'Cargando…'
+        : total == 0
+            ? 'Sin tareas'
+            : '$total elemento${total == 1 ? '' : 's'}';
+
+    Widget pill(String text, {bool strong = false}) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+          decoration: BoxDecoration(
+            color: strong ? s.vivid : Colors.white.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(Radii.pill),
+          ),
+          child: Text(
+            text,
+            style: context.textTheme.labelSmall?.copyWith(
+              color: strong ? Colors.white : s.ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        );
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: BrutalBox(
         onTap: onTap,
         color: s.surface,
         radius: Radii.lg,
-        padding: const EdgeInsets.all(16),
-        child: Row(
+        clip: true,
+        child: Stack(
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: s.vivid,
-                borderRadius: BorderRadius.circular(Radii.sm),
-                border: Border.all(color: ink, width: Brutal.border),
+            Positioned(
+              right: -14,
+              bottom: -14,
+              child: Icon(
+                c.icon,
+                size: 104,
+                color: s.vivid.withValues(alpha: 0.14),
               ),
-              child: Icon(subject.icon, color: Colors.white, size: 24),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  Text(
-                    subject.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.titleMedium?.copyWith(
-                      color: s.ink,
-                      fontWeight: FontWeight.w800,
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: s.vivid,
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      border: Border.all(color: ink, width: Brutal.border),
+                    ),
+                    child: Icon(c.icon, color: Colors.white, size: 25),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          c.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textTheme.titleMedium?.copyWith(
+                            color: s.ink,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        if (c.room.isNotEmpty)
+                          Text(
+                            c.room,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.bodySmall
+                                ?.copyWith(color: s.inkMuted),
+                          ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            pill(summary, strong: total > 0),
+                            if (open > 0)
+                              pill('$open abierta${open == 1 ? '' : 's'}'),
+                            if (drafts > 0)
+                              pill(
+                                '$drafts borrador${drafts == 1 ? '' : 'es'}',
+                              ),
+                            if (!c.isOwner) pill('Colaborativa'),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    summary,
-                    style: context.textTheme.bodySmall
-                        ?.copyWith(color: s.inkMuted),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: context.paper,
+                      borderRadius: BorderRadius.circular(Radii.sm),
+                      border: Border.all(color: ink, width: Brutal.border),
+                    ),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: context.onPaper,
+                      size: 24,
+                    ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: context.paper,
-                borderRadius: BorderRadius.circular(Radii.sm),
-                border: Border.all(color: ink, width: Brutal.border),
-              ),
-              child: Icon(
-                Icons.chevron_right_rounded,
-                color: context.onPaper,
-                size: 24,
               ),
             ),
           ],

@@ -21,6 +21,7 @@ class AssignmentFormState {
     DateTime? dueAt,
     this.maxScore = 100,
     this.allowLate = false,
+    this.allowStudentComments = true,
     this.published = true,
     this.attachments = const [],
     this.saving = false,
@@ -37,6 +38,7 @@ class AssignmentFormState {
   final DateTime dueAt;
   final double maxScore;
   final bool allowLate;
+  final bool allowStudentComments;
   final bool published;
   final List<AssignmentAttachment> attachments;
   final bool saving;
@@ -56,6 +58,7 @@ class AssignmentFormState {
     DateTime? dueAt,
     double? maxScore,
     bool? allowLate,
+    bool? allowStudentComments,
     bool? published,
     List<AssignmentAttachment>? attachments,
     bool? saving,
@@ -73,6 +76,8 @@ class AssignmentFormState {
       dueAt: dueAt ?? this.dueAt,
       maxScore: maxScore ?? this.maxScore,
       allowLate: allowLate ?? this.allowLate,
+      allowStudentComments:
+          allowStudentComments ?? this.allowStudentComments,
       published: published ?? this.published,
       attachments: attachments ?? this.attachments,
       saving: saving ?? this.saving,
@@ -109,6 +114,7 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
       dueAt: a.dueAt ?? DateTime.now().add(const Duration(days: 1)),
       maxScore: a.maxScore,
       allowLate: a.allowLate,
+      allowStudentComments: a.allowStudentComments,
       published: a.published,
       attachments: a.attachments,
     );
@@ -122,6 +128,8 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
   void setMaxScore(double v) => state = state.copyWith(maxScore: v);
   void setClass(int id) => state = state.copyWith(classId: id);
   void setAllowLate(bool v) => state = state.copyWith(allowLate: v);
+  void setAllowStudentComments(bool v) =>
+      state = state.copyWith(allowStudentComments: v);
   void setPublished(bool v) => state = state.copyWith(published: v);
 
   Future<void> addFiles(List<File> files) async {
@@ -157,6 +165,7 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
         state.dueAt.toUtc().toIso8601String(),
         state.maxScore,
         state.allowLate,
+        state.allowStudentComments,
         state.published,
         state.attachments.map((a) => a.id).toList()..sort(),
       ]);
@@ -198,6 +207,7 @@ class AssignmentFormController extends StateNotifier<AssignmentFormState> {
           dueAt: state.dueAt,
           maxScore: state.maxScore,
           allowLate: state.allowLate,
+          allowStudentComments: state.allowStudentComments,
           published: state.published,
           attachments: state.attachments,
         );

@@ -13,15 +13,20 @@ import '../../../../core/routing/route_paths.dart';
 import '../../../../core/widgets/brutal.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/subject_palette.dart';
-import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/celebration.dart';
 import '../../../../core/widgets/depth_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../../shared/models/app_role.dart';
+import '../../../dashboard/presentation/widgets/student_chrome.dart';
+import '../../../dashboard/providers.dart';
 import '../../domain/entities.dart';
+import '../../providers.dart';
 import '../controllers/assignment_detail_controller.dart';
+import '../controllers/assignments_list_controller.dart';
+import '../widgets/assignment_status_chip.dart';
+import '../widgets/submission_review_card.dart';
 import '../controllers/submission_controller.dart';
 import '../widgets/attachment_pill.dart';
 
@@ -45,34 +50,32 @@ class AssignmentDetailScreen extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).user;
     final role = user?.activeRole ?? AppRole.student;
 
-    return AppScaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Atrás',
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Detalle de tarea'),
-        actions: [
-          if (role == AppRole.teacher &&
-              assignmentAsync.valueOrNull != null &&
-              ref.watch(
-                classPermissionProvider(
-                  (assignmentAsync.valueOrNull!.classId, 'assignments.create'),
-                ),
-              ))
-            IconButton(
-              icon: const Icon(Icons.edit_rounded),
-              tooltip: 'Editar',
-              onPressed: () => context.push(
-                '${Routes.assignments}/$assignmentId/edit',
-              ),
+    final isTeacher = role == AppRole.teacher;
+    final loaded = assignmentAsync.valueOrNull;
+    final canEdit = isTeacher &&
+        loaded != null &&
+        ref.watch(
+          classPermissionProvider((loaded.classId, 'assignments.create')),
+        );
+
+    return StudentDetailScaffold(
+      title: 'Detalle de tarea',
+      bottomNav: false,
+      topActions: [
+        if (canEdit)
+          IconButton(
+            icon: const Icon(Icons.edit_rounded, color: Colors.white),
+            tooltip: 'Editar',
+            onPressed: () => context.push(
+              '${Routes.assignments}/$assignmentId/edit',
             ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          ),
+      ],
       child: assignmentAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Center(child: CircularProgressIndicator()),
+        ),
         error: (e, _) => Center(child: Text('$e')),
         data: (a) {
           if (a == null) {
@@ -81,11 +84,23 @@ class AssignmentDetailScreen extends ConsumerWidget {
               title: 'No encontrada',
             );
           }
+          final canSeeFiles =
+              isTeacher || ref.watch(portalCanProvider('materials.view'));
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Header(assignment: a),
+              _Header(assignment: a, teacherView: isTeacher),
               const SizedBox(height: 16),
+              if (isTeacher) ...[
+                _TeacherOverview(assignment: a),
+                const SizedBox(height: 16),
+                _TeacherSettings(assignment: a),
+                const SizedBox(height: 16),
+                if (canEdit) ...[
+                  _TeacherManageBar(assignment: a),
+                  const SizedBox(height: 16),
+                ],
+              ],
               if (a.description != null && a.description!.isNotEmpty) ...[
                 const SectionHeader(title: 'Descripción'),
                 const SizedBox(height: 8),
@@ -114,9 +129,10 @@ class AssignmentDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
               ],
-              if (a.attachments.isNotEmpty &&
-                  ref.watch(portalCanProvider('materials.view'))) ...[
-                const SectionHeader(title: 'Archivos adjuntos'),
+              if (a.attachments.isNotEmpty && canSeeFiles) ...[
+                SectionHeader(
+                  title: 'Archivos adjuntos (${a.attachments.length})',
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -128,8 +144,8 @@ class AssignmentDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
               ],
-              if (role == AppRole.teacher)
-                _TeacherActions(assignment: a)
+              if (isTeacher)
+                _SubmissionsSection(assignment: a)
               else
                 _StudentBlock(assignment: a, studentId: studentId ?? 1001),
             ],
@@ -141,8 +157,9 @@ class AssignmentDetailScreen extends ConsumerWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.assignment});
+  const _Header({required this.assignment, this.teacherView = false});
   final Assignment assignment;
+  final bool teacherView;
 
   static IconData _kindIcon(AssignmentKind kind) => switch (kind) {
         AssignmentKind.homework => Icons.assignment_rounded,
@@ -217,6 +234,19 @@ class _Header extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (teacherView) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      AssignmentStatusChip(
+                        status: assignment.statusForNow(DateTime.now()),
+                        onPastel: true,
+                      ),
+                      const SizedBox(width: 8),
+                      _HeroChip(label: assignment.kind.label),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -250,23 +280,21 @@ class _HeroChip extends StatelessWidget {
   }
 }
 
-class _TeacherActions extends ConsumerWidget {
-  const _TeacherActions({required this.assignment});
+/// Resumen numérico de la tarea: entregadas, calificadas y por entregar.
+class _TeacherOverview extends StatelessWidget {
+  const _TeacherOverview({required this.assignment});
   final Assignment assignment;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final canReview = ref.watch(
-      classPermissionProvider((assignment.classId, 'assignments.review')),
-    );
-    final canGrade = ref.watch(
-      classPermissionProvider((assignment.classId, 'assignments.grade')),
-    );
-    if (!canReview) return const SizedBox.shrink();
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final a = assignment;
+    final missing = (a.totalStudents - a.submittedCount).clamp(0, 1 << 30);
+    final toGrade = (a.submittedCount - a.gradedCount).clamp(0, 1 << 30);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeader(title: 'Entregas'),
+        const SectionHeader(title: 'Resumen'),
         const SizedBox(height: 8),
         DepthCard(
           brutal: true,
@@ -276,38 +304,450 @@ class _TeacherActions extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${assignment.submittedCount} / ${assignment.totalStudents} entregadas',
-                          style: context.textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${assignment.gradedCount} calificadas',
-                          style: context.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
+                  _Stat(
+                    value: '${a.submittedCount}/${a.totalStudents}',
+                    label: 'Entregadas',
+                    color: palette.accentDeep,
                   ),
-                  FilledButton.icon(
-                    onPressed: () => context.push(
-                      '${Routes.assignments}/${assignment.id}/grade',
-                    ),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 44),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                    icon: const Icon(Icons.fact_check_rounded),
-                    label: Text(canGrade ? 'Calificar' : 'Revisar entregas'),
+                  _Stat(
+                    value: '${a.gradedCount}',
+                    label: 'Calificadas',
+                    color: palette.success,
+                  ),
+                  _Stat(
+                    value: '$toGrade',
+                    label: 'Por calificar',
+                    color: palette.warning,
+                  ),
+                  _Stat(
+                    value: '$missing',
+                    label: 'Sin entregar',
+                    color: palette.danger,
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+              _ProgressLine(
+                label: 'Entregas',
+                value: a.submissionProgress,
+                color: palette.accentDeep,
+              ),
+              const SizedBox(height: 8),
+              _ProgressLine(
+                label: 'Calificación',
+                value: a.gradingProgress,
+                color: palette.success,
+              ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.value, required this.label, required this.color});
+  final String value;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: context.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800, color: color),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: context.textTheme.labelSmall
+                ?.copyWith(color: context.palette.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressLine extends StatelessWidget {
+  const _ProgressLine({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+  final String label;
+  final double value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Row(
+      children: [
+        SizedBox(
+          width: 86,
+          child: Text(
+            label,
+            style: context.textTheme.labelMedium
+                ?.copyWith(color: palette.textMuted),
+          ),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(Radii.pill),
+            child: LinearProgressIndicator(
+              value: value.clamp(0.0, 1.0),
+              minHeight: 8,
+              color: color,
+              backgroundColor: color.withValues(alpha: 0.15),
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 44,
+          child: Text(
+            '${(value * 100).round()} %',
+            textAlign: TextAlign.end,
+            style: context.textTheme.labelMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Reglas con las que se configuró la tarea (visibles de un vistazo).
+class _TeacherSettings extends StatelessWidget {
+  const _TeacherSettings({required this.assignment});
+  final Assignment assignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final a = assignment;
+    final fmt = DateFormat("d MMM y, HH:mm", 'es');
+    Widget row(IconData icon, String title, String value, {bool? on}) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: palette.accentDeep),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: context.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (on != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (on ? palette.success : palette.textMuted)
+                      .withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(Radii.pill),
+                ),
+                child: Text(
+                  value,
+                  style: context.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: on ? palette.success : palette.textMuted,
+                  ),
+                ),
+              )
+            else
+              Text(
+                value,
+                style: context.textTheme.bodyMedium
+                    ?.copyWith(color: palette.textMuted),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader(title: 'Configuración'),
+        const SizedBox(height: 8),
+        DepthCard(
+          brutal: true,
+          soft: true,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            children: [
+              row(Icons.event_rounded, 'Asignada', fmt.format(a.assignedAt)),
+              row(
+                Icons.schedule_rounded,
+                'Entrega tardía',
+                a.allowLate ? 'Permitida' : 'No permitida',
+                on: a.allowLate,
+              ),
+              row(
+                Icons.chat_bubble_outline_rounded,
+                'Comentarios del estudiante',
+                a.allowStudentComments ? 'Activados' : 'Desactivados',
+                on: a.allowStudentComments,
+              ),
+              row(
+                Icons.visibility_rounded,
+                'Visibilidad',
+                a.published ? 'Publicada' : 'Borrador',
+                on: a.published,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Acciones de gestión: editar, publicar/pasar a borrador y eliminar.
+class _TeacherManageBar extends ConsumerStatefulWidget {
+  const _TeacherManageBar({required this.assignment});
+  final Assignment assignment;
+
+  @override
+  ConsumerState<_TeacherManageBar> createState() => _TeacherManageBarState();
+}
+
+class _TeacherManageBarState extends ConsumerState<_TeacherManageBar> {
+  bool _busy = false;
+
+  Future<void> _togglePublished() async {
+    final a = widget.assignment;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(assignmentRepositoryProvider)
+          .publishAssignment(a.id, published: !a.published);
+      ref.invalidate(assignmentByIdProvider(a.id));
+      ref.invalidate(teacherAssignmentsProvider);
+      ref.invalidate(teacherAssignmentCountsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo cambiar: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    final a = widget.assignment;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar tarea'),
+        content: Text(
+          '«${a.title}» dejará de verse para los estudiantes. '
+          '¿Quieres eliminarla?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.palette.danger,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(assignmentRepositoryProvider).deleteAssignment(a.id);
+      ref.invalidate(teacherAssignmentsProvider);
+      ref.invalidate(teacherAssignmentCountsProvider);
+      ref.invalidate(teacherDashboardProvider);
+      if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo eliminar: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final a = widget.assignment;
+    final palette = context.palette;
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () => context.push('${Routes.assignments}/${a.id}/edit'),
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 46)),
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            label: const Text('Editar'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _busy ? null : _togglePublished,
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 46)),
+            icon: Icon(
+              a.published
+                  ? Icons.visibility_off_rounded
+                  : Icons.publish_rounded,
+              size: 18,
+            ),
+            label: Text(a.published ? 'A borrador' : 'Publicar'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.outlined(
+          onPressed: _busy ? null : _delete,
+          tooltip: 'Eliminar',
+          style: IconButton.styleFrom(
+            minimumSize: const Size(46, 46),
+            foregroundColor: palette.danger,
+            side: BorderSide(color: palette.danger.withValues(alpha: 0.6)),
+          ),
+          icon: const Icon(Icons.delete_outline_rounded),
+        ),
+      ],
+    );
+  }
+}
+
+enum _SubFilter {
+  all('Todas'),
+  delivered('Entregadas'),
+  toGrade('Por calificar'),
+  graded('Calificadas'),
+  missing('Sin entregar');
+
+  const _SubFilter(this.label);
+  final String label;
+
+  bool matches(Submission s) => switch (this) {
+        _SubFilter.all => true,
+        _SubFilter.delivered => s.status != SubmissionStatus.pending,
+        _SubFilter.toGrade => s.status == SubmissionStatus.submitted ||
+            s.status == SubmissionStatus.late,
+        _SubFilter.graded => s.status == SubmissionStatus.graded,
+        _SubFilter.missing => s.status == SubmissionStatus.pending,
+      };
+}
+
+/// Entregas de los estudiantes con sus archivos y comentarios, filtrables.
+class _SubmissionsSection extends ConsumerStatefulWidget {
+  const _SubmissionsSection({required this.assignment});
+  final Assignment assignment;
+
+  @override
+  ConsumerState<_SubmissionsSection> createState() =>
+      _SubmissionsSectionState();
+}
+
+class _SubmissionsSectionState extends ConsumerState<_SubmissionsSection> {
+  _SubFilter _filter = _SubFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
+    final a = widget.assignment;
+    final canReview = ref.watch(
+      classPermissionProvider((a.classId, 'assignments.review')),
+    );
+    if (!canReview) return const SizedBox.shrink();
+    final palette = context.palette;
+    final subs = ref.watch(submissionsForAssignmentProvider(a.id));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader(title: 'Entregas de los estudiantes'),
+        const SizedBox(height: 8),
+        subs.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => DepthCard(
+            soft: true,
+            padding: const EdgeInsets.all(16),
+            child: Text('No se pudieron cargar las entregas.\n$e'),
+          ),
+          data: (list) {
+            if (list.isEmpty) {
+              return DepthCard(
+                soft: true,
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'Esta clase aún no tiene estudiantes matriculados.',
+                  style: context.textTheme.bodyMedium
+                      ?.copyWith(color: palette.textMuted),
+                ),
+              );
+            }
+            final shown = [
+              for (final s in list)
+                if (_filter.matches(s)) s,
+            ];
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: 38,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (final f in _SubFilter.values)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(
+                              '${f.label} · ${list.where(f.matches).length}',
+                            ),
+                            selected: _filter == f,
+                            onSelected: (_) => setState(() => _filter = f),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (shown.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: Text(
+                        'Ningún estudiante en «${_filter.label}».',
+                        style: context.textTheme.bodyMedium
+                            ?.copyWith(color: palette.textMuted),
+                      ),
+                    ),
+                  )
+                else
+                  for (final s in shown)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: SubmissionReviewCard(assignment: a, submission: s),
+                    ),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -454,16 +894,18 @@ class _StudentBlockState extends ConsumerState<_StudentBlock> {
                     ),
                     const SizedBox(height: 10),
                   ],
-                  TextField(
-                    controller: _notesCtrl,
-                    minLines: 2,
-                    maxLines: 5,
-                    onChanged: controller.setNotes,
-                    decoration: const InputDecoration(
-                      labelText: 'Comentario (opcional)',
+                  if (widget.assignment.allowStudentComments) ...[
+                    TextField(
+                      controller: _notesCtrl,
+                      minLines: 2,
+                      maxLines: 5,
+                      onChanged: controller.setNotes,
+                      decoration: const InputDecoration(
+                        labelText: 'Comentario (opcional)',
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 10),
+                  ],
                   if (state.attachments.isNotEmpty)
                     Wrap(
                       spacing: 6,

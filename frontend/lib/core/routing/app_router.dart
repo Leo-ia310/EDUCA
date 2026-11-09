@@ -298,6 +298,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const _ExamsRoleSplit(),
         routes: [
           GoRoute(
+            path: 'class/:classId',
+            builder: (context, state) => RoleGuard(
+              allowed: const {AppRole.teacher},
+              child: TeacherClassAssignmentsScreen(
+                classId: int.tryParse(state.pathParameters['classId'] ?? '') ?? 0,
+              ),
+            ),
+          ),
+          GoRoute(
             path: 'subject/:name',
             builder: (context, state) {
               final name = state.pathParameters['name'] ?? '';
@@ -352,7 +361,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   final role =
                       ref.watch(authControllerProvider).user?.activeRole;
                   if (role == AppRole.teacher) {
-                    return TeacherSubjectAssignmentsScreen(subject: name);
+                    return const TeacherAssignmentsScreen();
                   }
                   return _StudentAssignmentsResolved(
                     idProvider: role == AppRole.parent

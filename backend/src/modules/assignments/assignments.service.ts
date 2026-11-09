@@ -87,7 +87,10 @@ export class AssignmentsService {
       p_only_open: onlyOpen === true || onlyOpen === "true", p_kinds: kinds,
       p_after_due_at: cursor?.dueAt ?? null, p_after_id: cursor?.id ?? null, p_limit: limit,
     });
-    return { assignments: data.assignments, nextCursor: encodeAssignmentCursor(data.nextCursor as AssignmentCursor | null) };
+    const list = (data.assignments as Record<string, unknown>[]) ?? [];
+    const flags = await this.repository.commentFlags(list.map(item => Number(item.id)));
+    const assignments = list.map(item => ({ ...item, allowStudentComments: flags.get(Number(item.id)) ?? true }));
+    return { assignments, nextCursor: encodeAssignmentCursor(data.nextCursor as AssignmentCursor | null) };
   }
 
   /** Tareas visibles para el maestro (RLS limita a sus clases y colaboraciones), con conteos de entregas. */
@@ -191,7 +194,12 @@ export class AssignmentsService {
       allow_late: Boolean(payload.allowLate),
       published: payload.published == null ? true : Boolean(payload.published),
     };
-    return { assignment: await this.repository.writeAssignment(assignmentId, dbPayload, fileIds, key ?? randomUUID()) };
+    const allowComments = payload.allowStudentComments == null ? null : Boolean(payload.allowStudentComments);
+    const written = await this.repository.writeAssignment(assignmentId, dbPayload, fileIds, key ?? randomUUID());
+    // Solo se toca la marca si llegó en la petición; así una edición sin ella no la restablece.
+    if (allowComments != null) await this.repository.setCommentFlag(Number(written.id), allowComments);
+    const [flag] = [...(await this.repository.commentFlags([Number(written.id)])).values()];
+    return { assignment: { ...written, allowStudentComments: flag ?? true } };
   }
 
   /** Quita un adjunto de la tarea (solo el vínculo; el archivo queda en el almacenamiento). */
@@ -276,7 +284,9 @@ export class AssignmentsService {
     }
 
     const fileIds = parseSubmissionFiles(payload.attachments);
-    const row = await this.repository.submit(assignmentId, studentId, optionalString(payload.notes, 50000), fileIds);
+    // Si el maestro desactivó los comentarios, el texto se descarta aunque llegue en la petición.
+    const notes = assignment.allow_student_comments === false ? null : optionalString(payload.notes, 50000);
+    const row = await this.repository.submit(assignmentId, studentId, notes, fileIds);
     return { submission: await this.hydrateSubmission(ctx, Number(row.id)) };
   }
 
@@ -408,6 +418,7 @@ function mapListed(
     dueAt: String(r.due_at ?? ""),
     maxScore: Number(r.max_score ?? 100),
     allowLate: Boolean(r.allow_late),
+    allowStudentComments: r.allow_student_comments !== false,
     published: r.published == null ? true : Boolean(r.published),
     totalStudents: studentsByGroup.get(Number(r.classes?.group_id)) ?? 0,
     submittedCount: c.submitted,

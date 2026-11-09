@@ -18,6 +18,20 @@ export class AssignmentsRepository {
   async feed(parameters: Record<string, unknown>) {
     return expectSingle<Record<string, unknown>>(db.rpc("assignment_feed", parameters), "No se pudieron cargar las tareas.");
   }
+  /** Marca «comentarios del estudiante» por tarea (columna fuera del contrato atómico de assignment_write). */
+  async commentFlags(ids: number[]) {
+    const flags = new Map<number, boolean>();
+    for (let i = 0; i < ids.length; i += 200) {
+      const { data, error } = await db.from("assignments").select("id, allow_student_comments").in("id", ids.slice(i, i + 200));
+      if (error) throw error;
+      for (const row of data ?? []) flags.set(Number(row.id), row.allow_student_comments !== false);
+    }
+    return flags;
+  }
+  async setCommentFlag(id: number, allow: boolean) {
+    const { error } = await db.from("assignments").update({ allow_student_comments: allow }).eq("id", id);
+    assertNoDbError(error);
+  }
   async taskStatusId(code: string) {
     const row = await expectSingle<Record<string, unknown>>(
       db.from("catalog_task_statuses").select("id").eq("code", code).single(),
@@ -42,7 +56,7 @@ export class AssignmentsRepository {
       db
         .from("assignments")
         .select(
-          "id, class_id, title, description, instructions, kind, assigned_at, due_at, max_score, allow_late, published, created_at, " +
+          "id, class_id, title, description, instructions, kind, assigned_at, due_at, max_score, allow_late, allow_student_comments, published, created_at, " +
             "classes(id, group_id, academic_year_id, subjects(name), groups(name), teachers(persons(first_name, last_name)))",
         )
         .eq("id", id)
@@ -184,7 +198,7 @@ export class AssignmentsRepository {
     return expectSingle<Record<string, unknown>>(
       db
         .from("assignments")
-        .select("id, class_id, due_at, allow_late, published, classes(group_id)")
+        .select("id, class_id, due_at, allow_late, allow_student_comments, published, classes(group_id)")
         .eq("id", assignmentId)
         .eq("institution_id", institutionId)
         .is("deleted_at", null)

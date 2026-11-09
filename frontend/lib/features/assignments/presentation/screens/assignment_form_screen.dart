@@ -231,6 +231,15 @@ class _AssignmentFormScreenState extends ConsumerState<AssignmentFormScreen> {
                 ),
                 SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,
+                  title: const Text('Permitir comentarios del estudiante'),
+                  subtitle: const Text(
+                    'Si lo apagas, el estudiante solo adjunta sus archivos.',
+                  ),
+                  value: state.allowStudentComments,
+                  onChanged: controller.setAllowStudentComments,
+                ),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
                   title: const Text('Publicar inmediatamente'),
                   subtitle: const Text('Si lo apagas, queda como borrador.'),
                   value: state.published,

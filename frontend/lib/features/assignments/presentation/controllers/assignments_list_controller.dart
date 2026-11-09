@@ -123,13 +123,36 @@ AssignmentQuery _query(AssignmentsFilter filter,
       subject: subject,);
 }
 
+/// Filtros propios del panel docente (no se comparten con el feed del alumno).
+typedef TeacherFeed = ({
+  int? classId,
+  AssignmentKind? kind,
+  bool onlyOpen,
+  String search,
+});
+
+const TeacherFeed kTeacherFeedAll =
+    (classId: null, kind: null, onlyOpen: false, search: '');
+
 final teacherAssignmentsProvider = StateNotifierProvider.autoDispose
-    .family<AssignmentFeedController, AsyncValue<List<Assignment>>, String?>(
-        (ref, subject) {
+    .family<AssignmentFeedController, AsyncValue<List<Assignment>>, TeacherFeed>(
+        (ref, feed) {
   final repo = ref.watch(assignmentRepositoryProvider);
-  final query = _query(ref.watch(assignmentsFilterProvider), subject: subject);
+  final query = AssignmentQuery(
+    classId: feed.classId,
+    kinds: feed.kind == null ? null : [feed.kind!],
+    onlyOpen: feed.onlyOpen,
+    search: feed.search,
+  );
   return AssignmentFeedController(
       (cursor) => repo.assignmentPage(query: query, cursor: cursor),);
+});
+
+/// Tareas por clase, calculadas en la base: las tarjetas de clase muestran el
+/// total real sin depender de cuántas páginas del feed se hayan cargado.
+final teacherAssignmentCountsProvider =
+    FutureProvider.autoDispose<Map<int, ClassAssignmentCounts>>((ref) {
+  return ref.watch(assignmentRepositoryProvider).teacherClassCounts();
 });
 
 typedef StudentAssignmentFeed = ({int studentId, bool exams, String? subject});

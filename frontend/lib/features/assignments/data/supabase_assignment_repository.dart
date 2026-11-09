@@ -57,7 +57,7 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
 
   static const _assignmentSelect =
       'id, class_id, title, description, instructions, assigned_at, '
-      'due_at, kind, max_score, allow_late, published, '
+      'due_at, kind, max_score, allow_late, allow_student_comments, published, '
       'classes(id, group_id, subjects(name), groups(name))';
 
   static const _submissionSelect =
@@ -136,11 +136,12 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
     );
     return (data['students'] as List)
         .cast<Map<String, dynamic>>()
-        .where((row) => row['submissionId'] != null)
         .map(
           (row) => _submissionFromApi({
             ...row,
-            'id': row['submissionId'],
+            // Sin entrega: se lista igual (estado «pendiente») para que el
+            // maestro vea quién falta; su id sintético nunca se envía al API.
+            'id': row['submissionId'] ?? 'pending-${row['studentId']}',
             'assignmentId': assignmentId,
             'studentId': int.parse(row['studentId'].toString()),
             'studentName': row['name'],
@@ -180,6 +181,7 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
       'dueAt': draft.dueAt.toIso8601String(),
       'maxScore': draft.maxScore,
       'allowLate': draft.allowLate,
+      'allowStudentComments': draft.allowStudentComments,
       'published': draft.published,
       'attachments': draft.attachments.map(_attachmentToApi).toList(),
     });
@@ -258,6 +260,22 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
   }
 
   @override
+  Future<Map<int, ClassAssignmentCounts>> teacherClassCounts() async {
+    final data = Map<String, dynamic>.from(
+      await _c.rpc('teacher_assignment_class_counts') as Map,
+    );
+    return {
+      for (final e in data.entries)
+        if (int.tryParse(e.key) != null)
+          int.parse(e.key): ClassAssignmentCounts(
+            total: ((e.value as Map)['total'] as num?)?.toInt() ?? 0,
+            open: ((e.value as Map)['open'] as num?)?.toInt() ?? 0,
+            drafts: ((e.value as Map)['drafts'] as num?)?.toInt() ?? 0,
+          ),
+    };
+  }
+
+  @override
   Future<({int pending, int submitted, int graded})> studentCounters({
     required int studentId,
   }) async {
@@ -313,6 +331,7 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
       kind: _kindFromApi(row['kind'] as String?),
       maxScore: (row['max_score'] as num?)?.toDouble() ?? 100,
       allowLate: row['allow_late'] as bool? ?? false,
+      allowStudentComments: row['allow_student_comments'] as bool? ?? true,
       published: row['published'] as bool? ?? true,
       attachments: attachments,
       totalStudents: (stats['total'] as num?)?.toInt() ?? 0,
@@ -426,6 +445,7 @@ class SupabaseAssignmentRepository implements AssignmentRepository {
       kind: _kindFromApi(row['kind'] as String?),
       maxScore: (row['maxScore'] as num?)?.toDouble() ?? 100,
       allowLate: row['allowLate'] as bool? ?? false,
+      allowStudentComments: row['allowStudentComments'] as bool? ?? true,
       published: row['published'] as bool? ?? true,
       attachments: _attachmentsFromApi(row['attachments']),
       totalStudents: (row['totalStudents'] as num?)?.toInt() ?? 0,

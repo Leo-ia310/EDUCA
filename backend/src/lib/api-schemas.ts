@@ -45,7 +45,7 @@ const paged = (item: Schema) => obj({ items: arr(item), pageInfo });
 const task = obj({
   id: str, classId: str, subjectName: str, groupName: str, title: str,
   description: nullable(str), instructions: nullable(str), assignedAt: str, dueAt: str,
-  maxScore: num, allowLate: bool, published: bool, totalStudents: int, submittedCount: int, gradedCount: int,
+  maxScore: num, allowLate: bool, allowStudentComments: bool, published: bool, totalStudents: int, submittedCount: int, gradedCount: int,
 });
 const feedTask = extend(task, {
   dueAt: nullable(str),
@@ -300,7 +300,7 @@ export const responseSchemas: Record<string, Schema> = {
   "POST /api/assignments/upsert": obj({
     assignment: obj({
       id: str, classId: int, subjectName: str, groupName: str, title: str, description: nullable(str), instructions: nullable(str),
-      assignedAt: str, dueAt: str, kind: str, maxScore: num, allowLate: bool, published: bool, attachments: arr(attachment),
+      assignedAt: str, dueAt: str, kind: str, maxScore: num, allowLate: bool, allowStudentComments: bool, published: bool, attachments: arr(attachment),
       teacherName: nullable(str), totalStudents: int, submittedCount: int, gradedCount: int,
     }),
   }),
@@ -326,8 +326,8 @@ export const requestSchemas: Record<string, Schema> = {
   "POST /api/assignments/upsert": obj({
     assignmentId: idish, classId: idish, title: str, description: str, instructions: str, dueAt: str, maxScore: num,
     kind: enumOf("homework", "exam", "project", "quiz", "presentation"),
-    allowLate: bool, published: bool, attachments: arr(fileRef), idempotencyKey: str,
-  }, ["assignmentId", "description", "instructions", "allowLate", "published", "attachments", "kind", "idempotencyKey"]),
+    allowLate: bool, allowStudentComments: bool, published: bool, attachments: arr(fileRef), idempotencyKey: str,
+  }, ["assignmentId", "description", "instructions", "allowLate", "allowStudentComments", "published", "attachments", "kind", "idempotencyKey"]),
   "PATCH /api/assignments/:id/publish": obj({ published: bool }),
   "PATCH /api/assignments/submissions/:submissionId/grade": obj({ score: num, feedback: str }, ["feedback"]),
   "POST /api/assignments/submit": obj({ assignmentId: idish, studentId: idish, notes: { ...str, maxLength: 50000 }, attachments: { ...arr(fileRef), maxItems: 20 } }, ["studentId", "notes", "attachments"]),

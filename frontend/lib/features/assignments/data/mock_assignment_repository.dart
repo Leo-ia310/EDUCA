@@ -187,6 +187,7 @@ class MockAssignmentRepository implements AssignmentRepository {
       kind: draft.kind,
       maxScore: draft.maxScore,
       allowLate: draft.allowLate,
+      allowStudentComments: draft.allowStudentComments,
       published: draft.published,
       attachments: draft.attachments,
       teacherName: existing?.teacherName ?? 'Prof. Elena Ramírez',
@@ -296,6 +297,22 @@ class MockAssignmentRepository implements AssignmentRepository {
   }
 
   // ---------- Counters ----------
+  @override
+  Future<Map<int, ClassAssignmentCounts>> teacherClassCounts() async {
+    final now = DateTime.now();
+    final out = <int, ClassAssignmentCounts>{};
+    for (final a in _assignments) {
+      final c = out[a.classId] ?? const ClassAssignmentCounts();
+      final open = a.published && (a.dueAt == null || !a.dueAt!.isBefore(now));
+      out[a.classId] = ClassAssignmentCounts(
+        total: c.total + 1,
+        open: c.open + (open ? 1 : 0),
+        drafts: c.drafts + (a.published ? 0 : 1),
+      );
+    }
+    return out;
+  }
+
   @override
   Future<({int pending, int submitted, int toGrade})> teacherCounters() async {
     var pending = 0, submitted = 0, toGrade = 0;

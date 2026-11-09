@@ -79,6 +79,7 @@ class Assignment extends Equatable {
     this.teacherName,
     this.progress,
     this.published = true,
+    this.allowStudentComments = true,
   });
 
   final String id;
@@ -93,6 +94,9 @@ class Assignment extends Equatable {
   final AssignmentKind kind;
   final double maxScore;
   final bool allowLate;
+
+  /// El maestro decide si el estudiante puede comentar al entregar.
+  final bool allowStudentComments;
   final bool published;
   final List<AssignmentAttachment> attachments;
   final String? teacherName;
@@ -140,6 +144,7 @@ class Assignment extends Equatable {
     AssignmentKind? kind,
     double? maxScore,
     bool? allowLate,
+    bool? allowStudentComments,
     bool? published,
     List<AssignmentAttachment>? attachments,
     int? submittedCount,
@@ -160,6 +165,8 @@ class Assignment extends Equatable {
       kind: kind ?? this.kind,
       maxScore: maxScore ?? this.maxScore,
       allowLate: allowLate ?? this.allowLate,
+      allowStudentComments:
+          allowStudentComments ?? this.allowStudentComments,
       published: published ?? this.published,
       attachments: attachments ?? this.attachments,
       teacherName: teacherName,
@@ -272,6 +279,7 @@ class AssignmentDraft {
     this.description,
     this.instructions,
     this.allowLate = false,
+    this.allowStudentComments = true,
     this.published = true,
     this.attachments = const [],
     this.assignmentId,
@@ -288,6 +296,7 @@ class AssignmentDraft {
   final DateTime dueAt;
   final double maxScore;
   final bool allowLate;
+  final bool allowStudentComments;
   final bool published;
   final List<AssignmentAttachment> attachments;
 }

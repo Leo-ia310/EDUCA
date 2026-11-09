@@ -42,6 +42,9 @@ abstract class AssignmentRepository {
   /// Resumen rápido para badges (pendientes/por calificar) usado por
   /// dashboards.
   Future<({int pending, int submitted, int toGrade})> teacherCounters();
+
+  /// Tareas por clase (total, abiertas y borradores) sin paginar el feed.
+  Future<Map<int, ClassAssignmentCounts>> teacherClassCounts();
   Future<({int pending, int submitted, int graded})> studentCounters({
     required int studentId,
   });
