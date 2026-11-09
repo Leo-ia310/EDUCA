@@ -57,6 +57,11 @@ class BackendApiClient {
   StreamSubscription<AuthState>? _authSubscription;
   String? _identity;
   bool _disposed = false;
+  Future<bool>? _refreshing;
+
+  /// Margen (s) antes del vencimiento del access token en el que se renueva por
+  /// adelantado. El backend rechaza con 401 un token vencido.
+  static const _refreshMarginSeconds = 60;
 
   String get _base {
     final value = Env.backendApiBaseUrl.trim();
@@ -144,6 +149,102 @@ class BackendApiClient {
       );
 
   Future<dynamic> _request(
+    String method,
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? query,
+    required bool authenticated,
+  }) async {
+    if (_disposed) {
+      throw BackendApiException(
+        'La sesión HTTP terminó.',
+        code: 'request_cancelled',
+      );
+    }
+    if (authenticated) await _ensureFreshToken();
+    final usedToken = _supabase.auth.currentSession?.accessToken;
+    try {
+      return await _attempt(
+        method,
+        path,
+        data: data,
+        query: query,
+        authenticated: authenticated,
+      );
+    } on BackendApiException catch (error) {
+      // El backend rechazó el token (vencido, o sesión revocada en otro
+      // dispositivo). Se renueva UNA vez y se reintenta: un 401 ocurre antes de
+      // ejecutar nada, así que reintentar una escritura no la duplica. Si la
+      // renovación falla de verdad, la sesión terminó y la app vuelve al login.
+      if (authenticated &&
+          error.statusCode == 401 &&
+          error.code == 'unauthorized' &&
+          await _tokenRenewedSince(usedToken)) {
+        return _attempt(
+          method,
+          path,
+          data: data,
+          query: query,
+          authenticated: authenticated,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  /// Renueva el access token si vence en menos de [_refreshMarginSeconds]. La
+  /// librería lo renueva sola solo en primer plano: tras horas en segundo plano
+  /// (o con el teléfono bloqueado) el token puede estar vencido al volver.
+  Future<void> _ensureFreshToken() async {
+    final session = _supabase.auth.currentSession;
+    final expiresAt = session?.expiresAt;
+    if (session == null || expiresAt == null) return;
+    final left = expiresAt - DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    if (left > _refreshMarginSeconds) return;
+    await _refreshSession();
+  }
+
+  /// `true` si hay un token distinto al que falló (otra solicitud ya renovó la
+  /// sesión) o si se logra renovarla ahora.
+  Future<bool> _tokenRenewedSince(String? usedToken) async {
+    final current = _supabase.auth.currentSession?.accessToken;
+    if (current != null && current != usedToken) return true;
+    return _refreshSession();
+  }
+
+  /// Una sola renovación a la vez: varias solicitudes que reciben 401 a la vez
+  /// comparten la misma.
+  Future<bool> _refreshSession() =>
+      _refreshing ??= _doRefreshSession().whenComplete(() => _refreshing = null);
+
+  Future<bool> _doRefreshSession() async {
+    try {
+      final response = await _supabase.auth.refreshSession();
+      return response.session != null;
+    } on AuthRetryableFetchException {
+      // Sin red: no es el fin de la sesión; se reintentará más tarde.
+      return false;
+    } on AuthException catch (error) {
+      // Refresh token revocado o inexistente (p. ej. cerraron sesión en otro
+      // dispositivo): la sesión terminó. La librería emite `signedOut` y
+      // AuthController devuelve al usuario al login.
+      final ended = error is AuthSessionMissingException ||
+          error is AuthApiException &&
+              const {'400', '401', '403'}.contains(error.statusCode);
+      if (ended) {
+        try {
+          await _supabase.auth.signOut(scope: SignOutScope.local);
+        } catch (_) {
+          // Ya no había sesión local que cerrar.
+        }
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<dynamic> _attempt(
     String method,
     String path, {
     Map<String, dynamic>? data,

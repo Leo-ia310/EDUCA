@@ -334,7 +334,9 @@ export class AuthFlowService {
       p_recovery_codes:recoveryCodes.map(c=>this.hashSecret(c)),p_session_id:sessionId ?? null});
   }
   async logout(accessToken: string) {
-    const response = await dependencyFetch(`${env.supabaseUrl}/auth/v1/logout`, {
+    // scope=local: cierra SOLO esta sesión. Sin él, GoTrue usa «global» y revoca las sesiones de la cuenta en
+    // todos los dispositivos: cerrar sesión en la web dejaba la app del celular con «Sesión inválida o expirada».
+    const response = await dependencyFetch(`${env.supabaseUrl}/auth/v1/logout?scope=local`, {
       method: "POST",
       headers: {
         apikey: env.supabaseAnonKey,

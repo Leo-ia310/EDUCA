@@ -165,6 +165,7 @@ export const apiManifest: ApiManifestEntry[] = [
     request: "sin body",
     response: "{ ok: true }",
     source: "backend/src/modules/auth/auth.routes.ts",
+    notes: "Cierra SOLO la sesion del token usado (GoTrue scope=local). Antes era global y revocaba las sesiones de la cuenta en todos los dispositivos: cerrar sesion en la web dejaba la app del celular con 401 Sesion invalida o expirada y refresh token revocado.",
   }),
   api({
     module: "auth",

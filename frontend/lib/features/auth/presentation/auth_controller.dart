@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../../core/constants/env.dart';
 import '../../../core/errors/failures.dart';
@@ -62,10 +65,30 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthController extends StateNotifier<AuthState> {
-  AuthController(this._repo) : super(const AuthState(loading: true)) {
+  AuthController(this._repo, {Stream<void>? sessionEnded})
+      : super(const AuthState(loading: true)) {
     _restoreSession();
+    _sessionEnded = sessionEnded?.listen((_) => _onSessionEnded());
   }
   final AuthRepository _repo;
+  StreamSubscription<void>? _sessionEnded;
+
+  /// La sesión terminó sin que el usuario la cerrara (p. ej. cerró sesión en
+  /// otro dispositivo, o la cuenta se desactivó): vuelve al login con un aviso
+  /// en vez de dejar pantallas rotas con «Sesión inválida o expirada».
+  void _onSessionEnded() {
+    if (!state.isAuthenticated) return; // cierre normal: el estado ya está limpio
+    state = const AuthState(
+      error: 'Tu sesión terminó. Inicia sesión nuevamente.',
+    );
+    unawaited(_repo.signOut().catchError((_) {}));
+  }
+
+  @override
+  void dispose() {
+    unawaited(_sessionEnded?.cancel());
+    super.dispose();
+  }
 
   Future<void> _restoreSession() async {
     try {
@@ -236,5 +259,11 @@ class AuthController extends StateNotifier<AuthState> {
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) {
-  return AuthController(ref.watch(authRepositoryProvider));
+  final client = ref.watch(supabaseClientProvider);
+  return AuthController(
+    ref.watch(authRepositoryProvider),
+    sessionEnded: client?.auth.onAuthStateChange
+        .where((event) => event.event == sb.AuthChangeEvent.signedOut)
+        .map((_) {}),
+  );
 });
