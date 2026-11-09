@@ -17,10 +17,65 @@ class AttendanceRemoteDataSource {
     required int teacherId,
   }) async {
     final response = await _api.call('assignments.teacherClasses');
-    return ((response as List?) ?? const [])
+    final classes = ((response as List?) ?? const [])
         .map((row) => _classFromMap(Map<String, dynamic>.from(row as Map)))
         .where((c) => c.can('attendance.write'))
         .toList();
+    // El backend entrega las clases del maestro sin hora ni aula: se completan
+    // con su horario de hoy. Si el horario no se puede consultar, se devuelven
+    // tal cual (todas «de hoy»), sin bloquear el pase de lista.
+    final today = await _todaySlots();
+    if (today == null) return classes;
+    final result = [
+      for (final c in classes)
+        today[c.classId] == null
+            ? c.withToday(scheduledToday: false)
+            : c.withToday(
+                scheduledToday: true,
+                startTime: today[c.classId]!.start,
+                endTime: today[c.classId]!.end,
+                classroom: today[c.classId]!.room,
+              ),
+    ]..sort((a, b) {
+        if (a.scheduledToday != b.scheduledToday) {
+          return a.scheduledToday ? -1 : 1;
+        }
+        final byTime = a.startTime.compareTo(b.startTime);
+        return byTime != 0 ? byTime : a.subjectName.compareTo(b.subjectName);
+      });
+    return result;
+  }
+
+  /// Bloque más temprano de cada clase en el día de hoy, o `null` si no se pudo
+  /// consultar el horario.
+  Future<Map<int, ({String start, String end, String? room})>?>
+      _todaySlots() async {
+    try {
+      final data = await _api.get('/schedules/mine');
+      final rows = data is Map ? data['schedules'] : null;
+      if (rows is! List) return null;
+      final todayIndex = DateTime.now().weekday - 1; // 0 = lunes … 6 = domingo
+      final slots = <int, ({String start, String end, String? room})>{};
+      for (final raw in rows) {
+        if (raw is! Map) continue;
+        if (raw['kind'] != 'class' || raw['weekdayIndex'] != todayIndex) {
+          continue;
+        }
+        final classId = int.tryParse('${raw['classId']}');
+        if (classId == null) continue;
+        final start = '${raw['startTime'] ?? ''}';
+        final known = slots[classId];
+        if (known != null && known.start.compareTo(start) <= 0) continue;
+        slots[classId] = (
+          start: start,
+          end: '${raw['endTime'] ?? ''}',
+          room: raw['room'] == null ? null : '${raw['room']}',
+        );
+      }
+      return slots;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<List<StudentBrief>> classRoster(

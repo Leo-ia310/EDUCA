@@ -251,9 +251,11 @@ extension on AttendanceRecord {
 
 Map<String,dynamic> _classJson(ClassSessionBrief c) => {'classId':c.classId,'groupId':c.groupId,
  'subjectName':c.subjectName,'groupName':c.groupName,'startTime':c.startTime,'endTime':c.endTime,
- 'studentCount':c.studentCount,'classroom':c.classroom,'isOwner':c.isOwner,'permissions':c.permissions?.toList(),};
+ 'studentCount':c.studentCount,'classroom':c.classroom,'isOwner':c.isOwner,'permissions':c.permissions?.toList(),
+ 'scheduledToday':c.scheduledToday,};
 ClassSessionBrief _cachedClass(Map<String,dynamic> row) => ClassSessionBrief(classId:row['classId'] as int,
  groupId:row['groupId'] as int,subjectName:row['subjectName'] as String,groupName:row['groupName'] as String,
  startTime:row['startTime'] as String,endTime:row['endTime'] as String,studentCount:row['studentCount'] as int,
  classroom:row['classroom'] as String?,isOwner:row['isOwner']==true,
- permissions:row['permissions']==null?null:Set<String>.from(row['permissions'] as List),);
+ permissions:row['permissions']==null?null:Set<String>.from(row['permissions'] as List),
+ scheduledToday:row['scheduledToday']!=false,);

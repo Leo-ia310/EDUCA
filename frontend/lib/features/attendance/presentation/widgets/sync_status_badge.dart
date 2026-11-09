@@ -6,9 +6,14 @@ import '../../domain/attendance_sync_service.dart';
 
 /// Indicador "X pendientes / sincronizado" que aparece en barras de
 /// pantalla de asistencia.
+///
+/// Con [onDark] se dibuja para fondos azules/oscuros (cabeceras con degradado):
+/// píldora blanca translúcida con texto claro. Sin eso, el verde translúcido de
+/// «Al día» casi no se distingue sobre el azul.
 class SyncStatusBadge extends ConsumerWidget {
-  const SyncStatusBadge({super.key, this.compact = false});
+  const SyncStatusBadge({super.key, this.compact = false, this.onDark = false});
   final bool compact;
+  final bool onDark;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,11 +49,25 @@ class SyncStatusBadge extends ConsumerWidget {
       label = compact ? 'Al día' : 'Sincronizado';
     }
 
+    if (onDark) {
+      bg = Colors.white.withValues(alpha: 0.22);
+      fg = status.syncing
+          ? Colors.white
+          : status.pending > 0
+              ? const Color(0xFFFFE08A)
+              : status.lastError != null
+                  ? const Color(0xFFFFC2C2)
+                  : Colors.white;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(Radii.pill),
+        border: onDark
+            ? Border.all(color: Colors.white.withValues(alpha: 0.45))
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

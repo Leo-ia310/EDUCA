@@ -49,6 +49,7 @@ class ClassSessionBrief extends Equatable {
     this.classroom,
     this.isOwner = true,
     this.permissions,
+    this.scheduledToday = true,
   });
 
   final int classId;
@@ -61,7 +62,32 @@ class ClassSessionBrief extends Equatable {
   final String? classroom;
   final bool isOwner;
   final Set<String>? permissions;
+
+  /// `true` si la clase tiene un bloque en el horario de hoy (o si no se pudo
+  /// consultar el horario); `false` si hoy no le toca.
+  final bool scheduledToday;
   bool can(String permission) => permissions?.contains(permission) ?? true;
+
+  /// Copia con el bloque del horario de hoy (hora y aula) o marcada como «hoy no le toca».
+  ClassSessionBrief withToday({
+    required bool scheduledToday,
+    String? startTime,
+    String? endTime,
+    String? classroom,
+  }) =>
+      ClassSessionBrief(
+        classId: classId,
+        groupId: groupId,
+        subjectName: subjectName,
+        groupName: groupName,
+        startTime: startTime ?? this.startTime,
+        endTime: endTime ?? this.endTime,
+        studentCount: studentCount,
+        classroom: classroom ?? this.classroom,
+        isOwner: isOwner,
+        permissions: permissions,
+        scheduledToday: scheduledToday,
+      );
 
   @override
   List<Object?> get props => [classId, groupId, subjectName, startTime];

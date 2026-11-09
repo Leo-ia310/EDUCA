@@ -41,7 +41,8 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
       } catch (error) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('No se pudo cargar la clase. $error')),);
+            SnackBar(content: Text('No se pudo cargar la clase. $error')),
+          );
         }
       }
     });
@@ -95,9 +96,12 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
           children: [
             if (state.error != null)
               Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(state.error!,
-                      style: TextStyle(color: context.palette.warning),),),
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  state.error!,
+                  style: TextStyle(color: context.palette.warning),
+                ),
+              ),
             _HeaderSummary(
               brief: brief,
               present: state.present,
@@ -118,22 +122,24 @@ class _AttendanceTakeScreenState extends ConsumerState<AttendanceTakeScreen> {
                     onChanged: (status) async {
                       if (row.conflict) {
                         final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                                    title: const Text('Cambio en otra sesión'),
-                                    content: Text(
-                                        'Servidor: ${row.conflictStatus?.label ?? "Sin marcación"}. ${row.conflictNotes ?? ""}\nSe guardará tu elección: ${status.label}.',),
-                                    actions: [
-                                      TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: const Text('Cancelar'),),
-                                      TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child:
-                                              const Text('Confirmar elección'),),
-                                    ],),);
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Cambio en otra sesión'),
+                            content: Text(
+                              'Servidor: ${row.conflictStatus?.label ?? "Sin marcación"}. ${row.conflictNotes ?? ""}\nSe guardará tu elección: ${status.label}.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Confirmar elección'),
+                              ),
+                            ],
+                          ),
+                        );
                         if (confirmed != true || !mounted) return;
                       }
                       await controller.setStatus(row.student.id, status);
@@ -188,7 +194,11 @@ class _HeaderSummary extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${brief.groupName} · ${brief.classroom ?? ''}',
+                        [
+                          brief.groupName,
+                          if ((brief.classroom ?? '').isNotEmpty)
+                            brief.classroom!,
+                        ].join(' · '),
                         style: context.textTheme.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w700,
@@ -196,7 +206,9 @@ class _HeaderSummary extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${brief.startTime} – ${brief.endTime}',
+                        brief.startTime.isEmpty
+                            ? 'Pase de lista de hoy'
+                            : '${brief.startTime} – ${brief.endTime}',
                         style: context.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -205,7 +217,7 @@ class _HeaderSummary extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SyncStatusBadge(compact: true),
+                const SyncStatusBadge(compact: true, onDark: true),
               ],
             ),
             const SizedBox(height: 12),
@@ -237,37 +249,43 @@ class _HeaderSummary extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: OutlinedButton(
                     onPressed: onMarkAll,
-                    icon: const Icon(Icons.done_all_rounded, size: 18),
-                    label: const Text('Todos presentes'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: Colors.white.withValues(alpha: 0.7),
+                        width: 1.5,
                       ),
-                      minimumSize: const Size(0, 44),
+                      minimumSize: const Size(0, 46),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    child: const _ButtonLabel(
+                      icon: Icons.done_all_rounded,
+                      text: 'Todos presentes',
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  flex: 2,
                   child: Consumer(
                     builder: (context, ref, _) {
                       final controller =
                           ref.read(attendanceTakeControllerProvider.notifier);
                       final loading =
                           ref.watch(attendanceTakeControllerProvider).loading;
-                      return FilledButton.icon(
+                      return FilledButton(
                         onPressed: loading ? null : controller.finishPass,
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: palette.accentDeep,
-                          minimumSize: const Size(0, 44),
+                          minimumSize: const Size(0, 46),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
-                        icon: const Icon(Icons.check_circle_outline, size: 18),
-                        label: Text(loading ? 'Procesando…' : 'Finalizar pase'),
+                        child: _ButtonLabel(
+                          icon: Icons.check_circle_outline_rounded,
+                          text: loading ? 'Procesando…' : 'Finalizar pase',
+                        ),
                       );
                     },
                   ),
@@ -276,6 +294,34 @@ class _HeaderSummary extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Icono + texto en una sola línea, centrados; si el botón es estrecho el
+/// contenido se encoge en vez de partirse en dos líneas.
+class _ButtonLabel extends StatelessWidget {
+  const _ButtonLabel({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 19),
+          const SizedBox(width: 7),
+          Text(
+            text,
+            maxLines: 1,
+            softWrap: false,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          ),
+        ],
       ),
     );
   }
@@ -361,8 +407,10 @@ class _StudentTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (row.conflict)
-                  Text('Cambió en otra sesión · Revisa tu elección',
-                      style: TextStyle(color: palette.warning),),
+                  Text(
+                    'Cambió en otra sesión · Revisa tu elección',
+                    style: TextStyle(color: palette.warning),
+                  ),
                 if (row.student.studentCode != null)
                   Text(
                     row.student.studentCode!,
