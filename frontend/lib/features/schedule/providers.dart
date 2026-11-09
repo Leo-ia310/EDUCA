@@ -59,6 +59,8 @@ Map<int, List<ClassSlot>> buildWeeklySlots(
             color: isBreak ? const Color(0xFF64748B) : subjectColor(subject),
             isBreak: isBreak,
             shift: m['shift'] as String?,
+            classId: int.tryParse('${m['classId'] ?? ''}'),
+            groupName: m['groupName'] as String?,
           ),
         );
   }

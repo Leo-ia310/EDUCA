@@ -14,6 +14,10 @@ import '../../../dashboard/presentation/widgets/student_chrome.dart';
 import '../../../../core/widgets/error_state.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../admin/data/admin_schedule.dart';
+import '../../../assignments/providers.dart' show teacherClassesProvider;
+import '../../../attendance/domain/entities.dart' show ClassSessionBrief;
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../../shared/models/app_role.dart';
 import '../../data/schedule_mock.dart';
 import '../../providers.dart';
 
@@ -68,6 +72,45 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       for (final s in byDay[selectedDay] ?? const <ClassSlot>[])
         if (activeShift == null || s.shift == null || s.shift == activeShift) s,
     ];
+    // El maestro ve el grupo de cada clase (en vez de su propio nombre).
+    final isTeacher = !widget.forChild &&
+        ref.watch(authControllerProvider).user?.activeRole == AppRole.teacher;
+    final groupOf = <int, String>{
+      if (isTeacher)
+        for (final c in ref.watch(teacherClassesProvider).valueOrNull ??
+            const <ClassSessionBrief>[])
+          c.classId: c.groupName,
+    };
+    String? subtitleOf(ClassSlot s) {
+      if (!isTeacher) return s.teacher.isEmpty ? null : s.teacher;
+      return s.groupName ?? groupOf[s.classId] ?? 'Grupo sin asignar';
+    }
+
+    final isToday = selectedDay == ScheduleMock.todayIndex();
+    final now = DateTime.now();
+    final nowMin = now.hour * 60 + now.minute;
+    int minutes(String hhmm) {
+      final parts = hhmm.split(':');
+      if (parts.length < 2) return 0;
+      return (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
+    }
+
+    ClassSlot? current;
+    ClassSlot? next;
+    if (isToday) {
+      for (final sl in slots) {
+        if (sl.isBreak) continue;
+        if (minutes(sl.start) <= nowMin && nowMin < minutes(sl.end)) {
+          current = sl;
+        } else if (minutes(sl.start) > nowMin && next == null) {
+          next = sl;
+        }
+      }
+    }
+    final classSlots = [
+      for (final sl in slots)
+        if (!sl.isBreak) sl,
+    ];
 
     return StudentDetailScaffold(
       title: widget.title,
@@ -80,7 +123,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ],
           // Selector de día
           SizedBox(
-            height: 76,
+            height: 84,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
@@ -112,7 +155,22 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 2),
+                        Text(
+                          () {
+                            final n = (byDay[i] ?? const <ClassSlot>[])
+                                .where((e) => !e.isBreak)
+                                .length;
+                            return n == 0 ? '–' : '$n';
+                          }(),
+                          style: context.textTheme.labelSmall?.copyWith(
+                            color: selected
+                                ? palette.onAccent.withValues(alpha: 0.85)
+                                : palette.textMuted,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
                         Container(
                           width: 6,
                           height: 6,
@@ -158,6 +216,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           const SizedBox(height: 20),
           SectionHeader(title: ScheduleMock.weekDaysLong[selectedDay]),
           const SizedBox(height: 8),
+          if (classSlots.isNotEmpty && !weekly.isLoading)
+            _DaySummary(
+              classCount: classSlots.length,
+              first: classSlots.first.start,
+              last: classSlots.last.end,
+              current: current,
+              next: next,
+              finished: isToday &&
+                  current == null &&
+                  next == null &&
+                  nowMin >= minutes(classSlots.last.end),
+            ),
           if (weekly.isLoading && !weekly.isRefreshing)
             const Padding(
               padding: EdgeInsets.only(top: 24),
@@ -195,10 +265,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           else
             for (final slot in slots)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 32),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 child: slot.isBreak
                     ? _BreakRow(slot: slot)
-                    : _SlotCard(slot: slot),
+                    : _SlotCard(
+                        slot: slot,
+                        subtitle: subtitleOf(slot),
+                        status: identical(slot, current)
+                            ? 'En curso'
+                            : identical(slot, next)
+                                ? 'Siguiente'
+                                : null,
+                      ),
               ),
           const SizedBox(height: 24),
         ],
@@ -209,8 +287,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
 /// Columna de timeline: hora de inicio, punto, línea punteada y hora de fin.
 class _Timeline extends StatelessWidget {
-  const _Timeline(
-      {required this.start, required this.end, required this.color,});
+  const _Timeline({
+    required this.start,
+    required this.end,
+    required this.color,
+  });
 
   final String start;
   final String end;
@@ -251,9 +332,11 @@ class _Timeline extends StatelessWidget {
 
 /// Tarjeta de clase: ícono, materia y maestro sobre fondo pastel.
 class _SlotCard extends StatelessWidget {
-  const _SlotCard({required this.slot});
+  const _SlotCard({required this.slot, this.subtitle, this.status});
 
   final ClassSlot slot;
+  final String? subtitle;
+  final String? status;
 
   // Tinta oscura legible sobre cualquier pastel.
   static const _ink = Color(0xFF16202E);
@@ -265,11 +348,15 @@ class _SlotCard extends StatelessWidget {
     final pastel = context.pastel(slot.color);
     // En oscuro la tarjeta se tiñe como el resto de la app (color al 20 % sobre
     // la superficie) con tinta clara; en claro conserva el pastel de siempre.
-    final cardFill = dark ? pastel.surface : Color.lerp(slot.color, Colors.white, 0.72)!;
+    final cardFill =
+        dark ? pastel.surface : Color.lerp(slot.color, Colors.white, 0.72)!;
     final ink = dark ? pastel.ink : _ink;
     final inkMuted = dark ? pastel.inkMuted : _ink.withValues(alpha: 0.62);
     final diamondBg = dark
-        ? Color.alphaBlend(slot.color.withValues(alpha: 0.28), AppColors.darkSurface)
+        ? Color.alphaBlend(
+            slot.color.withValues(alpha: 0.28),
+            AppColors.darkSurface,
+          )
         : _diamondBg;
     final glyph = Color.lerp(slot.color, Colors.white, 0.28)!;
 
@@ -326,22 +413,136 @@ class _SlotCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 3),
-                        Text(
-                          slot.teacher,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.textTheme.bodySmall?.copyWith(
-                            color: inkMuted,
+                        if (subtitle != null)
+                          Text(
+                            subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: inkMuted,
+                            ),
                           ),
-                        ),
+                        if (slot.room.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.meeting_room_rounded,
+                                size: 14,
+                                color: inkMuted,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  slot.room,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.textTheme.labelSmall
+                                      ?.copyWith(color: inkMuted),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
+                  if (status != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _diamondBg,
+                        borderRadius: BorderRadius.circular(Radii.pill),
+                      ),
+                      child: Text(
+                        status!,
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Resumen del día: cuántas clases, rango horario y, hoy, qué sigue.
+class _DaySummary extends StatelessWidget {
+  const _DaySummary({
+    required this.classCount,
+    required this.first,
+    required this.last,
+    required this.current,
+    required this.next,
+    required this.finished,
+  });
+
+  final int classCount;
+  final String first;
+  final String last;
+  final ClassSlot? current;
+  final ClassSlot? next;
+  final bool finished;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final (icon, text) = current != null
+        ? (
+            Icons.play_circle_rounded,
+            'Ahora: ${current!.subject} hasta las ${current!.end}',
+          )
+        : next != null
+            ? (
+                Icons.schedule_rounded,
+                'Sigue: ${next!.subject} a las ${next!.start}',
+              )
+            : finished
+                ? (Icons.check_circle_rounded, 'Terminaste las clases de hoy')
+                : (Icons.event_note_rounded, '');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: BrutalBox(
+        color: palette.accentSoft,
+        radius: Radii.lg,
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$classCount clase${classCount == 1 ? '' : 's'} · $first – $last',
+              style: context.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: palette.accentDeep,
+              ),
+            ),
+            if (text.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(icon, size: 18, color: palette.accentDeep),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: context.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

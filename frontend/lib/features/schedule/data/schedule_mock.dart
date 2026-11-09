@@ -12,6 +12,8 @@ class ClassSlot {
     required this.color,
     this.isBreak = false,
     this.shift,
+    this.classId,
+    this.groupName,
   });
 
   final String start;
@@ -27,6 +29,10 @@ class ClassSlot {
 
   /// Turno (`morning`, `afternoon`, `evening`) si el admin lo indicó.
   final String? shift;
+
+  /// Clase y grupo del bloque (cuando el backend los entrega).
+  final int? classId;
+  final String? groupName;
 }
 
 /// Horario semanal de demostración, indexado por día (0 = Lunes .. 4 = Viernes).

@@ -91,40 +91,86 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     color: palette.accentDeep,
                     onRefresh: () =>
                         ref.read(notificationsRepositoryProvider).refresh(),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (_, i) {
-                        final n = filtered[i];
-                        return Slidable(
-                          key: ValueKey(n.id),
-                          endActionPane: ActionPane(
-                            motion: const BehindMotion(),
-                            children: [
-                              SlidableAction(
-                                onPressed: (_) => ref
-                                    .read(notificationsRepositoryProvider)
-                                    .remove(n.id),
-                                backgroundColor: palette.danger,
-                                foregroundColor: Colors.white,
-                                icon: Icons.delete_outline,
-                                label: 'Eliminar',
-                                borderRadius: BorderRadius.circular(Radii.md),
+                    child: Builder(
+                      builder: (context) {
+                        // Filas: encabezado de día + notificaciones de ese día.
+                        final rows = <Object>[];
+                        String? lastDay;
+                        for (final n in filtered) {
+                          final day = _dayLabel(n.receivedAt);
+                          if (day != lastDay) {
+                            rows.add(day);
+                            lastDay = day;
+                          }
+                          rows.add(n);
+                        }
+                        return ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                          itemCount: rows.length,
+                          itemBuilder: (_, i) {
+                            final row = rows[i];
+                            if (row is String) {
+                              final count = filtered
+                                  .where((n) => _dayLabel(n.receivedAt) == row)
+                                  .length;
+                              return Padding(
+                                padding: const EdgeInsets.fromLTRB(4, 14, 0, 8),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      row,
+                                      style: context.textTheme.titleSmall
+                                          ?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '$count',
+                                      style: context.textTheme.labelMedium
+                                          ?.copyWith(
+                                        color: palette.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            final n = row as AppNotification;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Slidable(
+                                key: ValueKey(n.id),
+                                endActionPane: ActionPane(
+                                  motion: const BehindMotion(),
+                                  children: [
+                                    SlidableAction(
+                                      onPressed: (_) => ref
+                                          .read(notificationsRepositoryProvider)
+                                          .remove(n.id),
+                                      backgroundColor: palette.danger,
+                                      foregroundColor: Colors.white,
+                                      icon: Icons.delete_outline,
+                                      label: 'Eliminar',
+                                      borderRadius:
+                                          BorderRadius.circular(Radii.md),
+                                    ),
+                                  ],
+                                ),
+                                child: NotificationTile(
+                                  notification: n,
+                                  onTap: () async {
+                                    await ref
+                                        .read(notificationsRepositoryProvider)
+                                        .markRead(n.id);
+                                    if (n.deepLink != null && context.mounted) {
+                                      context.push(n.deepLink!);
+                                    }
+                                  },
+                                ),
                               ),
-                            ],
-                          ),
-                          child: NotificationTile(
-                            notification: n,
-                            onTap: () async {
-                              await ref
-                                  .read(notificationsRepositoryProvider)
-                                  .markRead(n.id);
-                              if (n.deepLink != null && context.mounted) {
-                                context.push(n.deepLink!);
-                              }
-                            },
-                          ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -137,6 +183,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       ),
     );
   }
+}
+
+/// Etiqueta del día de una notificación: Hoy, Ayer, Esta semana o Anteriores.
+String _dayLabel(DateTime at) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(at.year, at.month, at.day);
+  final diff = today.difference(day).inDays;
+  if (diff <= 0) return 'Hoy';
+  if (diff == 1) return 'Ayer';
+  if (diff < 7) return 'Esta semana';
+  return 'Anteriores';
 }
 
 class _FilterBar extends StatefulWidget {
