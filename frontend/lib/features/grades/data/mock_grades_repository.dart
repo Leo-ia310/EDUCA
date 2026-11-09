@@ -1,4 +1,5 @@
 import '../domain/entities.dart';
+import '../domain/gradebook_stats.dart';
 import '../domain/grades_calculator.dart';
 import '../domain/grades_repository.dart';
 import '../../assignments/data/mock_assignments_data.dart'
@@ -83,8 +84,9 @@ class MockGradesRepository implements GradesRepository {
             .map((e) => e.id)
             .toSet();
     return _grades
-        .where((g) =>
-            g.studentId == studentId && validIds.contains(g.evaluationId),)
+        .where(
+          (g) => g.studentId == studentId && validIds.contains(g.evaluationId),
+        )
         .toList();
   }
 
@@ -197,7 +199,9 @@ class MockGradesRepository implements GradesRepository {
     required String periodId,
   }) async {
     final evaluations = _evaluations
-        .where((e) => e.classId == classId && e.periodId == periodId)
+        .where((e) =>
+            e.classId == classId &&
+            (periodId == kGradebookYear || e.periodId == periodId),)
         .toList();
     final studentIds = AssignmentsMockSeed.studentNames.keys.toList();
     final grades = <int, Map<String, double?>>{};

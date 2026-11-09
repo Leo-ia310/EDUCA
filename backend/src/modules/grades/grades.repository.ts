@@ -92,14 +92,16 @@ export class GradesRepository {
     return (data ?? []) as Array<Record<string, unknown>>;
   }
 
-  async gradebookEvaluations(institutionId: number, classId: number, periodId: number) {
-    return readAllPages<Record<string, unknown>>((from, to) => this.client
-      .from("evaluations")
-      .select("id, title, date, max_score, weight, catalog_evaluation_types(code), classes(subjects(name))")
-      .eq("institution_id", institutionId)
-      .eq("class_id", classId)
-      .eq("academic_period_id", periodId)
-      .order("date").order("id").range(from, to));
+  async gradebookEvaluations(institutionId: number, classId: number, periodId: number | null) {
+    return readAllPages<Record<string, unknown>>((from, to) => {
+      let query = this.client
+        .from("evaluations")
+        .select("id, title, date, max_score, weight, academic_period_id, catalog_evaluation_types(code), classes(subjects(name))")
+        .eq("institution_id", institutionId)
+        .eq("class_id", classId);
+      if (periodId != null) query = query.eq("academic_period_id", periodId);
+      return query.order("date").order("id").range(from, to);
+    });
   }
 
   async enrolledStudents(institutionId: number, groupId: number, academicYearId: number | null) {

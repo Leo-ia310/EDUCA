@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/network/backend_api_client.dart';
 import '../../../core/network/read_all.dart';
 import '../domain/entities.dart';
+import '../domain/gradebook_stats.dart';
 import '../domain/grades_calculator.dart';
 import '../domain/grades_repository.dart';
 
@@ -437,13 +438,18 @@ class SupabaseGradesRepository implements GradesRepository {
     required String periodId,
   }) async {
     final data = Map<String, dynamic>.from(await _api.get('/grades/gradebook',
-        queryParameters: {'classId': classId, 'periodId': periodId},) as Map,);
+        queryParameters: {
+          'classId': classId,
+          if (periodId != kGradebookYear) 'periodId': periodId,
+        },) as Map,);
     final evaluations = (data['evaluations'] as List)
         .cast<Map<String, dynamic>>()
         .map((row) => Evaluation(
               id: row['id'].toString(),
               classId: classId,
-              periodId: periodId,
+              periodId: (row['periodId'] as String?)?.isNotEmpty == true
+                  ? row['periodId'] as String
+                  : periodId,
               subjectName: row['subjectName'] as String? ?? 'Materia',
               title: row['title'] as String? ?? '',
               date: DateTime.tryParse(row['date'] as String? ?? '') ??

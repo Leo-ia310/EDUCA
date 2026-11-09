@@ -1209,7 +1209,7 @@ export const apiManifest: ApiManifestEntry[] = [
     summary: "Libro de calificaciones de una clase en un periodo (solo lectura)",
     auth: "admin con reports.view, maestro de la clase o colaborador con class.view",
     frontendStatus: "connected",
-    request: "?classId=&periodId=",
+    request: "?classId=&periodId? (si se omite: todas las evaluaciones de la clase, para el acumulado del año)",
     response: "{ ok: true, data: { evaluations: [{ id, classId, periodId, subjectName, title, date, maxScore, weight, kind }], students: [{ studentId, name }], grades: { [studentId]: { [evaluationId]: number | null } } } }",
     source: "backend/src/modules/grades/grades.routes.ts",
     notes: "Notas crudas; se leen todas las páginas de evaluaciones y notas, incluso grids con más de 1000 celdas. Matrícula ACT del año de la clase y alumnos activos, sin duplicados. El promedio ponderado y la etiqueta se calculan con la escala (GET /api/grades/scales/default). Las notas se registran con grades.setGrade (solo maestro).",

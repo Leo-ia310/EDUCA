@@ -131,7 +131,9 @@ export class GradesService {
   async gradebook(ctx: AppContext, query: Record<string, unknown>) {
     this.requireGradebookAccess(ctx);
     const classId = requiredId(query.classId ?? query.class_id, "Clase");
-    const periodId = requiredId(query.periodId ?? query.period_id, "Periodo");
+    // Sin periodo = todo el año hasta el momento (todas las evaluaciones de la clase).
+    const rawPeriod = query.periodId ?? query.period_id;
+    const periodId = rawPeriod == null || rawPeriod === "" ? null : requiredId(rawPeriod, "Periodo");
     const cls = await this.permissions.assertTeacherCanUseClass(ctx, classId, "class.view");
 
     const [evaluations, enrollments] = await Promise.all([
@@ -160,7 +162,7 @@ export class GradesService {
       evaluations: evaluations.map((e: any) => ({
         id: String(e.id),
         classId: String(classId),
-        periodId: String(periodId),
+        periodId: String(e.academic_period_id ?? periodId ?? ""),
         subjectName: String(e.classes?.subjects?.name ?? "Materia"),
         title: String(e.title ?? ""),
         date: e.date ?? null,
