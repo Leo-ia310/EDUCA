@@ -318,10 +318,18 @@ export const responseSchemas: Record<string, Schema> = {
  * Esquemas de los CUERPOS de petición de las escrituras que usa la web (misma clave «MÉTODO ruta»).
  * Son estrictos con los nombres de campo (para atrapar errores de escritura) pero aceptan ids como texto o número.
  */
+responseSchemas['GET /api/assignments/:id/originality/summary'] = obj({
+  assignmentId: int, eligible: int, preliminary: bool, hasTemplate: bool, notice: str,
+  items: arr(obj({ submissionId: int, studentId: int, state: enumOf('queued','processing','completed','failed','insufficient_text','unsupported_format'),
+    compared: bool, coverage: nullable(num), binaryIdentical: bool, textIdentical: bool, submittedAt: str })),
+});
+responseSchemas['GET /api/assignments/:id/originality/template'] = obj({ template: str, updatedAt: nullable(str), instructionsLines: int });
+responseSchemas['POST /api/assignments/:id/originality/template'] = obj({ template: str, reanalyzing: int });
 responseSchemas['POST /api/assignments/submissions/:submissionId/originality/retry'] =
   responseSchemas['GET /api/assignments/submissions/:submissionId/originality'];
 
 export const requestSchemas: Record<string, Schema> = {
+  'POST /api/assignments/:id/originality/template': obj({ template: str }),
   'POST /api/assignments/submissions/:submissionId/originality/retry': obj({}),
   "POST /api/assignments/upsert": obj({
     assignmentId: idish, classId: idish, title: str, description: str, instructions: str, dueAt: str, maxScore: num,

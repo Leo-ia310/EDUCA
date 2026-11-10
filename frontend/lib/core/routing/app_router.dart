@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/assignments/presentation/screens/assignment_detail_screen.dart';
 import '../../features/assignments/presentation/screens/assignment_form_screen.dart';
 import '../../features/assignments/presentation/screens/grading_screen.dart';
+import '../../features/assignments/presentation/screens/originality_detail_screen.dart';
+import '../../features/assignments/presentation/screens/originality_template_screen.dart';
 import '../../features/assignments/presentation/screens/student_assignments_screen.dart';
 import '../../features/assignments/presentation/screens/teacher_assignments_screen.dart';
 import '../../features/attendance/presentation/screens/attendance_classes_screen.dart';
@@ -406,6 +408,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                   allowed: const {AppRole.teacher},
                   child: GradingScreen(
                     assignmentId: state.pathParameters['id']!,
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'originality/template',
+                builder: (context, state) => RoleGuard(
+                  allowed: const {AppRole.teacher},
+                  child: OriginalityTemplateScreen(
+                    assignmentId: state.pathParameters['id']!,
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'originality/:submissionId',
+                builder: (context, state) => RoleGuard(
+                  allowed: const {AppRole.teacher},
+                  child: OriginalityDetailScreen(
+                    assignmentId: state.pathParameters['id']!,
+                    submissionId: state.pathParameters['submissionId']!,
                   ),
                 ),
               ),

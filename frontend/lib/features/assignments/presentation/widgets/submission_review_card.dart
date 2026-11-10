@@ -11,7 +11,8 @@ import '../../domain/entities.dart';
 import '../controllers/grading_controller.dart';
 import 'assignment_status_chip.dart';
 import 'attachment_pill.dart';
-import 'originality_card.dart';
+import '../controllers/originality_controller.dart';
+import 'originality_widgets.dart';
 
 /// Tarjeta de una entrega para el docente: quién entregó, cuándo, el comentario
 /// y los archivos del estudiante, la nota vigente y el acceso para calificar.
@@ -69,6 +70,22 @@ class SubmissionReviewCard extends ConsumerWidget {
               SubmissionStatusChip(status: submission.status),
             ],
           ),
+          if (delivered && ref.watch(originalityApiProvider) != null) ...[
+            const SizedBox(height: 12),
+            OriginalityRow(
+              assignmentId: assignment.id,
+              submissionId: submission.id,
+              item: ref.watch(
+                originalitySummaryProvider(assignment.id).select(
+                  (s) => s.valueOrNull?.itemFor(submission.id),
+                ),
+              ),
+              loading: ref.watch(
+                originalitySummaryProvider(assignment.id)
+                    .select((s) => s.isLoading),
+              ),
+            ),
+          ],
           if (delivered && submission.attachments.isNotEmpty) ...[
             const SizedBox(height: 12),
             _Label(
@@ -135,7 +152,6 @@ class SubmissionReviewCard extends ConsumerWidget {
               ),
             ],
           ],
-          if (delivered) OriginalityButton(submissionId: submission.id),
           if (delivered && canGrade) ...[
             const SizedBox(height: 8),
             Align(

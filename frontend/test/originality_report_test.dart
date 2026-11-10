@@ -48,13 +48,13 @@ void main() {
     expect(doc.pending, isTrue);
     expect(doc.submittedAt.isUtc, isTrue);
     expect(
-      OriginalityDocument.fromJson(document(state: 'failed')).label,
-      contains('entrega sigue válida'),
+      OriginalityDocument.fromJson(document(state: 'failed')).status.hint,
+      contains('entrega sigue siendo válida'),
     );
     final match =
         OriginalityDocument.fromJson(document(compared: true, coverage: 100))
             .match!;
-    expect(match.fragments, ['Fragmento']);
+    expect(match.fragments.map((f) => f.text), ['Fragmento']);
     expect(
       OriginalityReport.fromJson({'documents': [], 'notice': 'Orientativo'})
           .pending,

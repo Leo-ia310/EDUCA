@@ -18,7 +18,12 @@ const port: QueuePort = {
   async shared(institution,assignment) {
     const { data,error } = await client.from('assignments').select('instructions,description')
       .eq('institution_id',institution).eq('id',assignment).is('deleted_at',null).single();
-    if (error) throw Error('assignment_unavailable'); return [data.instructions ?? '', data.description ?? ''];
+    if (error) throw Error('assignment_unavailable');
+    // Plantilla del docente (tabla privada, solo service_role): texto adicional a excluir.
+    const { data: tpl,error: tplError } = await client.from('originality_templates').select('template')
+      .eq('assignment_id',assignment).maybeSingle();
+    if (tplError) throw Error('assignment_unavailable');
+    return [data.instructions ?? '', data.description ?? '', tpl?.template ?? ''];
   },
   async file(institution,id) {
     const { data,error } = await client.from('files').select('storage_path,mime_type,size_bytes')

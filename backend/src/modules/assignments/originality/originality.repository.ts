@@ -12,6 +12,9 @@ export class OriginalityRepository {
     this.queryCount++;
     const { data, error } = await this.client.rpc(name, args); assertNoDbError(error); return data as T;
   }
+  summary(assignmentId: number) { return this.rpc('originality_summary', { p_assignment: assignmentId }); }
+  templateGet(assignmentId: number) { return this.rpc('originality_template_get', { p_assignment: assignmentId }); }
+  templateSet(assignmentId: number, template: string) { return this.rpc('originality_template_set', { p_assignment: assignmentId, p_template: template }); }
   report(submissionId: number, evidence: boolean, retry: boolean) {
     return this.rpc('originality_report', { p_submission: submissionId, p_evidence: evidence, p_retry: retry });
   }
@@ -28,7 +31,12 @@ export class OriginalityRepository {
   async shared(institution: number, assignment: number): Promise<string[]> {
     this.queryCount++;
     const { data, error } = await this.client.from('assignments').select('instructions,description').eq('institution_id', institution).eq('id', assignment).is('deleted_at', null).single();
-    assertNoDbError(error); return [data?.instructions ?? '', data?.description ?? ''];
+    assertNoDbError(error);
+    // La plantilla del docente (texto a excluir) vive en una tabla privada; el trabajador usa service_role.
+    this.queryCount++;
+    const { data: tpl, error: tplError } = await this.client.from('originality_templates').select('template').eq('assignment_id', assignment).maybeSingle();
+    assertNoDbError(tplError);
+    return [data?.instructions ?? '', data?.description ?? '', tpl?.template ?? ''];
   }
   async sourceUrl(path: string) {
     const { data, error } = await this.client.storage.from('files').createSignedUrl(path, 60); assertNoDbError(error); return data!.signedUrl;

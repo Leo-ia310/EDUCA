@@ -25,7 +25,9 @@ import '../../domain/entities.dart';
 import '../../providers.dart';
 import '../controllers/assignment_detail_controller.dart';
 import '../controllers/assignments_list_controller.dart';
+import '../controllers/originality_controller.dart';
 import '../widgets/assignment_status_chip.dart';
+import '../widgets/originality_summary_card.dart';
 import '../widgets/submission_review_card.dart';
 import '../controllers/submission_controller.dart';
 import '../widgets/attachment_pill.dart';
@@ -144,9 +146,18 @@ class AssignmentDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
               ],
-              if (isTeacher)
-                _SubmissionsSection(assignment: a)
-              else
+              if (isTeacher) ...[
+                if (ref.watch(
+                  classPermissionProvider((a.classId, 'assignments.review')),
+                )) ...[
+                  OriginalitySummaryCard(
+                    assignmentId: a.id,
+                    canEditTemplate: canEdit,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                _SubmissionsSection(assignment: a),
+              ] else
                 _StudentBlock(assignment: a, studentId: studentId ?? 1001),
             ],
           );
@@ -663,6 +674,7 @@ class _SubmissionsSection extends ConsumerStatefulWidget {
 
 class _SubmissionsSectionState extends ConsumerState<_SubmissionsSection> {
   _SubFilter _filter = _SubFilter.all;
+  bool _byOriginality = false;
 
   @override
   Widget build(BuildContext context) {
@@ -701,10 +713,17 @@ class _SubmissionsSectionState extends ConsumerState<_SubmissionsSection> {
                 ),
               );
             }
+            final summary =
+                ref.watch(originalitySummaryProvider(a.id)).valueOrNull;
             final shown = [
               for (final s in list)
                 if (_filter.matches(s)) s,
             ];
+            if (_byOriginality && summary != null) {
+              double cov(Submission s) =>
+                  summary.itemFor(s.id)?.shownCoverage ?? -1;
+              shown.sort((x, y) => cov(y).compareTo(cov(x)));
+            }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -724,6 +743,23 @@ class _SubmissionsSectionState extends ConsumerState<_SubmissionsSection> {
                             onSelected: (_) => setState(() => _filter = f),
                           ),
                         ),
+                      if (summary != null && summary.withPercentage > 0) ...[
+                        Container(
+                          width: 1,
+                          height: 22,
+                          margin: const EdgeInsets.only(right: 8, top: 8),
+                          color: palette.textMuted.withValues(alpha: 0.3),
+                        ),
+                        FilterChip(
+                          avatar: const Icon(
+                            Icons.sort_rounded,
+                            size: 16,
+                          ),
+                          label: const Text('Ordenar por coincidencia'),
+                          selected: _byOriginality,
+                          onSelected: (v) => setState(() => _byOriginality = v),
+                        ),
+                      ],
                     ],
                   ),
                 ),

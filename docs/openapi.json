@@ -330,6 +330,323 @@
         }
       }
     },
+    "/api/assignments/{id}/originality/summary": {
+      "get": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "Resumen de coincidencias textuales de una actividad (una fila por entrega)",
+        "description": "Auth: teacher con class.view, assignments.review y students.view en la clase; RLS.\n\nNotas: Migración 0065. Evita una consulta por alumno; sin fragmentos ni nombres de fuentes. compared=false no equivale a 0%. Auditado.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ assignmentId, eligible, preliminary, hasTemplate, items: [{ submissionId, studentId, state, compared, coverage, binaryIdentical, textIdentical, submittedAt }], notice }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "assignmentId": {
+                          "type": "integer"
+                        },
+                        "eligible": {
+                          "type": "integer"
+                        },
+                        "preliminary": {
+                          "type": "boolean"
+                        },
+                        "hasTemplate": {
+                          "type": "boolean"
+                        },
+                        "notice": {
+                          "type": "string"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "submissionId": {
+                                "type": "integer"
+                              },
+                              "studentId": {
+                                "type": "integer"
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "queued",
+                                  "processing",
+                                  "completed",
+                                  "failed",
+                                  "insufficient_text",
+                                  "unsupported_format"
+                                ]
+                              },
+                              "compared": {
+                                "type": "boolean"
+                              },
+                              "coverage": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "binaryIdentical": {
+                                "type": "boolean"
+                              },
+                              "textIdentical": {
+                                "type": "boolean"
+                              },
+                              "submittedAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "submissionId",
+                              "studentId",
+                              "state",
+                              "compared",
+                              "coverage",
+                              "binaryIdentical",
+                              "textIdentical",
+                              "submittedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "assignmentId",
+                        "eligible",
+                        "preliminary",
+                        "hasTemplate",
+                        "notice",
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
+    "/api/assignments/{id}/originality/template": {
+      "get": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "Leer la plantilla de exclusión de una actividad",
+        "description": "Auth: teacher con class.view, assignments.review y students.view en la clase; RLS.\n\nNotas: Migración 0065. Tabla privada originality_templates; no visible para estudiantes ni padres.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ template, updatedAt, instructionsLines }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "template": {
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "instructionsLines": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "template",
+                        "updatedAt",
+                        "instructionsLines"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "assignments"
+        ],
+        "summary": "Guardar la plantilla de exclusión y reanalizar la actividad",
+        "description": "Auth: teacher con class.view, assignments.create y students.view en la clase; RLS.\n\nNotas: Migración 0065. Las líneas de al menos 20 caracteres que coincidan con la plantilla se excluyen del cálculo. Si cambia, borra los pares previos y reencola los documentos activos; no toca notas ni entregas. Auditado.\n\nFuente: backend/src/modules/assignments/assignments.routes.ts.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "template": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "template"
+                ],
+                "additionalProperties": false
+              },
+              "examples": {
+                "manifest": {
+                  "value": "params id; body { template: string hasta 20000 caracteres }"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ template, reanalyzing }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "data"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "template": {
+                          "type": "string"
+                        },
+                        "reanalyzing": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "template",
+                        "reanalyzing"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación o negocio."
+          },
+          "401": {
+            "description": "Sesión requerida o inválida."
+          },
+          "403": {
+            "description": "Permisos insuficientes."
+          }
+        }
+      }
+    },
     "/api/assignments/submissions/{submissionId}/originality/retry": {
       "post": {
         "tags": [

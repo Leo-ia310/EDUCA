@@ -33,3 +33,35 @@ test('HTTP contract validates ID/query/body and protects role/missing session be
   assert.equal(calls.at(-1)![3],true);
  }finally{report.mock.restore();await new Promise<void>(resolve=>server.close(()=>resolve()));}
 });
+test('summary and template routes validate input, role and never leak cache',async()=>{
+ const { originalitySummary, originalityTemplate, originalitySaveTemplate } = require('../src/modules/assignments/originality/originality.controller') as typeof import('../src/modules/assignments/originality/originality.controller');
+ const app=express();app.use(express.json());
+ app.use((req:AppRequest,_res,next)=>{
+  if(req.header('x-test-role'))req.appContext={userId:1,institutionId:1,roles:new Set([req.header('x-test-role')!]),authUserId:'fixture',personId:1,fullName:'Teacher',adminPermissions:null} satisfies AppContext;
+  next();
+ });
+ app.get('/:id/originality/summary',requireRoles(['teacher']),asyncHandler(originalitySummary));
+ app.get('/:id/originality/template',requireRoles(['teacher']),asyncHandler(originalityTemplate));
+ app.post('/:id/originality/template',requireRoles(['teacher']),asyncHandler(originalitySaveTemplate));app.use(errorHandler);
+ const calls:string[]=[];
+ const summary=mock.method(originalityService,'summary',async(_c:AppContext,id:number)=>{calls.push('summary:'+id);return {items:[]};});
+ const template=mock.method(originalityService,'template',async(_c:AppContext,id:number)=>{calls.push('template:'+id);return {template:''};});
+ const save=mock.method(originalityService,'saveTemplate',async(_c:AppContext,id:number,text:string)=>{calls.push('save:'+id+':'+text);return {template:text,reanalyzing:2};});
+ const server=app.listen(0,'127.0.0.1');await once(server,'listening');const base=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
+ const teacher={'x-test-role':'teacher','content-type':'application/json'};
+ try{
+  assert.equal((await fetch(base+'/9/originality/summary')).status,401);
+  assert.equal((await fetch(base+'/9/originality/summary',{headers:{'x-test-role':'student'}})).status,403);
+  assert.equal((await fetch(base+'/abc/originality/summary',{headers:teacher})).status,400);
+  assert.equal((await fetch(base+'/9/originality/summary?x=1',{headers:teacher})).status,400);
+  const ok=await fetch(base+'/9/originality/summary',{headers:teacher});
+  assert.equal(ok.status,200);assert.equal(ok.headers.get('cache-control'),'private, no-store');
+  assert.equal((await fetch(base+'/9/originality/template',{headers:teacher})).status,200);
+  assert.equal((await fetch(base+'/9/originality/template',{method:'POST',headers:teacher,body:'{"template":1}'})).status,400);
+  assert.equal((await fetch(base+'/9/originality/template',{method:'POST',headers:teacher,body:'{"template":"x","institutionId":2}'})).status,400);
+  assert.equal((await fetch(base+'/9/originality/template',{method:'POST',headers:teacher,body:JSON.stringify({template:'x'.repeat(20001)})})).status,400);
+  const saved=await fetch(base+'/9/originality/template',{method:'POST',headers:teacher,body:'{"template":"Portada común de la clase"}'});
+  assert.equal(saved.status,200);assert.deepEqual((await saved.json()).data,{template:'Portada común de la clase',reanalyzing:2});
+  assert.deepEqual(calls,['summary:9','template:9','save:9:Portada común de la clase']);
+ }finally{summary.mock.restore();template.mock.restore();save.mock.restore();await new Promise<void>(resolve=>server.close(()=>resolve()));}
+});

@@ -11,5 +11,22 @@ export class OriginalityService {
     await permissionsService.assertTeacherCanUseAssignment(ctx, Number(submission.assignment_id), 'students.view');
     return this.repository.report(id, evidence, retry);
   }
+  private async assignmentAccess(ctx: AppContext, assignmentId: number, permission: string) {
+    permissionsService.requireRole(ctx, ['teacher']);
+    await permissionsService.assertTeacherCanUseAssignment(ctx, assignmentId, permission);
+    await permissionsService.assertTeacherCanUseAssignment(ctx, assignmentId, 'students.view');
+  }
+  async summary(ctx: AppContext, assignmentId: number) {
+    await this.assignmentAccess(ctx, assignmentId, 'assignments.review');
+    return this.repository.summary(assignmentId);
+  }
+  async template(ctx: AppContext, assignmentId: number) {
+    await this.assignmentAccess(ctx, assignmentId, 'assignments.review');
+    return this.repository.templateGet(assignmentId);
+  }
+  async saveTemplate(ctx: AppContext, assignmentId: number, template: string) {
+    await this.assignmentAccess(ctx, assignmentId, 'assignments.create');
+    return this.repository.templateSet(assignmentId, template);
+  }
 }
 export const originalityService = new OriginalityService();

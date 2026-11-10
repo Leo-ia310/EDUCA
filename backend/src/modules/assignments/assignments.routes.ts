@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { originalityReport, originalityRetry } from './originality/originality.controller';
+import { originalityReport, originalityRetry, originalitySaveTemplate, originalitySummary, originalityTemplate } from './originality/originality.controller';
 
 import {
   assignmentSubmissions,
@@ -29,6 +29,9 @@ assignmentsRoutes.post(
 );
 assignmentsRoutes.get("/teacher", requireRoles(["teacher"]), asyncHandler(listAssignments));
 assignmentsRoutes.get("/student", requireRoles(["parent", "student"]), asyncHandler(studentAssignments));
+assignmentsRoutes.get('/:id/originality/summary', requireRoles(['teacher']), asyncHandler(originalitySummary));
+assignmentsRoutes.get('/:id/originality/template', requireRoles(['teacher']), asyncHandler(originalityTemplate));
+assignmentsRoutes.post('/:id/originality/template', requireRoles(['teacher']), asyncHandler(originalitySaveTemplate));
 assignmentsRoutes.get("/:id/submissions", requireRoles(["teacher"]), asyncHandler(assignmentSubmissions));
 assignmentsRoutes.post("/upsert", requireRoles(["teacher"]), asyncHandler(upsertAssignment));
 assignmentsRoutes.post("/delete", requireRoles(["teacher"]), asyncHandler(deleteAssignment));
