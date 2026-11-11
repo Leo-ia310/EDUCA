@@ -1,0 +1,27 @@
+{
+  "recordedAt": "2026-11-11T04:51:12.761Z",
+  "projectRef": "qwfkmijewogksfizdski",
+  "deploymentCliSucceeded": true,
+  "uploadedSourceIncludesTemplates": true,
+  "migrationReapplied": false,
+  "secretsModified": false,
+  "cron": [
+    {
+      "jobname": "nivra-originality",
+      "schedule": "10 seconds",
+      "active": true
+    }
+  ],
+  "metricsBeforeRequest": {
+    "failed": 0,
+    "processing": 0,
+    "queueDepth": 0,
+    "oldestQueueAgeSeconds": 0
+  },
+  "anonymousStatus": 401,
+  "authenticatedStatus": 200,
+  "workerResponse": {
+    "status": "idle"
+  },
+  "verificationLimit": "Post-deploy management API reads returned 403; remote source download and secret digest comparison unavailable. Teacher UI percentage change not exercised; no templates or student submissions modified."
+}
